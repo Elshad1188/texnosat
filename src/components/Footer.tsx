@@ -1,47 +1,45 @@
 import { Phone, Mail, MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
     <footer className="border-t border-border bg-secondary text-secondary-foreground">
       <div className="container mx-auto px-4 py-12">
         <div className="grid gap-8 md:grid-cols-4">
-          {/* Brand */}
           <div>
-            <div className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-primary">
                 <span className="font-display text-lg font-bold text-primary-foreground">T</span>
               </div>
               <span className="font-display text-xl font-bold">
                 Texno<span className="text-primary">sat</span>
               </span>
-            </div>
+            </Link>
             <p className="mt-3 text-sm text-secondary-foreground/60">
-              Azərbaycanın ən etibarlı elan platforması. Al, sat, dəyişdir — asanlıqla.
+              Azərbaycanın ən etibarlı elektronika al-sat platforması.
             </p>
           </div>
 
-          {/* Links */}
           <div>
             <h4 className="mb-3 font-display text-sm font-semibold">Kateqoriyalar</h4>
             <ul className="space-y-2 text-sm text-secondary-foreground/60">
-              <li><a href="#" className="hover:text-primary">Elektronika</a></li>
-              <li><a href="#" className="hover:text-primary">Nəqliyyat</a></li>
-              <li><a href="#" className="hover:text-primary">Daşınmaz əmlak</a></li>
-              <li><a href="#" className="hover:text-primary">İş elanları</a></li>
+              <li><Link to="/products?category=telefonlar" className="hover:text-primary">Telefonlar</Link></li>
+              <li><Link to="/products?category=noutbuklar" className="hover:text-primary">Noutbuklar</Link></li>
+              <li><Link to="/products?category=plansetler" className="hover:text-primary">Planşetlər</Link></li>
+              <li><Link to="/products?category=aksesuarlar" className="hover:text-primary">Aksesuarlar</Link></li>
             </ul>
           </div>
 
           <div>
             <h4 className="mb-3 font-display text-sm font-semibold">Şirkət</h4>
             <ul className="space-y-2 text-sm text-secondary-foreground/60">
-              <li><a href="#" className="hover:text-primary">Haqqımızda</a></li>
+              <li><Link to="/about" className="hover:text-primary">Haqqımızda</Link></li>
               <li><a href="#" className="hover:text-primary">Qaydalar</a></li>
               <li><a href="#" className="hover:text-primary">Məxfilik</a></li>
               <li><a href="#" className="hover:text-primary">Əlaqə</a></li>
             </ul>
           </div>
 
-          {/* Contact */}
           <div>
             <h4 className="mb-3 font-display text-sm font-semibold">Əlaqə</h4>
             <ul className="space-y-2 text-sm text-secondary-foreground/60">
