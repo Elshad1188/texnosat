@@ -1,10 +1,12 @@
-import { Search, Plus, User, Heart, ShoppingCart, Menu, X } from "lucide-react";
+import { Search, Plus, User, Heart, ShoppingCart, Menu, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
@@ -34,9 +36,20 @@ const Header = () => {
           <Button variant="ghost" size="icon" className="hidden md:flex" asChild>
             <Link to="/favorites"><Heart className="h-5 w-5" /></Link>
           </Button>
-          <Button variant="ghost" size="icon" className="hidden md:flex">
-            <User className="h-5 w-5" />
-          </Button>
+          {user ? (
+            <>
+              <Button variant="ghost" size="icon" className="hidden md:flex" asChild>
+                <Link to="/profile"><User className="h-5 w-5" /></Link>
+              </Button>
+              <Button variant="ghost" size="icon" className="hidden md:flex" onClick={() => signOut()}>
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </>
+          ) : (
+            <Button variant="ghost" size="icon" className="hidden md:flex" asChild>
+              <Link to="/auth"><User className="h-5 w-5" /></Link>
+            </Button>
+          )}
           <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-1.5" asChild>
             <Link to="/products">
               <ShoppingCart className="h-4 w-4" />
