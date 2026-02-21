@@ -1,4 +1,4 @@
-import { Search, Plus, User, Heart, ShoppingCart, Menu, X, LogOut } from "lucide-react";
+import { Plus, User, Heart, Menu, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -44,18 +44,21 @@ const Header = () => {
               <Button variant="ghost" size="icon" className="hidden md:flex" onClick={() => signOut()}>
                 <LogOut className="h-5 w-5" />
               </Button>
+              <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-1.5" asChild>
+                <Link to="/create-listing">
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Elan yerləşdir</span>
+                </Link>
+              </Button>
             </>
           ) : (
-            <Button variant="ghost" size="icon" className="hidden md:flex" asChild>
-              <Link to="/auth"><User className="h-5 w-5" /></Link>
+            <Button variant="outline" className="gap-1.5" asChild>
+              <Link to="/auth">
+                <User className="h-4 w-4" />
+                <span>Daxil ol</span>
+              </Link>
             </Button>
           )}
-          <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-1.5" asChild>
-            <Link to="/products">
-              <ShoppingCart className="h-4 w-4" />
-              <span className="hidden sm:inline">Məhsullara bax</span>
-            </Link>
-          </Button>
           <Button
             variant="ghost"
             size="icon"
