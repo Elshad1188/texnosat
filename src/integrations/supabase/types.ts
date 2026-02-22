@@ -14,6 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
+      listings: {
+        Row: {
+          category: string
+          condition: string
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          image_urls: string[] | null
+          is_active: boolean
+          is_premium: boolean
+          is_urgent: boolean
+          location: string
+          price: number
+          store_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          views_count: number
+        }
+        Insert: {
+          category: string
+          condition?: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          image_urls?: string[] | null
+          is_active?: boolean
+          is_premium?: boolean
+          is_urgent?: boolean
+          location?: string
+          price: number
+          store_id?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          views_count?: number
+        }
+        Update: {
+          category?: string
+          condition?: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          image_urls?: string[] | null
+          is_active?: boolean
+          is_premium?: boolean
+          is_urgent?: boolean
+          location?: string
+          price?: number
+          store_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          views_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listings_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -44,6 +112,54 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      stores: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_premium: boolean
+          logo_url: string | null
+          name: string
+          phone: string | null
+          premium_until: string | null
+          updated_at: string
+          user_id: string
+          working_hours: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_premium?: boolean
+          logo_url?: string | null
+          name: string
+          phone?: string | null
+          premium_until?: string | null
+          updated_at?: string
+          user_id: string
+          working_hours?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_premium?: boolean
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          premium_until?: string | null
+          updated_at?: string
+          user_id?: string
+          working_hours?: string | null
         }
         Relationships: []
       }

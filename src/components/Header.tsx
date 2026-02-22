@@ -1,4 +1,4 @@
-import { Plus, User, Heart, Menu, X, LogOut } from "lucide-react";
+import { Plus, User, Heart, Menu, X, LogOut, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -25,7 +25,10 @@ const Header = () => {
             Ana səhifə
           </Link>
           <Link to="/products" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            Məhsullar
+            Elanlar
+          </Link>
+          <Link to="/create-store" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            Mağaza aç
           </Link>
           <Link to="/about" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             Haqqımızda
@@ -74,9 +77,10 @@ const Header = () => {
         <div className="border-t border-border bg-card p-4 md:hidden animate-fade-in">
           <nav className="flex flex-col gap-3">
             <Link to="/" className="text-sm font-medium text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>Ana səhifə</Link>
-            <Link to="/products" className="text-sm font-medium text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>Məhsullar</Link>
-            <Link to="/about" className="text-sm font-medium text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>Haqqımızda</Link>
+            <Link to="/products" className="text-sm font-medium text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>Elanlar</Link>
+            <Link to="/create-store" className="text-sm font-medium text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>Mağaza aç</Link>
             <Link to="/favorites" className="text-sm font-medium text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>Seçilmişlər</Link>
+            {!user && <Link to="/auth" className="text-sm font-medium text-primary" onClick={() => setMobileMenuOpen(false)}>Daxil ol</Link>}
           </nav>
         </div>
       )}
