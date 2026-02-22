@@ -1,12 +1,14 @@
-import { Plus, User, Heart, Menu, X, LogOut, Store } from "lucide-react";
+import { Plus, User, Heart, Menu, X, LogOut, Store, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
@@ -41,6 +43,11 @@ const Header = () => {
           </Button>
           {user ? (
             <>
+              {isAdmin && (
+                <Button variant="ghost" size="icon" className="hidden md:flex" asChild>
+                  <Link to="/admin"><ShieldCheck className="h-5 w-5 text-primary" /></Link>
+                </Button>
+              )}
               <Button variant="ghost" size="icon" className="hidden md:flex" asChild>
                 <Link to="/profile"><User className="h-5 w-5" /></Link>
               </Button>
@@ -80,6 +87,7 @@ const Header = () => {
             <Link to="/products" className="text-sm font-medium text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>Elanlar</Link>
             <Link to="/create-store" className="text-sm font-medium text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>Mağaza aç</Link>
             <Link to="/favorites" className="text-sm font-medium text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>Seçilmişlər</Link>
+            {isAdmin && <Link to="/admin" className="text-sm font-medium text-primary" onClick={() => setMobileMenuOpen(false)}>Admin Panel</Link>}
             {!user && <Link to="/auth" className="text-sm font-medium text-primary" onClick={() => setMobileMenuOpen(false)}>Daxil ol</Link>}
           </nav>
         </div>
