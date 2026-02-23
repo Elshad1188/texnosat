@@ -1,28 +1,34 @@
 import { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, SlidersHorizontal, X } from "lucide-react";
-import {
-  Smartphone, Laptop, Tablet, Headphones, Monitor, Gamepad2,
-  Camera, Watch, Cpu, Printer, Wifi, CircuitBoard, type LucideIcon,
-} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Search, SlidersHorizontal, X, Loader2 } from "lucide-react";
+import { CircuitBoard, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ListingCard from "@/components/ListingCard";
-import { products, categories } from "@/data/products";
-
-const iconMap: Record<string, LucideIcon> = {
-  Smartphone, Laptop, Tablet, Headphones, Monitor, Gamepad2,
-  Camera, Watch, Cpu, Printer, Wifi, CircuitBoard,
-};
+import { supabase } from "@/integrations/supabase/client";
+import { iconMap } from "@/lib/icons";
 
 const conditions = ["Hamısı", "Yeni", "Yeni kimi", "İşlənmiş"];
 const sortOptions = [
   { value: "newest", label: "Ən yeni" },
   { value: "price-asc", label: "Ucuzdan bahaya" },
   { value: "price-desc", label: "Bahadan ucuza" },
+  { value: "views", label: "Ən çox baxılan" },
 ];
+
+function formatTime(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const hours = Math.floor(diff / 3600000);
+  if (hours < 1) return "Az əvvəl";
+  if (hours < 24) return `${hours} saat əvvəl`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} gün əvvəl`;
+  return new Date(dateStr).toLocaleDateString("az");
+}
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -31,48 +37,92 @@ const Products = () => {
 
   const [query, setQuery] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+  const [selectedSubcategory, setSelectedSubcategory] = useState("");
+  const [selectedRegion, setSelectedRegion] = useState("");
   const [selectedCondition, setSelectedCondition] = useState("Hamısı");
   const [sortBy, setSortBy] = useState("newest");
   const [showFilters, setShowFilters] = useState(false);
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
 
+  // Fetch categories
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories-all"],
+    queryFn: async () => {
+      const { data } = await supabase.from("categories").select("*").eq("is_active", true).order("sort_order");
+      return data || [];
+    },
+  });
+
+  // Fetch regions
+  const { data: regions = [] } = useQuery({
+    queryKey: ["regions-all"],
+    queryFn: async () => {
+      const { data } = await supabase.from("regions").select("*").eq("is_active", true).order("sort_order");
+      return data || [];
+    },
+  });
+
+  // Fetch listings from DB
+  const { data: allListings = [], isLoading } = useQuery({
+    queryKey: ["listings-all"],
+    queryFn: async () => {
+      const { data } = await supabase.from("listings").select("*").eq("is_active", true).order("created_at", { ascending: false });
+      return data || [];
+    },
+  });
+
+  const parentCategories = categories.filter((c: any) => !c.parent_id);
+  const subcategories = selectedCategory ? categories.filter((c: any) => {
+    const parent = parentCategories.find((p: any) => p.slug === selectedCategory);
+    return parent && c.parent_id === parent.id;
+  }) : [];
+
+  const parentRegions = regions.filter((r: any) => !r.parent_id);
+
   const filteredProducts = useMemo(() => {
-    let result = [...products];
+    let result = [...allListings];
 
     if (query) {
       const q = query.toLowerCase();
-      result = result.filter((p) => p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q));
+      result = result.filter((p: any) =>
+        p.title.toLowerCase().includes(q) || (p.description || "").toLowerCase().includes(q)
+      );
     }
 
     if (selectedCategory) {
-      result = result.filter((p) => p.category === selectedCategory);
+      result = result.filter((p: any) => p.category === selectedCategory);
     }
 
     if (selectedCondition !== "Hamısı") {
-      result = result.filter((p) => p.condition === selectedCondition);
+      result = result.filter((p: any) => p.condition === selectedCondition);
     }
 
-    if (priceMin) result = result.filter((p) => p.price >= Number(priceMin));
-    if (priceMax) result = result.filter((p) => p.price <= Number(priceMax));
+    if (selectedRegion) {
+      const region = regions.find((r: any) => r.id === selectedRegion);
+      if (region) {
+        result = result.filter((p: any) => p.location === (region as any).name);
+      }
+    }
 
-    if (sortBy === "price-asc") result.sort((a, b) => a.price - b.price);
-    else if (sortBy === "price-desc") result.sort((a, b) => b.price - a.price);
+    if (priceMin) result = result.filter((p: any) => Number(p.price) >= Number(priceMin));
+    if (priceMax) result = result.filter((p: any) => Number(p.price) <= Number(priceMax));
+
+    if (sortBy === "price-asc") result.sort((a: any, b: any) => Number(a.price) - Number(b.price));
+    else if (sortBy === "price-desc") result.sort((a: any, b: any) => Number(b.price) - Number(a.price));
+    else if (sortBy === "views") result.sort((a: any, b: any) => (b.views_count || 0) - (a.views_count || 0));
 
     return result;
-  }, [query, selectedCategory, selectedCondition, sortBy, priceMin, priceMax]);
+  }, [query, selectedCategory, selectedCondition, sortBy, priceMin, priceMax, allListings, selectedRegion, regions]);
 
   const clearFilters = () => {
-    setQuery("");
-    setSelectedCategory("");
-    setSelectedCondition("Hamısı");
-    setPriceMin("");
-    setPriceMax("");
-    setSortBy("newest");
+    setQuery(""); setSelectedCategory(""); setSelectedSubcategory("");
+    setSelectedRegion(""); setSelectedCondition("Hamısı");
+    setPriceMin(""); setPriceMax(""); setSortBy("newest");
     setSearchParams({});
   };
 
-  const hasActiveFilters = query || selectedCategory || selectedCondition !== "Hamısı" || priceMin || priceMax;
+  const hasActiveFilters = query || selectedCategory || selectedCondition !== "Hamısı" || priceMin || priceMax || selectedRegion;
 
   return (
     <div className="min-h-screen bg-background">
@@ -82,31 +132,16 @@ const Products = () => {
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
           <form onSubmit={(e) => e.preventDefault()} className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Məhsul axtar..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="h-11 w-full rounded-xl border border-border bg-card pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            />
+            <input type="text" placeholder="Məhsul axtar..." value={query} onChange={(e) => setQuery(e.target.value)}
+              className="h-11 w-full rounded-xl border border-border bg-card pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
           </form>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
-              className="gap-2"
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              Filterlər
+            <Button variant="outline" onClick={() => setShowFilters(!showFilters)} className="gap-2">
+              <SlidersHorizontal className="h-4 w-4" /> Filterlər
             </Button>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="h-11 rounded-xl border border-border bg-card px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              {sortOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
+              className="h-11 rounded-xl border border-border bg-card px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
+              {sortOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
             </select>
           </div>
         </div>
@@ -119,38 +154,31 @@ const Products = () => {
                 <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Vəziyyət</label>
                 <div className="flex flex-wrap gap-1.5">
                   {conditions.map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => setSelectedCondition(c)}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                        selectedCondition === c
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground hover:bg-accent"
-                      }`}
-                    >
+                    <button key={c} onClick={() => setSelectedCondition(c)}
+                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${selectedCondition === c ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
                       {c}
                     </button>
                   ))}
                 </div>
               </div>
               <div>
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Bölgə</label>
+                <Select value={selectedRegion || "all"} onValueChange={(v) => setSelectedRegion(v === "all" ? "" : v)}>
+                  <SelectTrigger className="w-40"><SelectValue placeholder="Bölgə seçin" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Hamısı</SelectItem>
+                    {parentRegions.map((r: any) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
                 <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Qiymət aralığı (₼)</label>
                 <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    placeholder="Min"
-                    value={priceMin}
-                    onChange={(e) => setPriceMin(e.target.value)}
-                    className="h-9 w-24 rounded-lg border border-border bg-muted px-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
+                  <input type="number" placeholder="Min" value={priceMin} onChange={(e) => setPriceMin(e.target.value)}
+                    className="h-9 w-24 rounded-lg border border-border bg-muted px-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
                   <span className="text-muted-foreground">—</span>
-                  <input
-                    type="number"
-                    placeholder="Max"
-                    value={priceMax}
-                    onChange={(e) => setPriceMax(e.target.value)}
-                    className="h-9 w-24 rounded-lg border border-border bg-muted px-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
+                  <input type="number" placeholder="Max" value={priceMax} onChange={(e) => setPriceMax(e.target.value)}
+                    className="h-9 w-24 rounded-lg border border-border bg-muted px-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
                 </div>
               </div>
             </div>
@@ -164,63 +192,58 @@ const Products = () => {
 
         {/* Category chips */}
         <div className="mb-6 flex flex-wrap gap-2">
-          <button
-            onClick={() => setSelectedCategory("")}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-              !selectedCategory ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
-            }`}
-          >
+          <button onClick={() => { setSelectedCategory(""); setSelectedSubcategory(""); }}
+            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${!selectedCategory ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
             Hamısı
           </button>
-          {categories.map((cat) => {
+          {parentCategories.map((cat: any) => {
             const Icon = iconMap[cat.icon] || CircuitBoard;
             return (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(selectedCategory === cat.id ? "" : cat.id)}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                  selectedCategory === cat.id
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-accent"
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {cat.label}
+              <button key={cat.id} onClick={() => { setSelectedCategory(selectedCategory === cat.slug ? "" : cat.slug); setSelectedSubcategory(""); }}
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${selectedCategory === cat.slug ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
+                <Icon className="h-3.5 w-3.5" />{cat.name}
               </button>
             );
           })}
         </div>
 
+        {/* Subcategory chips */}
+        {subcategories.length > 0 && (
+          <div className="mb-4 flex flex-wrap gap-1.5 pl-4">
+            {subcategories.map((sub: any) => (
+              <button key={sub.id} onClick={() => setSelectedSubcategory(selectedSubcategory === sub.slug ? "" : sub.slug)}
+                className={`rounded-lg px-2.5 py-1 text-[11px] font-medium transition-colors ${selectedSubcategory === sub.slug ? "bg-primary/80 text-primary-foreground" : "bg-muted/80 text-muted-foreground hover:bg-accent"}`}>
+                {sub.name}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Results */}
         <div className="mb-4 text-sm text-muted-foreground">
-          {filteredProducts.length} məhsul tapıldı
+          {isLoading ? "Yüklənir..." : `${filteredProducts.length} elan tapıldı`}
         </div>
 
-        {filteredProducts.length > 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+        ) : filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {filteredProducts.map((product) => (
+            {filteredProducts.map((product: any) => (
               <ListingCard
-                key={product.id}
-                id={product.id}
-                title={product.title}
-                price={`${product.price.toLocaleString()} ${product.currency}`}
-                location={product.location}
-                time={product.time}
-                image={product.image}
-                condition={product.condition}
-                isPremium={product.isPremium}
-                isUrgent={product.isUrgent}
+                key={product.id} id={product.id} title={product.title}
+                price={`${Number(product.price).toLocaleString()} ${product.currency}`}
+                location={product.location} time={formatTime(product.created_at)}
+                image={product.image_urls?.[0] || "/placeholder.svg"}
+                condition={product.condition} isPremium={product.is_premium} isUrgent={product.is_urgent}
               />
             ))}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Search className="mb-4 h-12 w-12 text-muted-foreground/30" />
-            <h3 className="font-display text-lg font-semibold text-foreground">Məhsul tapılmadı</h3>
+            <h3 className="font-display text-lg font-semibold text-foreground">Elan tapılmadı</h3>
             <p className="mt-1 text-sm text-muted-foreground">Axtarış meyarlarınızı dəyişməyi yoxlayın</p>
-            <Button variant="outline" onClick={clearFilters} className="mt-4">
-              Filterləri sıfırla
-            </Button>
+            <Button variant="outline" onClick={clearFilters} className="mt-4">Filterləri sıfırla</Button>
           </div>
         )}
       </main>
