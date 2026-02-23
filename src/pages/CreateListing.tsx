@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
@@ -11,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { ImagePlus, X, Loader2 } from "lucide-react";
-import { categories } from "@/data/products";
 
 const conditions = ["Yeni", "Yeni kimi", "İşlənmiş"];
 
@@ -25,18 +25,30 @@ const CreateListing = () => {
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [form, setForm] = useState({
-    title: "",
-    description: "",
-    price: "",
-    category: "",
-    condition: "Yeni",
-    location: "Bakı",
+    title: "", description: "", price: "", category: "", condition: "Yeni", location: "",
   });
 
-  if (!user) {
-    navigate("/auth");
-    return null;
-  }
+  // Fetch categories from DB
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories-all"],
+    queryFn: async () => {
+      const { data } = await supabase.from("categories").select("*").eq("is_active", true).order("sort_order");
+      return data || [];
+    },
+  });
+
+  // Fetch regions from DB
+  const { data: regions = [] } = useQuery({
+    queryKey: ["regions-parent"],
+    queryFn: async () => {
+      const { data } = await supabase.from("regions").select("*").is("parent_id", null).eq("is_active", true).order("sort_order");
+      return data || [];
+    },
+  });
+
+  const parentCategories = categories.filter((c: any) => !c.parent_id);
+
+  if (!user) { navigate("/auth"); return null; }
 
   const handleImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -63,40 +75,28 @@ const CreateListing = () => {
       toast({ title: "Zəhmət olmasa bütün sahələri doldurun", variant: "destructive" });
       return;
     }
-
     setLoading(true);
     try {
       const imageUrls: string[] = [];
       for (const file of images) {
         const fileName = `${user.id}/${Date.now()}-${file.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from("listing-images")
-          .upload(fileName, file);
+        const { error: uploadError } = await supabase.storage.from("listing-images").upload(fileName, file);
         if (uploadError) throw uploadError;
         const { data: urlData } = supabase.storage.from("listing-images").getPublicUrl(fileName);
         imageUrls.push(urlData.publicUrl);
       }
-
       const { error } = await supabase.from("listings").insert({
-        user_id: user.id,
-        title: form.title,
-        description: form.description,
-        price: parseFloat(form.price),
-        category: form.category,
-        condition: form.condition,
-        location: form.location,
+        user_id: user.id, title: form.title, description: form.description,
+        price: parseFloat(form.price), category: form.category,
+        condition: form.condition, location: form.location || "Bakı",
         image_urls: imageUrls,
       });
-
       if (error) throw error;
-
       toast({ title: "Elan uğurla yerləşdirildi!" });
       navigate("/products");
     } catch (err: any) {
       toast({ title: "Xəta baş verdi", description: err.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   return (
@@ -114,105 +114,66 @@ const CreateListing = () => {
               {previews.map((src, i) => (
                 <div key={i} className="relative h-24 w-24 overflow-hidden rounded-xl border border-border">
                   <img src={src} alt="" className="h-full w-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(i)}
-                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
-                  >
+                  <button type="button" onClick={() => removeImage(i)}
+                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
                     <X className="h-3 w-3" />
                   </button>
                 </div>
               ))}
               {images.length < 5 && (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex h-24 w-24 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-                >
-                  <ImagePlus className="h-6 w-6" />
-                  <span className="mt-1 text-xs">Əlavə et</span>
+                <button type="button" onClick={() => fileInputRef.current?.click()}
+                  className="flex h-24 w-24 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary">
+                  <ImagePlus className="h-6 w-6" /><span className="mt-1 text-xs">Əlavə et</span>
                 </button>
               )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handleImageAdd}
-              />
+              <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageAdd} />
             </div>
           </div>
 
-          {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="title">Başlıq *</Label>
-            <Input
-              id="title"
-              placeholder="Məs: iPhone 15 Pro Max 256GB"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-            />
+            <Input id="title" placeholder="Məs: iPhone 15 Pro Max 256GB" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
           </div>
 
-          {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="desc">Təsvir</Label>
-            <Textarea
-              id="desc"
-              placeholder="Məhsul haqqında ətraflı məlumat..."
-              rows={4}
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-            />
+            <Textarea id="desc" placeholder="Məhsul haqqında ətraflı məlumat..." rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </div>
 
-          {/* Price & Category */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="price">Qiymət (₼) *</Label>
-              <Input
-                id="price"
-                type="number"
-                min="0"
-                placeholder="0"
-                value={form.price}
-                onChange={(e) => setForm({ ...form, price: e.target.value })}
-              />
+              <Input id="price" type="number" min="0" placeholder="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
             </div>
             <div className="space-y-2">
               <Label>Kateqoriya *</Label>
               <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                 <SelectTrigger><SelectValue placeholder="Seçin" /></SelectTrigger>
                 <SelectContent>
-                  {categories.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
-                  ))}
+                  {parentCategories.map((c: any) => <SelectItem key={c.id} value={c.slug}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          {/* Condition & Location */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Vəziyyət</Label>
               <Select value={form.condition} onValueChange={(v) => setForm({ ...form, condition: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {conditions.map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
+                  {conditions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="location">Şəhər</Label>
-              <Input
-                id="location"
-                value={form.location}
-                onChange={(e) => setForm({ ...form, location: e.target.value })}
-              />
+              <Label>Bölgə</Label>
+              <Select value={form.location} onValueChange={(v) => setForm({ ...form, location: v })}>
+                <SelectTrigger><SelectValue placeholder="Bölgə seçin" /></SelectTrigger>
+                <SelectContent>
+                  {regions.map((r: any) => <SelectItem key={r.id} value={r.name}>{r.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
