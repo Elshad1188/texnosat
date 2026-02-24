@@ -1,14 +1,52 @@
 import { Plus, User, Heart, Menu, X, LogOut, Store, ShieldCheck, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { isAdmin } = useIsAdmin();
+  const queryClient = useQueryClient();
+
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ["unread-messages", user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+      const { data: convos } = await supabase
+        .from("conversations")
+        .select("id")
+        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`);
+      if (!convos || convos.length === 0) return 0;
+      const { data } = await supabase
+        .from("messages")
+        .select("id")
+        .in("conversation_id", convos.map(c => c.id))
+        .eq("is_read", false)
+        .neq("sender_id", user.id);
+      return data?.length || 0;
+    },
+    enabled: !!user,
+    refetchInterval: 10000,
+  });
+
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel("header-unread")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["unread-messages", user.id] });
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "messages" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["unread-messages", user.id] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id]);
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
@@ -43,8 +81,15 @@ const Header = () => {
           </Button>
           {user ? (
             <>
-              <Button variant="ghost" size="icon" className="hidden md:flex" asChild>
-                <Link to="/messages"><MessageCircle className="h-5 w-5" /></Link>
+              <Button variant="ghost" size="icon" className="hidden md:flex relative" asChild>
+                <Link to="/messages">
+                  <MessageCircle className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
+                </Link>
               </Button>
               {isAdmin && (
                 <Button variant="ghost" size="icon" className="hidden md:flex" asChild>
