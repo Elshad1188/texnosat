@@ -11,6 +11,7 @@ import CreateListing from "./pages/CreateListing";
 import CreateStore from "./pages/CreateStore";
 import AdminPanel from "./pages/AdminPanel";
 import Auth from "./pages/Auth";
+import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/create-store" element={<CreateStore />} />
             <Route path="/admin" element={<AdminPanel />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/messages" element={<Messages />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

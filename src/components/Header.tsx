@@ -1,4 +1,4 @@
-import { Plus, User, Heart, Menu, X, LogOut, Store, ShieldCheck } from "lucide-react";
+import { Plus, User, Heart, Menu, X, LogOut, Store, ShieldCheck, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -43,6 +43,9 @@ const Header = () => {
           </Button>
           {user ? (
             <>
+              <Button variant="ghost" size="icon" className="hidden md:flex" asChild>
+                <Link to="/messages"><MessageCircle className="h-5 w-5" /></Link>
+              </Button>
               {isAdmin && (
                 <Button variant="ghost" size="icon" className="hidden md:flex" asChild>
                   <Link to="/admin"><ShieldCheck className="h-5 w-5 text-primary" /></Link>
@@ -87,6 +90,7 @@ const Header = () => {
             <Link to="/products" className="text-sm font-medium text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>Elanlar</Link>
             <Link to="/create-store" className="text-sm font-medium text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>Mağaza aç</Link>
             <Link to="/favorites" className="text-sm font-medium text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>Seçilmişlər</Link>
+            {user && <Link to="/messages" className="text-sm font-medium text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>Mesajlar</Link>}
             {isAdmin && <Link to="/admin" className="text-sm font-medium text-primary" onClick={() => setMobileMenuOpen(false)}>Admin Panel</Link>}
             {!user && <Link to="/auth" className="text-sm font-medium text-primary" onClick={() => setMobileMenuOpen(false)}>Daxil ol</Link>}
           </nav>

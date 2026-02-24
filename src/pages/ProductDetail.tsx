@@ -239,7 +239,31 @@ const ProductDetail = () => {
                   <Phone className="h-4 w-4" />
                   {showPhone ? (seller?.phone || "Nömrə yoxdur") : "Nömrəni göstər"}
                 </Button>
-                <Button variant="outline" className="w-full gap-2">
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={async () => {
+                    if (!user) { navigate("/auth"); return; }
+                    // Find or create conversation
+                    const { data: existing } = await supabase
+                      .from("conversations")
+                      .select("id")
+                      .eq("listing_id", listing.id)
+                      .eq("buyer_id", user.id)
+                      .eq("seller_id", listing.user_id)
+                      .maybeSingle();
+                    if (existing) {
+                      navigate(`/messages?c=${existing.id}`);
+                    } else {
+                      const { data: newConvo } = await supabase
+                        .from("conversations")
+                        .insert({ listing_id: listing.id, buyer_id: user.id, seller_id: listing.user_id })
+                        .select("id")
+                        .single();
+                      if (newConvo) navigate(`/messages?c=${newConvo.id}`);
+                    }
+                  }}
+                >
                   <MessageCircle className="h-4 w-4" /> Mesaj yaz
                 </Button>
               </div>
