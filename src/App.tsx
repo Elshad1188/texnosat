@@ -13,6 +13,7 @@ import AdminPanel from "./pages/AdminPanel";
 import Auth from "./pages/Auth";
 import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
+import Favorites from "./pages/Favorites";
 import NotFound from "./pages/NotFound";
 import MobileBottomNav from "./components/MobileBottomNav";
 
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/messages" element={<Messages />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/favorites" element={<Favorites />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
