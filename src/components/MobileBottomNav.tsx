@@ -35,28 +35,28 @@ const MobileBottomNav = () => {
   const navItems = [
     { path: "/", icon: Home, label: "Ana səhifə" },
     { path: "/favorites", icon: Heart, label: "Seçilmişlər" },
-    { path: "/create-listing", icon: Plus, label: "Əlavə et", isCenter: true },
+    { path: "/create-listing", icon: Plus, label: "Yerləşdir", isCenter: true },
     { path: "/messages", icon: MessageCircle, label: "Mesajlar", badge: unreadCount },
     { path: user ? "/profile" : "/auth", icon: User, label: "Profil" },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-xl md:hidden">
-      <div className="flex items-end justify-around px-2 pb-[env(safe-area-inset-bottom)] pt-1">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+      <div className="flex items-center justify-around h-14">
         {navItems.map((item) => {
           const active = isActive(item.path);
-          
+
           if (item.isCenter) {
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                className="relative -mt-5 flex flex-col items-center"
+                className="relative -mt-4 flex flex-col items-center"
               >
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-primary shadow-lg shadow-primary/30 transition-transform active:scale-95">
-                  <item.icon className="h-6 w-6 text-primary-foreground" />
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-primary shadow-md shadow-primary/25 transition-transform active:scale-90">
+                  <Plus className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
                 </div>
-                <span className="mt-0.5 text-[10px] font-medium text-primary">
+                <span className="mt-0.5 text-[9px] font-semibold text-primary leading-none">
                   {item.label}
                 </span>
               </Link>
@@ -67,32 +67,30 @@ const MobileBottomNav = () => {
             <Link
               key={item.path}
               to={item.path}
-              className="relative flex flex-col items-center py-2 px-3"
+              className="flex flex-col items-center justify-center gap-0.5 min-w-[3rem]"
             >
               <div className="relative">
                 <item.icon
                   className={cn(
-                    "h-5 w-5 transition-colors",
+                    "h-[18px] w-[18px] transition-colors",
                     active ? "text-primary" : "text-muted-foreground"
                   )}
+                  strokeWidth={active ? 2.5 : 2}
                 />
                 {item.badge && item.badge > 0 && (
-                  <span className="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
+                  <span className="absolute -top-1 -right-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-destructive px-0.5 text-[8px] font-bold text-destructive-foreground leading-none">
                     {item.badge > 99 ? "99+" : item.badge}
                   </span>
                 )}
               </div>
               <span
                 className={cn(
-                  "mt-1 text-[10px] font-medium transition-colors",
+                  "text-[9px] font-medium leading-none transition-colors",
                   active ? "text-primary" : "text-muted-foreground"
                 )}
               >
                 {item.label}
               </span>
-              {active && (
-                <div className="absolute top-0 h-0.5 w-8 rounded-full bg-primary" />
-              )}
             </Link>
           );
         })}
