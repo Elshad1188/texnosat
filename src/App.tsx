@@ -14,6 +14,7 @@ import Auth from "./pages/Auth";
 import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import MobileBottomNav from "./components/MobileBottomNav";
 
 const queryClient = new QueryClient();
 
@@ -24,18 +25,21 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/product/:id" element={<ProductDetail />} />
-            <Route path="/create-listing" element={<CreateListing />} />
-            <Route path="/create-store" element={<CreateStore />} />
-            <Route path="/admin" element={<AdminPanel />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <div className="pb-16 md:pb-0">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/product/:id" element={<ProductDetail />} />
+              <Route path="/create-listing" element={<CreateListing />} />
+              <Route path="/create-store" element={<CreateStore />} />
+              <Route path="/admin" element={<AdminPanel />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/messages" element={<Messages />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
+          <MobileBottomNav />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

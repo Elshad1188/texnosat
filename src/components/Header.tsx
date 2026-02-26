@@ -117,30 +117,9 @@ const Header = () => {
               </Link>
             </Button>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
         </div>
       </div>
 
-      {mobileMenuOpen && (
-        <div className="border-t border-border bg-card p-4 md:hidden animate-fade-in">
-          <nav className="flex flex-col gap-3">
-            <Link to="/" className="text-sm font-medium text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>Ana səhifə</Link>
-            <Link to="/products" className="text-sm font-medium text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>Elanlar</Link>
-            <Link to="/create-store" className="text-sm font-medium text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>Mağaza aç</Link>
-            <Link to="/favorites" className="text-sm font-medium text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>Seçilmişlər</Link>
-            {user && <Link to="/messages" className="text-sm font-medium text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>Mesajlar</Link>}
-            {isAdmin && <Link to="/admin" className="text-sm font-medium text-primary" onClick={() => setMobileMenuOpen(false)}>Admin Panel</Link>}
-            {!user && <Link to="/auth" className="text-sm font-medium text-primary" onClick={() => setMobileMenuOpen(false)}>Daxil ol</Link>}
-          </nav>
-        </div>
-      )}
     </header>
   );
 };
