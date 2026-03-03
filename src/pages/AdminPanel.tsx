@@ -13,10 +13,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import AdminCategoryManager from "@/components/admin/AdminCategoryManager";
 import AdminRegionManager from "@/components/admin/AdminRegionManager";
+import AdminThemeManager from "@/components/admin/AdminThemeManager";
 import {
   ShieldCheck, Trash2, Eye, EyeOff, Search, Users, ShoppingBag, Store,
   Crown, Loader2, AlertTriangle, Zap, Star, MapPin, Pencil, MessageSquare,
-  FolderTree, Map,
+  FolderTree, Map, Palette,
 } from "lucide-react";
 
 interface Listing {
@@ -184,6 +185,7 @@ const AdminPanel = () => {
             <TabsTrigger value="stores" className="gap-1.5"><Store className="h-4 w-4" /> Mağazalar</TabsTrigger>
             <TabsTrigger value="users" className="gap-1.5"><Users className="h-4 w-4" /> İstifadəçilər</TabsTrigger>
             <TabsTrigger value="reviews" className="gap-1.5"><MessageSquare className="h-4 w-4" /> Rəylər</TabsTrigger>
+            <TabsTrigger value="theme" className="gap-1.5"><Palette className="h-4 w-4" /> Dizayn</TabsTrigger>
           </TabsList>
 
           {/* Listings */}
@@ -327,6 +329,9 @@ const AdminPanel = () => {
               </div>
             )}
           </TabsContent>
+
+          {/* Theme */}
+          <TabsContent value="theme"><AdminThemeManager /></TabsContent>
         </Tabs>
       </main>
       <Footer />
