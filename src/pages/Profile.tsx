@@ -14,10 +14,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
-import { User, Package, Store, Star, Edit2, Save, Eye, MapPin, Phone, Calendar, LogOut } from "lucide-react";
+import { User, Package, Store, Star, Edit2, Save, Eye, MapPin, Phone, Calendar, LogOut, ShieldCheck } from "lucide-react";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 const Profile = () => {
   const { user, signOut, loading: authLoading } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -289,6 +291,19 @@ const Profile = () => {
                 </div>
 
                 <Separator />
+                {isAdmin && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full gap-1.5 border-primary/30 text-primary"
+                    asChild
+                  >
+                    <Link to="/admin">
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                      Admin Panel
+                    </Link>
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="destructive"
