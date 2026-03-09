@@ -85,6 +85,19 @@ const Profile = () => {
     enabled: !!user,
   });
 
+  const { data: regions = [] } = useQuery({
+    queryKey: ["regions-profile"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("regions")
+        .select("name")
+        .eq("is_active", true)
+        .is("parent_id", null)
+        .order("name", { ascending: true });
+      return data || [];
+    },
+  });
+
   const updateProfile = useMutation({
     mutationFn: async () => {
       const { error } = await supabase
