@@ -123,7 +123,7 @@ const NotificationBell = () => {
       )}
 
       <Dialog open={!!selectedNotification} onOpenChange={(v) => { if (!v) setSelectedNotification(null); }}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md rounded-2xl border-2 border-primary">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <span>{typeIcons[selectedNotification?.type] || "📌"}</span>
