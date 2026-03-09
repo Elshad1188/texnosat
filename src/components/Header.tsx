@@ -88,9 +88,6 @@ const Header = () => {
           </Button>
           {user ? (
             <>
-              <div className="hidden md:flex">
-                <NotificationBell />
-              </div>
               <Button variant="ghost" size="icon" className="hidden md:flex relative" asChild>
                 <Link to="/messages">
                   <MessageCircle className="h-5 w-5" />
@@ -112,10 +109,13 @@ const Header = () => {
               <Button variant="ghost" size="icon" className="hidden md:flex" onClick={() => signOut()}>
                 <LogOut className="h-5 w-5" />
               </Button>
-              <Button className="bg-gradient-primary text-primary-foreground hover:opacity-90 gap-1.5" asChild>
+              
+              <NotificationBell />
+              
+              <Button className="hidden md:flex bg-gradient-primary text-primary-foreground hover:opacity-90 gap-1.5" asChild>
                 <Link to="/create-listing">
                   <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Elan yerləşdir</span>
+                  <span>Elan yerləşdir</span>
                 </Link>
               </Button>
             </>
