@@ -1,5 +1,5 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Heart, Share2, MapPin, Clock, Star, Phone, MessageCircle, Shield, Eye, Loader2, Send } from "lucide-react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { ArrowLeft, Heart, Share2, MapPin, Clock, Star, Phone, MessageCircle, Shield, Eye, Loader2, Send, Store, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
