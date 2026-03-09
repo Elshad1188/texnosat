@@ -215,6 +215,7 @@ const ProductDetail = () => {
                 {liked ? "Seçilmişlərdə" : "Seçilmişlərə əlavə et"}
               </Button>
               <Button variant="outline" size="icon"><Share2 className="h-4 w-4" /></Button>
+              <ReportButton targetType="listing" targetId={listing.id} />
             </div>
 
             {/* Seller Card */}
