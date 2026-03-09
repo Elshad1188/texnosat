@@ -136,12 +136,27 @@ const Profile = () => {
                 <div className="flex flex-col items-center gap-1.5 sm:flex-row">
                   <h1 className="text-xl font-bold text-foreground sm:text-2xl">{profile?.full_name || "İstifadəçi"}</h1>
                   <Badge className={levelColor + " text-[10px]"}>{level}</Badge>
+                  {isAdmin && (
+                    <Badge className="bg-primary/15 text-primary border border-primary/30 text-[10px] flex items-center gap-1">
+                      <ShieldCheck className="h-3 w-3" /> Admin
+                    </Badge>
+                  )}
                 </div>
                 <div className="mt-1 flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground sm:justify-start">
                   {profile?.city && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{profile.city}</span>}
                   {profile?.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{profile.phone}</span>}
                   <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(profile?.created_at || "").toLocaleDateString("az-AZ")}</span>
                 </div>
+                {isAdmin && (
+                  <div className="mt-3 flex justify-center sm:justify-start">
+                    <Button size="sm" className="bg-gradient-primary text-primary-foreground gap-1.5 h-8 text-xs" asChild>
+                      <Link to="/admin">
+                        <ShieldCheck className="h-3.5 w-3.5" />
+                        Admin Paneli
+                      </Link>
+                    </Button>
+                  </div>
+                )}
               </div>
               <div className="flex gap-4 text-center">
                 <div><p className="text-xl font-bold text-foreground">{listings.length}</p><p className="text-[10px] text-muted-foreground">Elan</p></div>
