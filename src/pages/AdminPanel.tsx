@@ -235,117 +235,23 @@ const AdminPanel = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="categories"><AdminCategoryManager /></TabsContent>
-          <TabsContent value="regions"><AdminRegionManager /></TabsContent>
+          <TabsContent value="categories" className="mt-3"><AdminCategoryManager /></TabsContent>
+          <TabsContent value="regions" className="mt-3"><AdminRegionManager /></TabsContent>
 
           {/* Stores */}
-          <TabsContent value="stores">
-            {loading ? <LoadingState /> : fStores.length === 0 ? <EmptyState text="Mağaza tapılmadı" /> : (
-              <div className="space-y-2">
-                {fStores.map((s) => (
-                  <div key={s.id} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-card">
-                    <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
-                      {s.logo_url ? <img src={s.logo_url} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center"><Store className="h-4 w-4 text-muted-foreground" /></div>}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="truncate text-sm font-semibold text-foreground">{s.name}</h3>
-                        {s.is_premium && <Badge className="bg-amber-500/20 text-amber-600 border-0 text-[10px]">Premium</Badge>}
-                      </div>
-                      <p className="text-xs text-muted-foreground">{s.city || "—"} · Sahibi: {getProfileName(s.user_id)} · {new Date(s.created_at).toLocaleDateString("az")}</p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateStore(s.id, { is_premium: !s.is_premium })}>
-                        <Crown className={`h-4 w-4 ${s.is_premium ? "text-amber-500" : "text-muted-foreground"}`} />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteStore(s.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          {/* Users */}
-          <TabsContent value="users">
-            {loading ? <LoadingState /> : fProfiles.length === 0 ? <EmptyState text="İstifadəçi tapılmadı" /> : (
-              <div className="space-y-2">
-                {fProfiles.map((p) => {
-                  const isUserAdmin = userRoles.some((r) => r.user_id === p.user_id && r.role === "admin");
-                  const isUserMod = userRoles.some((r) => r.user_id === p.user_id && r.role === "moderator");
-                  const isSelf = p.user_id === user?.id;
-                  const level = getUserLevel(p.user_id);
-                  return (
-                    <div key={p.id} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-card">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                        {(p.full_name || "?")[0].toUpperCase()}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <h3 className="truncate text-sm font-semibold text-foreground">{p.full_name || "Adsız"}</h3>
-                          {isUserAdmin && <Badge className="bg-primary/20 text-primary border-0 text-[10px]">Admin</Badge>}
-                          {isUserMod && <Badge className="bg-blue-500/20 text-blue-600 border-0 text-[10px]">Moderator</Badge>}
-                          <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>
-                          {isSelf && <Badge variant="outline" className="text-[10px]">Siz</Badge>}
-                        </div>
-                        <p className="text-xs text-muted-foreground">{p.city || "—"} · {p.phone || "—"} · {new Date(p.created_at).toLocaleDateString("az")}</p>
-                      </div>
-                      {!isSelf && (
-                        <div className="flex items-center gap-1">
-                          <Button variant={isUserAdmin ? "destructive" : "outline"} size="sm" className="text-xs h-7" onClick={() => toggleRole(p.user_id, "admin")}>
-                            <ShieldCheck className="mr-1 h-3 w-3" />{isUserAdmin ? "Admin sil" : "Admin"}
-                          </Button>
-                          <Button variant={isUserMod ? "destructive" : "outline"} size="sm" className="text-xs h-7" onClick={() => toggleRole(p.user_id, "moderator")}>
-                            {isUserMod ? "Mod sil" : "Mod"}
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </TabsContent>
-
-          {/* Reviews */}
-          <TabsContent value="reviews">
-            {loading ? <LoadingState /> : reviews.length === 0 ? <EmptyState text="Rəy tapılmadı" /> : (
-              <div className="space-y-2">
-                {reviews.map((r) => (
-                  <div key={r.id} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-card">
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star key={i} className={`h-3.5 w-3.5 ${i < r.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`} />
-                      ))}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm text-foreground">{r.comment || "Şərh yoxdur"}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {getProfileName(r.reviewer_id)} → {getProfileName(r.reviewed_user_id)} · {new Date(r.created_at).toLocaleDateString("az")}
-                      </p>
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteReview(r.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
+          <TabsContent value="stores" className="mt-3">
+...
           {/* Reports */}
-          <TabsContent value="reports"><AdminReportsManager /></TabsContent>
+          <TabsContent value="reports" className="mt-3"><AdminReportsManager /></TabsContent>
 
           {/* Banners */}
-          <TabsContent value="banners"><AdminBannerManager /></TabsContent>
+          <TabsContent value="banners" className="mt-3"><AdminBannerManager /></TabsContent>
 
           {/* Pages */}
-          <TabsContent value="pages"><AdminPagesManager /></TabsContent>
+          <TabsContent value="pages" className="mt-3"><AdminPagesManager /></TabsContent>
 
           {/* Settings */}
-          <TabsContent value="settings"><AdminSettingsManager /></TabsContent>
+          <TabsContent value="settings" className="mt-3"><AdminSettingsManager /></TabsContent>
 
           {/* Theme */}
           <TabsContent value="theme"><AdminThemeManager /></TabsContent>
