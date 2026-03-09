@@ -255,7 +255,18 @@ const StoreDetail = () => {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {listings.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} />
+                <ListingCard
+                  key={listing.id}
+                  id={listing.id}
+                  title={listing.title}
+                  price={`${listing.price} ${listing.currency}`}
+                  location={listing.location}
+                  time={new Date(listing.created_at).toLocaleDateString("az-AZ")}
+                  image={listing.image_urls?.[0] || "/placeholder.svg"}
+                  condition={listing.condition}
+                  isPremium={listing.is_premium}
+                  isUrgent={listing.is_urgent}
+                />
               ))}
             </div>
           )}
