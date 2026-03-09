@@ -11,6 +11,8 @@ import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import CreateListing from "./pages/CreateListing";
 import CreateStore from "./pages/CreateStore";
+import Stores from "./pages/Stores";
+import StoreDetail from "./pages/StoreDetail";
 import AdminPanel from "./pages/AdminPanel";
 import Auth from "./pages/Auth";
 import Messages from "./pages/Messages";
