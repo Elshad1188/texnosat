@@ -190,6 +190,46 @@ const SellerProfile = () => {
           </div>
         </div>
 
+        {/* Store Card */}
+        {sellerStore && (
+          <Link
+            to={`/store/${sellerStore.id}`}
+            className="mt-6 flex items-center gap-4 rounded-xl border border-border bg-card p-4 shadow-card transition-all hover:shadow-card-hover hover:-translate-y-0.5"
+          >
+            {/* Cover strip */}
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-gradient-to-br from-primary/20 to-primary/5">
+              {sellerStore.logo_url ? (
+                <img src={sellerStore.logo_url} alt={sellerStore.name} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center">
+                  <Store className="h-7 w-7 text-muted-foreground" />
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="truncate font-display text-base font-semibold text-foreground">{sellerStore.name}</h3>
+                {sellerStore.is_premium && (
+                  <Badge className="gap-0.5 bg-gradient-primary text-primary-foreground text-[9px] px-1.5 py-0">
+                    <Crown className="h-3 w-3" /> Premium
+                  </Badge>
+                )}
+              </div>
+              <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
+                {sellerStore.city && (
+                  <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {sellerStore.city}</span>
+                )}
+                {sellerStore.description && (
+                  <span className="truncate">{sellerStore.description}</span>
+                )}
+              </div>
+            </div>
+
+            <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
+          </Link>
+        )}
+
         {/* Listings */}
         <div className="mt-8">
           <h2 className="mb-4 font-display text-xl font-bold text-foreground">
