@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ListingCard from "@/components/ListingCard";
+import ReportButton from "@/components/ReportButton";
 
 function formatTime(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -214,6 +215,7 @@ const ProductDetail = () => {
                 {liked ? "Seçilmişlərdə" : "Seçilmişlərə əlavə et"}
               </Button>
               <Button variant="outline" size="icon"><Share2 className="h-4 w-4" /></Button>
+              <ReportButton targetType="listing" targetId={listing.id} />
             </div>
 
             {/* Seller Card */}

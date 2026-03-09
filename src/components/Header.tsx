@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import NotificationBell from "@/components/NotificationBell";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -70,7 +71,7 @@ const Header = () => {
           <Link to="/create-store" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             Mağaza aç
           </Link>
-          <Link to="/about" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+          <Link to="/page/about" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             Haqqımızda
           </Link>
         </nav>
@@ -81,6 +82,9 @@ const Header = () => {
           </Button>
           {user ? (
             <>
+              <div className="hidden md:flex">
+                <NotificationBell />
+              </div>
               <Button variant="ghost" size="icon" className="hidden md:flex relative" asChild>
                 <Link to="/messages">
                   <MessageCircle className="h-5 w-5" />
@@ -119,7 +123,6 @@ const Header = () => {
           )}
         </div>
       </div>
-
     </header>
   );
 };
