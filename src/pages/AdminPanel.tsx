@@ -157,28 +157,32 @@ const AdminPanel = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-6">
-        <div className="mb-6 flex items-center gap-3">
-          <ShieldCheck className="h-7 w-7 text-primary" />
-          <h1 className="font-display text-2xl font-bold text-foreground">Admin Panel</h1>
+      <main className="container mx-auto px-3 py-4 sm:px-4 sm:py-6 pb-20 md:pb-6">
+        <div className="mb-4 flex items-center gap-2">
+          <ShieldCheck className="h-6 w-6 text-primary" />
+          <h1 className="font-display text-xl font-bold text-foreground sm:text-2xl">Admin Panel</h1>
         </div>
 
         <Tabs defaultValue="stats">
-          <TabsList className="mb-4 w-full flex-wrap justify-start">
-            <TabsTrigger value="stats" className="gap-1.5"><BarChart3 className="h-4 w-4" /> Statistika</TabsTrigger>
-            <TabsTrigger value="moderation" className="gap-1.5"><CheckSquare className="h-4 w-4" /> Moderasiya</TabsTrigger>
-            <TabsTrigger value="listings" className="gap-1.5"><ShoppingBag className="h-4 w-4" /> Elanlar</TabsTrigger>
-            <TabsTrigger value="categories" className="gap-1.5"><FolderTree className="h-4 w-4" /> Kateqoriyalar</TabsTrigger>
-            <TabsTrigger value="regions" className="gap-1.5"><Map className="h-4 w-4" /> Bölgələr</TabsTrigger>
-            <TabsTrigger value="stores" className="gap-1.5"><Store className="h-4 w-4" /> Mağazalar</TabsTrigger>
-            <TabsTrigger value="users" className="gap-1.5"><Users className="h-4 w-4" /> İstifadəçilər</TabsTrigger>
-            <TabsTrigger value="reviews" className="gap-1.5"><MessageSquare className="h-4 w-4" /> Rəylər</TabsTrigger>
-            <TabsTrigger value="reports" className="gap-1.5"><Flag className="h-4 w-4" /> Şikayətlər</TabsTrigger>
-            <TabsTrigger value="banners" className="gap-1.5"><Image className="h-4 w-4" /> Bannerlər</TabsTrigger>
-            <TabsTrigger value="pages" className="gap-1.5"><FileText className="h-4 w-4" /> Səhifələr</TabsTrigger>
-            <TabsTrigger value="settings" className="gap-1.5"><Settings className="h-4 w-4" /> Tənzimləmələr</TabsTrigger>
-            <TabsTrigger value="theme" className="gap-1.5"><Palette className="h-4 w-4" /> Dizayn</TabsTrigger>
-          </TabsList>
+          <div className="sticky top-[57px] z-30 -mx-3 bg-background/95 backdrop-blur-sm px-3 pb-2 sm:-mx-4 sm:px-4">
+            <div className="overflow-x-auto scrollbar-none">
+              <TabsList className="inline-flex h-auto min-w-full w-max gap-1 rounded-xl bg-muted/60 p-1">
+                <TabsTrigger value="stats" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><BarChart3 className="h-3.5 w-3.5" /> Statistika</TabsTrigger>
+                <TabsTrigger value="moderation" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><CheckSquare className="h-3.5 w-3.5" /> Moderasiya</TabsTrigger>
+                <TabsTrigger value="listings" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><ShoppingBag className="h-3.5 w-3.5" /> Elanlar</TabsTrigger>
+                <TabsTrigger value="categories" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><FolderTree className="h-3.5 w-3.5" /> Kateqoriyalar</TabsTrigger>
+                <TabsTrigger value="regions" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Map className="h-3.5 w-3.5" /> Bölgələr</TabsTrigger>
+                <TabsTrigger value="stores" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Store className="h-3.5 w-3.5" /> Mağazalar</TabsTrigger>
+                <TabsTrigger value="users" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Users className="h-3.5 w-3.5" /> İstifadəçilər</TabsTrigger>
+                <TabsTrigger value="reviews" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><MessageSquare className="h-3.5 w-3.5" /> Rəylər</TabsTrigger>
+                <TabsTrigger value="reports" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Flag className="h-3.5 w-3.5" /> Şikayətlər</TabsTrigger>
+                <TabsTrigger value="banners" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Image className="h-3.5 w-3.5" /> Bannerlər</TabsTrigger>
+                <TabsTrigger value="pages" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><FileText className="h-3.5 w-3.5" /> Səhifələr</TabsTrigger>
+                <TabsTrigger value="settings" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Settings className="h-3.5 w-3.5" /> Tənzimləmələr</TabsTrigger>
+                <TabsTrigger value="theme" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Palette className="h-3.5 w-3.5" /> Dizayn</TabsTrigger>
+              </TabsList>
+            </div>
+          </div>
 
           {/* Stats */}
           <TabsContent value="stats"><AdminStatsManager /></TabsContent>
