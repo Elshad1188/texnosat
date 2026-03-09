@@ -240,9 +240,6 @@ const AdminPanel = () => {
 
           {/* Stores */}
           <TabsContent value="stores" className="mt-3">
-...
-          {/* Stores */}
-          <TabsContent value="stores" className="mt-3">
             {loading ? <LoadingState /> : fStores.length === 0 ? <EmptyState text="Mağaza tapılmadı" /> : (
               <div className="space-y-2">
                 {fStores.map((s) => (
