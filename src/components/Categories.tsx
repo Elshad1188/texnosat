@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { iconMap } from "@/lib/icons";
 import { useNavigate } from "react-router-dom";
-import { CircuitBoard } from "lucide-react";
+import { CircuitBoard, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Categories = () => {
@@ -23,10 +23,12 @@ const Categories = () => {
 
   if (isLoading) {
     return (
-      <section className="py-12 md:py-16">
+      <section className="py-4">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
-            {Array.from({ length: 12 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)}
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-28 flex-shrink-0 rounded-full" />
+            ))}
           </div>
         </div>
       </section>
@@ -34,30 +36,28 @@ const Categories = () => {
   }
 
   return (
-    <section className="py-12 md:py-16">
+    <section className="py-4">
       <div className="container mx-auto px-4">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">Kateqoriyalar</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Elektronika kateqoriyasını seçin</p>
-          </div>
-          <button onClick={() => navigate("/products")} className="text-sm font-medium text-primary hover:underline">
-            Hamısına bax →
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+          {/* All categories button */}
+          <button
+            onClick={() => navigate("/products")}
+            className="flex items-center gap-1.5 flex-shrink-0 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:opacity-90"
+          >
+            Hamısı
+            <ChevronRight className="h-4 w-4" />
           </button>
-        </div>
-        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
+          
           {categories.map((cat: any) => {
             const Icon = iconMap[cat.icon] || CircuitBoard;
             return (
               <button
                 key={cat.id}
                 onClick={() => navigate(`/products?category=${cat.slug}`)}
-                className="group flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-card transition-all duration-200 hover:shadow-card-hover hover:border-primary/30"
+                className="flex items-center gap-2 flex-shrink-0 rounded-full border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground shadow-sm transition-all hover:border-primary/50 hover:bg-primary/5 active:scale-95"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent text-accent-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                  <Icon className="h-5 w-5" />
-                </div>
-                <span className="text-center text-xs font-medium text-foreground sm:text-sm">{cat.name}</span>
+                <Icon className="h-4 w-4 text-primary" />
+                {cat.name}
               </button>
             );
           })}
