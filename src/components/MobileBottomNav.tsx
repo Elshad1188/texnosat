@@ -77,8 +77,8 @@ const MobileBottomNav = () => {
                   )}
                   strokeWidth={active ? 2.5 : 2}
                 />
-                {item.badge && item.badge > 0 && (
-                  <span className="absolute -top-1 -right-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-destructive px-0.5 text-[8px] font-bold text-destructive-foreground leading-none">
+                {item.badge !== undefined && item.badge > 0 && (
+                  <span className="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
                     {item.badge > 99 ? "99+" : item.badge}
                   </span>
                 )}
