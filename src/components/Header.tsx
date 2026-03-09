@@ -74,6 +74,12 @@ const Header = () => {
           <Link to="/page/about" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             Haqqımızda
           </Link>
+          {isAdmin && (
+            <Link to="/admin" className="flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary/80">
+              <ShieldCheck className="h-4 w-4" />
+              Admin
+            </Link>
+          )}
         </nav>
 
         <div className="flex items-center gap-2">
