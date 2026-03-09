@@ -246,9 +246,17 @@ const ProductDetail = () => {
             </div>
 
             <div className="mt-4 flex gap-2">
-              <Button onClick={() => setLiked(!liked)} variant="outline" className="gap-1.5">
-                <Heart className={`h-4 w-4 ${liked ? "fill-primary text-primary" : ""}`} />
-                {liked ? "Seçilmişlərdə" : "Seçilmişlərə əlavə et"}
+              <Button 
+                onClick={() => {
+                  if (!user) { navigate("/auth"); return; }
+                  toggleFavorite.mutate();
+                }} 
+                variant="outline" 
+                className="gap-1.5"
+                disabled={toggleFavorite.isPending}
+              >
+                <Heart className={`h-4 w-4 ${isFavorited ? "fill-primary text-primary" : ""}`} />
+                {isFavorited ? "Seçilmişlərdə" : "Seçilmişlərə əlavə et"}
               </Button>
               <Button variant="outline" size="icon"><Share2 className="h-4 w-4" /></Button>
               <ReportButton targetType="listing" targetId={listing.id} />
