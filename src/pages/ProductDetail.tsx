@@ -1,5 +1,5 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Heart, Share2, MapPin, Clock, Star, Phone, MessageCircle, Shield, Eye, Loader2, Send } from "lucide-react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { ArrowLeft, Heart, Share2, MapPin, Clock, Star, Phone, MessageCircle, Shield, Eye, Loader2, Send, Store, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -119,6 +119,30 @@ const ProductDetail = () => {
     },
     enabled: reviewerIds.length > 0,
   });
+
+  // Fetch store if listing belongs to one
+  const { data: store } = useQuery({
+    queryKey: ["store", listing?.store_id],
+    queryFn: async () => {
+      const { data } = await supabase.from("stores").select("*").eq("id", listing!.store_id!).single();
+      return data;
+    },
+    enabled: !!listing?.store_id,
+  });
+
+  // Fetch store reviews (avg rating)
+  const { data: storeOwnerReviews = [] } = useQuery({
+    queryKey: ["store-owner-reviews", store?.user_id],
+    queryFn: async () => {
+      const { data } = await supabase.from("reviews").select("rating").eq("reviewed_user_id", store!.user_id);
+      return data || [];
+    },
+    enabled: !!store?.user_id,
+  });
+
+  const storeAvgRating = storeOwnerReviews.length > 0
+    ? storeOwnerReviews.reduce((s: number, r: any) => s + r.rating, 0) / storeOwnerReviews.length
+    : 0;
 
   // Fetch similar listings
   const { data: similarListings = [] } = useQuery({
@@ -280,6 +304,38 @@ const ProductDetail = () => {
                 </div>
                 <Shield className="h-5 w-5 text-primary" />
               </div>
+
+              {/* Store Link */}
+              {store && (
+                <Link
+                  to={`/store/${store.id}`}
+                  className="mt-3 flex items-center gap-3 rounded-lg border border-border bg-muted/50 p-3 transition-colors hover:bg-muted"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-card border border-border">
+                    {store.logo_url ? (
+                      <img src={store.logo_url} alt={store.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <Store className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="truncate text-sm font-semibold text-foreground">{store.name}</p>
+                      {store.is_premium && (
+                        <Badge className="gap-0.5 bg-gradient-primary text-primary-foreground text-[9px] px-1.5 py-0">Premium</Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Star className="h-3 w-3 fill-primary text-primary" />
+                      <span>{storeAvgRating.toFixed(1)}</span>
+                      <span>·</span>
+                      <span>{storeOwnerReviews.length} rəy</span>
+                    </div>
+                  </div>
+                  <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </Link>
+              )}
+
               <div className="mt-4 flex flex-col gap-2">
                 <Button className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2" onClick={() => setShowPhone(!showPhone)}>
                   <Phone className="h-4 w-4" />
@@ -290,7 +346,6 @@ const ProductDetail = () => {
                   className="w-full gap-2"
                   onClick={async () => {
                     if (!user) { navigate("/auth"); return; }
-                    // Find or create conversation
                     const { data: existing } = await supabase
                       .from("conversations")
                       .select("id")
