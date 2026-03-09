@@ -185,15 +185,15 @@ const AdminPanel = () => {
           </div>
 
           {/* Stats */}
-          <TabsContent value="stats"><AdminStatsManager /></TabsContent>
+          <TabsContent value="stats" className="mt-3"><AdminStatsManager /></TabsContent>
 
           {/* Moderation */}
-          <TabsContent value="moderation"><AdminModerationManager /></TabsContent>
+          <TabsContent value="moderation" className="mt-3"><AdminModerationManager /></TabsContent>
 
           {/* Search for listings/stores/users */}
-          <div className="relative mb-4">
+          <div className="relative mt-3 mb-3">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Axtar..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
+            <Input placeholder="Axtar..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9 h-9 text-sm" />
           </div>
 
           {/* Listings */}
