@@ -20,10 +20,11 @@ import AdminReportsManager from "@/components/admin/AdminReportsManager";
 import AdminStatsManager from "@/components/admin/AdminStatsManager";
 import AdminSettingsManager from "@/components/admin/AdminSettingsManager";
 import AdminPagesManager from "@/components/admin/AdminPagesManager";
+import AdminNotificationSender from "@/components/admin/AdminNotificationSender";
 import {
   ShieldCheck, Trash2, Eye, EyeOff, Search, Users, ShoppingBag, Store,
   Crown, Loader2, AlertTriangle, Zap, Star, MapPin, Pencil, MessageSquare,
-  FolderTree, Map, Palette, BarChart3, CheckSquare, Image, Flag, Settings, FileText,
+  FolderTree, Map, Palette, BarChart3, CheckSquare, Image, Flag, Settings, FileText, Bell,
 } from "lucide-react";
 
 interface Listing {
@@ -169,6 +170,7 @@ const AdminPanel = () => {
               <TabsList className="inline-flex h-auto min-w-full w-max gap-1 rounded-xl bg-muted/60 p-1">
                 <TabsTrigger value="stats" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><BarChart3 className="h-3.5 w-3.5" /> Statistika</TabsTrigger>
                 <TabsTrigger value="moderation" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><CheckSquare className="h-3.5 w-3.5" /> Moderasiya</TabsTrigger>
+                <TabsTrigger value="notifications" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Bell className="h-3.5 w-3.5" /> Bildirişlər</TabsTrigger>
                 <TabsTrigger value="listings" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><ShoppingBag className="h-3.5 w-3.5" /> Elanlar</TabsTrigger>
                 <TabsTrigger value="categories" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><FolderTree className="h-3.5 w-3.5" /> Kateqoriyalar</TabsTrigger>
                 <TabsTrigger value="regions" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Map className="h-3.5 w-3.5" /> Bölgələr</TabsTrigger>
@@ -189,6 +191,9 @@ const AdminPanel = () => {
 
           {/* Moderation */}
           <TabsContent value="moderation" className="mt-3"><AdminModerationManager /></TabsContent>
+
+          {/* Notifications */}
+          <TabsContent value="notifications" className="mt-3"><AdminNotificationSender /></TabsContent>
 
           {/* Search for listings/stores/users */}
           <div className="relative mt-3 mb-3">
