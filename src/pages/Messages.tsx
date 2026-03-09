@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { MessageCircle, Send, ArrowLeft, Loader2, Check, CheckCheck } from "lucide-react";
+import { MessageCircle, Send, ArrowLeft, Loader2, Check, CheckCheck, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,7 +28,7 @@ const Messages = () => {
   const [messageText, setMessageText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch conversations with last message and other user profile
+  // Fetch conversations with last message, other user profile, and store info
   const { data: conversations = [], isLoading: convosLoading } = useQuery({
     queryKey: ["conversations", user?.id],
     queryFn: async () => {
@@ -40,9 +40,12 @@ const Messages = () => {
         .order("last_message_at", { ascending: false });
       if (!convos || convos.length === 0) return [];
 
-      // Get other user profiles
+      // Get other user IDs
       const otherUserIds = convos.map(c => c.buyer_id === user.id ? c.seller_id : c.buyer_id);
       const { data: profiles } = await supabase.from("profiles").select("*").in("user_id", otherUserIds);
+
+      // Fetch stores for all other users (to check if they are store owners)
+      const { data: stores } = await supabase.from("stores").select("*").in("user_id", otherUserIds);
 
       // Get listing titles
       const listingIds = convos.filter(c => c.listing_id).map(c => c.listing_id!);
@@ -68,10 +71,17 @@ const Messages = () => {
       return convos.map(c => {
         const otherUserId = c.buyer_id === user.id ? c.seller_id : c.buyer_id;
         const profile = (profiles || []).find((p: any) => p.user_id === otherUserId);
+        const store = (stores || []).find((s: any) => s.user_id === otherUserId);
         const listing = (listings || []).find((l: any) => l.id === c.listing_id);
         const lastMsg = (lastMessages || []).find((m: any) => m.conversation_id === c.id);
         const unread = (unreadCounts || []).filter((u: any) => u.conversation_id === c.id).length;
-        return { ...c, profile, listing, lastMsg, unread };
+
+        // Display name: use store name if the other user has a store, otherwise profile name
+        const displayName = store ? store.name : (profile?.full_name || "Adsız");
+        const displayAvatar = store?.logo_url || null;
+        const isStore = !!store;
+
+        return { ...c, profile, store, listing, lastMsg, unread, displayName, displayAvatar, isStore };
       });
     },
     enabled: !!user,
@@ -148,6 +158,16 @@ const Messages = () => {
 
   const activeConvo = conversations.find((c: any) => c.id === activeConvoId);
 
+  // Check if current user is a store owner (for showing "sent as store")
+  const { data: myStore } = useQuery({
+    queryKey: ["my-store", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("stores").select("*").eq("user_id", user!.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
@@ -171,6 +191,12 @@ const Messages = () => {
           <div className={`w-full border-r border-border md:w-80 flex-shrink-0 flex flex-col ${activeConvoId ? "hidden md:flex" : "flex"}`}>
             <div className="border-b border-border p-4">
               <h2 className="font-display text-lg font-bold text-foreground">Mesajlar</h2>
+              {myStore && (
+                <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                  <Store className="h-3 w-3" />
+                  {myStore.name} adından yazırsınız
+                </p>
+              )}
             </div>
             <div className="flex-1 overflow-y-auto">
               {convosLoading ? (
@@ -191,14 +217,26 @@ const Messages = () => {
                       activeConvoId === c.id ? "bg-accent" : ""
                     }`}
                   >
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                      {c.profile?.full_name?.[0]?.toUpperCase() || "?"}
+                    {/* Avatar: store logo or person initial */}
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary font-semibold text-sm">
+                      {c.displayAvatar ? (
+                        <img src={c.displayAvatar} alt="" className="h-full w-full object-cover" />
+                      ) : c.isStore ? (
+                        <Store className="h-4 w-4" />
+                      ) : (
+                        c.displayName[0]?.toUpperCase() || "?"
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {c.profile?.full_name || "Adsız"}
-                        </p>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {c.displayName}
+                          </p>
+                          {c.isStore && (
+                            <Store className="h-3 w-3 shrink-0 text-primary" />
+                          )}
+                        </div>
                         <span className="text-[10px] text-muted-foreground flex-shrink-0">
                           {c.lastMsg ? formatTime(c.lastMsg.created_at) : ""}
                         </span>
@@ -232,13 +270,24 @@ const Messages = () => {
                   <button onClick={() => navigate("/messages")} className="md:hidden">
                     <ArrowLeft className="h-5 w-5 text-muted-foreground" />
                   </button>
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                    {activeConvo.profile?.full_name?.[0]?.toUpperCase() || "?"}
+                  <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary font-semibold text-sm">
+                    {activeConvo.displayAvatar ? (
+                      <img src={activeConvo.displayAvatar} alt="" className="h-full w-full object-cover" />
+                    ) : activeConvo.isStore ? (
+                      <Store className="h-4 w-4" />
+                    ) : (
+                      activeConvo.displayName[0]?.toUpperCase() || "?"
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {activeConvo.profile?.full_name || "Adsız"}
-                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {activeConvo.displayName}
+                      </p>
+                      {activeConvo.isStore && (
+                        <Store className="h-3.5 w-3.5 shrink-0 text-primary" />
+                      )}
+                    </div>
                     {activeConvo.listing && (
                       <p className="text-xs text-muted-foreground truncate">
                         {activeConvo.listing.title}
@@ -288,6 +337,12 @@ const Messages = () => {
 
                 {/* Input */}
                 <div className="border-t border-border p-4">
+                  {myStore && (
+                    <p className="mb-2 flex items-center gap-1 text-xs text-muted-foreground">
+                      <Store className="h-3 w-3" />
+                      {myStore.name} adından cavab verirsiniz
+                    </p>
+                  )}
                   <form
                     onSubmit={(e) => { e.preventDefault(); sendMessage.mutate(); }}
                     className="flex items-center gap-2"
