@@ -77,20 +77,26 @@ const FeaturedListings = () => {
             )}
           </div>
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {listings.map((l: any) => (
-              <ListingCard
-                key={l.id}
-                id={l.id}
-                title={l.title}
-                price={`${Number(l.price).toLocaleString()} ${l.currency}`}
-                location={l.location}
-                time={formatTime(l.created_at)}
-                image={l.image_urls?.[0] || "/placeholder.svg"}
-                condition={l.condition}
-                isPremium={l.is_premium}
-                isUrgent={l.is_urgent}
-              />
-            ))}
+            {listings.map((l: any) => {
+              const s = l.store_id ? storesMap[l.store_id] : undefined;
+              return (
+                <ListingCard
+                  key={l.id}
+                  id={l.id}
+                  title={l.title}
+                  price={`${Number(l.price).toLocaleString()} ${l.currency}`}
+                  location={l.location}
+                  time={formatTime(l.created_at)}
+                  image={l.image_urls?.[0] || "/placeholder.svg"}
+                  condition={l.condition}
+                  isPremium={l.is_premium}
+                  isUrgent={l.is_urgent}
+                  storeId={l.store_id}
+                  storeName={s?.name}
+                  storeLogo={s?.logo_url}
+                />
+              );
+            })}
           </div>
         </div>
       </section>
