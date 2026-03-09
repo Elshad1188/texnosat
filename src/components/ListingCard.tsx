@@ -1,7 +1,9 @@
 import { Heart, MapPin, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ListingCardProps {
   id: string;
@@ -16,8 +18,40 @@ interface ListingCardProps {
 }
 
 const ListingCard = ({ id, title, price, location, time, image, condition, isPremium, isUrgent }: ListingCardProps) => {
-  const [liked, setLiked] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { data: favoriteData } = useQuery({
+    queryKey: ["favorite", id, user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("favorites")
+        .select("id")
+        .eq("listing_id", id)
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const isFavorited = !!favoriteData;
+
+  const toggleFavorite = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Auth required");
+      if (isFavorited) {
+        await supabase.from("favorites").delete().eq("listing_id", id).eq("user_id", user.id);
+      } else {
+        await supabase.from("favorites").insert({ listing_id: id, user_id: user.id });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["favorite", id, user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["favorites"] });
+    },
+  });
 
   return (
     <div
@@ -27,10 +61,15 @@ const ListingCard = ({ id, title, price, location, time, image, condition, isPre
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         <img src={image} alt={title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
         <button
-          onClick={(e) => { e.stopPropagation(); setLiked(!liked); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!user) { navigate("/auth"); return; }
+            toggleFavorite.mutate();
+          }}
+          disabled={toggleFavorite.isPending}
           className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-card/80 backdrop-blur-sm transition-colors hover:bg-card"
         >
-          <Heart className={`h-4 w-4 ${liked ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+          <Heart className={`h-4 w-4 ${isFavorited ? "fill-primary text-primary" : "text-muted-foreground"}`} />
         </button>
         <div className="absolute left-2 top-2 flex gap-1.5">
           {isPremium && (
