@@ -9,6 +9,7 @@ import { useEffect } from "react";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
+import SellerProfile from "./pages/SellerProfile";
 import CreateListing from "./pages/CreateListing";
 import CreateStore from "./pages/CreateStore";
 import Stores from "./pages/Stores";
@@ -46,6 +47,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
+                <Route path="/seller/:id" element={<SellerProfile />} />
                 <Route path="/create-listing" element={<CreateListing />} />
                 <Route path="/create-store" element={<CreateStore />} />
                 <Route path="/stores" element={<Stores />} />
