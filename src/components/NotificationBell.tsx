@@ -2,14 +2,21 @@ import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Bell, Check, CheckCheck, X } from "lucide-react";
+import { Bell, Check, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 const NotificationBell = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState<any>(null);
 
   const { data: notifications = [] } = useQuery({
     queryKey: ["notifications", user?.id],
@@ -26,7 +33,6 @@ const NotificationBell = () => {
     refetchInterval: 15000,
   });
 
-  // Realtime subscription
   useEffect(() => {
     if (!user) return;
     const channel = supabase
@@ -40,9 +46,12 @@ const NotificationBell = () => {
 
   const unreadCount = notifications.filter((n: any) => !n.is_read).length;
 
-  const markRead = async (id: string) => {
-    await supabase.from("notifications").update({ is_read: true }).eq("id", id);
-    queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
+  const handleNotificationClick = async (n: any) => {
+    setSelectedNotification(n);
+    if (!n.is_read) {
+      await supabase.from("notifications").update({ is_read: true }).eq("id", n.id);
+      queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
+    }
   };
 
   const markAllRead = async () => {
@@ -89,7 +98,8 @@ const NotificationBell = () => {
                 {notifications.map((n: any) => (
                   <div
                     key={n.id}
-                    className={`flex items-start gap-2 border-b border-border p-3 transition-colors ${
+                    onClick={() => handleNotificationClick(n)}
+                    className={`flex items-start gap-2 border-b border-border p-3 transition-colors cursor-pointer hover:bg-accent/50 ${
                       n.is_read ? "opacity-60" : "bg-primary/5"
                     }`}
                   >
@@ -102,9 +112,7 @@ const NotificationBell = () => {
                       </p>
                     </div>
                     {!n.is_read && (
-                      <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => markRead(n.id)}>
-                        <Check className="h-3 w-3" />
-                      </Button>
+                      <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
                     )}
                   </div>
                 ))}
@@ -113,6 +121,23 @@ const NotificationBell = () => {
           </div>
         </>
       )}
+
+      <Dialog open={!!selectedNotification} onOpenChange={(v) => { if (!v) setSelectedNotification(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span>{typeIcons[selectedNotification?.type] || "📌"}</span>
+              {selectedNotification?.title}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              {selectedNotification && new Date(selectedNotification.created_at).toLocaleString("az")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+            {selectedNotification?.message || "Məzmun yoxdur"}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
