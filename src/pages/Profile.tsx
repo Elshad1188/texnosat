@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { User, Package, Store, Star, Edit2, Save, Eye, MapPin, Phone, Calendar, LogOut, ShieldCheck } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Profile = () => {
   const { user, signOut, loading: authLoading } = useAuth();
@@ -82,6 +83,19 @@ const Profile = () => {
       return data || [];
     },
     enabled: !!user,
+  });
+
+  const { data: regions = [] } = useQuery({
+    queryKey: ["regions-profile"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("regions")
+        .select("name")
+        .eq("is_active", true)
+        .is("parent_id", null)
+        .order("name", { ascending: true });
+      return data || [];
+    },
   });
 
   const updateProfile = useMutation({
@@ -286,8 +300,22 @@ const Profile = () => {
                   <Input value={phone} onChange={(e) => setPhone(e.target.value)} disabled={!editing} placeholder="+994 XX XXX XX XX" className="h-9 text-sm" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Şəhər</Label>
-                  <Input value={city} onChange={(e) => setCity(e.target.value)} disabled={!editing} className="h-9 text-sm" />
+                  <Label className="text-xs">Bölgə</Label>
+                  <Select value={city || undefined} onValueChange={setCity} disabled={!editing}>
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder="Bölgə seçin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {city && !regions.some((r: { name: string }) => r.name === city) && (
+                        <SelectItem value={city}>{city}</SelectItem>
+                      )}
+                      {regions.map((region: { name: string }) => (
+                        <SelectItem key={region.name} value={region.name}>
+                          {region.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Separator />
                 <div className="flex gap-2">
