@@ -68,6 +68,9 @@ const Header = () => {
           <Link to="/products" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             Elanlar
           </Link>
+          <Link to="/stores" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            Mağazalar
+          </Link>
           <Link to="/create-store" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             Mağaza aç
           </Link>
