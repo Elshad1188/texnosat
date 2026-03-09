@@ -289,9 +289,9 @@ const ProductDetail = () => {
             {/* Seller Card */}
             <div className="mt-6 rounded-xl border border-border bg-card p-4 shadow-card">
               <div className="flex items-center justify-between">
-                <div>
+                <Link to={`/seller/${listing.user_id}`} className="group flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="font-medium text-foreground">{seller?.full_name || "Adsız"}</p>
+                    <p className="font-medium text-foreground group-hover:text-primary transition-colors">{seller?.full_name || "Adsız"}</p>
                     <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>
                   </div>
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -301,8 +301,10 @@ const ProductDetail = () => {
                     <span>{sellerReviews.length} rəy</span>
                     {seller?.city && <><span>·</span><span>{seller.city}</span></>}
                   </div>
-                </div>
-                <Shield className="h-5 w-5 text-primary" />
+                </Link>
+                <Link to={`/seller/${listing.user_id}`} className="text-muted-foreground hover:text-primary transition-colors">
+                  <ExternalLink className="h-5 w-5" />
+                </Link>
               </div>
 
               {/* Store Link */}
