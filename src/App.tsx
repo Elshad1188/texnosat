@@ -9,6 +9,7 @@ import { useEffect } from "react";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
+import SellerProfile from "./pages/SellerProfile";
 import CreateListing from "./pages/CreateListing";
 import CreateStore from "./pages/CreateStore";
 import Stores from "./pages/Stores";
