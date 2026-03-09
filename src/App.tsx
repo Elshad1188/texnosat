@@ -15,6 +15,7 @@ import Auth from "./pages/Auth";
 import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
 import Favorites from "./pages/Favorites";
+import StaticPage from "./pages/StaticPage";
 import NotFound from "./pages/NotFound";
 import MobileBottomNav from "./components/MobileBottomNav";
 
@@ -40,6 +41,7 @@ const App = () => (
                 <Route path="/messages" element={<Messages />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/favorites" element={<Favorites />} />
+                <Route path="/page/:slug" element={<StaticPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>

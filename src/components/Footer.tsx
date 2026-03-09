@@ -1,7 +1,30 @@
 import { Phone, Mail, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Footer = () => {
+  const { data: settings } = useQuery({
+    queryKey: ["site-settings-general"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("*").eq("key", "general").maybeSingle();
+      return data?.value as any || {};
+    },
+  });
+
+  const { data: pages = [] } = useQuery({
+    queryKey: ["footer-pages"],
+    queryFn: async () => {
+      const { data } = await supabase.from("pages").select("slug, title").eq("is_published", true);
+      return data || [];
+    },
+  });
+
+  const phone = settings?.contact_phone || "+994 50 123 45 67";
+  const email = settings?.contact_email || "info@texnosat.az";
+  const address = settings?.contact_address || "Bakı, Azərbaycan";
+  const footerText = settings?.footer_text || "© 2026 Texnosat. Bütün hüquqlar qorunur.";
+
   return (
     <footer className="border-t border-border bg-secondary text-secondary-foreground">
       <div className="container mx-auto px-4 py-12">
@@ -16,7 +39,7 @@ const Footer = () => {
               </span>
             </Link>
             <p className="mt-3 text-sm text-secondary-foreground/60">
-              Azərbaycanın ən etibarlı elektronika al-sat platforması.
+              {settings?.site_description || "Azərbaycanın ən etibarlı elektronika al-sat platforması."}
             </p>
           </div>
 
@@ -33,25 +56,32 @@ const Footer = () => {
           <div>
             <h4 className="mb-3 font-display text-sm font-semibold">Şirkət</h4>
             <ul className="space-y-2 text-sm text-secondary-foreground/60">
-              <li><Link to="/about" className="hover:text-primary">Haqqımızda</Link></li>
-              <li><a href="#" className="hover:text-primary">Qaydalar</a></li>
-              <li><a href="#" className="hover:text-primary">Məxfilik</a></li>
-              <li><a href="#" className="hover:text-primary">Əlaqə</a></li>
+              {pages.length > 0 ? (
+                pages.map((p: any) => (
+                  <li key={p.slug}><Link to={`/page/${p.slug}`} className="hover:text-primary">{p.title}</Link></li>
+                ))
+              ) : (
+                <>
+                  <li><Link to="/page/about" className="hover:text-primary">Haqqımızda</Link></li>
+                  <li><Link to="/page/rules" className="hover:text-primary">Qaydalar</Link></li>
+                  <li><Link to="/page/privacy" className="hover:text-primary">Məxfilik</Link></li>
+                </>
+              )}
             </ul>
           </div>
 
           <div>
             <h4 className="mb-3 font-display text-sm font-semibold">Əlaqə</h4>
             <ul className="space-y-2 text-sm text-secondary-foreground/60">
-              <li className="flex items-center gap-2"><Phone className="h-4 w-4" /> +994 50 123 45 67</li>
-              <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> info@texnosat.az</li>
-              <li className="flex items-center gap-2"><MapPin className="h-4 w-4" /> Bakı, Azərbaycan</li>
+              <li className="flex items-center gap-2"><Phone className="h-4 w-4" /> {phone}</li>
+              <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> {email}</li>
+              <li className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {address}</li>
             </ul>
           </div>
         </div>
 
         <div className="mt-8 border-t border-secondary-foreground/10 pt-6 text-center text-xs text-secondary-foreground/40">
-          © 2026 Texnosat. Bütün hüquqlar qorunur.
+          {footerText}
         </div>
       </div>
     </footer>
