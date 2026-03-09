@@ -40,6 +40,16 @@ const SellerProfile = () => {
     enabled: !!id,
   });
 
+  // Fetch seller's store (if any)
+  const { data: sellerStore } = useQuery({
+    queryKey: ["seller-store", id],
+    queryFn: async () => {
+      const { data } = await supabase.from("stores").select("*").eq("user_id", id).maybeSingle();
+      return data;
+    },
+    enabled: !!id,
+  });
+
   // Fetch seller's listings
   const { data: listings = [] } = useQuery({
     queryKey: ["seller-listings", id],
