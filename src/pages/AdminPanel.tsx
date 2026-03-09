@@ -170,6 +170,7 @@ const AdminPanel = () => {
               <TabsList className="inline-flex h-auto min-w-full w-max gap-1 rounded-xl bg-muted/60 p-1">
                 <TabsTrigger value="stats" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><BarChart3 className="h-3.5 w-3.5" /> Statistika</TabsTrigger>
                 <TabsTrigger value="moderation" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><CheckSquare className="h-3.5 w-3.5" /> Moderasiya</TabsTrigger>
+                <TabsTrigger value="notifications" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Bell className="h-3.5 w-3.5" /> Bildirişlər</TabsTrigger>
                 <TabsTrigger value="listings" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><ShoppingBag className="h-3.5 w-3.5" /> Elanlar</TabsTrigger>
                 <TabsTrigger value="categories" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><FolderTree className="h-3.5 w-3.5" /> Kateqoriyalar</TabsTrigger>
                 <TabsTrigger value="regions" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Map className="h-3.5 w-3.5" /> Bölgələr</TabsTrigger>
