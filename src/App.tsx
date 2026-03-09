@@ -11,6 +11,8 @@ import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import CreateListing from "./pages/CreateListing";
 import CreateStore from "./pages/CreateStore";
+import Stores from "./pages/Stores";
+import StoreDetail from "./pages/StoreDetail";
 import AdminPanel from "./pages/AdminPanel";
 import Auth from "./pages/Auth";
 import Messages from "./pages/Messages";
@@ -46,6 +48,8 @@ const App = () => (
                 <Route path="/product/:id" element={<ProductDetail />} />
                 <Route path="/create-listing" element={<CreateListing />} />
                 <Route path="/create-store" element={<CreateStore />} />
+                <Route path="/stores" element={<Stores />} />
+                <Route path="/store/:id" element={<StoreDetail />} />
                 <Route path="/admin" element={<AdminPanel />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/messages" element={<Messages />} />
