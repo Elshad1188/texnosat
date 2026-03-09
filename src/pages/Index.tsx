@@ -11,14 +11,14 @@ const Index = () => {
       <Header />
       <main>
         <HeroSection />
-        <div className="container mx-auto px-4 mt-4">
-          <BannerDisplay position="home_top" />
-        </div>
         <Categories />
         <div className="container mx-auto px-4">
-          <BannerDisplay position="home_middle" />
+          <BannerDisplay position="home_top" />
         </div>
         <FeaturedListings />
+        <div className="container mx-auto px-4 pb-8">
+          <BannerDisplay position="home_middle" />
+        </div>
       </main>
       <Footer />
     </div>
