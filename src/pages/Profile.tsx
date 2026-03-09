@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { User, Package, Store, Star, Edit2, Save, Eye, MapPin, Phone, Calendar, LogOut, ShieldCheck } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Profile = () => {
   const { user, signOut, loading: authLoading } = useAuth();
