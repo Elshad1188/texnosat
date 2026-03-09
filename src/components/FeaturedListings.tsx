@@ -38,6 +38,22 @@ const FeaturedListings = () => {
     },
   });
 
+  // Collect all store IDs and fetch stores
+  const allListings = [...premiumListings, ...urgentListings, ...newListings];
+  const storeIds = [...new Set(allListings.map(l => l.store_id).filter(Boolean))] as string[];
+
+  const { data: storesMap = {} } = useQuery({
+    queryKey: ["stores-map", storeIds.join(",")],
+    queryFn: async () => {
+      if (storeIds.length === 0) return {};
+      const { data } = await supabase.from("stores").select("id, name, logo_url").in("id", storeIds);
+      const map: Record<string, { name: string; logo_url: string | null }> = {};
+      data?.forEach(s => { map[s.id] = { name: s.name, logo_url: s.logo_url }; });
+      return map;
+    },
+    enabled: storeIds.length > 0,
+  });
+
   const renderSection = (
     title: string, subtitle: string, icon: React.ReactNode,
     listings: any[], bgClass?: string, showAll?: boolean,
