@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,13 +6,10 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ListingCard from "@/components/ListingCard";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Store, MapPin, Phone, Clock, Crown, MessageCircle, Loader2, ArrowLeft, Send
+  Store, MapPin, Phone, Clock, Crown, MessageCircle, Loader2, ArrowLeft
 } from "lucide-react";
 
 const StoreDetail = () => {
@@ -21,10 +17,6 @@ const StoreDetail = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  const [inquiryOpen, setInquiryOpen] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [form, setForm] = useState({ name: "", phone: "", message: "" });
 
   const { data: store, isLoading } = useQuery({
     queryKey: ["store", id],
@@ -50,22 +42,16 @@ const StoreDetail = () => {
     enabled: !!id,
   });
 
-  const handleInquiry = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleMessageStore = async () => {
     if (!user) {
-      toast({ title: "Müraciət üçün daxil olun", variant: "destructive" });
+      toast({ title: "Mesaj üçün daxil olun", variant: "destructive" });
       navigate("/auth");
-      return;
-    }
-    if (!form.name || !form.phone || !form.message) {
-      toast({ title: "Bütün sahələri doldurun", variant: "destructive" });
       return;
     }
     if (!store) return;
 
-    setSending(true);
     try {
-      // Create or find conversation
+      // Find existing conversation with this store owner (no listing)
       const { data: existing } = await supabase
         .from("conversations")
         .select("id")
@@ -74,32 +60,19 @@ const StoreDetail = () => {
         .is("listing_id", null)
         .maybeSingle();
 
-      let conversationId = existing?.id;
-      if (!conversationId) {
+      if (existing) {
+        navigate(`/messages?c=${existing.id}`);
+      } else {
         const { data: newConvo, error } = await supabase
           .from("conversations")
           .insert({ buyer_id: user.id, seller_id: store.user_id })
           .select("id")
           .single();
         if (error) throw error;
-        conversationId = newConvo.id;
+        navigate(`/messages?c=${newConvo.id}`);
       }
-
-      // Send inquiry message
-      const msgContent = `📦 Mağaza müraciəti\n\nAd: ${form.name}\nTelefon: ${form.phone}\n\nMəlumat:\n${form.message}`;
-      await supabase.from("messages").insert({
-        conversation_id: conversationId,
-        sender_id: user.id,
-        content: msgContent,
-      });
-
-      toast({ title: "Müraciət göndərildi!" });
-      setForm({ name: "", phone: "", message: "" });
-      setInquiryOpen(false);
     } catch (err: any) {
-      toast({ title: "Xəta baş verdi", description: err.message, variant: "destructive" });
-    } finally {
-      setSending(false);
+      toast({ title: "Xəta", description: err.message, variant: "destructive" });
     }
   };
 
@@ -195,51 +168,13 @@ const StoreDetail = () => {
 
               <Button
                 className="mt-4 gap-2 bg-gradient-primary text-primary-foreground hover:opacity-90"
-                onClick={() => setInquiryOpen(!inquiryOpen)}
+                onClick={handleMessageStore}
               >
                 <MessageCircle className="h-4 w-4" />
-                Mağazaya müraciət
+                Mağazaya mesaj yaz
               </Button>
             </div>
           </div>
-
-          {/* Inquiry Form */}
-          {inquiryOpen && (
-            <form onSubmit={handleInquiry} className="mt-6 space-y-4 border-t border-border pt-6">
-              <h3 className="font-display text-lg font-semibold text-foreground">Müraciət formu</h3>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Adınız *</Label>
-                  <Input
-                    placeholder="Ad Soyad"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Telefon *</Label>
-                  <Input
-                    placeholder="+994 50 000 0000"
-                    value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Mesajınız *</Label>
-                <Textarea
-                  placeholder="Nə barədə məlumat almaq istəyirsiniz?"
-                  rows={3}
-                  value={form.message}
-                  onChange={(e) => setForm({ ...form, message: e.target.value })}
-                />
-              </div>
-              <Button type="submit" disabled={sending} className="gap-2">
-                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                Göndər
-              </Button>
-            </form>
-          )}
         </div>
 
         {/* Store Listings */}
