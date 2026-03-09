@@ -7,7 +7,7 @@ import ListingCard from "@/components/ListingCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  User, MapPin, Star, Calendar, Package, ArrowLeft, Loader2, MessageCircle
+  User, MapPin, Star, Calendar, Package, ArrowLeft, Loader2, Store, Crown, ExternalLink
 } from "lucide-react";
 
 function formatTime(dateStr: string) {
