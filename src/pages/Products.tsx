@@ -72,6 +72,20 @@ const Products = () => {
     },
   });
 
+  // Fetch stores for listing badges
+  const listingStoreIds = [...new Set(allListings.map(l => l.store_id).filter(Boolean))] as string[];
+  const { data: storesMap = {} } = useQuery({
+    queryKey: ["stores-map-products", listingStoreIds.join(",")],
+    queryFn: async () => {
+      if (listingStoreIds.length === 0) return {};
+      const { data } = await supabase.from("stores").select("id, name, logo_url").in("id", listingStoreIds);
+      const map: Record<string, { name: string; logo_url: string | null }> = {};
+      data?.forEach(s => { map[s.id] = { name: s.name, logo_url: s.logo_url }; });
+      return map;
+    },
+    enabled: listingStoreIds.length > 0,
+  });
+
   const parentCategories = categories.filter((c: any) => !c.parent_id);
   const subcategories = selectedCategory ? categories.filter((c: any) => {
     const parent = parentCategories.find((p: any) => p.slug === selectedCategory);
