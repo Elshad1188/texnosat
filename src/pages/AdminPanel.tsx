@@ -157,39 +157,43 @@ const AdminPanel = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-6">
-        <div className="mb-6 flex items-center gap-3">
-          <ShieldCheck className="h-7 w-7 text-primary" />
-          <h1 className="font-display text-2xl font-bold text-foreground">Admin Panel</h1>
+      <main className="container mx-auto px-3 py-4 sm:px-4 sm:py-6 pb-20 md:pb-6">
+        <div className="mb-4 flex items-center gap-2">
+          <ShieldCheck className="h-6 w-6 text-primary" />
+          <h1 className="font-display text-xl font-bold text-foreground sm:text-2xl">Admin Panel</h1>
         </div>
 
         <Tabs defaultValue="stats">
-          <TabsList className="mb-4 w-full flex-wrap justify-start">
-            <TabsTrigger value="stats" className="gap-1.5"><BarChart3 className="h-4 w-4" /> Statistika</TabsTrigger>
-            <TabsTrigger value="moderation" className="gap-1.5"><CheckSquare className="h-4 w-4" /> Moderasiya</TabsTrigger>
-            <TabsTrigger value="listings" className="gap-1.5"><ShoppingBag className="h-4 w-4" /> Elanlar</TabsTrigger>
-            <TabsTrigger value="categories" className="gap-1.5"><FolderTree className="h-4 w-4" /> Kateqoriyalar</TabsTrigger>
-            <TabsTrigger value="regions" className="gap-1.5"><Map className="h-4 w-4" /> Bölgələr</TabsTrigger>
-            <TabsTrigger value="stores" className="gap-1.5"><Store className="h-4 w-4" /> Mağazalar</TabsTrigger>
-            <TabsTrigger value="users" className="gap-1.5"><Users className="h-4 w-4" /> İstifadəçilər</TabsTrigger>
-            <TabsTrigger value="reviews" className="gap-1.5"><MessageSquare className="h-4 w-4" /> Rəylər</TabsTrigger>
-            <TabsTrigger value="reports" className="gap-1.5"><Flag className="h-4 w-4" /> Şikayətlər</TabsTrigger>
-            <TabsTrigger value="banners" className="gap-1.5"><Image className="h-4 w-4" /> Bannerlər</TabsTrigger>
-            <TabsTrigger value="pages" className="gap-1.5"><FileText className="h-4 w-4" /> Səhifələr</TabsTrigger>
-            <TabsTrigger value="settings" className="gap-1.5"><Settings className="h-4 w-4" /> Tənzimləmələr</TabsTrigger>
-            <TabsTrigger value="theme" className="gap-1.5"><Palette className="h-4 w-4" /> Dizayn</TabsTrigger>
-          </TabsList>
+          <div className="sticky top-[57px] z-30 -mx-3 bg-background/95 backdrop-blur-sm px-3 pb-2 sm:-mx-4 sm:px-4">
+            <div className="overflow-x-auto scrollbar-none">
+              <TabsList className="inline-flex h-auto min-w-full w-max gap-1 rounded-xl bg-muted/60 p-1">
+                <TabsTrigger value="stats" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><BarChart3 className="h-3.5 w-3.5" /> Statistika</TabsTrigger>
+                <TabsTrigger value="moderation" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><CheckSquare className="h-3.5 w-3.5" /> Moderasiya</TabsTrigger>
+                <TabsTrigger value="listings" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><ShoppingBag className="h-3.5 w-3.5" /> Elanlar</TabsTrigger>
+                <TabsTrigger value="categories" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><FolderTree className="h-3.5 w-3.5" /> Kateqoriyalar</TabsTrigger>
+                <TabsTrigger value="regions" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Map className="h-3.5 w-3.5" /> Bölgələr</TabsTrigger>
+                <TabsTrigger value="stores" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Store className="h-3.5 w-3.5" /> Mağazalar</TabsTrigger>
+                <TabsTrigger value="users" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Users className="h-3.5 w-3.5" /> İstifadəçilər</TabsTrigger>
+                <TabsTrigger value="reviews" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><MessageSquare className="h-3.5 w-3.5" /> Rəylər</TabsTrigger>
+                <TabsTrigger value="reports" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Flag className="h-3.5 w-3.5" /> Şikayətlər</TabsTrigger>
+                <TabsTrigger value="banners" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Image className="h-3.5 w-3.5" /> Bannerlər</TabsTrigger>
+                <TabsTrigger value="pages" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><FileText className="h-3.5 w-3.5" /> Səhifələr</TabsTrigger>
+                <TabsTrigger value="settings" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Settings className="h-3.5 w-3.5" /> Tənzimləmələr</TabsTrigger>
+                <TabsTrigger value="theme" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Palette className="h-3.5 w-3.5" /> Dizayn</TabsTrigger>
+              </TabsList>
+            </div>
+          </div>
 
           {/* Stats */}
-          <TabsContent value="stats"><AdminStatsManager /></TabsContent>
+          <TabsContent value="stats" className="mt-3"><AdminStatsManager /></TabsContent>
 
           {/* Moderation */}
-          <TabsContent value="moderation"><AdminModerationManager /></TabsContent>
+          <TabsContent value="moderation" className="mt-3"><AdminModerationManager /></TabsContent>
 
           {/* Search for listings/stores/users */}
-          <div className="relative mb-4">
+          <div className="relative mt-3 mb-3">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Axtar..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
+            <Input placeholder="Axtar..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9 h-9 text-sm" />
           </div>
 
           {/* Listings */}
@@ -231,11 +235,14 @@ const AdminPanel = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="categories"><AdminCategoryManager /></TabsContent>
-          <TabsContent value="regions"><AdminRegionManager /></TabsContent>
+          <TabsContent value="categories" className="mt-3"><AdminCategoryManager /></TabsContent>
+          <TabsContent value="regions" className="mt-3"><AdminRegionManager /></TabsContent>
 
           {/* Stores */}
-          <TabsContent value="stores">
+          <TabsContent value="stores" className="mt-3">
+...
+          {/* Stores */}
+          <TabsContent value="stores" className="mt-3">
             {loading ? <LoadingState /> : fStores.length === 0 ? <EmptyState text="Mağaza tapılmadı" /> : (
               <div className="space-y-2">
                 {fStores.map((s) => (
@@ -248,9 +255,9 @@ const AdminPanel = () => {
                         <h3 className="truncate text-sm font-semibold text-foreground">{s.name}</h3>
                         {s.is_premium && <Badge className="bg-amber-500/20 text-amber-600 border-0 text-[10px]">Premium</Badge>}
                       </div>
-                      <p className="text-xs text-muted-foreground">{s.city || "—"} · Sahibi: {getProfileName(s.user_id)} · {new Date(s.created_at).toLocaleDateString("az")}</p>
+                      <p className="text-xs text-muted-foreground">{s.city || "—"} · {getProfileName(s.user_id)} · {new Date(s.created_at).toLocaleDateString("az")}</p>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex shrink-0 items-center gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateStore(s.id, { is_premium: !s.is_premium })}>
                         <Crown className={`h-4 w-4 ${s.is_premium ? "text-amber-500" : "text-muted-foreground"}`} />
                       </Button>
@@ -265,7 +272,7 @@ const AdminPanel = () => {
           </TabsContent>
 
           {/* Users */}
-          <TabsContent value="users">
+          <TabsContent value="users" className="mt-3">
             {loading ? <LoadingState /> : fProfiles.length === 0 ? <EmptyState text="İstifadəçi tapılmadı" /> : (
               <div className="space-y-2">
                 {fProfiles.map((p) => {
@@ -274,27 +281,27 @@ const AdminPanel = () => {
                   const isSelf = p.user_id === user?.id;
                   const level = getUserLevel(p.user_id);
                   return (
-                    <div key={p.id} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-card">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
+                    <div key={p.id} className="flex items-center gap-2 rounded-xl border border-border bg-card p-3 shadow-card">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
                         {(p.full_name || "?")[0].toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <h3 className="truncate text-sm font-semibold text-foreground">{p.full_name || "Adsız"}</h3>
+                        <div className="flex flex-wrap items-center gap-1">
+                          <h3 className="truncate text-xs font-semibold text-foreground">{p.full_name || "Adsız"}</h3>
                           {isUserAdmin && <Badge className="bg-primary/20 text-primary border-0 text-[10px]">Admin</Badge>}
-                          {isUserMod && <Badge className="bg-blue-500/20 text-blue-600 border-0 text-[10px]">Moderator</Badge>}
+                          {isUserMod && <Badge className="bg-blue-500/20 text-blue-600 border-0 text-[10px]">Mod</Badge>}
                           <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>
                           {isSelf && <Badge variant="outline" className="text-[10px]">Siz</Badge>}
                         </div>
-                        <p className="text-xs text-muted-foreground">{p.city || "—"} · {p.phone || "—"} · {new Date(p.created_at).toLocaleDateString("az")}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">{p.city || "—"} · {new Date(p.created_at).toLocaleDateString("az")}</p>
                       </div>
                       {!isSelf && (
-                        <div className="flex items-center gap-1">
-                          <Button variant={isUserAdmin ? "destructive" : "outline"} size="sm" className="text-xs h-7" onClick={() => toggleRole(p.user_id, "admin")}>
-                            <ShieldCheck className="mr-1 h-3 w-3" />{isUserAdmin ? "Admin sil" : "Admin"}
+                        <div className="flex shrink-0 items-center gap-1">
+                          <Button variant={isUserAdmin ? "destructive" : "outline"} size="sm" className="text-[11px] h-7 px-2" onClick={() => toggleRole(p.user_id, "admin")}>
+                            <ShieldCheck className="mr-0.5 h-3 w-3" />{isUserAdmin ? "Sil" : "Admin"}
                           </Button>
-                          <Button variant={isUserMod ? "destructive" : "outline"} size="sm" className="text-xs h-7" onClick={() => toggleRole(p.user_id, "moderator")}>
-                            {isUserMod ? "Mod sil" : "Mod"}
+                          <Button variant={isUserMod ? "destructive" : "outline"} size="sm" className="text-[11px] h-7 px-2" onClick={() => toggleRole(p.user_id, "moderator")}>
+                            {isUserMod ? "Sil" : "Mod"}
                           </Button>
                         </div>
                       )}
@@ -306,23 +313,23 @@ const AdminPanel = () => {
           </TabsContent>
 
           {/* Reviews */}
-          <TabsContent value="reviews">
+          <TabsContent value="reviews" className="mt-3">
             {loading ? <LoadingState /> : reviews.length === 0 ? <EmptyState text="Rəy tapılmadı" /> : (
               <div className="space-y-2">
                 {reviews.map((r) => (
                   <div key={r.id} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-card">
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-0.5 shrink-0">
                       {Array.from({ length: 5 }).map((_, i) => (
                         <Star key={i} className={`h-3.5 w-3.5 ${i < r.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`} />
                       ))}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm text-foreground">{r.comment || "Şərh yoxdur"}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm text-foreground line-clamp-1">{r.comment || "Şərh yoxdur"}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">
                         {getProfileName(r.reviewer_id)} → {getProfileName(r.reviewed_user_id)} · {new Date(r.created_at).toLocaleDateString("az")}
                       </p>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteReview(r.id)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => deleteReview(r.id)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
@@ -332,19 +339,19 @@ const AdminPanel = () => {
           </TabsContent>
 
           {/* Reports */}
-          <TabsContent value="reports"><AdminReportsManager /></TabsContent>
+          <TabsContent value="reports" className="mt-3"><AdminReportsManager /></TabsContent>
 
           {/* Banners */}
-          <TabsContent value="banners"><AdminBannerManager /></TabsContent>
+          <TabsContent value="banners" className="mt-3"><AdminBannerManager /></TabsContent>
 
           {/* Pages */}
-          <TabsContent value="pages"><AdminPagesManager /></TabsContent>
+          <TabsContent value="pages" className="mt-3"><AdminPagesManager /></TabsContent>
 
           {/* Settings */}
-          <TabsContent value="settings"><AdminSettingsManager /></TabsContent>
+          <TabsContent value="settings" className="mt-3"><AdminSettingsManager /></TabsContent>
 
           {/* Theme */}
-          <TabsContent value="theme"><AdminThemeManager /></TabsContent>
+          <TabsContent value="theme" className="mt-3"><AdminThemeManager /></TabsContent>
         </Tabs>
       </main>
       <Footer />
