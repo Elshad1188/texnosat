@@ -242,15 +242,19 @@ const Products = () => {
           <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
         ) : filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {filteredProducts.map((product: any) => (
-              <ListingCard
-                key={product.id} id={product.id} title={product.title}
-                price={`${Number(product.price).toLocaleString()} ${product.currency}`}
-                location={product.location} time={formatTime(product.created_at)}
-                image={product.image_urls?.[0] || "/placeholder.svg"}
-                condition={product.condition} isPremium={product.is_premium} isUrgent={product.is_urgent}
-              />
-            ))}
+            {filteredProducts.map((product: any) => {
+              const st = product.store_id ? storesMap[product.store_id] : undefined;
+              return (
+                <ListingCard
+                  key={product.id} id={product.id} title={product.title}
+                  price={`${Number(product.price).toLocaleString()} ${product.currency}`}
+                  location={product.location} time={formatTime(product.created_at)}
+                  image={product.image_urls?.[0] || "/placeholder.svg"}
+                  condition={product.condition} isPremium={product.is_premium} isUrgent={product.is_urgent}
+                  storeId={product.store_id} storeName={st?.name} storeLogo={st?.logo_url}
+                />
+              );
+            })}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
