@@ -120,6 +120,30 @@ const ProductDetail = () => {
     enabled: reviewerIds.length > 0,
   });
 
+  // Fetch store if listing belongs to one
+  const { data: store } = useQuery({
+    queryKey: ["store", listing?.store_id],
+    queryFn: async () => {
+      const { data } = await supabase.from("stores").select("*").eq("id", listing!.store_id!).single();
+      return data;
+    },
+    enabled: !!listing?.store_id,
+  });
+
+  // Fetch store reviews (avg rating)
+  const { data: storeOwnerReviews = [] } = useQuery({
+    queryKey: ["store-owner-reviews", store?.user_id],
+    queryFn: async () => {
+      const { data } = await supabase.from("reviews").select("rating").eq("reviewed_user_id", store!.user_id);
+      return data || [];
+    },
+    enabled: !!store?.user_id,
+  });
+
+  const storeAvgRating = storeOwnerReviews.length > 0
+    ? storeOwnerReviews.reduce((s: number, r: any) => s + r.rating, 0) / storeOwnerReviews.length
+    : 0;
+
   // Fetch similar listings
   const { data: similarListings = [] } = useQuery({
     queryKey: ["similar", listing?.category, id],
