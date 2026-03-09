@@ -36,11 +36,47 @@ const ProductDetail = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [liked, setLiked] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+
+  // Check if listing is favorited
+  const { data: favoriteData } = useQuery({
+    queryKey: ["favorite", id, user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("favorites")
+        .select("id")
+        .eq("listing_id", id!)
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!id && !!user,
+  });
+
+  const isFavorited = !!favoriteData;
+
+  // Toggle favorite mutation
+  const toggleFavorite = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Daxil olun");
+      if (isFavorited) {
+        await supabase.from("favorites").delete().eq("listing_id", id!).eq("user_id", user.id);
+      } else {
+        await supabase.from("favorites").insert({ listing_id: id!, user_id: user.id });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["favorite", id, user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["favorites"] });
+      toast({ title: isFavorited ? "Seçilmişlərdən silindi" : "Seçilmişlərə əlavə edildi" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+    },
+  });
 
   // Fetch listing
   const { data: listing, isLoading } = useQuery({
