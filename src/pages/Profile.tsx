@@ -300,8 +300,22 @@ const Profile = () => {
                   <Input value={phone} onChange={(e) => setPhone(e.target.value)} disabled={!editing} placeholder="+994 XX XXX XX XX" className="h-9 text-sm" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Şəhər</Label>
-                  <Input value={city} onChange={(e) => setCity(e.target.value)} disabled={!editing} className="h-9 text-sm" />
+                  <Label className="text-xs">Bölgə</Label>
+                  <Select value={city || undefined} onValueChange={setCity} disabled={!editing}>
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder="Bölgə seçin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {city && !regions.some((r: { name: string }) => r.name === city) && (
+                        <SelectItem value={city}>{city}</SelectItem>
+                      )}
+                      {regions.map((region: { name: string }) => (
+                        <SelectItem key={region.name} value={region.name}>
+                          {region.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Separator />
                 <div className="flex gap-2">
