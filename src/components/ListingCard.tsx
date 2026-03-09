@@ -1,4 +1,4 @@
-import { Heart, MapPin, Clock } from "lucide-react";
+import { Heart, MapPin, Clock, Store } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,9 +15,12 @@ interface ListingCardProps {
   condition?: string;
   isPremium?: boolean;
   isUrgent?: boolean;
+  storeId?: string | null;
+  storeName?: string;
+  storeLogo?: string | null;
 }
 
-const ListingCard = ({ id, title, price, location, time, image, condition, isPremium, isUrgent }: ListingCardProps) => {
+const ListingCard = ({ id, title, price, location, time, image, condition, isPremium, isUrgent, storeId, storeName, storeLogo }: ListingCardProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -91,6 +94,27 @@ const ListingCard = ({ id, title, price, location, time, image, condition, isPre
           {title}
         </h3>
         <p className="mt-2 font-display text-lg font-bold text-foreground">{price}</p>
+
+        {/* Store Badge */}
+        {storeId && storeName && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/store/${storeId}`);
+            }}
+            className="mt-2 flex items-center gap-1.5 rounded-md bg-muted/80 px-2 py-1 transition-colors hover:bg-muted"
+          >
+            <div className="flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden rounded bg-card">
+              {storeLogo ? (
+                <img src={storeLogo} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <Store className="h-2.5 w-2.5 text-muted-foreground" />
+              )}
+            </div>
+            <span className="truncate text-[11px] font-medium text-muted-foreground">{storeName}</span>
+          </button>
+        )}
+
         <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <MapPin className="h-3 w-3" /> {location}

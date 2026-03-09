@@ -38,6 +38,22 @@ const FeaturedListings = () => {
     },
   });
 
+  // Collect all store IDs and fetch stores
+  const allListings = [...premiumListings, ...urgentListings, ...newListings];
+  const storeIds = [...new Set(allListings.map(l => l.store_id).filter(Boolean))] as string[];
+
+  const { data: storesMap = {} } = useQuery({
+    queryKey: ["stores-map", storeIds.join(",")],
+    queryFn: async () => {
+      if (storeIds.length === 0) return {};
+      const { data } = await supabase.from("stores").select("id, name, logo_url").in("id", storeIds);
+      const map: Record<string, { name: string; logo_url: string | null }> = {};
+      data?.forEach(s => { map[s.id] = { name: s.name, logo_url: s.logo_url }; });
+      return map;
+    },
+    enabled: storeIds.length > 0,
+  });
+
   const renderSection = (
     title: string, subtitle: string, icon: React.ReactNode,
     listings: any[], bgClass?: string, showAll?: boolean,
@@ -61,20 +77,26 @@ const FeaturedListings = () => {
             )}
           </div>
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {listings.map((l: any) => (
-              <ListingCard
-                key={l.id}
-                id={l.id}
-                title={l.title}
-                price={`${Number(l.price).toLocaleString()} ${l.currency}`}
-                location={l.location}
-                time={formatTime(l.created_at)}
-                image={l.image_urls?.[0] || "/placeholder.svg"}
-                condition={l.condition}
-                isPremium={l.is_premium}
-                isUrgent={l.is_urgent}
-              />
-            ))}
+            {listings.map((l: any) => {
+              const s = l.store_id ? storesMap[l.store_id] : undefined;
+              return (
+                <ListingCard
+                  key={l.id}
+                  id={l.id}
+                  title={l.title}
+                  price={`${Number(l.price).toLocaleString()} ${l.currency}`}
+                  location={l.location}
+                  time={formatTime(l.created_at)}
+                  image={l.image_urls?.[0] || "/placeholder.svg"}
+                  condition={l.condition}
+                  isPremium={l.is_premium}
+                  isUrgent={l.is_urgent}
+                  storeId={l.store_id}
+                  storeName={s?.name}
+                  storeLogo={s?.logo_url}
+                />
+              );
+            })}
           </div>
         </div>
       </section>
