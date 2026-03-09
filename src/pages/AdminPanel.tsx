@@ -14,10 +14,16 @@ import { Switch } from "@/components/ui/switch";
 import AdminCategoryManager from "@/components/admin/AdminCategoryManager";
 import AdminRegionManager from "@/components/admin/AdminRegionManager";
 import AdminThemeManager from "@/components/admin/AdminThemeManager";
+import AdminModerationManager from "@/components/admin/AdminModerationManager";
+import AdminBannerManager from "@/components/admin/AdminBannerManager";
+import AdminReportsManager from "@/components/admin/AdminReportsManager";
+import AdminStatsManager from "@/components/admin/AdminStatsManager";
+import AdminSettingsManager from "@/components/admin/AdminSettingsManager";
+import AdminPagesManager from "@/components/admin/AdminPagesManager";
 import {
   ShieldCheck, Trash2, Eye, EyeOff, Search, Users, ShoppingBag, Store,
   Crown, Loader2, AlertTriangle, Zap, Star, MapPin, Pencil, MessageSquare,
-  FolderTree, Map, Palette,
+  FolderTree, Map, Palette, BarChart3, CheckSquare, Image, Flag, Settings, FileText,
 } from "lucide-react";
 
 interface Listing {
@@ -78,7 +84,6 @@ const AdminPanel = () => {
     setLoading(false);
   };
 
-  // Listing actions
   const updateListing = async (id: string, updates: Partial<Listing>) => {
     const { error } = await supabase.from("listings").update(updates).eq("id", id);
     if (error) { toast({ title: "Xəta", description: error.message, variant: "destructive" }); return; }
@@ -93,7 +98,6 @@ const AdminPanel = () => {
     toast({ title: "Elan silindi" });
   };
 
-  // Store actions
   const updateStore = async (id: string, updates: Partial<StoreItem>) => {
     const { error } = await supabase.from("stores").update(updates).eq("id", id);
     if (error) { toast({ title: "Xəta", description: error.message, variant: "destructive" }); return; }
@@ -108,7 +112,6 @@ const AdminPanel = () => {
     toast({ title: "Mağaza silindi" });
   };
 
-  // Role actions
   const toggleRole = async (userId: string, role: "admin" | "moderator" | "user") => {
     const has = userRoles.some((r) => r.user_id === userId && r.role === role);
     if (has) {
@@ -123,7 +126,6 @@ const AdminPanel = () => {
     toast({ title: has ? `${role} rolu silindi` : `${role} rolu verildi` });
   };
 
-  // Review actions
   const deleteReview = async (id: string) => {
     const { error } = await supabase.from("reviews").delete().eq("id", id);
     if (error) { toast({ title: "Xəta", description: error.message, variant: "destructive" }); return; }
@@ -161,32 +163,34 @@ const AdminPanel = () => {
           <h1 className="font-display text-2xl font-bold text-foreground">Admin Panel</h1>
         </div>
 
-        {/* Stats */}
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-          <StatCard icon={<ShoppingBag className="h-5 w-5" />} label="Elanlar" value={listings.length} />
-          <StatCard icon={<Eye className="h-5 w-5" />} label="Aktiv" value={listings.filter((l) => l.is_active).length} />
-          <StatCard icon={<Crown className="h-5 w-5" />} label="Premium" value={listings.filter((l) => l.is_premium).length} />
-          <StatCard icon={<Store className="h-5 w-5" />} label="Mağazalar" value={stores.length} />
-          <StatCard icon={<Users className="h-5 w-5" />} label="İstifadəçilər" value={profiles.length} />
-          <StatCard icon={<MessageSquare className="h-5 w-5" />} label="Rəylər" value={reviews.length} />
-        </div>
-
-        {/* Search */}
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Axtar..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
-        </div>
-
-        <Tabs defaultValue="listings">
+        <Tabs defaultValue="stats">
           <TabsList className="mb-4 w-full flex-wrap justify-start">
+            <TabsTrigger value="stats" className="gap-1.5"><BarChart3 className="h-4 w-4" /> Statistika</TabsTrigger>
+            <TabsTrigger value="moderation" className="gap-1.5"><CheckSquare className="h-4 w-4" /> Moderasiya</TabsTrigger>
             <TabsTrigger value="listings" className="gap-1.5"><ShoppingBag className="h-4 w-4" /> Elanlar</TabsTrigger>
             <TabsTrigger value="categories" className="gap-1.5"><FolderTree className="h-4 w-4" /> Kateqoriyalar</TabsTrigger>
             <TabsTrigger value="regions" className="gap-1.5"><Map className="h-4 w-4" /> Bölgələr</TabsTrigger>
             <TabsTrigger value="stores" className="gap-1.5"><Store className="h-4 w-4" /> Mağazalar</TabsTrigger>
             <TabsTrigger value="users" className="gap-1.5"><Users className="h-4 w-4" /> İstifadəçilər</TabsTrigger>
             <TabsTrigger value="reviews" className="gap-1.5"><MessageSquare className="h-4 w-4" /> Rəylər</TabsTrigger>
+            <TabsTrigger value="reports" className="gap-1.5"><Flag className="h-4 w-4" /> Şikayətlər</TabsTrigger>
+            <TabsTrigger value="banners" className="gap-1.5"><Image className="h-4 w-4" /> Bannerlər</TabsTrigger>
+            <TabsTrigger value="pages" className="gap-1.5"><FileText className="h-4 w-4" /> Səhifələr</TabsTrigger>
+            <TabsTrigger value="settings" className="gap-1.5"><Settings className="h-4 w-4" /> Tənzimləmələr</TabsTrigger>
             <TabsTrigger value="theme" className="gap-1.5"><Palette className="h-4 w-4" /> Dizayn</TabsTrigger>
           </TabsList>
+
+          {/* Stats */}
+          <TabsContent value="stats"><AdminStatsManager /></TabsContent>
+
+          {/* Moderation */}
+          <TabsContent value="moderation"><AdminModerationManager /></TabsContent>
+
+          {/* Search for listings/stores/users */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input placeholder="Axtar..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
+          </div>
 
           {/* Listings */}
           <TabsContent value="listings">
@@ -208,13 +212,13 @@ const AdminPanel = () => {
                       <p className="text-xs text-muted-foreground">Satıcı: {getProfileName(l.user_id)}</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateListing(l.id, { is_active: !l.is_active })} title={l.is_active ? "Deaktiv et" : "Aktivləşdir"}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateListing(l.id, { is_active: !l.is_active })}>
                         {l.is_active ? <Eye className="h-4 w-4 text-green-500" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateListing(l.id, { is_premium: !l.is_premium })} title="Premium">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateListing(l.id, { is_premium: !l.is_premium })}>
                         <Crown className={`h-4 w-4 ${l.is_premium ? "text-amber-500" : "text-muted-foreground"}`} />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateListing(l.id, { is_urgent: !l.is_urgent })} title="Təcili">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateListing(l.id, { is_urgent: !l.is_urgent })}>
                         <Zap className={`h-4 w-4 ${l.is_urgent ? "text-destructive" : "text-muted-foreground"}`} />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteListing(l.id)}>
@@ -227,10 +231,7 @@ const AdminPanel = () => {
             )}
           </TabsContent>
 
-          {/* Categories */}
           <TabsContent value="categories"><AdminCategoryManager /></TabsContent>
-
-          {/* Regions */}
           <TabsContent value="regions"><AdminRegionManager /></TabsContent>
 
           {/* Stores */}
@@ -330,6 +331,18 @@ const AdminPanel = () => {
             )}
           </TabsContent>
 
+          {/* Reports */}
+          <TabsContent value="reports"><AdminReportsManager /></TabsContent>
+
+          {/* Banners */}
+          <TabsContent value="banners"><AdminBannerManager /></TabsContent>
+
+          {/* Pages */}
+          <TabsContent value="pages"><AdminPagesManager /></TabsContent>
+
+          {/* Settings */}
+          <TabsContent value="settings"><AdminSettingsManager /></TabsContent>
+
           {/* Theme */}
           <TabsContent value="theme"><AdminThemeManager /></TabsContent>
         </Tabs>
@@ -338,13 +351,6 @@ const AdminPanel = () => {
     </div>
   );
 };
-
-const StatCard = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) => (
-  <div className="rounded-xl border border-border bg-card p-3 shadow-card">
-    <div className="flex items-center gap-2 text-muted-foreground">{icon}<span className="text-xs">{label}</span></div>
-    <p className="mt-1 font-display text-xl font-bold text-foreground">{value}</p>
-  </div>
-);
 
 const LoadingState = () => <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 const EmptyState = ({ text }: { text: string }) => (
