@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Store, MapPin, Phone, Clock, Crown, MessageCircle, Loader2, ArrowLeft, Users, UserPlus, UserMinus, Settings
+  Store, MapPin, Phone, Clock, Crown, MessageCircle, Loader2, ArrowLeft,
+  Users, UserPlus, UserMinus, Settings
 } from "lucide-react";
 
 const StoreDetail = () => {
@@ -18,8 +19,6 @@ const StoreDetail = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
-  const isOwner = !!user && store?.user_id === user.id;
 
   const { data: store, isLoading } = useQuery({
     queryKey: ["store", id],
@@ -30,14 +29,14 @@ const StoreDetail = () => {
     enabled: !!id,
   });
 
+  const isOwner = !!user && !!store && store.user_id === user.id;
+
   const { data: listings = [] } = useQuery({
     queryKey: ["store-listings", id],
     queryFn: async () => {
       const { data } = await supabase
-        .from("listings")
-        .select("*")
-        .eq("store_id", id)
-        .eq("is_active", true)
+        .from("listings").select("*")
+        .eq("store_id", id).eq("is_active", true)
         .order("is_premium", { ascending: false })
         .order("created_at", { ascending: false });
       return data || [];
@@ -45,32 +44,57 @@ const StoreDetail = () => {
     enabled: !!id,
   });
 
+  const { data: followersCount = 0 } = useQuery({
+    queryKey: ["store-followers-count", id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("store_followers").select("id", { count: "exact", head: true })
+        .eq("store_id", id!);
+      return count || 0;
+    },
+    enabled: !!id,
+  });
+
+  const { data: isFollowing = false } = useQuery({
+    queryKey: ["store-following", id, user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("store_followers").select("id")
+        .eq("store_id", id!).eq("user_id", user!.id).maybeSingle();
+      return !!data;
+    },
+    enabled: !!id && !!user,
+  });
+
+  const toggleFollow = useMutation({
+    mutationFn: async () => {
+      if (isFollowing) {
+        await supabase.from("store_followers").delete().eq("store_id", id!).eq("user_id", user!.id);
+      } else {
+        await supabase.from("store_followers").insert({ store_id: id!, user_id: user!.id });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["store-followers-count", id] });
+      queryClient.invalidateQueries({ queryKey: ["store-following", id, user?.id] });
+      toast({ title: isFollowing ? "Abunəlikdən çıxdınız" : "Mağazaya abunə oldunuz" });
+    },
+  });
+
   const handleMessageStore = async () => {
-    if (!user) {
-      toast({ title: "Mesaj üçün daxil olun", variant: "destructive" });
-      navigate("/auth");
-      return;
-    }
+    if (!user) { toast({ title: "Mesaj üçün daxil olun", variant: "destructive" }); navigate("/auth"); return; }
     if (!store) return;
-
     try {
-      // Find existing conversation with this store owner (no listing)
       const { data: existing } = await supabase
-        .from("conversations")
-        .select("id")
-        .eq("buyer_id", user.id)
-        .eq("seller_id", store.user_id)
-        .is("listing_id", null)
-        .maybeSingle();
-
+        .from("conversations").select("id")
+        .eq("buyer_id", user.id).eq("seller_id", store.user_id)
+        .is("listing_id", null).maybeSingle();
       if (existing) {
         navigate(`/messages?c=${existing.id}`);
       } else {
         const { data: newConvo, error } = await supabase
-          .from("conversations")
-          .insert({ buyer_id: user.id, seller_id: store.user_id })
-          .select("id")
-          .single();
+          .from("conversations").insert({ buyer_id: user.id, seller_id: store.user_id })
+          .select("id").single();
         if (error) throw error;
         navigate(`/messages?c=${newConvo.id}`);
       }
@@ -83,9 +107,7 @@ const StoreDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="flex items-center justify-center py-32">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
+        <div className="flex items-center justify-center py-32"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
         <Footer />
       </div>
     );
@@ -98,9 +120,7 @@ const StoreDetail = () => {
         <div className="container mx-auto flex flex-col items-center py-32 text-center">
           <Store className="h-16 w-16 text-muted-foreground/50" />
           <p className="mt-4 text-lg font-medium text-muted-foreground">Mağaza tapılmadı</p>
-          <Button asChild className="mt-6">
-            <Link to="/stores">Mağazalara qayıt</Link>
-          </Button>
+          <Button asChild className="mt-6"><Link to="/stores">Mağazalara qayıt</Link></Button>
         </div>
         <Footer />
       </div>
@@ -111,23 +131,18 @@ const StoreDetail = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      {/* Çardağ / Cover Banner */}
       <div className="relative h-48 w-full bg-gradient-to-br from-primary/30 via-primary/10 to-background sm:h-64">
-        {store.cover_url && (
-          <img src={store.cover_url} alt="Cover" className="h-full w-full object-cover" />
-        )}
+        {store.cover_url && <img src={store.cover_url} alt="Cover" className="h-full w-full object-cover" />}
         <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
       </div>
 
       <main className="container mx-auto px-4">
-        {/* Store Info Card */}
         <div className="relative -mt-16 mb-8 rounded-xl border border-border bg-card p-6 shadow-lg">
           <Link to="/stores" className="absolute right-4 top-4 text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-5 w-5" />
           </Link>
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            {/* Logo */}
             <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border-4 border-card bg-muted shadow-md">
               {store.logo_url ? (
                 <img src={store.logo_url} alt={store.name} className="h-full w-full object-cover" />
@@ -146,67 +161,75 @@ const StoreDetail = () => {
                 )}
               </div>
 
-              {store.description && (
-                <p className="mt-2 text-sm text-muted-foreground">{store.description}</p>
-              )}
+              {store.description && <p className="mt-2 text-sm text-muted-foreground">{store.description}</p>}
 
-              <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted-foreground">
-                {store.city && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" /> {store.city}
-                    {store.address && `, ${store.address}`}
-                  </span>
-                )}
-                {store.phone && (
-                  <span className="flex items-center gap-1">
-                    <Phone className="h-4 w-4" /> {store.phone}
-                  </span>
-                )}
-                {store.working_hours && (
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" /> {store.working_hours}
-                  </span>
-                )}
+              <div className="mt-3 flex flex-wrap gap-4 text-sm text-muted-foreground">
+                {store.city && <span className="flex items-center gap-1"><MapPin className="h-4 w-4" /> {store.city}{store.address && `, ${store.address}`}</span>}
+                {store.phone && <span className="flex items-center gap-1"><Phone className="h-4 w-4" /> {store.phone}</span>}
+                {store.working_hours && <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {store.working_hours}</span>}
+                <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {followersCount} abunəçi</span>
               </div>
 
-              <Button
-                className="mt-4 gap-2 bg-gradient-primary text-primary-foreground hover:opacity-90"
-                onClick={handleMessageStore}
-              >
-                <MessageCircle className="h-4 w-4" />
-                Mağazaya mesaj yaz
-              </Button>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {isOwner ? (
+                  <>
+                    <Button size="sm" variant="outline" className="gap-1" asChild>
+                      <Link to="/store-dashboard"><Settings className="h-4 w-4" />İdarə paneli</Link>
+                    </Button>
+                    <Button size="sm" variant="outline" className="gap-1" asChild>
+                      <Link to="/create-store"><Settings className="h-4 w-4" />Redaktə et</Link>
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      className="gap-2 bg-gradient-primary text-primary-foreground hover:opacity-90"
+                      onClick={handleMessageStore}
+                    >
+                      <MessageCircle className="h-4 w-4" />Mağazaya mesaj yaz
+                    </Button>
+                    {user && (
+                      <Button
+                        variant={isFollowing ? "outline" : "secondary"}
+                        className="gap-1"
+                        onClick={() => toggleFollow.mutate()}
+                        disabled={toggleFollow.isPending}
+                      >
+                        {isFollowing ? <><UserMinus className="h-4 w-4" />Abunəlikdən çıx</> : <><UserPlus className="h-4 w-4" />Abunə ol</>}
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Store Listings */}
         <div className="mb-8">
           <h2 className="mb-4 font-display text-xl font-bold text-foreground">
             Mağaza elanları ({listings.length})
           </h2>
-
           {listings.length === 0 ? (
             <div className="rounded-xl border border-border bg-card p-8 text-center">
               <p className="text-muted-foreground">Bu mağazada hələ elan yoxdur</p>
+              {isOwner && (
+                <Button className="mt-4 bg-gradient-primary text-primary-foreground" asChild>
+                  <Link to="/create-listing">Elan yerləşdir</Link>
+                </Button>
+              )}
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {listings.map((listing) => (
                 <ListingCard
-                  key={listing.id}
-                  id={listing.id}
-                  title={listing.title}
+                  key={listing.id} id={listing.id} title={listing.title}
                   price={`${listing.price} ${listing.currency}`}
                   location={listing.location}
                   time={new Date(listing.created_at).toLocaleDateString("az-AZ")}
                   image={listing.image_urls?.[0] || "/placeholder.svg"}
-                  condition={listing.condition}
-                  isPremium={listing.is_premium}
-                  isUrgent={listing.is_urgent}
-                  storeId={store?.id}
-                  storeName={store?.name}
-                  storeLogo={store?.logo_url}
+                  condition={listing.condition} isPremium={listing.is_premium}
+                  isUrgent={listing.is_urgent} storeId={store.id}
+                  storeName={store.name} storeLogo={store.logo_url}
                 />
               ))}
             </div>
