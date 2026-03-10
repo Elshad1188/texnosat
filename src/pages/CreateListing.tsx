@@ -24,8 +24,19 @@ const CreateListing = () => {
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [publishToStore, setPublishToStore] = useState(false);
   const [form, setForm] = useState({
     title: "", description: "", price: "", category: "", condition: "Yeni", location: "",
+  });
+
+  // Check if user has a store
+  const { data: userStore } = useQuery({
+    queryKey: ["user-store", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("stores").select("id, name, logo_url").eq("user_id", user!.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
   });
 
   // Fetch categories from DB
