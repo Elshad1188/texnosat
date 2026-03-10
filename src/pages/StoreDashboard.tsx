@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import ListingCard from "@/components/ListingCard";
+import ListingBoostDialog from "@/components/ListingBoostDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
 import {
   Store, Package, Users, Eye, Crown, Edit2, Plus, Trash2,
-  MapPin, Phone, Clock, TrendingUp, Loader2, BarChart3
+  MapPin, Phone, Clock, TrendingUp, Loader2, BarChart3, Rocket
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -26,6 +26,7 @@ const StoreDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [boostListingId, setBoostListingId] = useState<string | null>(null);
 
   const { data: store, isLoading } = useQuery({
     queryKey: ["my-store", user?.id],
@@ -239,6 +240,10 @@ const StoreDashboard = () => {
                         </div>
                       </div>
                       <div className="flex shrink-0 gap-1">
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-amber-500 hover:text-amber-600"
+                          onClick={() => setBoostListingId(l.id)}>
+                          <Rocket className="h-4 w-4" />
+                        </Button>
                         <Button size="sm" variant="ghost" className="h-8 w-8 p-0"
                           onClick={() => toggleListing.mutate({ id: l.id, is_active: !l.is_active })}>
                           <Eye className={`h-4 w-4 ${l.is_active ? "text-primary" : "text-muted-foreground"}`} />
@@ -308,6 +313,13 @@ const StoreDashboard = () => {
         </Tabs>
       </main>
       <Footer />
+      {boostListingId && (
+        <ListingBoostDialog
+          listingId={boostListingId}
+          open={!!boostListingId}
+          onOpenChange={(open) => { if (!open) setBoostListingId(null); }}
+        />
+      )}
     </div>
   );
 };

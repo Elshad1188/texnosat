@@ -84,6 +84,16 @@ const Balance = () => {
     if (!referralInput.trim()) return;
     setProcessing(true);
     try {
+      // Check if referral system is enabled
+      const { data: refSettings } = await supabase
+        .from("site_settings").select("value").eq("key", "referral").maybeSingle();
+      const enabled = refSettings?.value ? (refSettings.value as any).referral_enabled !== false : true;
+      if (!enabled) {
+        toast({ title: "Referal sistemi hazırda deaktivdir", variant: "destructive" });
+        setProcessing(false);
+        return;
+      }
+
       const { data, error } = await supabase.rpc("process_referral", {
         _referral_code: referralInput.trim().toUpperCase(),
         _new_user_id: user.id,
