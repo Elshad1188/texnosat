@@ -67,6 +67,7 @@ const App = () => (
               </Routes>
             </div>
             <MobileBottomNav />
+            <AppDownloadBanner />
           </ThemeProvider>
         </AuthProvider>
       </BrowserRouter>

@@ -226,16 +226,42 @@ const Profile = () => {
                         </Badge>
                       </div>
                       <p className="mt-1 text-base font-bold text-primary">{l.price} {l.currency}</p>
-                      <div className="mt-1.5 flex items-center justify-between">
+                        <div className="mt-1.5 flex items-center justify-between">
                         <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
                           <span className="flex items-center gap-0.5"><Eye className="h-3 w-3" />{l.views_count}</span>
                           <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" />{l.location}</span>
                         </div>
-                        {!l.is_premium && !l.is_urgent && (
-                          <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" onClick={() => setBoostListingId(l.id)}>
-                            <Wallet className="h-3 w-3" /> Yüksəlt
+                        <div className="flex gap-1">
+                          {!l.is_premium && !l.is_urgent && (
+                            <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" onClick={() => setBoostListingId(l.id)}>
+                              <Wallet className="h-3 w-3" /> Yüksəlt
+                            </Button>
+                          )}
+                          <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" asChild>
+                            <Link to={`/create-listing?edit=${l.id}`}><Edit2 className="h-3 w-3" /></Link>
                           </Button>
-                        )}
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1 text-destructive hover:text-destructive">
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Elanı silmək istəyirsiniz?</AlertDialogTitle>
+                                <AlertDialogDescription>Bu əməliyyat geri alına bilməz.</AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Ləğv et</AlertDialogCancel>
+                                <AlertDialogAction onClick={async () => {
+                                  await supabase.from("listings").delete().eq("id", l.id);
+                                  queryClient.invalidateQueries({ queryKey: ["my-listings"] });
+                                  toast({ title: "Elan silindi" });
+                                }}>Sil</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
