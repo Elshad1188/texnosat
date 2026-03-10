@@ -23,10 +23,11 @@ import AdminPagesManager from "@/components/admin/AdminPagesManager";
 import AdminNotificationSender from "@/components/admin/AdminNotificationSender";
 import AdminBalanceManager from "@/components/admin/AdminBalanceManager";
 import AdminReferralManager from "@/components/admin/AdminReferralManager";
+import AdminIntegrationsManager from "@/components/admin/AdminIntegrationsManager";
 import {
   ShieldCheck, Trash2, Eye, EyeOff, Search, Users, ShoppingBag, Store,
   Crown, Loader2, AlertTriangle, Zap, Star, MapPin, Pencil, MessageSquare,
-  FolderTree, Map, Palette, BarChart3, CheckSquare, Image, Flag, Settings, FileText, Bell, Wallet, Gift,
+  FolderTree, Map, Palette, BarChart3, CheckSquare, Image, Flag, Settings, FileText, Bell, Wallet, Gift, Plug,
 } from "lucide-react";
 
 interface Listing {
