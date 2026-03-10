@@ -21,6 +21,8 @@ import AdminStatsManager from "@/components/admin/AdminStatsManager";
 import AdminSettingsManager from "@/components/admin/AdminSettingsManager";
 import AdminPagesManager from "@/components/admin/AdminPagesManager";
 import AdminNotificationSender from "@/components/admin/AdminNotificationSender";
+import AdminBalanceManager from "@/components/admin/AdminBalanceManager";
+import AdminReferralManager from "@/components/admin/AdminReferralManager";
 import {
   ShieldCheck, Trash2, Eye, EyeOff, Search, Users, ShoppingBag, Store,
   Crown, Loader2, AlertTriangle, Zap, Star, MapPin, Pencil, MessageSquare,
