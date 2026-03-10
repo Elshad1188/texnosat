@@ -182,6 +182,8 @@ const AdminPanel = () => {
                 <TabsTrigger value="reports" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Flag className="h-3.5 w-3.5" /> Şikayətlər</TabsTrigger>
                 <TabsTrigger value="banners" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Image className="h-3.5 w-3.5" /> Bannerlər</TabsTrigger>
                 <TabsTrigger value="pages" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><FileText className="h-3.5 w-3.5" /> Səhifələr</TabsTrigger>
+                <TabsTrigger value="balance" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Wallet className="h-3.5 w-3.5" /> Balans</TabsTrigger>
+                <TabsTrigger value="referral" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Gift className="h-3.5 w-3.5" /> Referal</TabsTrigger>
                 <TabsTrigger value="settings" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Settings className="h-3.5 w-3.5" /> Tənzimləmələr</TabsTrigger>
                 <TabsTrigger value="theme" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Palette className="h-3.5 w-3.5" /> Dizayn</TabsTrigger>
               </TabsList>
