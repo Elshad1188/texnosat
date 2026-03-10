@@ -173,6 +173,10 @@ const Profile = () => {
                 )}
               </div>
               <div className="flex gap-4 text-center">
+                <Link to="/balance" className="text-center hover:opacity-80 transition-opacity">
+                  <p className="text-xl font-bold text-primary">{Number((profile as any)?.balance || 0).toFixed(2)} ₼</p>
+                  <p className="text-[10px] text-muted-foreground">Balans</p>
+                </Link>
                 <div><p className="text-xl font-bold text-foreground">{listings.length}</p><p className="text-[10px] text-muted-foreground">Elan</p></div>
                 <div><p className="text-xl font-bold text-foreground">{avgRating}</p><p className="text-[10px] text-muted-foreground">Reytinq</p></div>
                 <div><p className="text-xl font-bold text-foreground">{reviews.length}</p><p className="text-[10px] text-muted-foreground">Rəy</p></div>
