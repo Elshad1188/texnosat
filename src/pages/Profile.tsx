@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ListingBoostDialog from "@/components/ListingBoostDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
