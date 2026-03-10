@@ -60,6 +60,7 @@ const App = () => (
                 <Route path="/messages" element={<Messages />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/favorites" element={<Favorites />} />
+                <Route path="/balance" element={<Balance />} />
                 <Route path="/page/:slug" element={<StaticPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
