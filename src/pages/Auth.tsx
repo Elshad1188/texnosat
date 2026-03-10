@@ -110,6 +110,21 @@ const Auth = () => {
                   </div>
                 </div>
               )}
+              {!isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="referral">Referal kodu (istəyə bağlı)</Label>
+                  <div className="relative">
+                    <Gift className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="referral"
+                      placeholder="XXXXXXXX"
+                      value={referralCode}
+                      onChange={(e) => setReferralCode(e.target.value)}
+                      className="pl-10 uppercase font-mono"
+                    />
+                  </div>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
                 <div className="relative">

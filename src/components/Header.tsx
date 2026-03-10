@@ -142,4 +142,15 @@ const Header = () => {
   );
 };
 
+const BalanceDisplay = ({ userId }: { userId: string }) => {
+  const { data: profile } = useQuery({
+    queryKey: ["profile-balance", userId],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("balance").eq("user_id", userId).single();
+      return data;
+    },
+  });
+  return <span>{Number((profile as any)?.balance || 0).toFixed(2)} ₼</span>;
+};
+
 export default Header;
