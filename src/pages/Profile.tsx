@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
-import { User, Package, Store, Star, Edit2, Save, Eye, MapPin, Phone, Calendar, LogOut, ShieldCheck } from "lucide-react";
+import { User, Package, Store, Star, Edit2, Save, Eye, MapPin, Phone, Calendar, LogOut, ShieldCheck, Settings } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -246,6 +246,11 @@ const Profile = () => {
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-semibold text-foreground truncate">{s.name}</h3>
                         <p className="text-xs text-muted-foreground line-clamp-1">{s.description || "Açıqlama yoxdur"}</p>
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        <Button size="sm" variant="outline" className="h-8 text-xs gap-1" asChild>
+                          <Link to="/store-dashboard"><Settings className="h-3.5 w-3.5" />İdarə et</Link>
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>

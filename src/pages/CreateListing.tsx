@@ -11,7 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ImagePlus, X, Loader2 } from "lucide-react";
+import { ImagePlus, X, Loader2, Store } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 const conditions = ["Yeni", "Yeni kimi", "İşlənmiş"];
 
@@ -24,8 +25,19 @@ const CreateListing = () => {
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [publishToStore, setPublishToStore] = useState(false);
   const [form, setForm] = useState({
     title: "", description: "", price: "", category: "", condition: "Yeni", location: "",
+  });
+
+  // Check if user has a store
+  const { data: userStore } = useQuery({
+    queryKey: ["user-store", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("stores").select("id, name, logo_url").eq("user_id", user!.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
   });
 
   // Fetch categories from DB
@@ -90,6 +102,7 @@ const CreateListing = () => {
         price: parseFloat(form.price), category: form.category,
         condition: form.condition, location: form.location || "Bakı",
         image_urls: imageUrls,
+        store_id: publishToStore && userStore ? userStore.id : null,
       });
       if (error) throw error;
       toast({ title: "Elan uğurla yerləşdirildi!" });
@@ -129,6 +142,26 @@ const CreateListing = () => {
               <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageAdd} />
             </div>
           </div>
+
+          {/* Store option */}
+          {userStore && (
+            <div className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  {userStore.logo_url ? (
+                    <img src={userStore.logo_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                  ) : (
+                    <Store className="h-5 w-5 text-primary" />
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{userStore.name} mağazasında paylaş</p>
+                  <p className="text-xs text-muted-foreground">Elan mağaza profili altında göstəriləcək</p>
+                </div>
+              </div>
+              <Switch checked={publishToStore} onCheckedChange={setPublishToStore} />
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="title">Başlıq *</Label>

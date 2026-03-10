@@ -13,6 +13,7 @@ import SellerProfile from "./pages/SellerProfile";
 import CreateListing from "./pages/CreateListing";
 import CreateStore from "./pages/CreateStore";
 import Stores from "./pages/Stores";
+import StoreDashboard from "./pages/StoreDashboard";
 import StoreDetail from "./pages/StoreDetail";
 import AdminPanel from "./pages/AdminPanel";
 import Auth from "./pages/Auth";
@@ -52,6 +53,7 @@ const App = () => (
                 <Route path="/create-store" element={<CreateStore />} />
                 <Route path="/stores" element={<Stores />} />
                 <Route path="/store/:id" element={<StoreDetail />} />
+                <Route path="/store-dashboard" element={<StoreDashboard />} />
                 <Route path="/admin" element={<AdminPanel />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/messages" element={<Messages />} />
