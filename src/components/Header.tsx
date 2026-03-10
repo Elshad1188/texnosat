@@ -86,6 +86,12 @@ const Header = () => {
         </nav>
 
         <div className="flex items-center gap-2">
+          {user && (
+            <Link to="/balance" className="hidden md:flex items-center gap-1.5 rounded-lg bg-muted px-2.5 py-1.5 text-sm font-semibold text-foreground hover:bg-accent transition-colors">
+              <Wallet className="h-4 w-4 text-primary" />
+              <BalanceDisplay userId={user.id} />
+            </Link>
+          )}
           <Button variant="ghost" size="icon" className="hidden md:flex" asChild>
             <Link to="/favorites"><Heart className="h-5 w-5" /></Link>
           </Button>
