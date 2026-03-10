@@ -13,6 +13,7 @@ import SellerProfile from "./pages/SellerProfile";
 import CreateListing from "./pages/CreateListing";
 import CreateStore from "./pages/CreateStore";
 import Stores from "./pages/Stores";
+import StoreDashboard from "./pages/StoreDashboard";
 import StoreDetail from "./pages/StoreDetail";
 import AdminPanel from "./pages/AdminPanel";
 import Auth from "./pages/Auth";
