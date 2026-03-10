@@ -313,6 +313,13 @@ const StoreDashboard = () => {
         </Tabs>
       </main>
       <Footer />
+      {boostListingId && (
+        <ListingBoostDialog
+          listingId={boostListingId}
+          open={!!boostListingId}
+          onOpenChange={(open) => { if (!open) setBoostListingId(null); }}
+        />
+      )}
     </div>
   );
 };
