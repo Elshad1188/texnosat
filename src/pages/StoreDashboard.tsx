@@ -26,6 +26,7 @@ const StoreDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [boostListingId, setBoostListingId] = useState<string | null>(null);
 
   const { data: store, isLoading } = useQuery({
     queryKey: ["my-store", user?.id],
