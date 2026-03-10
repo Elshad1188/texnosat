@@ -40,6 +40,18 @@ const Auth = () => {
       } else {
         await signUp(email, password, fullName);
         toast({ title: "Hesab yaradıldı!", description: "Xoş gəldiniz!" });
+        // Process referral after signup
+        if (referralCode) {
+          setTimeout(async () => {
+            const { data: { user: newUser } } = await supabase.auth.getUser();
+            if (newUser) {
+              await supabase.rpc("process_referral", {
+                _referral_code: referralCode.toUpperCase(),
+                _new_user_id: newUser.id,
+              });
+            }
+          }, 2000);
+        }
       }
       navigate("/");
     } catch (error: any) {
