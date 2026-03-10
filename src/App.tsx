@@ -21,6 +21,7 @@ import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
 import Favorites from "./pages/Favorites";
 import StaticPage from "./pages/StaticPage";
+import Balance from "./pages/Balance";
 import NotFound from "./pages/NotFound";
 import MobileBottomNav from "./components/MobileBottomNav";
 
