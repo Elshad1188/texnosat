@@ -3,6 +3,8 @@ import { ArrowLeft, Heart, Share2, MapPin, Clock, Star, Phone, MessageCircle, Sh
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from "@/components/ui/carousel";
+import ImageViewer from "@/components/ImageViewer";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +40,8 @@ const ProductDetail = () => {
   const queryClient = useQueryClient();
   const [showPhone, setShowPhone] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
 
@@ -234,18 +238,44 @@ const ProductDetail = () => {
           {/* Images */}
           <div className="lg:col-span-3">
             <div className="relative overflow-hidden rounded-2xl bg-muted">
-              <img src={images[selectedImage]} alt={listing.title} className="aspect-[4/3] w-full object-cover" />
-              <div className="absolute left-3 top-3 flex gap-1.5">
+              <Carousel
+                opts={{ startIndex: selectedImage, loop: images.length > 1 }}
+                setApi={(api: CarouselApi) => {
+                  api?.on("select", () => {
+                    setSelectedImage(api.selectedScrollSnap());
+                  });
+                }}
+              >
+                <CarouselContent>
+                  {images.map((img: string, i: number) => (
+                    <CarouselItem key={i}>
+                      <img
+                        src={img}
+                        alt={listing.title}
+                        className="aspect-[4/3] w-full object-cover cursor-pointer"
+                        onClick={() => { setViewerIndex(i); setViewerOpen(true); }}
+                      />
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                {images.length > 1 && (
+                  <>
+                    <CarouselPrevious className="left-3 bg-card/80 border-0 backdrop-blur-sm" />
+                    <CarouselNext className="right-3 bg-card/80 border-0 backdrop-blur-sm" />
+                  </>
+                )}
+              </Carousel>
+              <div className="absolute left-3 top-3 flex gap-1.5 z-10 pointer-events-none">
                 {listing.is_premium && <Badge className="bg-gradient-primary text-primary-foreground border-0">Premium</Badge>}
                 {listing.is_urgent && <Badge variant="destructive">Təcili</Badge>}
                 <Badge variant="secondary">{listing.condition}</Badge>
               </div>
-              <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded-lg bg-card/80 px-2 py-1 text-xs backdrop-blur-sm">
+              <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded-lg bg-card/80 px-2 py-1 text-xs backdrop-blur-sm z-10 pointer-events-none">
                 <Eye className="h-3 w-3" /> {listing.views_count} baxış
               </div>
             </div>
             {images.length > 1 && (
-              <div className="mt-3 flex gap-2 overflow-x-auto">
+              <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-none">
                 {images.map((img: string, i: number) => (
                   <button key={i} onClick={() => setSelectedImage(i)}
                     className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-colors ${i === selectedImage ? "border-primary" : "border-border"}`}>
@@ -254,6 +284,13 @@ const ProductDetail = () => {
                 ))}
               </div>
             )}
+
+            <ImageViewer
+              images={images}
+              initialIndex={viewerIndex}
+              open={viewerOpen}
+              onOpenChange={setViewerOpen}
+            />
           </div>
 
           {/* Details */}
