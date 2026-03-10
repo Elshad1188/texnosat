@@ -43,6 +43,12 @@ const Auth = () => {
         // Process referral after signup
         if (referralCode) {
           setTimeout(async () => {
+            // Check if referral system is enabled
+            const { data: refSettings } = await supabase
+              .from("site_settings").select("value").eq("key", "referral").maybeSingle();
+            const enabled = refSettings?.value ? (refSettings.value as any).referral_enabled !== false : true;
+            if (!enabled) return;
+
             const { data: { user: newUser } } = await supabase.auth.getUser();
             if (newUser) {
               await supabase.rpc("process_referral", {
