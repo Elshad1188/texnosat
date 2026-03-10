@@ -40,6 +40,8 @@ const ProductDetail = () => {
   const queryClient = useQueryClient();
   const [showPhone, setShowPhone] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
 
