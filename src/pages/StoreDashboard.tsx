@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import ListingCard from "@/components/ListingCard";
+import ListingBoostDialog from "@/components/ListingBoostDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
 import {
   Store, Package, Users, Eye, Crown, Edit2, Plus, Trash2,
-  MapPin, Phone, Clock, TrendingUp, Loader2, BarChart3
+  MapPin, Phone, Clock, TrendingUp, Loader2, BarChart3, Rocket
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
