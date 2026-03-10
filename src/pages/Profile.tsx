@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ListingBoostDialog from "@/components/ListingBoostDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,7 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
-import { User, Package, Store, Star, Edit2, Save, Eye, MapPin, Phone, Calendar, LogOut, ShieldCheck, Settings } from "lucide-react";
+import { User, Package, Store, Star, Edit2, Save, Eye, MapPin, Phone, Calendar, LogOut, ShieldCheck, Settings, Wallet } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -26,6 +27,7 @@ const Profile = () => {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
+  const [boostListingId, setBoostListingId] = useState<string | null>(null);
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["profile", user?.id],
@@ -173,6 +175,10 @@ const Profile = () => {
                 )}
               </div>
               <div className="flex gap-4 text-center">
+                <Link to="/balance" className="text-center hover:opacity-80 transition-opacity">
+                  <p className="text-xl font-bold text-primary">{Number((profile as any)?.balance || 0).toFixed(2)} ₼</p>
+                  <p className="text-[10px] text-muted-foreground">Balans</p>
+                </Link>
                 <div><p className="text-xl font-bold text-foreground">{listings.length}</p><p className="text-[10px] text-muted-foreground">Elan</p></div>
                 <div><p className="text-xl font-bold text-foreground">{avgRating}</p><p className="text-[10px] text-muted-foreground">Reytinq</p></div>
                 <div><p className="text-xl font-bold text-foreground">{reviews.length}</p><p className="text-[10px] text-muted-foreground">Rəy</p></div>
@@ -215,9 +221,16 @@ const Profile = () => {
                         </Badge>
                       </div>
                       <p className="mt-1 text-base font-bold text-primary">{l.price} {l.currency}</p>
-                      <div className="mt-1.5 flex items-center gap-3 text-[11px] text-muted-foreground">
-                        <span className="flex items-center gap-0.5"><Eye className="h-3 w-3" />{l.views_count}</span>
-                        <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" />{l.location}</span>
+                      <div className="mt-1.5 flex items-center justify-between">
+                        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                          <span className="flex items-center gap-0.5"><Eye className="h-3 w-3" />{l.views_count}</span>
+                          <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" />{l.location}</span>
+                        </div>
+                        {!l.is_premium && !l.is_urgent && (
+                          <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" onClick={() => setBoostListingId(l.id)}>
+                            <Wallet className="h-3 w-3" /> Yüksəlt
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -367,6 +380,13 @@ const Profile = () => {
         </Tabs>
       </main>
       <Footer />
+      {boostListingId && (
+        <ListingBoostDialog
+          listingId={boostListingId}
+          open={!!boostListingId}
+          onOpenChange={(v) => { if (!v) setBoostListingId(null); }}
+        />
+      )}
     </div>
   );
 };

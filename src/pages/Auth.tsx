@@ -1,23 +1,34 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, User, ArrowLeft } from "lucide-react";
+import { Mail, Lock, User, ArrowLeft, Gift } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Auth = () => {
+  const [searchParams] = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) {
+      setReferralCode(ref);
+      setIsLogin(false);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +40,18 @@ const Auth = () => {
       } else {
         await signUp(email, password, fullName);
         toast({ title: "Hesab yaradıldı!", description: "Xoş gəldiniz!" });
+        // Process referral after signup
+        if (referralCode) {
+          setTimeout(async () => {
+            const { data: { user: newUser } } = await supabase.auth.getUser();
+            if (newUser) {
+              await supabase.rpc("process_referral", {
+                _referral_code: referralCode.toUpperCase(),
+                _new_user_id: newUser.id,
+              });
+            }
+          }, 2000);
+        }
       }
       navigate("/");
     } catch (error: any) {
@@ -83,6 +106,21 @@ const Auth = () => {
                       onChange={(e) => setFullName(e.target.value)}
                       className="pl-10"
                       required
+                    />
+                  </div>
+                </div>
+              )}
+              {!isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="referral">Referal kodu (istəyə bağlı)</Label>
+                  <div className="relative">
+                    <Gift className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="referral"
+                      placeholder="XXXXXXXX"
+                      value={referralCode}
+                      onChange={(e) => setReferralCode(e.target.value)}
+                      className="pl-10 uppercase font-mono"
                     />
                   </div>
                 </div>

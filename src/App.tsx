@@ -21,6 +21,7 @@ import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
 import Favorites from "./pages/Favorites";
 import StaticPage from "./pages/StaticPage";
+import Balance from "./pages/Balance";
 import NotFound from "./pages/NotFound";
 import MobileBottomNav from "./components/MobileBottomNav";
 
@@ -59,6 +60,7 @@ const App = () => (
                 <Route path="/messages" element={<Messages />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/favorites" element={<Favorites />} />
+                <Route path="/balance" element={<Balance />} />
                 <Route path="/page/:slug" element={<StaticPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

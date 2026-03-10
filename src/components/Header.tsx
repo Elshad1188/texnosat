@@ -1,4 +1,4 @@
-import { Plus, User, Heart, Menu, X, LogOut, Store, ShieldCheck, MessageCircle } from "lucide-react";
+import { Plus, User, Heart, Menu, X, LogOut, Store, ShieldCheck, MessageCircle, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
@@ -86,6 +86,12 @@ const Header = () => {
         </nav>
 
         <div className="flex items-center gap-2">
+          {user && (
+            <Link to="/balance" className="hidden md:flex items-center gap-1.5 rounded-lg bg-muted px-2.5 py-1.5 text-sm font-semibold text-foreground hover:bg-accent transition-colors">
+              <Wallet className="h-4 w-4 text-primary" />
+              <BalanceDisplay userId={user.id} />
+            </Link>
+          )}
           <Button variant="ghost" size="icon" className="hidden md:flex" asChild>
             <Link to="/favorites"><Heart className="h-5 w-5" /></Link>
           </Button>
@@ -134,6 +140,17 @@ const Header = () => {
       </div>
     </header>
   );
+};
+
+const BalanceDisplay = ({ userId }: { userId: string }) => {
+  const { data: profile } = useQuery({
+    queryKey: ["profile-balance", userId],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("balance").eq("user_id", userId).single();
+      return data;
+    },
+  });
+  return <span>{Number((profile as any)?.balance || 0).toFixed(2)} ₼</span>;
 };
 
 export default Header;
