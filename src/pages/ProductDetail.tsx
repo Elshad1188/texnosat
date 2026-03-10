@@ -311,7 +311,7 @@ const ProductDetail = () => {
               <Badge variant="outline">{listing.category}</Badge>
             </div>
 
-            <div className="mt-4 flex gap-2">
+            <div className="mt-4 flex flex-wrap gap-2">
               <Button 
                 onClick={() => {
                   if (!user) { navigate("/auth"); return; }
@@ -326,6 +326,34 @@ const ProductDetail = () => {
               </Button>
               <Button variant="outline" size="icon"><Share2 className="h-4 w-4" /></Button>
               <ReportButton targetType="listing" targetId={listing.id} />
+              {user && user.id === listing.user_id && (
+                <>
+                  <Button variant="outline" size="icon" asChild>
+                    <Link to={`/create-listing?edit=${listing.id}`}><Edit2 className="h-4 w-4" /></Link>
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="icon" className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Elanı silmək istəyirsiniz?</AlertDialogTitle>
+                        <AlertDialogDescription>Bu əməliyyat geri alına bilməz.</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Ləğv et</AlertDialogCancel>
+                        <AlertDialogAction onClick={async () => {
+                          await supabase.from("listings").delete().eq("id", listing.id);
+                          toast({ title: "Elan silindi" });
+                          navigate("/profile");
+                        }}>Sil</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
             </div>
 
             {/* Seller Card */}
