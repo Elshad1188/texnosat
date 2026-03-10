@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Heart, Share2, MapPin, Clock, Star, Phone, MessageCircle, Shield, Eye, Loader2, Send, Store, ExternalLink } from "lucide-react";
+import { ArrowLeft, Heart, Share2, MapPin, Clock, Star, Phone, MessageCircle, Shield, Eye, Loader2, Send, Store, ExternalLink, Edit2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +14,11 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ListingCard from "@/components/ListingCard";
 import ReportButton from "@/components/ReportButton";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 function formatTime(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -306,7 +311,7 @@ const ProductDetail = () => {
               <Badge variant="outline">{listing.category}</Badge>
             </div>
 
-            <div className="mt-4 flex gap-2">
+            <div className="mt-4 flex flex-wrap gap-2">
               <Button 
                 onClick={() => {
                   if (!user) { navigate("/auth"); return; }
@@ -321,6 +326,34 @@ const ProductDetail = () => {
               </Button>
               <Button variant="outline" size="icon"><Share2 className="h-4 w-4" /></Button>
               <ReportButton targetType="listing" targetId={listing.id} />
+              {user && user.id === listing.user_id && (
+                <>
+                  <Button variant="outline" size="icon" asChild>
+                    <Link to={`/create-listing?edit=${listing.id}`}><Edit2 className="h-4 w-4" /></Link>
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="icon" className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Elanı silmək istəyirsiniz?</AlertDialogTitle>
+                        <AlertDialogDescription>Bu əməliyyat geri alına bilməz.</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Ləğv et</AlertDialogCancel>
+                        <AlertDialogAction onClick={async () => {
+                          await supabase.from("listings").delete().eq("id", listing.id);
+                          toast({ title: "Elan silindi" });
+                          navigate("/profile");
+                        }}>Sil</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
             </div>
 
             {/* Seller Card */}

@@ -24,6 +24,7 @@ import StaticPage from "./pages/StaticPage";
 import Balance from "./pages/Balance";
 import NotFound from "./pages/NotFound";
 import MobileBottomNav from "./components/MobileBottomNav";
+import AppDownloadBanner from "./components/AppDownloadBanner";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +67,7 @@ const App = () => (
               </Routes>
             </div>
             <MobileBottomNav />
+            <AppDownloadBanner />
           </ThemeProvider>
         </AuthProvider>
       </BrowserRouter>
