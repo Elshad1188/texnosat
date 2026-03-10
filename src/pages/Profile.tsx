@@ -247,6 +247,11 @@ const Profile = () => {
                         <h3 className="text-sm font-semibold text-foreground truncate">{s.name}</h3>
                         <p className="text-xs text-muted-foreground line-clamp-1">{s.description || "Açıqlama yoxdur"}</p>
                       </div>
+                      <div className="flex gap-1 shrink-0">
+                        <Button size="sm" variant="outline" className="h-8 text-xs gap-1" asChild>
+                          <Link to="/store-dashboard"><Settings className="h-3.5 w-3.5" />İdarə et</Link>
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
