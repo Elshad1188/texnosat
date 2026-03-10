@@ -380,6 +380,13 @@ const Profile = () => {
         </Tabs>
       </main>
       <Footer />
+      {boostListingId && (
+        <ListingBoostDialog
+          listingId={boostListingId}
+          open={!!boostListingId}
+          onOpenChange={(v) => { if (!v) setBoostListingId(null); }}
+        />
+      )}
     </div>
   );
 };
