@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Store, MapPin, Phone, Clock, Crown, MessageCircle, Loader2, ArrowLeft
+  Store, MapPin, Phone, Clock, Crown, MessageCircle, Loader2, ArrowLeft, Users, UserPlus, UserMinus, Settings
 } from "lucide-react";
 
 const StoreDetail = () => {

@@ -101,6 +101,7 @@ const CreateListing = () => {
         price: parseFloat(form.price), category: form.category,
         condition: form.condition, location: form.location || "Bakı",
         image_urls: imageUrls,
+        store_id: publishToStore && userStore ? userStore.id : null,
       });
       if (error) throw error;
       toast({ title: "Elan uğurla yerləşdirildi!" });
