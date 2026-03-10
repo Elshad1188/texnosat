@@ -240,6 +240,10 @@ const StoreDashboard = () => {
                         </div>
                       </div>
                       <div className="flex shrink-0 gap-1">
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-amber-500 hover:text-amber-600"
+                          onClick={() => setBoostListingId(l.id)}>
+                          <Rocket className="h-4 w-4" />
+                        </Button>
                         <Button size="sm" variant="ghost" className="h-8 w-8 p-0"
                           onClick={() => toggleListing.mutate({ id: l.id, is_active: !l.is_active })}>
                           <Eye className={`h-4 w-4 ${l.is_active ? "text-primary" : "text-muted-foreground"}`} />
