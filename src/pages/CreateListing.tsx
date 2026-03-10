@@ -143,6 +143,26 @@ const CreateListing = () => {
             </div>
           </div>
 
+          {/* Store option */}
+          {userStore && (
+            <div className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  {userStore.logo_url ? (
+                    <img src={userStore.logo_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                  ) : (
+                    <Store className="h-5 w-5 text-primary" />
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{userStore.name} mağazasında paylaş</p>
+                  <p className="text-xs text-muted-foreground">Elan mağaza profili altında göstəriləcək</p>
+                </div>
+              </div>
+              <Switch checked={publishToStore} onCheckedChange={setPublishToStore} />
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="title">Başlıq *</Label>
             <Input id="title" placeholder="Məs: iPhone 15 Pro Max 256GB" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />

@@ -17,6 +17,9 @@ const StoreDetail = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const isOwner = !!user && store?.user_id === user.id;
 
   const { data: store, isLoading } = useQuery({
     queryKey: ["store", id],
