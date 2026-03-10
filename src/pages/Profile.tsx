@@ -221,9 +221,16 @@ const Profile = () => {
                         </Badge>
                       </div>
                       <p className="mt-1 text-base font-bold text-primary">{l.price} {l.currency}</p>
-                      <div className="mt-1.5 flex items-center gap-3 text-[11px] text-muted-foreground">
-                        <span className="flex items-center gap-0.5"><Eye className="h-3 w-3" />{l.views_count}</span>
-                        <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" />{l.location}</span>
+                      <div className="mt-1.5 flex items-center justify-between">
+                        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                          <span className="flex items-center gap-0.5"><Eye className="h-3 w-3" />{l.views_count}</span>
+                          <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" />{l.location}</span>
+                        </div>
+                        {!l.is_premium && !l.is_urgent && (
+                          <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" onClick={() => setBoostListingId(l.id)}>
+                            <Wallet className="h-3 w-3" /> Yüksəlt
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
