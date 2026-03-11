@@ -10,23 +10,41 @@ import { Save, Loader2, Smartphone, Bell, Send, Link2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface FirebaseConfig {
-  server_key: string;
-  sender_id: string;
-  app_store_url: string;
-  play_store_url: string;
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
+  storageBucket: string;
+  messagingSenderId: string;
+  appId: string;
+  vapidKey: string;
 }
 
-const defaults: FirebaseConfig = {
-  server_key: "",
-  sender_id: "",
+interface IntegrationsConfig {
+  app_store_url: string;
+  play_store_url: string;
+  firebase_config: FirebaseConfig;
+}
+
+const defaultFirebase: FirebaseConfig = {
+  apiKey: "",
+  authDomain: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: "",
+  vapidKey: "",
+};
+
+const defaults: IntegrationsConfig = {
   app_store_url: "",
   play_store_url: "",
+  firebase_config: defaultFirebase,
 };
 
 const AdminIntegrationsManager = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [config, setConfig] = useState<FirebaseConfig>(defaults);
+  const [config, setConfig] = useState<IntegrationsConfig>(defaults);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [pushTitle, setPushTitle] = useState("");
@@ -41,12 +59,24 @@ const AdminIntegrationsManager = () => {
         .eq("key", "integrations")
         .maybeSingle();
       if (data?.value) {
-        setConfig({ ...defaults, ...(data.value as any) });
+        const val = data.value as any;
+        setConfig({
+          ...defaults,
+          ...val,
+          firebase_config: { ...defaultFirebase, ...(val.firebase_config || {}) },
+        });
       }
       setLoading(false);
     };
     fetch();
   }, []);
+
+  const updateFirebase = (field: keyof FirebaseConfig, value: string) => {
+    setConfig({
+      ...config,
+      firebase_config: { ...config.firebase_config, [field]: value },
+    });
+  };
 
   const save = async () => {
     setSaving(true);
@@ -76,36 +106,21 @@ const AdminIntegrationsManager = () => {
       toast({ title: "Başlıq və mətn daxil edin", variant: "destructive" });
       return;
     }
-    if (!config.server_key) {
-      toast({ title: "Firebase Server Key tənzimlənməyib", variant: "destructive" });
-      return;
-    }
     setSending(true);
     try {
-      // Send push notification via Firebase Cloud Messaging
-      const res = await fetch("https://fcm.googleapis.com/fcm/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `key=${config.server_key}`,
-        },
-        body: JSON.stringify({
-          to: "/topics/all",
-          notification: {
-            title: pushTitle,
-            body: pushBody,
-            icon: "/pwa-192.png",
-          },
-        }),
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+
+      const res = await supabase.functions.invoke("send-push", {
+        body: { title: pushTitle, body: pushBody, topic: "all" },
       });
 
-      if (res.ok) {
+      if (res.error) {
+        toast({ title: "Xəta", description: res.error.message, variant: "destructive" });
+      } else {
         toast({ title: "Push bildirişi göndərildi!" });
         setPushTitle("");
         setPushBody("");
-      } else {
-        const err = await res.text();
-        toast({ title: "Xəta", description: err, variant: "destructive" });
       }
     } catch (err: any) {
       toast({ title: "Xəta", description: err.message, variant: "destructive" });
@@ -119,6 +134,8 @@ const AdminIntegrationsManager = () => {
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
+
+  const hasFirebase = !!config.firebase_config.apiKey && !!config.firebase_config.projectId;
 
   return (
     <div className="space-y-6">
@@ -159,31 +176,81 @@ const AdminIntegrationsManager = () => {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-sm">
-            <Bell className="h-4 w-4" /> Firebase Push Bildirişləri
+            <Bell className="h-4 w-4" /> Firebase Cloud Messaging (V1)
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Server Key</Label>
-            <Input
-              value={config.server_key}
-              onChange={(e) => setConfig({ ...config, server_key: e.target.value })}
-              placeholder="Firebase Cloud Messaging server key"
-              className="h-9 font-mono text-xs"
-              type="password"
-            />
-            <p className="text-[10px] text-muted-foreground">
-              Firebase Console → Project Settings → Cloud Messaging → Server key
-            </p>
+          <p className="text-[10px] text-muted-foreground">
+            Firebase Console → Project Settings → General → Your apps → Web app konfiqurasiyasını daxil edin.
+            Service account JSON-u isə backend sirrlərinə əlavə olunub.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs">API Key</Label>
+              <Input
+                value={config.firebase_config.apiKey}
+                onChange={(e) => updateFirebase("apiKey", e.target.value)}
+                placeholder="AIzaSy..."
+                className="h-9 font-mono text-xs"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Project ID</Label>
+              <Input
+                value={config.firebase_config.projectId}
+                onChange={(e) => updateFirebase("projectId", e.target.value)}
+                placeholder="my-project-id"
+                className="h-9 font-mono text-xs"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Auth Domain</Label>
+              <Input
+                value={config.firebase_config.authDomain}
+                onChange={(e) => updateFirebase("authDomain", e.target.value)}
+                placeholder="my-project.firebaseapp.com"
+                className="h-9 font-mono text-xs"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Storage Bucket</Label>
+              <Input
+                value={config.firebase_config.storageBucket}
+                onChange={(e) => updateFirebase("storageBucket", e.target.value)}
+                placeholder="my-project.appspot.com"
+                className="h-9 font-mono text-xs"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Messaging Sender ID</Label>
+              <Input
+                value={config.firebase_config.messagingSenderId}
+                onChange={(e) => updateFirebase("messagingSenderId", e.target.value)}
+                placeholder="123456789"
+                className="h-9 font-mono text-xs"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">App ID</Label>
+              <Input
+                value={config.firebase_config.appId}
+                onChange={(e) => updateFirebase("appId", e.target.value)}
+                placeholder="1:123:web:abc"
+                className="h-9 font-mono text-xs"
+              />
+            </div>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs">Sender ID</Label>
+            <Label className="text-xs">VAPID Key (Web Push sertifikatı)</Label>
             <Input
-              value={config.sender_id}
-              onChange={(e) => setConfig({ ...config, sender_id: e.target.value })}
-              placeholder="Firebase sender ID"
+              value={config.firebase_config.vapidKey}
+              onChange={(e) => updateFirebase("vapidKey", e.target.value)}
+              placeholder="BHk4..."
               className="h-9 font-mono text-xs"
             />
+            <p className="text-[10px] text-muted-foreground">
+              Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → Generate key pair
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -193,11 +260,11 @@ const AdminIntegrationsManager = () => {
       </Button>
 
       {/* Push Notification Sender */}
-      {config.server_key && (
+      {hasFirebase && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-sm">
-              <Send className="h-4 w-4" /> Push Bildirişi Göndər
+              <Send className="h-4 w-4" /> Push Bildirişi Göndər (FCM V1)
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -227,7 +294,7 @@ const AdminIntegrationsManager = () => {
               <Send className="h-4 w-4" /> {sending ? "Göndərilir..." : "Göndər"}
             </Button>
             <p className="text-[10px] text-muted-foreground">
-              Bu bildiriş "all" mövzusuna abunə olan bütün cihazlara göndəriləcək
+              FCM V1 API ilə "all" mövzusuna bildiriş göndəriləcək. Edge function vasitəsilə.
             </p>
           </CardContent>
         </Card>
