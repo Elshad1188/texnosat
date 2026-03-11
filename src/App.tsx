@@ -69,6 +69,7 @@ const App = () => (
             </div>
             <MobileBottomNav />
             <AppDownloadBanner />
+            <FirebaseInit />
           </ThemeProvider>
         </AuthProvider>
       </BrowserRouter>
