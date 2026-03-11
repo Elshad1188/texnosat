@@ -25,6 +25,7 @@ import Balance from "./pages/Balance";
 import NotFound from "./pages/NotFound";
 import MobileBottomNav from "./components/MobileBottomNav";
 import AppDownloadBanner from "./components/AppDownloadBanner";
+import FirebaseInit from "./components/FirebaseInit";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,7 @@ const App = () => (
             </div>
             <MobileBottomNav />
             <AppDownloadBanner />
+            <FirebaseInit />
           </ThemeProvider>
         </AuthProvider>
       </BrowserRouter>
