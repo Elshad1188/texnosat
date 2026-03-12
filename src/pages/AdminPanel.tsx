@@ -21,6 +21,7 @@ import AdminStatsManager from "@/components/admin/AdminStatsManager";
 import AdminSettingsManager from "@/components/admin/AdminSettingsManager";
 import AdminPagesManager from "@/components/admin/AdminPagesManager";
 import AdminNotificationSender from "@/components/admin/AdminNotificationSender";
+import AdminNotificationSettings from "@/components/admin/AdminNotificationSettings";
 import AdminBalanceManager from "@/components/admin/AdminBalanceManager";
 import AdminReferralManager from "@/components/admin/AdminReferralManager";
 import AdminIntegrationsManager from "@/components/admin/AdminIntegrationsManager";
@@ -199,7 +200,10 @@ const AdminPanel = () => {
           <TabsContent value="moderation" className="mt-3"><AdminModerationManager /></TabsContent>
 
           {/* Notifications */}
-          <TabsContent value="notifications" className="mt-3"><AdminNotificationSender /></TabsContent>
+          <TabsContent value="notifications" className="mt-3 space-y-6">
+            <AdminNotificationSettings />
+            <AdminNotificationSender />
+          </TabsContent>
 
           {/* Search for listings/stores/users */}
           <div className="relative mt-3 mb-3">
