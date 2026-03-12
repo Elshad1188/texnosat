@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, GripVertical, Image, Loader2, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, Image, Loader2, Upload, Link as LinkIcon } from "lucide-react";
 
 interface Banner {
   id: string;
@@ -32,7 +32,10 @@ const AdminBannerManager = () => {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState({ title: "", image_url: "", link: "", position: "home_top" });
+  const [uploading, setUploading] = useState(false);
+  const [uploadMode, setUploadMode] = useState<"url" | "file">("file");
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [form, setForm] = useState({ title: "", image_url: "", link: "", position: "home_top", starts_at: "", ends_at: "" });
 
   const fetchBanners = async () => {
     setLoading(true);
@@ -43,9 +46,26 @@ const AdminBannerManager = () => {
 
   useEffect(() => { fetchBanners(); }, []);
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("banners").upload(path, file);
+    if (error) {
+      toast({ title: "Yükləmə xətası", description: error.message, variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage.from("banners").getPublicUrl(path);
+    setForm(f => ({ ...f, image_url: urlData.publicUrl }));
+    setUploading(false);
+  };
+
   const addBanner = async () => {
     if (!form.title || !form.image_url) {
-      toast({ title: "Başlıq və şəkil URL tələb olunur", variant: "destructive" });
+      toast({ title: "Başlıq və şəkil tələb olunur", variant: "destructive" });
       return;
     }
     const { error } = await supabase.from("banners").insert({
@@ -54,10 +74,12 @@ const AdminBannerManager = () => {
       link: form.link || null,
       position: form.position,
       sort_order: banners.length,
+      starts_at: form.starts_at || null,
+      ends_at: form.ends_at || null,
     });
     if (error) { toast({ title: "Xəta", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Banner əlavə edildi" });
-    setForm({ title: "", image_url: "", link: "", position: "home_top" });
+    setForm({ title: "", image_url: "", link: "", position: "home_top", starts_at: "", ends_at: "" });
     setAdding(false);
     fetchBanners();
   };
@@ -92,14 +114,6 @@ const AdminBannerManager = () => {
               <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Banner başlığı" className="h-9" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Şəkil URL</Label>
-              <Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="https://..." className="h-9" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Link (istəyə bağlı)</Label>
-              <Input value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} placeholder="/products?category=..." className="h-9" />
-            </div>
-            <div className="space-y-1.5">
               <Label className="text-xs">Mövqe</Label>
               <Select value={form.position} onValueChange={(v) => setForm({ ...form, position: v })}>
                 <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
@@ -109,6 +123,69 @@ const AdminBannerManager = () => {
               </Select>
             </div>
           </div>
+
+          {/* Image source toggle */}
+          <div className="space-y-2">
+            <Label className="text-xs">Şəkil mənbəyi</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={uploadMode === "file" ? "default" : "outline"}
+                onClick={() => setUploadMode("file")}
+                className="gap-1.5"
+              >
+                <Upload className="h-3.5 w-3.5" /> Fayl yüklə
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={uploadMode === "url" ? "default" : "outline"}
+                onClick={() => setUploadMode("url")}
+                className="gap-1.5"
+              >
+                <LinkIcon className="h-3.5 w-3.5" /> URL
+              </Button>
+            </div>
+
+            {uploadMode === "file" ? (
+              <div>
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  className="gap-1.5 w-full"
+                >
+                  {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                  {uploading ? "Yüklənir..." : form.image_url ? "Başqa şəkil seç" : "Şəkil seç"}
+                </Button>
+              </div>
+            ) : (
+              <Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="https://..." className="h-9" />
+            )}
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Link (istəyə bağlı)</Label>
+              <Input value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} placeholder="/products?category=..." className="h-9" />
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Başlanğıc vaxtı (istəyə bağlı)</Label>
+              <Input type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} className="h-9" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Bitmə vaxtı (istəyə bağlı)</Label>
+              <Input type="datetime-local" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} className="h-9" />
+            </div>
+          </div>
+
           {form.image_url && (
             <img src={form.image_url} alt="Preview" className="h-24 w-full rounded-lg object-cover" />
           )}
