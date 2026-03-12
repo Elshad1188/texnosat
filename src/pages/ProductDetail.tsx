@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Heart, Share2, MapPin, Clock, Star, Phone, MessageCircle, Shield, Eye, Loader2, Send, Store, ExternalLink, Edit2, Trash2 } from "lucide-react";
+import { ArrowLeft, Heart, Share2, MapPin, Clock, Star, Phone, MessageCircle, Shield, Eye, Loader2, Send, Store, ExternalLink, Edit2, Trash2, Crown, Zap, Gem } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -271,8 +271,16 @@ const ProductDetail = () => {
                 )}
               </Carousel>
               <div className="absolute left-3 top-3 flex gap-1.5 z-10 pointer-events-none">
-                {listing.is_premium && <Badge className="bg-gradient-primary text-primary-foreground border-0">Premium</Badge>}
-                {listing.is_urgent && <Badge variant="destructive">Təcili</Badge>}
+                {listing.is_premium && (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/90 shadow-lg shadow-amber-500/30 backdrop-blur-sm">
+                    <Crown className="h-4 w-4 text-white" />
+                  </div>
+                )}
+                {listing.is_urgent && (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500/90 shadow-lg shadow-red-500/30 backdrop-blur-sm">
+                    <Zap className="h-4 w-4 text-white fill-white" />
+                  </div>
+                )}
                 <Badge variant="secondary">{listing.condition}</Badge>
               </div>
               <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded-lg bg-card/80 px-2 py-1 text-xs backdrop-blur-sm z-10 pointer-events-none">
@@ -356,91 +364,6 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* Seller Card */}
-            <div className="mt-6 rounded-xl border border-border bg-card p-4 shadow-card">
-              <div className="flex items-center justify-between">
-                <Link to={`/seller/${listing.user_id}`} className="group flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-foreground group-hover:text-primary transition-colors">{seller?.full_name || "Adsız"}</p>
-                    <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>
-                  </div>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Star className="h-3.5 w-3.5 fill-primary text-primary" />
-                    <span>{avgRating.toFixed(1)}</span>
-                    <span>·</span>
-                    <span>{sellerReviews.length} rəy</span>
-                    {seller?.city && <><span>·</span><span>{seller.city}</span></>}
-                  </div>
-                </Link>
-                <Link to={`/seller/${listing.user_id}`} className="text-muted-foreground hover:text-primary transition-colors">
-                  <ExternalLink className="h-5 w-5" />
-                </Link>
-              </div>
-
-              {/* Store Link */}
-              {store && (
-                <Link
-                  to={`/store/${store.id}`}
-                  className="mt-3 flex items-center gap-3 rounded-lg border border-border bg-muted/50 p-3 transition-colors hover:bg-muted"
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-card border border-border">
-                    {store.logo_url ? (
-                      <img src={store.logo_url} alt={store.name} className="h-full w-full object-cover" />
-                    ) : (
-                      <Store className="h-5 w-5 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <p className="truncate text-sm font-semibold text-foreground">{store.name}</p>
-                      {store.is_premium && (
-                        <Badge className="gap-0.5 bg-gradient-primary text-primary-foreground text-[9px] px-1.5 py-0">Premium</Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Star className="h-3 w-3 fill-primary text-primary" />
-                      <span>{storeAvgRating.toFixed(1)}</span>
-                      <span>·</span>
-                      <span>{storeOwnerReviews.length} rəy</span>
-                    </div>
-                  </div>
-                  <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
-                </Link>
-              )}
-
-              <div className="mt-4 flex flex-col gap-2">
-                <Button className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2" onClick={() => setShowPhone(!showPhone)}>
-                  <Phone className="h-4 w-4" />
-                  {showPhone ? (seller?.phone || "Nömrə yoxdur") : "Nömrəni göstər"}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full gap-2"
-                  onClick={async () => {
-                    if (!user) { navigate("/auth"); return; }
-                    const { data: existing } = await supabase
-                      .from("conversations")
-                      .select("id")
-                      .eq("listing_id", listing.id)
-                      .eq("buyer_id", user.id)
-                      .eq("seller_id", listing.user_id)
-                      .maybeSingle();
-                    if (existing) {
-                      navigate(`/messages?c=${existing.id}`);
-                    } else {
-                      const { data: newConvo } = await supabase
-                        .from("conversations")
-                        .insert({ listing_id: listing.id, buyer_id: user.id, seller_id: listing.user_id })
-                        .select("id")
-                        .single();
-                      if (newConvo) navigate(`/messages?c=${newConvo.id}`);
-                    }
-                  }}
-                >
-                  <MessageCircle className="h-4 w-4" /> Mesaj yaz
-                </Button>
-              </div>
-            </div>
 
             {/* Description */}
             {listing.description && (
@@ -465,8 +388,96 @@ const ProductDetail = () => {
           </div>
         </div>
 
+        {/* Seller Card - above reviews */}
+        <div className="mt-8 rounded-xl border border-border bg-card p-4 shadow-card max-w-2xl">
+          <div className="flex items-center justify-between">
+            <Link to={`/seller/${listing.user_id}`} className="group flex-1">
+              <div className="flex items-center gap-2">
+                <p className="font-medium text-foreground group-hover:text-primary transition-colors">{seller?.full_name || "Adsız"}</p>
+                <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>
+              </div>
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <Star className="h-3.5 w-3.5 fill-primary text-primary" />
+                <span>{avgRating.toFixed(1)}</span>
+                <span>·</span>
+                <span>{sellerReviews.length} rəy</span>
+                {seller?.city && <><span>·</span><span>{seller.city}</span></>}
+              </div>
+            </Link>
+            <Link to={`/seller/${listing.user_id}`} className="text-muted-foreground hover:text-primary transition-colors">
+              <ExternalLink className="h-5 w-5" />
+            </Link>
+          </div>
+
+          {/* Store Link */}
+          {store && (
+            <Link
+              to={`/store/${store.id}`}
+              className="mt-3 flex items-center gap-3 rounded-lg border border-border bg-muted/50 p-3 transition-colors hover:bg-muted"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-card border border-border">
+                {store.logo_url ? (
+                  <img src={store.logo_url} alt={store.name} className="h-full w-full object-cover" />
+                ) : (
+                  <Store className="h-5 w-5 text-muted-foreground" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <p className="truncate text-sm font-semibold text-foreground">{store.name}</p>
+                  {store.is_premium && (
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/90">
+                      <Crown className="h-3 w-3 text-white" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Star className="h-3 w-3 fill-primary text-primary" />
+                  <span>{storeAvgRating.toFixed(1)}</span>
+                  <span>·</span>
+                  <span>{storeOwnerReviews.length} rəy</span>
+                </div>
+              </div>
+              <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </Link>
+          )}
+
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <Button className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2" onClick={() => setShowPhone(!showPhone)}>
+              <Phone className="h-4 w-4" />
+              {showPhone ? (seller?.phone || "Nömrə yoxdur") : "Nömrəni göstər"}
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 gap-2"
+              onClick={async () => {
+                if (!user) { navigate("/auth"); return; }
+                const { data: existing } = await supabase
+                  .from("conversations")
+                  .select("id")
+                  .eq("listing_id", listing.id)
+                  .eq("buyer_id", user.id)
+                  .eq("seller_id", listing.user_id)
+                  .maybeSingle();
+                if (existing) {
+                  navigate(`/messages?c=${existing.id}`);
+                } else {
+                  const { data: newConvo } = await supabase
+                    .from("conversations")
+                    .insert({ listing_id: listing.id, buyer_id: user.id, seller_id: listing.user_id })
+                    .select("id")
+                    .single();
+                  if (newConvo) navigate(`/messages?c=${newConvo.id}`);
+                }
+              }}
+            >
+              <MessageCircle className="h-4 w-4" /> Mesaj yaz
+            </Button>
+          </div>
+        </div>
+
         {/* Reviews */}
-        <div className="mt-12">
+        <div className="mt-8">
           <h2 className="mb-4 font-display text-xl font-bold text-foreground">
             Satıcı rəyləri ({sellerReviews.length})
           </h2>
