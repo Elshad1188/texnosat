@@ -690,6 +690,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      notify_admins: {
+        Args: {
+          _event_type: string
+          _link?: string
+          _message: string
+          _title: string
+        }
+        Returns: undefined
+      }
       process_referral: {
         Args: { _new_user_id: string; _referral_code: string }
         Returns: boolean
