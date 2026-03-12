@@ -21,6 +21,7 @@ import AdminStatsManager from "@/components/admin/AdminStatsManager";
 import AdminSettingsManager from "@/components/admin/AdminSettingsManager";
 import AdminPagesManager from "@/components/admin/AdminPagesManager";
 import AdminNotificationSender from "@/components/admin/AdminNotificationSender";
+import AdminNotificationSettings from "@/components/admin/AdminNotificationSettings";
 import AdminBalanceManager from "@/components/admin/AdminBalanceManager";
 import AdminReferralManager from "@/components/admin/AdminReferralManager";
 import AdminIntegrationsManager from "@/components/admin/AdminIntegrationsManager";
