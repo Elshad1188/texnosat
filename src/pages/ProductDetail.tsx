@@ -271,8 +271,16 @@ const ProductDetail = () => {
                 )}
               </Carousel>
               <div className="absolute left-3 top-3 flex gap-1.5 z-10 pointer-events-none">
-                {listing.is_premium && <Badge className="bg-gradient-primary text-primary-foreground border-0">Premium</Badge>}
-                {listing.is_urgent && <Badge variant="destructive">Təcili</Badge>}
+                {listing.is_premium && (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/90 shadow-lg shadow-amber-500/30 backdrop-blur-sm">
+                    <Crown className="h-4 w-4 text-white" />
+                  </div>
+                )}
+                {listing.is_urgent && (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500/90 shadow-lg shadow-red-500/30 backdrop-blur-sm">
+                    <Zap className="h-4 w-4 text-white fill-white" />
+                  </div>
+                )}
                 <Badge variant="secondary">{listing.condition}</Badge>
               </div>
               <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded-lg bg-card/80 px-2 py-1 text-xs backdrop-blur-sm z-10 pointer-events-none">
