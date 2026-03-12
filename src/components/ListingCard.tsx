@@ -75,17 +75,16 @@ const ListingCard = ({ id, title, price, location, time, image, condition, isPre
         </button>
         <div className="absolute left-2 top-2 flex gap-1.5">
           {isPremium && (
-            <Badge className="bg-gradient-primary text-primary-foreground border-0 text-xs">Premium</Badge>
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500/90 shadow-lg shadow-amber-500/30 backdrop-blur-sm">
+              <Crown className="h-3.5 w-3.5 text-white" />
+            </div>
           )}
           {isUrgent && (
-            <Badge variant="destructive" className="text-xs">Təcili</Badge>
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-red-500/90 shadow-lg shadow-red-500/30 backdrop-blur-sm">
+              <Zap className="h-3.5 w-3.5 text-white fill-white" />
+            </div>
           )}
         </div>
-        {condition && (
-          <div className="absolute bottom-2 left-2">
-            <Badge variant="secondary" className="text-xs">{condition}</Badge>
-          </div>
-        )}
       </div>
 
       <div className="p-3">
