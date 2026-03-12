@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Package, MapPin, Trash2 } from "lucide-react";
+import { Heart, Package, MapPin, Trash2, Crown, Zap } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const Favorites = () => {
