@@ -200,7 +200,10 @@ const AdminPanel = () => {
           <TabsContent value="moderation" className="mt-3"><AdminModerationManager /></TabsContent>
 
           {/* Notifications */}
-          <TabsContent value="notifications" className="mt-3"><AdminNotificationSender /></TabsContent>
+          <TabsContent value="notifications" className="mt-3 space-y-6">
+            <AdminNotificationSettings />
+            <AdminNotificationSender />
+          </TabsContent>
 
           {/* Search for listings/stores/users */}
           <div className="relative mt-3 mb-3">
