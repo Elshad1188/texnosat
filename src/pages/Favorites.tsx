@@ -102,9 +102,17 @@ const Favorites = () => {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                    <div className="mt-1.5 flex gap-1">
-                      {l.is_premium && <Badge className="bg-primary/10 text-primary text-xs">Premium</Badge>}
-                      {l.is_urgent && <Badge variant="destructive" className="text-xs">Təcili</Badge>}
+                    <div className="mt-1.5 flex gap-1.5">
+                      {l.is_premium && (
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/90 shadow-sm">
+                          <Crown className="h-3 w-3 text-white" />
+                        </div>
+                      )}
+                      {l.is_urgent && (
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-red-500/90 shadow-sm">
+                          <Zap className="h-3 w-3 text-white fill-white" />
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
