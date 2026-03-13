@@ -29,7 +29,7 @@ import AdminVideoSettings from "@/components/admin/AdminVideoSettings";
 import {
   ShieldCheck, Trash2, Eye, EyeOff, Search, Users, ShoppingBag, Store,
   Crown, Loader2, AlertTriangle, Zap, Star, MapPin, Pencil, MessageSquare,
-  FolderTree, Map, Palette, BarChart3, CheckSquare, Image, Flag, Settings, FileText, Bell, Wallet, Gift, Plug,
+  FolderTree, Map, Palette, BarChart3, CheckSquare, Image, Flag, Settings, FileText, Bell, Wallet, Gift, Plug, Video,
 } from "lucide-react";
 
 interface Listing {
