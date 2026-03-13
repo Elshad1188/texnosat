@@ -366,6 +366,7 @@ const AdminPanel = () => {
           <TabsContent value="balance" className="mt-3"><AdminBalanceManager /></TabsContent>
           <TabsContent value="referral" className="mt-3"><AdminReferralManager /></TabsContent>
           <TabsContent value="integrations" className="mt-3"><AdminIntegrationsManager /></TabsContent>
+          <TabsContent value="video" className="mt-3"><AdminVideoSettings /></TabsContent>
           <TabsContent value="theme" className="mt-3"><AdminThemeManager /></TabsContent>
         </Tabs>
       </main>
