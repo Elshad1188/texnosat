@@ -167,27 +167,34 @@ const CreateListing = () => {
         newImageUrls.push(urlData.publicUrl);
       }
 
+      // Upload video if new
+      let finalVideoUrl: string | null = existingVideo || null;
+      if (videoFile) {
+        const videoName = `${user.id}/${Date.now()}-${videoFile.name}`;
+        const { error: vErr } = await supabase.storage.from("listing-videos").upload(videoName, videoFile);
+        if (vErr) throw vErr;
+        const { data: vUrl } = supabase.storage.from("listing-videos").getPublicUrl(videoName);
+        finalVideoUrl = vUrl.publicUrl;
+      }
+
       const allImages = [...existingImages, ...newImageUrls];
 
+      const listingData: any = {
+        title: form.title, description: form.description,
+        price: parseFloat(form.price), category: form.category,
+        condition: form.condition, location: form.location || "Bakı",
+        image_urls: allImages,
+        video_url: finalVideoUrl,
+        store_id: publishToStore && userStore ? userStore.id : null,
+      };
+
       if (editId) {
-        const { error } = await supabase.from("listings").update({
-          title: form.title, description: form.description,
-          price: parseFloat(form.price), category: form.category,
-          condition: form.condition, location: form.location || "Bakı",
-          image_urls: allImages,
-          store_id: publishToStore && userStore ? userStore.id : null,
-        }).eq("id", editId).eq("user_id", user.id);
+        const { error } = await supabase.from("listings").update(listingData).eq("id", editId).eq("user_id", user.id);
         if (error) throw error;
         toast({ title: "Elan uğurla yeniləndi!" });
         navigate(`/product/${editId}`);
       } else {
-        const { error } = await supabase.from("listings").insert({
-          user_id: user.id, title: form.title, description: form.description,
-          price: parseFloat(form.price), category: form.category,
-          condition: form.condition, location: form.location || "Bakı",
-          image_urls: allImages,
-          store_id: publishToStore && userStore ? userStore.id : null,
-        });
+        const { error } = await supabase.from("listings").insert({ ...listingData, user_id: user.id });
         if (error) throw error;
         toast({ title: "Elan uğurla yerləşdirildi!" });
         navigate("/products");
