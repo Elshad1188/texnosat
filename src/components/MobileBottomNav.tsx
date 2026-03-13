@@ -1,4 +1,4 @@
-import { Home, Heart, Plus, MessageCircle, User } from "lucide-react";
+import { Home, Heart, Plus, MessageCircle, User, Play } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
