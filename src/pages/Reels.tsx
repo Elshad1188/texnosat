@@ -2,8 +2,8 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, Share2, Eye, ShoppingBag, ChevronUp, ChevronDown, X, Send, Play, Pause } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Heart, MessageCircle, Share2, Eye, ShoppingBag, ChevronUp, ChevronDown, X, Send, Play, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -30,24 +30,45 @@ const Reels = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const startId = searchParams.get("id");
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [isPlaying, setIsPlaying] = useState(true);
+  const [showLikeAnim, setShowLikeAnim] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
+  const lastTapRef = useRef(0);
 
-  // Fetch listings with videos
+  // Fetch all active listings, ordered: startId first if given, then similar category, then rest
   const { data: reels = [] } = useQuery({
-    queryKey: ["reels"],
+    queryKey: ["reels", startId],
     queryFn: async () => {
-      const { data } = await supabase
+      // Get all active listings
+      const { data: allListings } = await supabase
         .from("listings")
-        .select("id, title, price, currency, video_url, image_urls, user_id, store_id, created_at")
-        .not("video_url", "is", null)
+        .select("id, title, price, currency, video_url, image_urls, user_id, store_id, created_at, category")
         .eq("is_active", true)
         .order("created_at", { ascending: false });
-      return data || [];
+
+      if (!allListings || allListings.length === 0) return [];
+
+      // If startId provided, put that first, then same category, then rest
+      if (startId) {
+        const target = allListings.find(l => l.id === startId);
+        if (target) {
+          const sameCategory = allListings.filter(l => l.id !== startId && l.category === target.category);
+          const rest = allListings.filter(l => l.id !== startId && l.category !== target.category);
+          return [target, ...sameCategory, ...rest];
+        }
+      }
+
+      // Default: videos first, then image-only
+      const withVideo = allListings.filter(l => l.video_url);
+      const withoutVideo = allListings.filter(l => !l.video_url);
+      return [...withVideo, ...withoutVideo];
     },
   });
 
@@ -98,7 +119,6 @@ const Reels = () => {
         .eq("listing_id", currentReel!.id)
         .order("created_at", { ascending: true });
       if (!data) return [];
-      // fetch profiles for commenters
       const userIds = [...new Set(data.map(c => c.user_id))];
       const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", userIds);
       const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
@@ -161,8 +181,34 @@ const Reels = () => {
   const togglePlay = () => {
     const video = videoRefs.current.get(currentIndex);
     if (!video) return;
-    if (video.paused) { video.play(); setIsPlaying(true); } 
+    if (video.paused) { video.play(); setIsPlaying(true); }
     else { video.pause(); setIsPlaying(false); }
+  };
+
+  // Double-tap to like
+  const handleDoubleTap = () => {
+    if (!user) { navigate("/auth"); return; }
+    if (!likeData?.isLiked) {
+      toggleLike.mutate();
+    }
+    // Show heart animation
+    setShowLikeAnim(true);
+    setTimeout(() => setShowLikeAnim(false), 800);
+  };
+
+  const handleContentClick = (e: React.MouseEvent) => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      // Double tap
+      e.preventDefault();
+      handleDoubleTap();
+    } else {
+      // Single tap - toggle play for videos
+      if (currentReel?.video_url) {
+        togglePlay();
+      }
+    }
+    lastTapRef.current = now;
   };
 
   // Touch swipe
@@ -189,18 +235,21 @@ const Reels = () => {
     return (
       <div className="flex h-screen flex-col items-center justify-center bg-black text-white">
         <ShoppingBag className="mb-4 h-16 w-16 text-muted-foreground" />
-        <p className="text-lg font-semibold">Hələ heç bir video yoxdur</p>
+        <p className="text-lg font-semibold">Hələ heç bir elan yoxdur</p>
         <p className="mt-1 text-sm text-muted-foreground">Elan yaradarkən video əlavə edin</p>
         <Button variant="outline" className="mt-4" onClick={() => navigate("/")}>Ana səhifə</Button>
       </div>
     );
   }
 
+  const hasVideo = !!currentReel?.video_url;
+  const firstImage = currentReel?.image_urls?.[0] || "/placeholder.svg";
+
   return (
-    <div 
+    <div
       ref={containerRef}
-      className="fixed inset-0 z-50 bg-black" 
-      onTouchStart={handleTouchStart} 
+      className="fixed inset-0 z-50 bg-black"
+      onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
       {/* Close button */}
@@ -212,38 +261,59 @@ const Reels = () => {
         {currentIndex + 1} / {reels.length}
       </div>
 
-      {/* Video */}
-      {reels.map((reel, idx) => (
-        <div
-          key={reel.id}
-          className={cn(
-            "absolute inset-0 flex items-center justify-center transition-opacity duration-300",
-            idx === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
-          )}
-        >
-          <video
-            ref={el => { if (el) videoRefs.current.set(idx, el); }}
-            src={reel.video_url!}
-            className="h-full w-full object-contain"
-            loop
-            playsInline
-            muted={idx !== currentIndex}
-            onClick={togglePlay}
-          />
-          {/* Play/Pause overlay */}
-          {!isPlaying && idx === currentIndex && (
-            <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
-                <Play className="h-8 w-8 text-white fill-white" />
+      {/* Content: Video or Image */}
+      {reels.map((reel, idx) => {
+        const isVideo = !!reel.video_url;
+        const img = reel.image_urls?.[0] || "/placeholder.svg";
+        return (
+          <div
+            key={reel.id}
+            className={cn(
+              "absolute inset-0 flex items-center justify-center transition-opacity duration-300",
+              idx === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+            )}
+            onClick={handleContentClick}
+          >
+            {isVideo ? (
+              <video
+                ref={el => { if (el) videoRefs.current.set(idx, el); }}
+                src={reel.video_url!}
+                className="h-full w-full object-contain"
+                loop
+                playsInline
+                muted={idx !== currentIndex}
+              />
+            ) : (
+              <div className="h-full w-full flex items-center justify-center">
+                <img src={img} alt={reel.title} className="h-full w-full object-contain" />
+                <div className="absolute top-4 right-4 z-20 flex items-center gap-1 rounded-full bg-black/40 px-2.5 py-1 text-white text-[10px]">
+                  <ImageIcon className="h-3 w-3" /> Şəkil
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      ))}
+            )}
+
+            {/* Play/Pause overlay for videos */}
+            {isVideo && !isPlaying && idx === currentIndex && (
+              <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                  <Play className="h-8 w-8 text-white fill-white" />
+                </div>
+              </div>
+            )}
+
+            {/* Double-tap like animation */}
+            {showLikeAnim && idx === currentIndex && (
+              <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
+                <Heart className="h-24 w-24 text-red-500 fill-red-500 animate-like-pop" />
+              </div>
+            )}
+          </div>
+        );
+      })}
 
       {/* Bottom info */}
-      <div className="absolute bottom-0 left-0 right-16 z-30 p-4 pb-8 bg-gradient-to-t from-black/80 via-black/30 to-transparent">
-        <div className="flex items-center gap-2 mb-2">
+      <div className="absolute bottom-0 left-0 right-16 z-30 p-4 pb-8 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none">
+        <div className="flex items-center gap-2 mb-2 pointer-events-auto">
           <div className="h-8 w-8 rounded-full bg-primary/30 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
             {reelProfile?.avatar_url ? (
               <img src={reelProfile.avatar_url} alt="" className="h-full w-full object-cover" />
@@ -256,9 +326,9 @@ const Reels = () => {
         </div>
         <h3 className="text-white font-semibold text-base line-clamp-2">{currentReel?.title}</h3>
         <p className="text-primary font-bold text-lg mt-0.5">{currentReel?.price} {currentReel?.currency}</p>
-        <button 
+        <button
           onClick={() => navigate(`/product/${currentReel?.id}`)}
-          className="mt-2 flex items-center gap-1.5 rounded-lg bg-white/15 backdrop-blur-sm px-3 py-1.5 text-white text-xs font-medium"
+          className="mt-2 flex items-center gap-1.5 rounded-lg bg-white/15 backdrop-blur-sm px-3 py-1.5 text-white text-xs font-medium pointer-events-auto"
         >
           <ShoppingBag className="h-3.5 w-3.5" /> Elana bax
         </button>
@@ -266,8 +336,7 @@ const Reels = () => {
 
       {/* Right side actions */}
       <div className="absolute right-3 bottom-24 z-30 flex flex-col items-center gap-5">
-        {/* Like */}
-        <button 
+        <button
           onClick={() => {
             if (!user) { navigate("/auth"); return; }
             toggleLike.mutate();
@@ -280,7 +349,6 @@ const Reels = () => {
           <span className="text-white text-[11px] font-medium">{formatCount(likeData?.count || 0)}</span>
         </button>
 
-        {/* Comments */}
         <button onClick={() => setShowComments(true)} className="flex flex-col items-center gap-0.5">
           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
             <MessageCircle className="h-6 w-6 text-white" />
@@ -288,8 +356,7 @@ const Reels = () => {
           <span className="text-white text-[11px] font-medium">{formatCount(comments.length)}</span>
         </button>
 
-        {/* Share */}
-        <button 
+        <button
           onClick={() => {
             navigator.clipboard.writeText(window.location.origin + `/product/${currentReel?.id}`);
             toast({ title: "Link kopyalandı!" });
@@ -302,7 +369,6 @@ const Reels = () => {
           <span className="text-white text-[11px] font-medium">Paylaş</span>
         </button>
 
-        {/* Views */}
         <div className="flex flex-col items-center gap-0.5">
           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
             <Eye className="h-6 w-6 text-white" />
@@ -325,7 +391,7 @@ const Reels = () => {
       {showComments && (
         <div className="absolute inset-0 z-40 flex flex-col" onClick={() => setShowComments(false)}>
           <div className="flex-1" />
-          <div 
+          <div
             className="rounded-t-2xl bg-card max-h-[60vh] flex flex-col animate-slide-in-from-bottom"
             onClick={e => e.stopPropagation()}
           >
@@ -353,9 +419,9 @@ const Reels = () => {
             </div>
             {user && (
               <div className="flex items-center gap-2 px-4 py-3 border-t border-border">
-                <Input 
-                  placeholder="Şərh yazın..." 
-                  value={commentText} 
+                <Input
+                  placeholder="Şərh yazın..."
+                  value={commentText}
                   onChange={e => setCommentText(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && addComment.mutate()}
                   className="h-9 text-sm"

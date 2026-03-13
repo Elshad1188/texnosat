@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Heart, Share2, MapPin, Clock, Star, Phone, MessageCircle, Shield, Eye, Loader2, Send, Store, ExternalLink, Edit2, Trash2, Crown, Zap, Gem } from "lucide-react";
+import { ArrowLeft, Heart, Share2, MapPin, Clock, Star, Phone, MessageCircle, Shield, Eye, Loader2, Send, Store, ExternalLink, Edit2, Trash2, Crown, Zap, Gem, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -296,6 +296,30 @@ const ProductDetail = () => {
                   </button>
                 ))}
               </div>
+            )}
+
+            {/* Video preview */}
+            {listing.video_url && (
+              <button
+                onClick={() => navigate(`/reels?id=${listing.id}`)}
+                className="mt-3 relative w-full overflow-hidden rounded-xl bg-muted aspect-video group"
+              >
+                <video
+                  src={listing.video_url}
+                  className="h-full w-full object-cover"
+                  muted
+                  playsInline
+                  preload="metadata"
+                />
+                <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/40 transition-colors">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/90 shadow-lg">
+                    <Play className="h-7 w-7 text-primary-foreground fill-primary-foreground" />
+                  </div>
+                </div>
+                <span className="absolute bottom-2 left-2 rounded-md bg-black/60 px-2 py-0.5 text-xs text-white font-medium">
+                  Reels-də izlə
+                </span>
+              </button>
             )}
 
             <ImageViewer
