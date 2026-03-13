@@ -34,7 +34,7 @@ const MobileBottomNav = () => {
 
   const navItems = [
     { path: "/", icon: Home, label: "Ana səhifə" },
-    { path: "/favorites", icon: Heart, label: "Seçilmişlər" },
+    { path: "/reels", icon: Play, label: "Reels" },
     { path: "/create-listing", icon: Plus, label: "Yerləşdir", isCenter: true },
     { path: "/messages", icon: MessageCircle, label: "Mesajlar", badge: unreadCount },
     { path: user ? "/profile" : "/auth", icon: User, label: "Profil" },
