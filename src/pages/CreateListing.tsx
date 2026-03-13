@@ -21,6 +21,7 @@ const CreateListing = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const [searchParams] = useSearchParams();
   const editId = searchParams.get("edit");
 
@@ -28,9 +29,21 @@ const CreateListing = () => {
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string>("");
+  const [existingVideo, setExistingVideo] = useState<string>("");
   const [publishToStore, setPublishToStore] = useState(false);
   const [form, setForm] = useState({
     title: "", description: "", price: "", category: "", condition: "Yeni", location: "",
+  });
+
+  // Fetch max video duration from settings
+  const { data: videoSettings } = useQuery({
+    queryKey: ["video-settings"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "video_settings").maybeSingle();
+      return (data?.value as any) || { max_duration: 60 };
+    },
   });
 
   // Fetch existing listing for editing
