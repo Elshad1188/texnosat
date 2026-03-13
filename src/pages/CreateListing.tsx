@@ -125,6 +125,31 @@ const CreateListing = () => {
     setExistingImages((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleVideoAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const maxDur = videoSettings?.max_duration || 60;
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      window.URL.revokeObjectURL(video.src);
+      if (video.duration > maxDur) {
+        toast({ title: `Video ${maxDur} saniyədən uzun ola bilməz`, variant: "destructive" });
+        return;
+      }
+      setVideoFile(file);
+      setVideoPreview(URL.createObjectURL(file));
+      setExistingVideo("");
+    };
+    video.src = URL.createObjectURL(file);
+  };
+
+  const removeVideo = () => {
+    setVideoFile(null);
+    setVideoPreview("");
+    setExistingVideo("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title || !form.price || !form.category) {
