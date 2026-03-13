@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ImagePlus, X, Loader2, Store } from "lucide-react";
+import { ImagePlus, X, Loader2, Store, Video } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
 const conditions = ["Yeni", "Yeni kimi", "İşlənmiş"];
@@ -21,6 +21,7 @@ const CreateListing = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const [searchParams] = useSearchParams();
   const editId = searchParams.get("edit");
 
@@ -28,9 +29,21 @@ const CreateListing = () => {
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string>("");
+  const [existingVideo, setExistingVideo] = useState<string>("");
   const [publishToStore, setPublishToStore] = useState(false);
   const [form, setForm] = useState({
     title: "", description: "", price: "", category: "", condition: "Yeni", location: "",
+  });
+
+  // Fetch max video duration from settings
+  const { data: videoSettings } = useQuery({
+    queryKey: ["video-settings"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "video_settings").maybeSingle();
+      return (data?.value as any) || { max_duration: 60 };
+    },
   });
 
   // Fetch existing listing for editing
@@ -54,6 +67,7 @@ const CreateListing = () => {
         location: editListing.location,
       });
       setExistingImages(editListing.image_urls || []);
+      setExistingVideo((editListing as any).video_url || "");
       setPublishToStore(!!editListing.store_id);
     }
   }, [editListing]);
@@ -111,6 +125,31 @@ const CreateListing = () => {
     setExistingImages((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleVideoAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const maxDur = videoSettings?.max_duration || 60;
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      window.URL.revokeObjectURL(video.src);
+      if (video.duration > maxDur) {
+        toast({ title: `Video ${maxDur} saniyədən uzun ola bilməz`, variant: "destructive" });
+        return;
+      }
+      setVideoFile(file);
+      setVideoPreview(URL.createObjectURL(file));
+      setExistingVideo("");
+    };
+    video.src = URL.createObjectURL(file);
+  };
+
+  const removeVideo = () => {
+    setVideoFile(null);
+    setVideoPreview("");
+    setExistingVideo("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title || !form.price || !form.category) {
@@ -128,27 +167,34 @@ const CreateListing = () => {
         newImageUrls.push(urlData.publicUrl);
       }
 
+      // Upload video if new
+      let finalVideoUrl: string | null = existingVideo || null;
+      if (videoFile) {
+        const videoName = `${user.id}/${Date.now()}-${videoFile.name}`;
+        const { error: vErr } = await supabase.storage.from("listing-videos").upload(videoName, videoFile);
+        if (vErr) throw vErr;
+        const { data: vUrl } = supabase.storage.from("listing-videos").getPublicUrl(videoName);
+        finalVideoUrl = vUrl.publicUrl;
+      }
+
       const allImages = [...existingImages, ...newImageUrls];
 
+      const listingData: any = {
+        title: form.title, description: form.description,
+        price: parseFloat(form.price), category: form.category,
+        condition: form.condition, location: form.location || "Bakı",
+        image_urls: allImages,
+        video_url: finalVideoUrl,
+        store_id: publishToStore && userStore ? userStore.id : null,
+      };
+
       if (editId) {
-        const { error } = await supabase.from("listings").update({
-          title: form.title, description: form.description,
-          price: parseFloat(form.price), category: form.category,
-          condition: form.condition, location: form.location || "Bakı",
-          image_urls: allImages,
-          store_id: publishToStore && userStore ? userStore.id : null,
-        }).eq("id", editId).eq("user_id", user.id);
+        const { error } = await supabase.from("listings").update(listingData).eq("id", editId).eq("user_id", user.id);
         if (error) throw error;
         toast({ title: "Elan uğurla yeniləndi!" });
         navigate(`/product/${editId}`);
       } else {
-        const { error } = await supabase.from("listings").insert({
-          user_id: user.id, title: form.title, description: form.description,
-          price: parseFloat(form.price), category: form.category,
-          condition: form.condition, location: form.location || "Bakı",
-          image_urls: allImages,
-          store_id: publishToStore && userStore ? userStore.id : null,
-        });
+        const { error } = await supabase.from("listings").insert({ ...listingData, user_id: user.id });
         if (error) throw error;
         toast({ title: "Elan uğurla yerləşdirildi!" });
         navigate("/products");
@@ -210,6 +256,31 @@ const CreateListing = () => {
               )}
               <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageAdd} />
             </div>
+          </div>
+
+          {/* Video */}
+          <div>
+            <Label>Video (maks. {videoSettings?.max_duration || 60} san.)</Label>
+            <div className="mt-2 flex flex-wrap gap-3">
+              {(existingVideo || videoPreview) && (
+                <div className="relative h-24 w-36 overflow-hidden rounded-xl border border-border bg-black">
+                  <video src={existingVideo || videoPreview} className="h-full w-full object-cover" muted />
+                  <button type="button" onClick={removeVideo}
+                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
+                    <X className="h-3 w-3" />
+                  </button>
+                  <div className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">Video</div>
+                </div>
+              )}
+              {!existingVideo && !videoPreview && (
+                <button type="button" onClick={() => videoInputRef.current?.click()}
+                  className="flex h-24 w-36 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary">
+                  <Video className="h-6 w-6" /><span className="mt-1 text-xs">Video əlavə et</span>
+                </button>
+              )}
+              <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={handleVideoAdd} />
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">Video əlavə etsəniz, elanınız Reels bölməsində görünəcək</p>
           </div>
 
           {/* Store option */}
