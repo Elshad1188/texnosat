@@ -67,6 +67,7 @@ const CreateListing = () => {
         location: editListing.location,
       });
       setExistingImages(editListing.image_urls || []);
+      setExistingVideo((editListing as any).video_url || "");
       setPublishToStore(!!editListing.store_id);
     }
   }, [editListing]);
