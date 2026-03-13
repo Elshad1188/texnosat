@@ -149,4 +149,12 @@
   .animate-slide-in-from-left {
     animation: slide-in-from-left 0.5s ease-out;
   }
+
+  @keyframes slide-in-from-bottom {
+    0% { opacity: 0; transform: translateY(100%); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .animate-slide-in-from-bottom {
+    animation: slide-in-from-bottom 0.3s ease-out;
+  }
 }
