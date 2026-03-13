@@ -189,6 +189,7 @@ const AdminPanel = () => {
                 <TabsTrigger value="referral" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Gift className="h-3.5 w-3.5" /> Referal</TabsTrigger>
                 <TabsTrigger value="integrations" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Plug className="h-3.5 w-3.5" /> İnteqrasiyalar</TabsTrigger>
                 <TabsTrigger value="settings" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Settings className="h-3.5 w-3.5" /> Tənzimləmələr</TabsTrigger>
+                <TabsTrigger value="video" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Video className="h-3.5 w-3.5" /> Video</TabsTrigger>
                 <TabsTrigger value="theme" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Palette className="h-3.5 w-3.5" /> Dizayn</TabsTrigger>
               </TabsList>
             </div>
