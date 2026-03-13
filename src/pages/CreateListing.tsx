@@ -258,6 +258,31 @@ const CreateListing = () => {
             </div>
           </div>
 
+          {/* Video */}
+          <div>
+            <Label>Video (maks. {videoSettings?.max_duration || 60} san.)</Label>
+            <div className="mt-2 flex flex-wrap gap-3">
+              {(existingVideo || videoPreview) && (
+                <div className="relative h-24 w-36 overflow-hidden rounded-xl border border-border bg-black">
+                  <video src={existingVideo || videoPreview} className="h-full w-full object-cover" muted />
+                  <button type="button" onClick={removeVideo}
+                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
+                    <X className="h-3 w-3" />
+                  </button>
+                  <div className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">Video</div>
+                </div>
+              )}
+              {!existingVideo && !videoPreview && (
+                <button type="button" onClick={() => videoInputRef.current?.click()}
+                  className="flex h-24 w-36 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary">
+                  <Video className="h-6 w-6" /><span className="mt-1 text-xs">Video əlavə et</span>
+                </button>
+              )}
+              <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={handleVideoAdd} />
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">Video əlavə etsəniz, elanınız Reels bölməsində görünəcək</p>
+          </div>
+
           {/* Store option */}
           {userStore && (
             <div className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
