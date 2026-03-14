@@ -25,6 +25,57 @@ function formatTime(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("az");
 }
 
+/* ---- Image slideshow sub-component ---- */
+const ImageSlideshow = ({ images, title }: { images: string[]; title: string }) => {
+  const [slideIdx, setSlideIdx] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval>>();
+
+  useEffect(() => {
+    if (images.length <= 1) return;
+    timerRef.current = setInterval(() => {
+      setSlideIdx(prev => (prev + 1) % images.length);
+    }, 3000);
+    return () => clearInterval(timerRef.current);
+  }, [images.length]);
+
+  // Reset on images change
+  useEffect(() => { setSlideIdx(0); }, [images]);
+
+  return (
+    <div className="relative h-full w-full">
+      {images.map((img, i) => (
+        <img
+          key={i}
+          src={img}
+          alt={title}
+          className={cn(
+            "absolute inset-0 h-full w-full object-contain transition-opacity duration-700",
+            i === slideIdx ? "opacity-100" : "opacity-0"
+          )}
+        />
+      ))}
+      {/* Dots indicator */}
+      {images.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
+          {images.map((_, i) => (
+            <button
+              key={i}
+              onClick={(e) => { e.stopPropagation(); setSlideIdx(i); }}
+              className={cn(
+                "h-1.5 rounded-full transition-all duration-300",
+                i === slideIdx ? "w-4 bg-white" : "w-1.5 bg-white/40"
+              )}
+            />
+          ))}
+        </div>
+      )}
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-1 rounded-full bg-black/40 px-2.5 py-1 text-white text-[10px]">
+        <ImageIcon className="h-3 w-3" /> {slideIdx + 1}/{images.length}
+      </div>
+    </div>
+  );
+};
+
 const Reels = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -38,16 +89,27 @@ const Reels = () => {
   const [commentText, setCommentText] = useState("");
   const [isPlaying, setIsPlaying] = useState(true);
   const [showLikeAnim, setShowLikeAnim] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
   const lastTapRef = useRef(0);
 
-  // Transition state
-  const [transitioning, setTransitioning] = useState(false);
-  const [transitionDir, setTransitionDir] = useState<"up" | "down">("up");
+  // Fetch categories
+  const { data: categories = [] } = useQuery({
+    queryKey: ["reels-categories"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("categories")
+        .select("id, name, slug")
+        .is("parent_id", null)
+        .eq("is_active", true)
+        .order("sort_order");
+      return data || [];
+    },
+  });
 
   // Fetch all active listings
-  const { data: reels = [] } = useQuery({
+  const { data: allReels = [] } = useQuery({
     queryKey: ["reels", startId],
     queryFn: async () => {
       const { data: allListings } = await supabase
@@ -73,6 +135,16 @@ const Reels = () => {
     },
   });
 
+  // Filter by category
+  const reels = selectedCategory
+    ? allReels.filter(r => r.category === selectedCategory)
+    : allReels;
+
+  // Reset index when category changes
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [selectedCategory]);
+
   const currentReel = reels[currentIndex];
 
   // Fetch profile for current reel
@@ -85,12 +157,11 @@ const Reels = () => {
     enabled: !!currentReel,
   });
 
-  // Check if current user follows the reel owner (using store or a simple concept)
+  // Check if current user follows the reel owner
   const { data: isFollowing } = useQuery({
     queryKey: ["reel-follow", currentReel?.user_id, user?.id],
     queryFn: async () => {
       if (!user || !currentReel || currentReel.user_id === user.id) return false;
-      // Check if there's a store by this user and if we follow it
       const { data: store } = await supabase.from("stores").select("id").eq("user_id", currentReel.user_id).maybeSingle();
       if (!store) return false;
       const { data: follow } = await supabase.from("store_followers").select("id").eq("store_id", store.id).eq("user_id", user.id).maybeSingle();
@@ -176,9 +247,7 @@ const Reels = () => {
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const preventDefault = (e: TouchEvent) => {
-      e.preventDefault();
-    };
+    const preventDefault = (e: TouchEvent) => { e.preventDefault(); };
     el.addEventListener("touchmove", preventDefault, { passive: false });
     return () => el.removeEventListener("touchmove", preventDefault);
   }, []);
@@ -222,23 +291,13 @@ const Reels = () => {
     },
   });
 
-  const animateTransition = useCallback((dir: "up" | "down", newIndex: number) => {
-    if (transitioning) return;
-    setTransitionDir(dir);
-    setTransitioning(true);
-    setTimeout(() => {
-      setCurrentIndex(newIndex);
-      setTransitioning(false);
-    }, 300);
-  }, [transitioning]);
-
   const goNext = useCallback(() => {
-    if (currentIndex < reels.length - 1) animateTransition("up", currentIndex + 1);
-  }, [currentIndex, reels.length, animateTransition]);
+    if (currentIndex < reels.length - 1) setCurrentIndex(prev => prev + 1);
+  }, [currentIndex, reels.length]);
 
   const goPrev = useCallback(() => {
-    if (currentIndex > 0) animateTransition("down", currentIndex - 1);
-  }, [currentIndex, animateTransition]);
+    if (currentIndex > 0) setCurrentIndex(prev => prev - 1);
+  }, [currentIndex]);
 
   const togglePlay = () => {
     const video = videoRefs.current.get(currentIndex);
@@ -250,9 +309,7 @@ const Reels = () => {
   // Double-tap to like
   const handleDoubleTap = () => {
     if (!user) { navigate("/auth"); return; }
-    if (!likeData?.isLiked) {
-      toggleLike.mutate();
-    }
+    if (!likeData?.isLiked) toggleLike.mutate();
     setShowLikeAnim(true);
     setTimeout(() => setShowLikeAnim(false), 800);
   };
@@ -263,14 +320,12 @@ const Reels = () => {
       e.preventDefault();
       handleDoubleTap();
     } else {
-      if (currentReel?.video_url) {
-        togglePlay();
-      }
+      if (currentReel?.video_url) togglePlay();
     }
     lastTapRef.current = now;
   };
 
-  // Touch swipe with threshold
+  // Touch swipe
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
   const swiping = useRef(false);
@@ -286,7 +341,6 @@ const Reels = () => {
     swiping.current = false;
     const diffY = touchStartY.current - e.changedTouches[0].clientY;
     const diffX = Math.abs(touchStartX.current - e.changedTouches[0].clientX);
-    // Only vertical swipes
     if (Math.abs(diffY) > 60 && Math.abs(diffY) > diffX) {
       if (diffY > 0) goNext();
       else goPrev();
@@ -305,29 +359,15 @@ const Reels = () => {
     return () => window.removeEventListener("keydown", handler);
   }, [goNext, goPrev, currentIndex, showComments]);
 
-  if (reels.length === 0) {
+  if (allReels.length === 0) {
     return (
       <div className="flex h-screen flex-col items-center justify-center bg-black text-white">
         <ShoppingBag className="mb-4 h-16 w-16 text-muted-foreground" />
         <p className="text-lg font-semibold">Hələ heç bir elan yoxdur</p>
-        <p className="mt-1 text-sm text-muted-foreground">Elan yaradarkən video əlavə edin</p>
         <Button variant="outline" className="mt-4" onClick={() => navigate("/")}>Ana səhifə</Button>
       </div>
     );
   }
-
-  // Determine transition classes
-  const getTransitionClass = (idx: number) => {
-    if (idx === currentIndex) {
-      if (transitioning) {
-        return transitionDir === "up"
-          ? "translate-y-full opacity-0"
-          : "-translate-y-full opacity-0";
-      }
-      return "translate-y-0 opacity-100 z-10";
-    }
-    return "translate-y-full opacity-0 z-0 pointer-events-none";
-  };
 
   const showFollowBtn = currentReel && user && currentReel.user_id !== user.id && ownerStore;
 
@@ -343,28 +383,70 @@ const Reels = () => {
         <X className="h-5 w-5" />
       </button>
 
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 text-white/70 text-xs font-medium">
-        {currentIndex + 1} / {reels.length}
+      {/* Category tabs */}
+      <div className="absolute top-3 left-14 right-4 z-50 overflow-x-auto scrollbar-hide">
+        <div className="flex gap-1.5 pb-1">
+          <button
+            onClick={() => setSelectedCategory(null)}
+            className={cn(
+              "flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
+              !selectedCategory
+                ? "bg-white text-black"
+                : "bg-white/15 text-white/80 backdrop-blur-sm"
+            )}
+          >
+            Hamısı
+          </button>
+          {categories.map((cat: any) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.slug === selectedCategory ? null : cat.slug)}
+              className={cn(
+                "flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors whitespace-nowrap",
+                selectedCategory === cat.slug
+                  ? "bg-white text-black"
+                  : "bg-white/15 text-white/80 backdrop-blur-sm"
+              )}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Content: Only render current, prev, and next for performance */}
+      {/* Counter */}
+      {reels.length > 0 && (
+        <div className="absolute top-12 left-1/2 -translate-x-1/2 z-50 text-white/50 text-[10px]">
+          {currentIndex + 1} / {reels.length}
+        </div>
+      )}
+
+      {/* No results for this category */}
+      {reels.length === 0 && (
+        <div className="flex h-full flex-col items-center justify-center text-white">
+          <p className="text-sm text-white/60">Bu kateqoriyada elan yoxdur</p>
+          <button onClick={() => setSelectedCategory(null)} className="mt-2 text-xs text-primary font-medium">Hamısını göstər</button>
+        </div>
+      )}
+
+      {/* Content */}
       {reels.map((reel, idx) => {
-        // Only render nearby reels
         if (Math.abs(idx - currentIndex) > 1) return null;
 
         const isVideo = !!reel.video_url;
-        const img = reel.image_urls?.[0] || "/placeholder.svg";
+        const images = (reel.image_urls || []).filter(Boolean);
+        const hasMultipleImages = !isVideo && images.length > 1;
 
         return (
           <div
             key={reel.id}
             className={cn(
-              "absolute inset-0 flex items-center justify-center transition-all duration-300 ease-out",
+              "absolute inset-0 flex items-center justify-center transition-transform duration-300 ease-out",
               idx === currentIndex
-                ? "translate-y-0 opacity-100 z-10"
+                ? "translate-y-0 z-10"
                 : idx < currentIndex
-                  ? "-translate-y-full opacity-0 z-0 pointer-events-none"
-                  : "translate-y-full opacity-0 z-0 pointer-events-none"
+                  ? "-translate-y-full z-0 pointer-events-none"
+                  : "translate-y-full z-0 pointer-events-none"
             )}
             onClick={idx === currentIndex ? handleContentClick : undefined}
           >
@@ -377,16 +459,18 @@ const Reels = () => {
                 playsInline
                 muted={idx !== currentIndex}
               />
+            ) : hasMultipleImages ? (
+              <ImageSlideshow images={images} title={reel.title} />
             ) : (
               <div className="h-full w-full flex items-center justify-center">
-                <img src={img} alt={reel.title} className="h-full w-full object-contain" />
+                <img src={images[0] || "/placeholder.svg"} alt={reel.title} className="h-full w-full object-contain" />
                 <div className="absolute top-4 right-4 z-20 flex items-center gap-1 rounded-full bg-black/40 px-2.5 py-1 text-white text-[10px]">
                   <ImageIcon className="h-3 w-3" /> Şəkil
                 </div>
               </div>
             )}
 
-            {/* Play/Pause overlay for videos */}
+            {/* Play/Pause overlay */}
             {isVideo && !isPlaying && idx === currentIndex && (
               <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
@@ -406,96 +490,95 @@ const Reels = () => {
       })}
 
       {/* Bottom info */}
-      <div className="absolute bottom-0 left-0 right-16 z-30 p-4 pb-8 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none">
-        <div className="flex items-center gap-2 mb-2 pointer-events-auto">
-          <button
-            onClick={() => {
-              if (currentReel) navigate(`/seller/${currentReel.user_id}`);
-            }}
-            className="flex items-center gap-2"
-          >
-            <div className="h-9 w-9 rounded-full bg-primary/30 flex items-center justify-center text-white font-bold text-sm overflow-hidden ring-2 ring-white/30">
-              {reelProfile?.avatar_url ? (
-                <img src={reelProfile.avatar_url} alt="" className="h-full w-full object-cover" />
-              ) : (
-                (reelProfile?.full_name || "?")[0].toUpperCase()
-              )}
-            </div>
-            <span className="text-white text-sm font-semibold">{reelProfile?.full_name || "İstifadəçi"}</span>
-          </button>
-          <span className="text-white/50 text-xs">· {currentReel && formatTime(currentReel.created_at)}</span>
-
-          {/* Follow button */}
-          {showFollowBtn && (
+      {currentReel && (
+        <div className="absolute bottom-0 left-0 right-16 z-30 p-4 pb-8 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none">
+          <div className="flex items-center gap-2 mb-2 pointer-events-auto">
             <button
-              onClick={() => {
-                if (!user) { navigate("/auth"); return; }
-                toggleFollow.mutate();
-              }}
-              className={cn(
-                "ml-1 flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold transition-colors",
-                isFollowing
-                  ? "bg-white/20 text-white"
-                  : "bg-primary text-primary-foreground"
-              )}
+              onClick={() => navigate(`/seller/${currentReel.user_id}`)}
+              className="flex items-center gap-2"
             >
-              {isFollowing ? <UserCheck className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />}
-              {isFollowing ? "İzlənirlər" : "İzlə"}
+              <div className="h-9 w-9 rounded-full bg-primary/30 flex items-center justify-center text-white font-bold text-sm overflow-hidden ring-2 ring-white/30">
+                {reelProfile?.avatar_url ? (
+                  <img src={reelProfile.avatar_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  (reelProfile?.full_name || "?")[0].toUpperCase()
+                )}
+              </div>
+              <span className="text-white text-sm font-semibold">{reelProfile?.full_name || "İstifadəçi"}</span>
             </button>
-          )}
+            <span className="text-white/50 text-xs">· {formatTime(currentReel.created_at)}</span>
+
+            {showFollowBtn && (
+              <button
+                onClick={() => {
+                  if (!user) { navigate("/auth"); return; }
+                  toggleFollow.mutate();
+                }}
+                className={cn(
+                  "ml-1 flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold transition-colors",
+                  isFollowing ? "bg-white/20 text-white" : "bg-primary text-primary-foreground"
+                )}
+              >
+                {isFollowing ? <UserCheck className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />}
+                {isFollowing ? "İzlənirlər" : "İzlə"}
+              </button>
+            )}
+          </div>
+          <h3 className="text-white font-semibold text-base line-clamp-2">{currentReel.title}</h3>
+          <p className="text-primary font-bold text-lg mt-0.5">{currentReel.price} {currentReel.currency}</p>
+          <button
+            onClick={() => navigate(`/product/${currentReel.id}`)}
+            className="mt-2 flex items-center gap-1.5 rounded-lg bg-white/15 backdrop-blur-sm px-3 py-1.5 text-white text-xs font-medium pointer-events-auto"
+          >
+            <ShoppingBag className="h-3.5 w-3.5" /> Elana bax
+          </button>
         </div>
-        <h3 className="text-white font-semibold text-base line-clamp-2">{currentReel?.title}</h3>
-        <p className="text-primary font-bold text-lg mt-0.5">{currentReel?.price} {currentReel?.currency}</p>
-        <button
-          onClick={() => navigate(`/product/${currentReel?.id}`)}
-          className="mt-2 flex items-center gap-1.5 rounded-lg bg-white/15 backdrop-blur-sm px-3 py-1.5 text-white text-xs font-medium pointer-events-auto"
-        >
-          <ShoppingBag className="h-3.5 w-3.5" /> Elana bax
-        </button>
-      </div>
+      )}
 
       {/* Right side actions */}
-      <div className="absolute right-3 bottom-24 z-30 flex flex-col items-center gap-5">
-        <button
-          onClick={() => {
-            if (!user) { navigate("/auth"); return; }
-            toggleLike.mutate();
-          }}
-          className="flex flex-col items-center gap-0.5"
-        >
-          <div className={cn("flex h-11 w-11 items-center justify-center rounded-full", likeData?.isLiked ? "bg-red-500/20" : "bg-white/10 backdrop-blur-sm")}>
-            <Heart className={cn("h-6 w-6", likeData?.isLiked ? "fill-red-500 text-red-500" : "text-white")} />
-          </div>
-          <span className="text-white text-[11px] font-medium">{formatCount(likeData?.count || 0)}</span>
-        </button>
+      {currentReel && (
+        <div className="absolute right-3 bottom-24 z-30 flex flex-col items-center gap-5">
+          <button
+            onClick={() => {
+              if (!user) { navigate("/auth"); return; }
+              toggleLike.mutate();
+            }}
+            className="flex flex-col items-center gap-0.5"
+          >
+            <div className={cn("flex h-11 w-11 items-center justify-center rounded-full", likeData?.isLiked ? "bg-red-500/20" : "bg-white/10 backdrop-blur-sm")}>
+              <Heart className={cn("h-6 w-6", likeData?.isLiked ? "fill-red-500 text-red-500" : "text-white")} />
+            </div>
+            <span className="text-white text-[11px] font-medium">{formatCount(likeData?.count || 0)}</span>
+          </button>
 
-        <button onClick={() => setShowComments(true)} className="flex flex-col items-center gap-0.5">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
-            <MessageCircle className="h-6 w-6 text-white" />
-          </div>
-          <span className="text-white text-[11px] font-medium">{formatCount(comments.length)}</span>
-        </button>
+          <button onClick={() => setShowComments(true)} className="flex flex-col items-center gap-0.5">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
+              <MessageCircle className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-white text-[11px] font-medium">{formatCount(comments.length)}</span>
+          </button>
 
-        <button
-          onClick={() => {
-            navigator.clipboard.writeText(window.location.origin + `/reels?id=${currentReel?.id}`);
-            toast({ title: "Link kopyalandı!" });
-          }}
-          className="flex flex-col items-center gap-0.5"
-        >
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
-            <Share2 className="h-6 w-6 text-white" />
-          </div>
-          <span className="text-white text-[11px] font-medium">Paylaş</span>
-        </button>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.origin + `/reels?id=${currentReel.id}`);
+              toast({ title: "Link kopyalandı!" });
+            }}
+            className="flex flex-col items-center gap-0.5"
+          >
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
+              <Share2 className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-white text-[11px] font-medium">Paylaş</span>
+          </button>
 
-        <div className="flex flex-col items-center gap-0.5">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
-            <Eye className="h-6 w-6 text-white" />
+          <div className="flex flex-col items-center gap-0.5">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
+              <Eye className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-white text-[11px] font-medium">{formatCount(viewCount)}</span>
           </div>
-          <span className="text-white text-[11px] font-medium">{formatCount(viewCount)}</span>
         </div>
-      </div>
+      )}
 
       {/* Comments drawer */}
       {showComments && (
