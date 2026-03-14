@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Heart, MessageCircle, Share2, Eye, ShoppingBag, ChevronUp, ChevronDown, X, Send, Play, Image as ImageIcon } from "lucide-react";
+import { Heart, MessageCircle, Share2, Eye, ShoppingBag, X, Send, Play, Image as ImageIcon, UserPlus, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -42,11 +42,14 @@ const Reels = () => {
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
   const lastTapRef = useRef(0);
 
-  // Fetch all active listings, ordered: startId first if given, then similar category, then rest
+  // Transition state
+  const [transitioning, setTransitioning] = useState(false);
+  const [transitionDir, setTransitionDir] = useState<"up" | "down">("up");
+
+  // Fetch all active listings
   const { data: reels = [] } = useQuery({
     queryKey: ["reels", startId],
     queryFn: async () => {
-      // Get all active listings
       const { data: allListings } = await supabase
         .from("listings")
         .select("id, title, price, currency, video_url, image_urls, user_id, store_id, created_at, category")
@@ -55,7 +58,6 @@ const Reels = () => {
 
       if (!allListings || allListings.length === 0) return [];
 
-      // If startId provided, put that first, then same category, then rest
       if (startId) {
         const target = allListings.find(l => l.id === startId);
         if (target) {
@@ -65,7 +67,6 @@ const Reels = () => {
         }
       }
 
-      // Default: videos first, then image-only
       const withVideo = allListings.filter(l => l.video_url);
       const withoutVideo = allListings.filter(l => !l.video_url);
       return [...withVideo, ...withoutVideo];
@@ -78,13 +79,37 @@ const Reels = () => {
   const { data: reelProfile } = useQuery({
     queryKey: ["reel-profile", currentReel?.user_id],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("full_name, avatar_url").eq("user_id", currentReel!.user_id).maybeSingle();
+      const { data } = await supabase.from("profiles").select("full_name, avatar_url, user_id").eq("user_id", currentReel!.user_id).maybeSingle();
       return data;
     },
     enabled: !!currentReel,
   });
 
-  // Fetch like count + user like
+  // Check if current user follows the reel owner (using store or a simple concept)
+  const { data: isFollowing } = useQuery({
+    queryKey: ["reel-follow", currentReel?.user_id, user?.id],
+    queryFn: async () => {
+      if (!user || !currentReel || currentReel.user_id === user.id) return false;
+      // Check if there's a store by this user and if we follow it
+      const { data: store } = await supabase.from("stores").select("id").eq("user_id", currentReel.user_id).maybeSingle();
+      if (!store) return false;
+      const { data: follow } = await supabase.from("store_followers").select("id").eq("store_id", store.id).eq("user_id", user.id).maybeSingle();
+      return !!follow;
+    },
+    enabled: !!currentReel && !!user,
+  });
+
+  // Store of reel owner
+  const { data: ownerStore } = useQuery({
+    queryKey: ["reel-owner-store", currentReel?.user_id],
+    queryFn: async () => {
+      const { data } = await supabase.from("stores").select("id").eq("user_id", currentReel!.user_id).maybeSingle();
+      return data;
+    },
+    enabled: !!currentReel,
+  });
+
+  // Like data
   const { data: likeData } = useQuery({
     queryKey: ["reel-likes", currentReel?.id, user?.id],
     queryFn: async () => {
@@ -99,7 +124,7 @@ const Reels = () => {
     enabled: !!currentReel,
   });
 
-  // Fetch view count
+  // View count
   const { data: viewCount = 0 } = useQuery({
     queryKey: ["reel-views", currentReel?.id],
     queryFn: async () => {
@@ -109,7 +134,7 @@ const Reels = () => {
     enabled: !!currentReel,
   });
 
-  // Fetch comments
+  // Comments
   const { data: comments = [] } = useQuery({
     queryKey: ["reel-comments", currentReel?.id],
     queryFn: async () => {
@@ -147,6 +172,17 @@ const Reels = () => {
     });
   }, [currentIndex, reels]);
 
+  // Prevent pull-to-refresh
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const preventDefault = (e: TouchEvent) => {
+      e.preventDefault();
+    };
+    el.addEventListener("touchmove", preventDefault, { passive: false });
+    return () => el.removeEventListener("touchmove", preventDefault);
+  }, []);
+
   const toggleLike = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("auth");
@@ -157,6 +193,22 @@ const Reels = () => {
       }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["reel-likes", currentReel?.id] }),
+  });
+
+  const toggleFollow = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("auth");
+      if (!ownerStore) throw new Error("no-store");
+      if (isFollowing) {
+        await supabase.from("store_followers").delete().eq("store_id", ownerStore.id).eq("user_id", user.id);
+      } else {
+        await supabase.from("store_followers").insert({ store_id: ownerStore.id, user_id: user.id });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reel-follow", currentReel?.user_id] });
+      toast({ title: isFollowing ? "İzləmə dayandırıldı" : "İzlənilir" });
+    },
   });
 
   const addComment = useMutation({
@@ -170,13 +222,23 @@ const Reels = () => {
     },
   });
 
+  const animateTransition = useCallback((dir: "up" | "down", newIndex: number) => {
+    if (transitioning) return;
+    setTransitionDir(dir);
+    setTransitioning(true);
+    setTimeout(() => {
+      setCurrentIndex(newIndex);
+      setTransitioning(false);
+    }, 300);
+  }, [transitioning]);
+
   const goNext = useCallback(() => {
-    if (currentIndex < reels.length - 1) setCurrentIndex(i => i + 1);
-  }, [currentIndex, reels.length]);
+    if (currentIndex < reels.length - 1) animateTransition("up", currentIndex + 1);
+  }, [currentIndex, reels.length, animateTransition]);
 
   const goPrev = useCallback(() => {
-    if (currentIndex > 0) setCurrentIndex(i => i - 1);
-  }, [currentIndex]);
+    if (currentIndex > 0) animateTransition("down", currentIndex - 1);
+  }, [currentIndex, animateTransition]);
 
   const togglePlay = () => {
     const video = videoRefs.current.get(currentIndex);
@@ -191,7 +253,6 @@ const Reels = () => {
     if (!likeData?.isLiked) {
       toggleLike.mutate();
     }
-    // Show heart animation
     setShowLikeAnim(true);
     setTimeout(() => setShowLikeAnim(false), 800);
   };
@@ -199,11 +260,9 @@ const Reels = () => {
   const handleContentClick = (e: React.MouseEvent) => {
     const now = Date.now();
     if (now - lastTapRef.current < 300) {
-      // Double tap
       e.preventDefault();
       handleDoubleTap();
     } else {
-      // Single tap - toggle play for videos
       if (currentReel?.video_url) {
         togglePlay();
       }
@@ -211,25 +270,40 @@ const Reels = () => {
     lastTapRef.current = now;
   };
 
-  // Touch swipe
-  const touchStart = useRef(0);
-  const handleTouchStart = (e: React.TouchEvent) => { touchStart.current = e.touches[0].clientY; };
+  // Touch swipe with threshold
+  const touchStartY = useRef(0);
+  const touchStartX = useRef(0);
+  const swiping = useRef(false);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    touchStartX.current = e.touches[0].clientX;
+    swiping.current = true;
+  };
+
   const handleTouchEnd = (e: React.TouchEvent) => {
-    const diff = touchStart.current - e.changedTouches[0].clientY;
-    if (diff > 60) goNext();
-    else if (diff < -60) goPrev();
+    if (!swiping.current) return;
+    swiping.current = false;
+    const diffY = touchStartY.current - e.changedTouches[0].clientY;
+    const diffX = Math.abs(touchStartX.current - e.changedTouches[0].clientX);
+    // Only vertical swipes
+    if (Math.abs(diffY) > 60 && Math.abs(diffY) > diffX) {
+      if (diffY > 0) goNext();
+      else goPrev();
+    }
   };
 
   // Keyboard
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if (showComments) return;
       if (e.key === "ArrowDown") goNext();
       else if (e.key === "ArrowUp") goPrev();
       else if (e.key === " ") { e.preventDefault(); togglePlay(); }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [goNext, goPrev, currentIndex]);
+  }, [goNext, goPrev, currentIndex, showComments]);
 
   if (reels.length === 0) {
     return (
@@ -242,13 +316,25 @@ const Reels = () => {
     );
   }
 
-  const hasVideo = !!currentReel?.video_url;
-  const firstImage = currentReel?.image_urls?.[0] || "/placeholder.svg";
+  // Determine transition classes
+  const getTransitionClass = (idx: number) => {
+    if (idx === currentIndex) {
+      if (transitioning) {
+        return transitionDir === "up"
+          ? "translate-y-full opacity-0"
+          : "-translate-y-full opacity-0";
+      }
+      return "translate-y-0 opacity-100 z-10";
+    }
+    return "translate-y-full opacity-0 z-0 pointer-events-none";
+  };
+
+  const showFollowBtn = currentReel && user && currentReel.user_id !== user.id && ownerStore;
 
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-50 bg-black"
+      className="fixed inset-0 z-50 bg-black overflow-hidden touch-none"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -261,18 +347,26 @@ const Reels = () => {
         {currentIndex + 1} / {reels.length}
       </div>
 
-      {/* Content: Video or Image */}
+      {/* Content: Only render current, prev, and next for performance */}
       {reels.map((reel, idx) => {
+        // Only render nearby reels
+        if (Math.abs(idx - currentIndex) > 1) return null;
+
         const isVideo = !!reel.video_url;
         const img = reel.image_urls?.[0] || "/placeholder.svg";
+
         return (
           <div
             key={reel.id}
             className={cn(
-              "absolute inset-0 flex items-center justify-center transition-opacity duration-300",
-              idx === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+              "absolute inset-0 flex items-center justify-center transition-all duration-300 ease-out",
+              idx === currentIndex
+                ? "translate-y-0 opacity-100 z-10"
+                : idx < currentIndex
+                  ? "-translate-y-full opacity-0 z-0 pointer-events-none"
+                  : "translate-y-full opacity-0 z-0 pointer-events-none"
             )}
-            onClick={handleContentClick}
+            onClick={idx === currentIndex ? handleContentClick : undefined}
           >
             {isVideo ? (
               <video
@@ -314,15 +408,41 @@ const Reels = () => {
       {/* Bottom info */}
       <div className="absolute bottom-0 left-0 right-16 z-30 p-4 pb-8 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none">
         <div className="flex items-center gap-2 mb-2 pointer-events-auto">
-          <div className="h-8 w-8 rounded-full bg-primary/30 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
-            {reelProfile?.avatar_url ? (
-              <img src={reelProfile.avatar_url} alt="" className="h-full w-full object-cover" />
-            ) : (
-              (reelProfile?.full_name || "?")[0].toUpperCase()
-            )}
-          </div>
-          <span className="text-white text-sm font-semibold">{reelProfile?.full_name || "İstifadəçi"}</span>
+          <button
+            onClick={() => {
+              if (currentReel) navigate(`/seller/${currentReel.user_id}`);
+            }}
+            className="flex items-center gap-2"
+          >
+            <div className="h-9 w-9 rounded-full bg-primary/30 flex items-center justify-center text-white font-bold text-sm overflow-hidden ring-2 ring-white/30">
+              {reelProfile?.avatar_url ? (
+                <img src={reelProfile.avatar_url} alt="" className="h-full w-full object-cover" />
+              ) : (
+                (reelProfile?.full_name || "?")[0].toUpperCase()
+              )}
+            </div>
+            <span className="text-white text-sm font-semibold">{reelProfile?.full_name || "İstifadəçi"}</span>
+          </button>
           <span className="text-white/50 text-xs">· {currentReel && formatTime(currentReel.created_at)}</span>
+
+          {/* Follow button */}
+          {showFollowBtn && (
+            <button
+              onClick={() => {
+                if (!user) { navigate("/auth"); return; }
+                toggleFollow.mutate();
+              }}
+              className={cn(
+                "ml-1 flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold transition-colors",
+                isFollowing
+                  ? "bg-white/20 text-white"
+                  : "bg-primary text-primary-foreground"
+              )}
+            >
+              {isFollowing ? <UserCheck className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />}
+              {isFollowing ? "İzlənirlər" : "İzlə"}
+            </button>
+          )}
         </div>
         <h3 className="text-white font-semibold text-base line-clamp-2">{currentReel?.title}</h3>
         <p className="text-primary font-bold text-lg mt-0.5">{currentReel?.price} {currentReel?.currency}</p>
@@ -358,7 +478,7 @@ const Reels = () => {
 
         <button
           onClick={() => {
-            navigator.clipboard.writeText(window.location.origin + `/product/${currentReel?.id}`);
+            navigator.clipboard.writeText(window.location.origin + `/reels?id=${currentReel?.id}`);
             toast({ title: "Link kopyalandı!" });
           }}
           className="flex flex-col items-center gap-0.5"
@@ -377,16 +497,6 @@ const Reels = () => {
         </div>
       </div>
 
-      {/* Nav arrows (desktop) */}
-      <div className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 z-30 flex-col gap-2">
-        <button onClick={goPrev} disabled={currentIndex === 0} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm text-white disabled:opacity-30">
-          <ChevronUp className="h-5 w-5" />
-        </button>
-        <button onClick={goNext} disabled={currentIndex === reels.length - 1} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm text-white disabled:opacity-30">
-          <ChevronDown className="h-5 w-5" />
-        </button>
-      </div>
-
       {/* Comments drawer */}
       {showComments && (
         <div className="absolute inset-0 z-40 flex flex-col" onClick={() => setShowComments(false)}>
@@ -399,7 +509,7 @@ const Reels = () => {
               <h3 className="font-semibold text-foreground text-sm">Şərhlər ({comments.length})</h3>
               <button onClick={() => setShowComments(false)}><X className="h-5 w-5 text-muted-foreground" /></button>
             </div>
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 overscroll-contain" style={{ maxHeight: "40vh" }}>
               {comments.length === 0 ? (
                 <p className="text-center text-sm text-muted-foreground py-8">Hələ şərh yoxdur</p>
               ) : comments.map((c: any) => (
@@ -417,18 +527,27 @@ const Reels = () => {
                 </div>
               ))}
             </div>
-            {user && (
-              <div className="flex items-center gap-2 px-4 py-3 border-t border-border">
+            {user ? (
+              <form
+                onSubmit={e => { e.preventDefault(); if (commentText.trim()) addComment.mutate(); }}
+                className="flex items-center gap-2 px-4 py-3 border-t border-border"
+              >
                 <Input
                   placeholder="Şərh yazın..."
                   value={commentText}
                   onChange={e => setCommentText(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && addComment.mutate()}
                   className="h-9 text-sm"
+                  autoFocus
                 />
-                <Button size="icon" className="h-9 w-9 shrink-0" disabled={!commentText.trim() || addComment.isPending} onClick={() => addComment.mutate()}>
+                <Button type="submit" size="icon" className="h-9 w-9 shrink-0" disabled={!commentText.trim() || addComment.isPending}>
                   <Send className="h-4 w-4" />
                 </Button>
+              </form>
+            ) : (
+              <div className="px-4 py-3 border-t border-border text-center">
+                <button onClick={() => navigate("/auth")} className="text-sm text-primary font-medium">
+                  Şərh yazmaq üçün daxil olun
+                </button>
               </div>
             )}
           </div>
