@@ -388,16 +388,6 @@ const ProductDetail = () => {
               )}
             </div>
 
-  // Fetch category fields for label mapping
-  const { data: categoryFieldDefs = [] } = useQuery({
-    queryKey: ["category-fields-detail", listing?.category],
-    queryFn: async () => {
-      const { data } = await supabase.from("category_fields").select("field_name, field_label").eq("category_slug", listing!.category).eq("is_active", true);
-      return data || [];
-    },
-    enabled: !!listing?.category,
-  });
-
 
             {/* Description */}
             {listing.description && (
