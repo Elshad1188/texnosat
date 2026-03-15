@@ -38,7 +38,6 @@ const ImageSlideshow = ({ images, title }: { images: string[]; title: string }) 
     return () => clearInterval(timerRef.current);
   }, [images.length]);
 
-  // Reset on images change
   useEffect(() => { setSlideIdx(0); }, [images]);
 
   return (
@@ -54,7 +53,6 @@ const ImageSlideshow = ({ images, title }: { images: string[]; title: string }) 
           )}
         />
       ))}
-      {/* Dots indicator */}
       {images.length > 1 && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
           {images.map((_, i) => (
@@ -90,8 +88,9 @@ const Reels = () => {
   const [isPlaying, setIsPlaying] = useState(true);
   const [showLikeAnim, setShowLikeAnim] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map());
+  const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
   const lastTapRef = useRef(0);
 
   // Fetch categories
@@ -140,12 +139,32 @@ const Reels = () => {
     ? allReels.filter(r => r.category === selectedCategory)
     : allReels;
 
-  // Reset index when category changes
+  // Pause ALL videos and reset index when category changes
   useEffect(() => {
+    // Pause every video
+    videoRefs.current.forEach(video => {
+      video.pause();
+      video.currentTime = 0;
+    });
     setCurrentIndex(0);
+    setIsPlaying(true);
   }, [selectedCategory]);
 
   const currentReel = reels[currentIndex];
+
+  // Play only current reel's video, pause all others
+  useEffect(() => {
+    if (!currentReel) return;
+    videoRefs.current.forEach((video, key) => {
+      if (key === currentReel.id && currentReel.video_url) {
+        video.currentTime = 0;
+        video.play().catch(() => {});
+      } else {
+        video.pause();
+      }
+    });
+    setIsPlaying(true);
+  }, [currentIndex, currentReel?.id]);
 
   // Fetch profile for current reel
   const { data: reelProfile } = useQuery({
@@ -230,19 +249,6 @@ const Reels = () => {
     queryClient.invalidateQueries({ queryKey: ["reel-views", currentReel.id] });
   }, [currentReel?.id]);
 
-  // Play/pause video on index change
-  useEffect(() => {
-    videoRefs.current.forEach((video, idx) => {
-      if (idx === currentIndex) {
-        video.currentTime = 0;
-        video.play().catch(() => {});
-        setIsPlaying(true);
-      } else {
-        video.pause();
-      }
-    });
-  }, [currentIndex, reels]);
-
   // Prevent pull-to-refresh
   useEffect(() => {
     const el = containerRef.current;
@@ -292,15 +298,22 @@ const Reels = () => {
   });
 
   const goNext = useCallback(() => {
-    if (currentIndex < reels.length - 1) setCurrentIndex(prev => prev + 1);
-  }, [currentIndex, reels.length]);
+    if (isTransitioning || currentIndex >= reels.length - 1) return;
+    setIsTransitioning(true);
+    setCurrentIndex(prev => prev + 1);
+    setTimeout(() => setIsTransitioning(false), 350);
+  }, [currentIndex, reels.length, isTransitioning]);
 
   const goPrev = useCallback(() => {
-    if (currentIndex > 0) setCurrentIndex(prev => prev - 1);
-  }, [currentIndex]);
+    if (isTransitioning || currentIndex <= 0) return;
+    setIsTransitioning(true);
+    setCurrentIndex(prev => prev - 1);
+    setTimeout(() => setIsTransitioning(false), 350);
+  }, [currentIndex, isTransitioning]);
 
   const togglePlay = () => {
-    const video = videoRefs.current.get(currentIndex);
+    if (!currentReel) return;
+    const video = videoRefs.current.get(currentReel.id);
     if (!video) return;
     if (video.paused) { video.play(); setIsPlaying(true); }
     else { video.pause(); setIsPlaying(false); }
@@ -331,13 +344,14 @@ const Reels = () => {
   const swiping = useRef(false);
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (showComments) return;
     touchStartY.current = e.touches[0].clientY;
     touchStartX.current = e.touches[0].clientX;
     swiping.current = true;
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!swiping.current) return;
+    if (!swiping.current || showComments) return;
     swiping.current = false;
     const diffY = touchStartY.current - e.changedTouches[0].clientY;
     const diffX = Math.abs(touchStartX.current - e.changedTouches[0].clientX);
@@ -439,7 +453,7 @@ const Reels = () => {
 
         return (
           <div
-            key={reel.id}
+            key={reel.id + "-" + selectedCategory}
             className={cn(
               "absolute inset-0 flex items-center justify-center transition-transform duration-300 ease-out",
               idx === currentIndex
@@ -452,7 +466,7 @@ const Reels = () => {
           >
             {isVideo ? (
               <video
-                ref={el => { if (el) videoRefs.current.set(idx, el); }}
+                ref={el => { if (el) videoRefs.current.set(reel.id, el); }}
                 src={reel.video_url!}
                 className="h-full w-full object-contain"
                 loop
@@ -491,10 +505,11 @@ const Reels = () => {
 
       {/* Bottom info */}
       {currentReel && (
-        <div className="absolute bottom-0 left-0 right-16 z-30 p-4 pb-8 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none">
-          <div className="flex items-center gap-2 mb-2 pointer-events-auto">
+        <div className="absolute bottom-0 left-0 right-16 z-30 p-4 pb-8 bg-gradient-to-t from-black/80 via-black/30 to-transparent">
+          {/* Owner row with follow button */}
+          <div className="flex items-center gap-2 mb-2">
             <button
-              onClick={() => navigate(`/seller/${currentReel.user_id}`)}
+              onClick={(e) => { e.stopPropagation(); navigate(`/seller/${currentReel.user_id}`); }}
               className="flex items-center gap-2"
             >
               <div className="h-9 w-9 rounded-full bg-primary/30 flex items-center justify-center text-white font-bold text-sm overflow-hidden ring-2 ring-white/30">
@@ -506,11 +521,11 @@ const Reels = () => {
               </div>
               <span className="text-white text-sm font-semibold">{reelProfile?.full_name || "İstifadəçi"}</span>
             </button>
-            <span className="text-white/50 text-xs">· {formatTime(currentReel.created_at)}</span>
 
             {showFollowBtn && (
               <button
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   if (!user) { navigate("/auth"); return; }
                   toggleFollow.mutate();
                 }}
@@ -520,18 +535,23 @@ const Reels = () => {
                 )}
               >
                 {isFollowing ? <UserCheck className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />}
-                {isFollowing ? "İzlənirlər" : "İzlə"}
+                {isFollowing ? "İzləmədən çıx" : "İzlə"}
               </button>
             )}
+
+            <span className="text-white/50 text-xs ml-auto">· {formatTime(currentReel.created_at)}</span>
           </div>
-          <h3 className="text-white font-semibold text-base line-clamp-2">{currentReel.title}</h3>
-          <p className="text-primary font-bold text-lg mt-0.5">{currentReel.price} {currentReel.currency}</p>
+
+          {/* Listing title - clickable to listing page */}
           <button
-            onClick={() => navigate(`/product/${currentReel.id}`)}
-            className="mt-2 flex items-center gap-1.5 rounded-lg bg-white/15 backdrop-blur-sm px-3 py-1.5 text-white text-xs font-medium pointer-events-auto"
+            onClick={(e) => { e.stopPropagation(); navigate(`/product/${currentReel.id}`); }}
+            className="text-left"
           >
-            <ShoppingBag className="h-3.5 w-3.5" /> Elana bax
+            <h3 className="text-white font-semibold text-base line-clamp-2 hover:underline">{currentReel.title}</h3>
           </button>
+
+          {/* Price */}
+          <p className="text-primary font-bold text-lg mt-0.5">{currentReel.price} {currentReel.currency}</p>
         </div>
       )}
 
@@ -539,7 +559,8 @@ const Reels = () => {
       {currentReel && (
         <div className="absolute right-3 bottom-24 z-30 flex flex-col items-center gap-5">
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               if (!user) { navigate("/auth"); return; }
               toggleLike.mutate();
             }}
@@ -551,7 +572,7 @@ const Reels = () => {
             <span className="text-white text-[11px] font-medium">{formatCount(likeData?.count || 0)}</span>
           </button>
 
-          <button onClick={() => setShowComments(true)} className="flex flex-col items-center gap-0.5">
+          <button onClick={(e) => { e.stopPropagation(); setShowComments(true); }} className="flex flex-col items-center gap-0.5">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
               <MessageCircle className="h-6 w-6 text-white" />
             </div>
@@ -559,7 +580,8 @@ const Reels = () => {
           </button>
 
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               navigator.clipboard.writeText(window.location.origin + `/reels?id=${currentReel.id}`);
               toast({ title: "Link kopyalandı!" });
             }}
@@ -580,19 +602,26 @@ const Reels = () => {
         </div>
       )}
 
-      {/* Comments drawer */}
+      {/* Comments overlay - renders ON TOP of video without moving it */}
       {showComments && (
-        <div className="absolute inset-0 z-40 flex flex-col" onClick={() => setShowComments(false)}>
-          <div className="flex-1" />
+        <div
+          className="absolute inset-0 z-40"
+          onClick={() => setShowComments(false)}
+        >
+          {/* Semi-transparent backdrop */}
+          <div className="absolute inset-0 bg-black/40" />
+
+          {/* Comment panel - positioned from bottom, doesn't affect video */}
           <div
-            className="rounded-t-2xl bg-card max-h-[60vh] flex flex-col animate-slide-in-from-bottom"
+            className="absolute bottom-0 left-0 right-0 max-h-[55vh] flex flex-col rounded-t-2xl bg-card animate-slide-in-from-bottom"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
               <h3 className="font-semibold text-foreground text-sm">Şərhlər ({comments.length})</h3>
               <button onClick={() => setShowComments(false)}><X className="h-5 w-5 text-muted-foreground" /></button>
             </div>
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 overscroll-contain" style={{ maxHeight: "40vh" }}>
+
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 overscroll-contain min-h-0">
               {comments.length === 0 ? (
                 <p className="text-center text-sm text-muted-foreground py-8">Hələ şərh yoxdur</p>
               ) : comments.map((c: any) => (
@@ -610,24 +639,24 @@ const Reels = () => {
                 </div>
               ))}
             </div>
+
             {user ? (
               <form
                 onSubmit={e => { e.preventDefault(); if (commentText.trim()) addComment.mutate(); }}
-                className="flex items-center gap-2 px-4 py-3 border-t border-border"
+                className="flex items-center gap-2 px-4 py-3 border-t border-border shrink-0"
               >
                 <Input
                   placeholder="Şərh yazın..."
                   value={commentText}
                   onChange={e => setCommentText(e.target.value)}
                   className="h-9 text-sm"
-                  autoFocus
                 />
                 <Button type="submit" size="icon" className="h-9 w-9 shrink-0" disabled={!commentText.trim() || addComment.isPending}>
                   <Send className="h-4 w-4" />
                 </Button>
               </form>
             ) : (
-              <div className="px-4 py-3 border-t border-border text-center">
+              <div className="px-4 py-3 border-t border-border text-center shrink-0">
                 <button onClick={() => navigate("/auth")} className="text-sm text-primary font-medium">
                   Şərh yazmaq üçün daxil olun
                 </button>
