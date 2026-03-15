@@ -253,7 +253,12 @@ const AdminPanel = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="categories" className="mt-3"><AdminCategoryManager /></TabsContent>
+          <TabsContent value="categories" className="mt-3">
+            <AdminCategoryManager />
+            <div className="mt-6 border-t border-border pt-6">
+              <AdminCategoryFieldsManager />
+            </div>
+          </TabsContent>
           <TabsContent value="regions" className="mt-3"><AdminRegionManager /></TabsContent>
 
           {/* Stores */}
