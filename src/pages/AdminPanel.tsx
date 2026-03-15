@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import AdminCategoryManager from "@/components/admin/AdminCategoryManager";
+import AdminCategoryFieldsManager from "@/components/admin/AdminCategoryFieldsManager";
 import AdminRegionManager from "@/components/admin/AdminRegionManager";
 import AdminThemeManager from "@/components/admin/AdminThemeManager";
 import AdminModerationManager from "@/components/admin/AdminModerationManager";
