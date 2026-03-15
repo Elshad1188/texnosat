@@ -101,6 +101,16 @@ const CreateListing = () => {
 
   const parentCategories = categories.filter((c: any) => !c.parent_id);
 
+  // Fetch custom fields for selected category
+  const { data: categoryFields = [] } = useQuery({
+    queryKey: ["category-fields", form.category],
+    queryFn: async () => {
+      const { data } = await supabase.from("category_fields").select("*").eq("category_slug", form.category).eq("is_active", true).order("sort_order");
+      return data || [];
+    },
+    enabled: !!form.category,
+  });
+
   if (!user) { navigate("/auth"); return null; }
 
   const handleImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
