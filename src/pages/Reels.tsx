@@ -605,8 +605,9 @@ const Reels = () => {
       {/* Comments overlay - renders ON TOP of video without moving it */}
       {showComments && (
         <div
-          className="absolute inset-0 z-40"
+          className="absolute inset-0 z-40 touch-auto"
           onClick={() => setShowComments(false)}
+          onTouchMove={e => e.stopPropagation()}
         >
           {/* Semi-transparent backdrop */}
           <div className="absolute inset-0 bg-black/40" />
@@ -615,13 +616,14 @@ const Reels = () => {
           <div
             className="absolute bottom-0 left-0 right-0 max-h-[55vh] flex flex-col rounded-t-2xl bg-card animate-slide-in-from-bottom"
             onClick={e => e.stopPropagation()}
+            onTouchMove={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
               <h3 className="font-semibold text-foreground text-sm">Şərhlər ({comments.length})</h3>
               <button onClick={() => setShowComments(false)}><X className="h-5 w-5 text-muted-foreground" /></button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 overscroll-contain min-h-0">
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 overscroll-contain min-h-0" style={{ maxHeight: "35vh" }}>
               {comments.length === 0 ? (
                 <p className="text-center text-sm text-muted-foreground py-8">Hələ şərh yoxdur</p>
               ) : comments.map((c: any) => (
@@ -645,11 +647,13 @@ const Reels = () => {
                 onSubmit={e => { e.preventDefault(); if (commentText.trim()) addComment.mutate(); }}
                 className="flex items-center gap-2 px-4 py-3 border-t border-border shrink-0"
               >
-                <Input
+                <input
+                  autoFocus
                   placeholder="Şərh yazın..."
                   value={commentText}
                   onChange={e => setCommentText(e.target.value)}
-                  className="h-9 text-sm"
+                  className="flex-1 h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  onTouchStart={e => e.stopPropagation()}
                 />
                 <Button type="submit" size="icon" className="h-9 w-9 shrink-0" disabled={!commentText.trim() || addComment.isPending}>
                   <Send className="h-4 w-4" />
