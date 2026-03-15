@@ -199,6 +199,7 @@ const CreateListing = () => {
         image_urls: allImages,
         video_url: finalVideoUrl,
         store_id: publishToStore && userStore ? userStore.id : null,
+        custom_fields: Object.keys(customFields).length > 0 ? customFields : null,
       };
 
       if (editId) {
