@@ -407,6 +407,10 @@ const ProductDetail = () => {
                 <DetailRow label="Valyuta" value={listing.currency} />
                 <DetailRow label="Baxış sayı" value={String(listing.views_count)} />
                 <DetailRow label="Yerləşdirmə tarixi" value={new Date(listing.created_at).toLocaleDateString("az")} />
+                {/* Custom fields */}
+                {(listing as any).custom_fields && Object.entries((listing as any).custom_fields).map(([key, val]) => (
+                  val ? <DetailRow key={key} label={key} value={String(val)} /> : null
+                ))}
               </div>
             </div>
           </div>
