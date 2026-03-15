@@ -417,9 +417,11 @@ const ProductDetail = () => {
                 <DetailRow label="Baxış sayı" value={String(listing.views_count)} />
                 <DetailRow label="Yerləşdirmə tarixi" value={new Date(listing.created_at).toLocaleDateString("az")} />
                 {/* Custom fields */}
-                {(listing as any).custom_fields && Object.entries((listing as any).custom_fields).map(([key, val]) => (
-                  val ? <DetailRow key={key} label={key} value={String(val)} /> : null
-                ))}
+                {(listing as any).custom_fields && Object.entries((listing as any).custom_fields).map(([key, val]) => {
+                  if (!val) return null;
+                  const fieldDef = categoryFieldDefs.find((f: any) => f.field_name === key);
+                  return <DetailRow key={key} label={fieldDef?.field_label || key} value={String(val)} />;
+                })}
               </div>
             </div>
           </div>
