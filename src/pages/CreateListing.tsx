@@ -33,6 +33,8 @@ const CreateListing = () => {
   const [videoPreview, setVideoPreview] = useState<string>("");
   const [existingVideo, setExistingVideo] = useState<string>("");
   const [publishToStore, setPublishToStore] = useState(false);
+  const [customFields, setCustomFields] = useState<Record<string, string>>({});
+  const [showCustomFields, setShowCustomFields] = useState(false);
   const [form, setForm] = useState({
     title: "", description: "", price: "", category: "", condition: "Yeni", location: "",
   });
