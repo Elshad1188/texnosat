@@ -71,6 +71,7 @@ const CreateListing = () => {
       setExistingImages(editListing.image_urls || []);
       setExistingVideo((editListing as any).video_url || "");
       setPublishToStore(!!editListing.store_id);
+      setCustomFields((editListing as any).custom_fields || {});
     }
   }, [editListing]);
 
