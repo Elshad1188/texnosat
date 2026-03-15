@@ -124,6 +124,45 @@ export type Database = {
           },
         ]
       }
+      category_fields: {
+        Row: {
+          category_slug: string
+          created_at: string
+          field_label: string
+          field_name: string
+          field_type: string
+          id: string
+          is_active: boolean
+          is_required: boolean
+          options: Json | null
+          sort_order: number
+        }
+        Insert: {
+          category_slug: string
+          created_at?: string
+          field_label: string
+          field_name: string
+          field_type?: string
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          options?: Json | null
+          sort_order?: number
+        }
+        Update: {
+          category_slug?: string
+          created_at?: string
+          field_label?: string
+          field_name?: string
+          field_type?: string
+          id?: string
+          is_active?: boolean
+          is_required?: boolean
+          options?: Json | null
+          sort_order?: number
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           buyer_id: string
@@ -194,6 +233,7 @@ export type Database = {
           condition: string
           created_at: string
           currency: string
+          custom_fields: Json | null
           description: string | null
           id: string
           image_urls: string[] | null
@@ -217,6 +257,7 @@ export type Database = {
           condition?: string
           created_at?: string
           currency?: string
+          custom_fields?: Json | null
           description?: string | null
           id?: string
           image_urls?: string[] | null
@@ -240,6 +281,7 @@ export type Database = {
           condition?: string
           created_at?: string
           currency?: string
+          custom_fields?: Json | null
           description?: string | null
           id?: string
           image_urls?: string[] | null

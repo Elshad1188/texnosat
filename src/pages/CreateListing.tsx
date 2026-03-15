@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ImagePlus, X, Loader2, Store, Video } from "lucide-react";
+import { ImagePlus, X, Loader2, Store, Video, ChevronDown, ChevronUp } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
 const conditions = ["Yeni", "Yeni kimi", "İşlənmiş"];
@@ -33,6 +33,8 @@ const CreateListing = () => {
   const [videoPreview, setVideoPreview] = useState<string>("");
   const [existingVideo, setExistingVideo] = useState<string>("");
   const [publishToStore, setPublishToStore] = useState(false);
+  const [customFields, setCustomFields] = useState<Record<string, string>>({});
+  const [showCustomFields, setShowCustomFields] = useState(false);
   const [form, setForm] = useState({
     title: "", description: "", price: "", category: "", condition: "Yeni", location: "",
   });
@@ -69,6 +71,7 @@ const CreateListing = () => {
       setExistingImages(editListing.image_urls || []);
       setExistingVideo((editListing as any).video_url || "");
       setPublishToStore(!!editListing.store_id);
+      setCustomFields((editListing as any).custom_fields || {});
     }
   }, [editListing]);
 
@@ -98,6 +101,16 @@ const CreateListing = () => {
   });
 
   const parentCategories = categories.filter((c: any) => !c.parent_id);
+
+  // Fetch custom fields for selected category
+  const { data: categoryFields = [] } = useQuery({
+    queryKey: ["category-fields", form.category],
+    queryFn: async () => {
+      const { data } = await supabase.from("category_fields").select("*").eq("category_slug", form.category).eq("is_active", true).order("sort_order");
+      return data || [];
+    },
+    enabled: !!form.category,
+  });
 
   if (!user) { navigate("/auth"); return null; }
 
@@ -186,6 +199,7 @@ const CreateListing = () => {
         image_urls: allImages,
         video_url: finalVideoUrl,
         store_id: publishToStore && userStore ? userStore.id : null,
+        custom_fields: Object.keys(customFields).length > 0 ? customFields : null,
       };
 
       if (editId) {
@@ -349,6 +363,58 @@ const CreateListing = () => {
               </Select>
             </div>
           </div>
+
+          {/* Category custom fields */}
+          {categoryFields.length > 0 && (
+            <div className="rounded-xl border border-border bg-card">
+              <button
+                type="button"
+                onClick={() => setShowCustomFields(!showCustomFields)}
+                className="flex w-full items-center justify-between p-4"
+              >
+                <span className="text-sm font-semibold text-foreground">Əlavə məlumatlar ({categoryFields.length})</span>
+                {showCustomFields ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+              </button>
+              {showCustomFields && (
+                <div className="space-y-4 px-4 pb-4">
+                  {categoryFields.map((field: any) => (
+                    <div key={field.id} className="space-y-2">
+                      <Label>
+                        {field.field_label}
+                        {field.is_required && <span className="text-destructive ml-1">*</span>}
+                      </Label>
+                      {field.field_type === "select" && Array.isArray(field.options) ? (
+                        <Select
+                          value={customFields[field.field_name] || ""}
+                          onValueChange={v => setCustomFields(prev => ({ ...prev, [field.field_name]: v }))}
+                        >
+                          <SelectTrigger><SelectValue placeholder="Seçin" /></SelectTrigger>
+                          <SelectContent>
+                            {field.options.map((opt: string) => (
+                              <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : field.field_type === "number" ? (
+                        <Input
+                          type="number"
+                          placeholder={field.field_label}
+                          value={customFields[field.field_name] || ""}
+                          onChange={e => setCustomFields(prev => ({ ...prev, [field.field_name]: e.target.value }))}
+                        />
+                      ) : (
+                        <Input
+                          placeholder={field.field_label}
+                          value={customFields[field.field_name] || ""}
+                          onChange={e => setCustomFields(prev => ({ ...prev, [field.field_name]: e.target.value }))}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           <Button type="submit" disabled={loading} className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90">
             {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {editId ? "Yenilənir..." : "Yerləşdirilir..."}</> : (editId ? "Elanı yenilə" : "Elanı yerləşdir")}

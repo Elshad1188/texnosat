@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import AdminCategoryManager from "@/components/admin/AdminCategoryManager";
+import AdminCategoryFieldsManager from "@/components/admin/AdminCategoryFieldsManager";
 import AdminRegionManager from "@/components/admin/AdminRegionManager";
 import AdminThemeManager from "@/components/admin/AdminThemeManager";
 import AdminModerationManager from "@/components/admin/AdminModerationManager";
@@ -252,7 +253,12 @@ const AdminPanel = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="categories" className="mt-3"><AdminCategoryManager /></TabsContent>
+          <TabsContent value="categories" className="mt-3">
+            <AdminCategoryManager />
+            <div className="mt-6 border-t border-border pt-6">
+              <AdminCategoryFieldsManager />
+            </div>
+          </TabsContent>
           <TabsContent value="regions" className="mt-3"><AdminRegionManager /></TabsContent>
 
           {/* Stores */}

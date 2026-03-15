@@ -165,6 +165,16 @@ const ProductDetail = () => {
     enabled: !!listing?.category,
   });
 
+  // Fetch category fields for label mapping
+  const { data: categoryFieldDefs = [] } = useQuery({
+    queryKey: ["category-fields-detail", listing?.category],
+    queryFn: async () => {
+      const { data } = await supabase.from("category_fields").select("field_name, field_label").eq("category_slug", listing!.category).eq("is_active", true);
+      return data || [];
+    },
+    enabled: !!listing?.category,
+  });
+
   // Submit review
   const submitReview = useMutation({
     mutationFn: async () => {
@@ -388,7 +398,6 @@ const ProductDetail = () => {
               )}
             </div>
 
-
             {/* Description */}
             {listing.description && (
               <div className="mt-6">
@@ -407,6 +416,12 @@ const ProductDetail = () => {
                 <DetailRow label="Valyuta" value={listing.currency} />
                 <DetailRow label="Baxış sayı" value={String(listing.views_count)} />
                 <DetailRow label="Yerləşdirmə tarixi" value={new Date(listing.created_at).toLocaleDateString("az")} />
+                {/* Custom fields */}
+                {(listing as any).custom_fields && Object.entries((listing as any).custom_fields).map(([key, val]) => {
+                  if (!val) return null;
+                  const fieldDef = categoryFieldDefs.find((f: any) => f.field_name === key);
+                  return <DetailRow key={key} label={fieldDef?.field_label || key} value={String(val)} />;
+                })}
               </div>
             </div>
           </div>
