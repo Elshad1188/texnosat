@@ -20,6 +20,10 @@ interface SiteSettings {
   listing_requires_approval: boolean;
   max_images_per_listing: number;
   footer_text: string;
+  watermark_enabled: boolean;
+  watermark_url: string;
+  watermark_position: string;
+  watermark_opacity: number;
 }
 
 const defaults: SiteSettings = {
@@ -33,7 +37,19 @@ const defaults: SiteSettings = {
   listing_requires_approval: false,
   max_images_per_listing: 10,
   footer_text: "© 2026 Texnosat. Bütün hüquqlar qorunur.",
+  watermark_enabled: false,
+  watermark_url: "",
+  watermark_position: "bottom-right",
+  watermark_opacity: 50,
 };
+
+const watermarkPositions = [
+  { value: "top-left", label: "Yuxarı sol" },
+  { value: "top-right", label: "Yuxarı sağ" },
+  { value: "bottom-left", label: "Aşağı sol" },
+  { value: "bottom-right", label: "Aşağı sağ" },
+  { value: "center", label: "Mərkəz" },
+];
 
 const AdminSettingsManager = () => {
   const { user } = useAuth();
