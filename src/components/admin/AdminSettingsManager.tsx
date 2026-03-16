@@ -167,6 +167,75 @@ const AdminSettingsManager = () => {
         </div>
       </div>
 
+      {/* Watermark settings */}
+      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2"><Image className="h-4 w-4" /> Watermark (Logo)</h3>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-foreground">Şəkillərdə watermark göstər</p>
+            <p className="text-xs text-muted-foreground">Aktiv edildikdə elan şəkillərinin üstündə logo göstəriləcək</p>
+          </div>
+          <Switch
+            checked={settings.watermark_enabled}
+            onCheckedChange={(v) => setSettings({ ...settings, watermark_enabled: v })}
+          />
+        </div>
+        {settings.watermark_enabled && (
+          <>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Logo URL</Label>
+              <Input
+                value={settings.watermark_url}
+                onChange={(e) => setSettings({ ...settings, watermark_url: e.target.value })}
+                className="h-9"
+                placeholder="https://... və ya /logo.png"
+              />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Mövqe</Label>
+                <Select value={settings.watermark_position} onValueChange={(v) => setSettings({ ...settings, watermark_position: v })}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {watermarkPositions.map(p => (
+                      <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Şəffaflıq ({settings.watermark_opacity}%)</Label>
+                <Input
+                  type="range"
+                  min={10}
+                  max={100}
+                  value={settings.watermark_opacity}
+                  onChange={(e) => setSettings({ ...settings, watermark_opacity: Number(e.target.value) })}
+                  className="h-9"
+                />
+              </div>
+            </div>
+            {settings.watermark_url && (
+              <div className="relative h-32 w-48 rounded-lg border border-border bg-muted overflow-hidden">
+                <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">Önizləmə</div>
+                <img
+                  src={settings.watermark_url}
+                  alt="Watermark"
+                  className={`absolute ${
+                    settings.watermark_position === "top-left" ? "top-2 left-2" :
+                    settings.watermark_position === "top-right" ? "top-2 right-2" :
+                    settings.watermark_position === "bottom-left" ? "bottom-2 left-2" :
+                    settings.watermark_position === "bottom-right" ? "bottom-2 right-2" :
+                    "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+                  } h-8 w-auto`}
+                  style={{ opacity: settings.watermark_opacity / 100 }}
+                />
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
       <Button onClick={save} disabled={saving} className="gap-2 bg-gradient-primary text-primary-foreground">
         <Save className="h-4 w-4" /> {saving ? "Saxlanılır..." : "Dəyişiklikləri saxla"}
       </Button>
