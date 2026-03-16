@@ -5,7 +5,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Heart, MessageCircle, Share2, Eye, ShoppingBag, X, Send, Play, Image as ImageIcon, UserPlus, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -92,6 +91,7 @@ const Reels = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
   const lastTapRef = useRef(0);
+  const commentsEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch categories
   const { data: categories = [] } = useQuery({
@@ -113,7 +113,7 @@ const Reels = () => {
     queryFn: async () => {
       const { data: allListings } = await supabase
         .from("listings")
-        .select("id, title, price, currency, video_url, image_urls, user_id, store_id, created_at, category")
+        .select("id, title, price, currency, video_url, image_urls, user_id, store_id, created_at, category, views_count")
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
@@ -141,7 +141,6 @@ const Reels = () => {
 
   // Pause ALL videos and reset index when category changes
   useEffect(() => {
-    // Pause every video
     videoRefs.current.forEach(video => {
       video.pause();
       video.currentTime = 0;
@@ -214,7 +213,7 @@ const Reels = () => {
     enabled: !!currentReel,
   });
 
-  // View count
+  // View count from reel_views
   const { data: viewCount = 0 } = useQuery({
     queryKey: ["reel-views", currentReel?.id],
     queryFn: async () => {
@@ -242,12 +241,21 @@ const Reels = () => {
     enabled: !!currentReel,
   });
 
-  // Record view
+  // Record view - both reel_views and increment listings.views_count
   useEffect(() => {
     if (!currentReel) return;
     supabase.from("reel_views").insert({ listing_id: currentReel.id, user_id: user?.id || null });
+    // Also increment the listing's views_count
+    supabase.from("listings").update({ views_count: (currentReel.views_count || 0) + 1 }).eq("id", currentReel.id);
     queryClient.invalidateQueries({ queryKey: ["reel-views", currentReel.id] });
   }, [currentReel?.id]);
+
+  // Scroll to bottom of comments when opened or new comment added
+  useEffect(() => {
+    if (showComments && commentsEndRef.current) {
+      commentsEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [showComments, comments.length]);
 
   // Prevent pull-to-refresh
   useEffect(() => {
@@ -597,12 +605,12 @@ const Reels = () => {
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
               <Eye className="h-6 w-6 text-white" />
             </div>
-            <span className="text-white text-[11px] font-medium">{formatCount(viewCount)}</span>
+            <span className="text-white text-[11px] font-medium">{formatCount(viewCount + (currentReel.views_count || 0))}</span>
           </div>
         </div>
       )}
 
-      {/* Comments overlay - renders ON TOP of video without moving it */}
+      {/* Comments overlay - half-screen panel over video */}
       {showComments && (
         <div
           className="absolute inset-0 z-40 touch-auto"
@@ -612,18 +620,21 @@ const Reels = () => {
           {/* Semi-transparent backdrop */}
           <div className="absolute inset-0 bg-black/40" />
 
-          {/* Comment panel - positioned from bottom, doesn't affect video */}
+          {/* Comment panel - exactly 50% of screen from bottom */}
           <div
-            className="absolute bottom-0 left-0 right-0 max-h-[55vh] flex flex-col rounded-t-2xl bg-card animate-slide-in-from-bottom"
+            className="absolute bottom-0 left-0 right-0 flex flex-col rounded-t-2xl bg-card"
+            style={{ height: "50vh" }}
             onClick={e => e.stopPropagation()}
             onTouchMove={e => e.stopPropagation()}
           >
+            {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
               <h3 className="font-semibold text-foreground text-sm">Şərhlər ({comments.length})</h3>
               <button onClick={() => setShowComments(false)}><X className="h-5 w-5 text-muted-foreground" /></button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 overscroll-contain min-h-0" style={{ maxHeight: "35vh" }}>
+            {/* Scrollable comments list */}
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 overscroll-contain">
               {comments.length === 0 ? (
                 <p className="text-center text-sm text-muted-foreground py-8">Hələ şərh yoxdur</p>
               ) : comments.map((c: any) => (
@@ -640,27 +651,29 @@ const Reels = () => {
                   </div>
                 </div>
               ))}
+              <div ref={commentsEndRef} />
             </div>
 
+            {/* Fixed comment input at bottom */}
             {user ? (
               <form
                 onSubmit={e => { e.preventDefault(); if (commentText.trim()) addComment.mutate(); }}
-                className="flex items-center gap-2 px-4 py-3 border-t border-border shrink-0"
+                className="flex items-center gap-2 px-4 py-3 border-t border-border shrink-0 bg-card"
               >
                 <input
                   autoFocus
                   placeholder="Şərh yazın..."
                   value={commentText}
                   onChange={e => setCommentText(e.target.value)}
-                  className="flex-1 h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="flex-1 h-9 rounded-full border border-input bg-background px-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   onTouchStart={e => e.stopPropagation()}
                 />
-                <Button type="submit" size="icon" className="h-9 w-9 shrink-0" disabled={!commentText.trim() || addComment.isPending}>
+                <Button type="submit" size="icon" className="h-9 w-9 shrink-0 rounded-full" disabled={!commentText.trim() || addComment.isPending}>
                   <Send className="h-4 w-4" />
                 </Button>
               </form>
             ) : (
-              <div className="px-4 py-3 border-t border-border text-center shrink-0">
+              <div className="px-4 py-3 border-t border-border text-center shrink-0 bg-card">
                 <button onClick={() => navigate("/auth")} className="text-sm text-primary font-medium">
                   Şərh yazmaq üçün daxil olun
                 </button>
