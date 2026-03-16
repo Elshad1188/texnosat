@@ -92,6 +92,8 @@ const Reels = () => {
   const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
   const lastTapRef = useRef(0);
   const commentsEndRef = useRef<HTMLDivElement>(null);
+  // Lock to prevent swipe/index changes during comment operations
+  const commentLockRef = useRef(false);
 
   // Fetch categories
   const { data: categories = [] } = useQuery({
@@ -175,27 +177,20 @@ const Reels = () => {
     enabled: !!currentReel,
   });
 
-  // Check if current user follows the reel owner
+  // Check if current user follows the reel owner (user-level follow)
   const { data: isFollowing } = useQuery({
-    queryKey: ["reel-follow", currentReel?.user_id, user?.id],
+    queryKey: ["reel-user-follow", currentReel?.user_id, user?.id],
     queryFn: async () => {
       if (!user || !currentReel || currentReel.user_id === user.id) return false;
-      const { data: store } = await supabase.from("stores").select("id").eq("user_id", currentReel.user_id).maybeSingle();
-      if (!store) return false;
-      const { data: follow } = await supabase.from("store_followers").select("id").eq("store_id", store.id).eq("user_id", user.id).maybeSingle();
-      return !!follow;
+      const { data } = await supabase
+        .from("user_followers")
+        .select("id")
+        .eq("follower_id", user.id)
+        .eq("followed_id", currentReel.user_id)
+        .maybeSingle();
+      return !!data;
     },
     enabled: !!currentReel && !!user,
-  });
-
-  // Store of reel owner
-  const { data: ownerStore } = useQuery({
-    queryKey: ["reel-owner-store", currentReel?.user_id],
-    queryFn: async () => {
-      const { data } = await supabase.from("stores").select("id").eq("user_id", currentReel!.user_id).maybeSingle();
-      return data;
-    },
-    enabled: !!currentReel,
   });
 
   // Like data
@@ -241,16 +236,15 @@ const Reels = () => {
     enabled: !!currentReel,
   });
 
-  // Record view - both reel_views and increment listings.views_count
+  // Record view
   useEffect(() => {
     if (!currentReel) return;
     supabase.from("reel_views").insert({ listing_id: currentReel.id, user_id: user?.id || null });
-    // Also increment the listing's views_count
     supabase.from("listings").update({ views_count: (currentReel.views_count || 0) + 1 }).eq("id", currentReel.id);
     queryClient.invalidateQueries({ queryKey: ["reel-views", currentReel.id] });
   }, [currentReel?.id]);
 
-  // Scroll to bottom of comments when opened or new comment added
+  // Scroll to bottom of comments
   useEffect(() => {
     if (showComments && commentsEndRef.current) {
       commentsEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -278,18 +272,18 @@ const Reels = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["reel-likes", currentReel?.id] }),
   });
 
+  // User-level follow/unfollow
   const toggleFollow = useMutation({
     mutationFn: async () => {
-      if (!user) throw new Error("auth");
-      if (!ownerStore) throw new Error("no-store");
+      if (!user || !currentReel) throw new Error("auth");
       if (isFollowing) {
-        await supabase.from("store_followers").delete().eq("store_id", ownerStore.id).eq("user_id", user.id);
+        await supabase.from("user_followers").delete().eq("follower_id", user.id).eq("followed_id", currentReel.user_id);
       } else {
-        await supabase.from("store_followers").insert({ store_id: ownerStore.id, user_id: user.id });
+        await supabase.from("user_followers").insert({ follower_id: user.id, followed_id: currentReel.user_id });
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reel-follow", currentReel?.user_id] });
+      queryClient.invalidateQueries({ queryKey: ["reel-user-follow", currentReel?.user_id] });
       toast({ title: isFollowing ? "İzləmə dayandırıldı" : "İzlənilir" });
     },
   });
@@ -306,18 +300,18 @@ const Reels = () => {
   });
 
   const goNext = useCallback(() => {
-    if (isTransitioning || currentIndex >= reels.length - 1) return;
+    if (isTransitioning || commentLockRef.current || showComments || currentIndex >= reels.length - 1) return;
     setIsTransitioning(true);
     setCurrentIndex(prev => prev + 1);
     setTimeout(() => setIsTransitioning(false), 350);
-  }, [currentIndex, reels.length, isTransitioning]);
+  }, [currentIndex, reels.length, isTransitioning, showComments]);
 
   const goPrev = useCallback(() => {
-    if (isTransitioning || currentIndex <= 0) return;
+    if (isTransitioning || commentLockRef.current || showComments || currentIndex <= 0) return;
     setIsTransitioning(true);
     setCurrentIndex(prev => prev - 1);
     setTimeout(() => setIsTransitioning(false), 350);
-  }, [currentIndex, isTransitioning]);
+  }, [currentIndex, isTransitioning, showComments]);
 
   const togglePlay = () => {
     if (!currentReel) return;
@@ -336,6 +330,7 @@ const Reels = () => {
   };
 
   const handleContentClick = (e: React.MouseEvent) => {
+    if (showComments) return;
     const now = Date.now();
     if (now - lastTapRef.current < 300) {
       e.preventDefault();
@@ -346,20 +341,20 @@ const Reels = () => {
     lastTapRef.current = now;
   };
 
-  // Touch swipe
+  // Touch swipe - completely blocked when comments are open
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
   const swiping = useRef(false);
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (showComments) return;
+    if (showComments || commentLockRef.current) return;
     touchStartY.current = e.touches[0].clientY;
     touchStartX.current = e.touches[0].clientX;
     swiping.current = true;
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!swiping.current || showComments) return;
+    if (!swiping.current || showComments || commentLockRef.current) return;
     swiping.current = false;
     const diffY = touchStartY.current - e.changedTouches[0].clientY;
     const diffX = Math.abs(touchStartX.current - e.changedTouches[0].clientX);
@@ -391,7 +386,7 @@ const Reels = () => {
     );
   }
 
-  const showFollowBtn = currentReel && user && currentReel.user_id !== user.id && ownerStore;
+  const showFollowBtn = currentReel && user && currentReel.user_id !== user.id;
 
   return (
     <div
@@ -520,23 +515,23 @@ const Reels = () => {
         </div>
       )}
 
-      {/* Bottom info */}
-      {currentReel && (
+      {/* Bottom info - always visible when not in comments */}
+      {currentReel && !showComments && (
         <div className="absolute bottom-0 left-0 right-16 z-30 p-4 pb-8 bg-gradient-to-t from-black/80 via-black/30 to-transparent">
           {/* Owner row with follow button */}
           <div className="flex items-center gap-2 mb-2">
             <button
               onClick={(e) => { e.stopPropagation(); navigate(`/seller/${currentReel.user_id}`); }}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 min-w-0"
             >
-              <div className="h-9 w-9 rounded-full bg-primary/30 flex items-center justify-center text-white font-bold text-sm overflow-hidden ring-2 ring-white/30">
+              <div className="h-9 w-9 shrink-0 rounded-full bg-primary/30 flex items-center justify-center text-white font-bold text-sm overflow-hidden ring-2 ring-white/30">
                 {reelProfile?.avatar_url ? (
                   <img src={reelProfile.avatar_url} alt="" className="h-full w-full object-cover" />
                 ) : (
                   (reelProfile?.full_name || "?")[0].toUpperCase()
                 )}
               </div>
-              <span className="text-white text-sm font-semibold">{reelProfile?.full_name || "İstifadəçi"}</span>
+              <span className="text-white text-sm font-semibold truncate">{reelProfile?.full_name || "İstifadəçi"}</span>
             </button>
 
             {showFollowBtn && (
@@ -547,7 +542,7 @@ const Reels = () => {
                   toggleFollow.mutate();
                 }}
                 className={cn(
-                  "ml-1 flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold transition-colors",
+                  "ml-1 flex items-center gap-1 shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold transition-colors",
                   isFollowing ? "bg-white/20 text-white" : "bg-primary text-primary-foreground"
                 )}
               >
@@ -557,18 +552,22 @@ const Reels = () => {
             )}
           </div>
 
-          {/* Listing title - clickable to listing page */}
-          <button
-            onClick={(e) => { e.stopPropagation(); navigate(`/product/${currentReel.id}`); }}
-            className="text-left"
-          >
-            <h3 className="text-white font-semibold text-base line-clamp-2 hover:underline">{currentReel.title}</h3>
-          </button>
+          {/* Listing title - always visible */}
+          {currentReel.title && (
+            <button
+              onClick={(e) => { e.stopPropagation(); navigate(`/product/${currentReel.id}`); }}
+              className="text-left w-full"
+            >
+              <h3 className="text-white font-semibold text-base line-clamp-2 hover:underline drop-shadow-lg">
+                {currentReel.title}
+              </h3>
+            </button>
+          )}
         </div>
       )}
 
       {/* Right side actions */}
-      {currentReel && (
+      {currentReel && !showComments && (
         <div className="absolute right-3 bottom-24 z-30 flex flex-col items-center gap-5">
           <button
             onClick={(e) => {
@@ -614,25 +613,26 @@ const Reels = () => {
         </div>
       )}
 
-      {/* Comments overlay - sits ON TOP of video, video stays fully visible underneath */}
-      {showComments && (
+      {/* Comments overlay - fully captures all touch events to prevent video change */}
+      {showComments && currentReel && (
         <div
-          className="absolute inset-0 z-40 touch-auto pointer-events-none"
-          onTouchMove={e => e.stopPropagation()}
+          className="absolute inset-0 z-40"
+          onClick={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
         >
-          {/* Top half - tap to close, transparent so video is fully visible */}
+          {/* Top area - tap to close, transparent so video shows */}
           <div
-            className="absolute top-0 left-0 right-0 pointer-events-auto"
+            className="absolute top-0 left-0 right-0"
             style={{ height: "45vh" }}
             onClick={() => setShowComments(false)}
           />
 
-          {/* Comment panel - bottom 55% with semi-transparent bg so video shows through */}
+          {/* Comment panel */}
           <div
-            className="absolute bottom-0 left-0 right-0 flex flex-col rounded-t-2xl bg-card/95 backdrop-blur-md pointer-events-auto"
+            className="absolute bottom-0 left-0 right-0 flex flex-col rounded-t-2xl bg-card/95 backdrop-blur-md"
             style={{ height: "55vh" }}
-            onClick={e => e.stopPropagation()}
-            onTouchMove={e => e.stopPropagation()}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
@@ -641,7 +641,7 @@ const Reels = () => {
             </div>
 
             {/* Scrollable comments list */}
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 overscroll-contain">
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 overscroll-contain touch-auto">
               {comments.length === 0 ? (
                 <p className="text-center text-sm text-muted-foreground py-8">Hələ şərh yoxdur</p>
               ) : comments.map((c: any) => (
@@ -664,7 +664,19 @@ const Reels = () => {
             {/* Fixed comment input at bottom */}
             {user ? (
               <form
-                onSubmit={e => { e.preventDefault(); if (commentText.trim()) addComment.mutate(); }}
+                onSubmit={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (commentText.trim()) {
+                    commentLockRef.current = true;
+                    addComment.mutate(undefined, {
+                      onSettled: () => {
+                        // Release lock after mutation completes
+                        setTimeout(() => { commentLockRef.current = false; }, 500);
+                      }
+                    });
+                  }
+                }}
                 className="flex items-center gap-2 px-4 py-3 border-t border-border shrink-0 bg-card"
               >
                 <input
@@ -674,6 +686,7 @@ const Reels = () => {
                   onChange={e => setCommentText(e.target.value)}
                   className="flex-1 h-9 rounded-full border border-input bg-background px-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   onTouchStart={e => e.stopPropagation()}
+                  onTouchEnd={e => e.stopPropagation()}
                 />
                 <Button type="submit" size="icon" className="h-9 w-9 shrink-0 rounded-full" disabled={!commentText.trim() || addComment.isPending}>
                   <Send className="h-4 w-4" />
