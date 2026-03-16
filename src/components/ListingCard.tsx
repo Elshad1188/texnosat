@@ -79,6 +79,7 @@ const ListingCard = ({ id, title, price, location, time, image, condition, isPre
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         <img src={image} alt={title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+        <WatermarkOverlay />
         <button
           onClick={(e) => {
             e.stopPropagation();
