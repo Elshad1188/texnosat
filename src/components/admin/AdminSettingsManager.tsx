@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, Loader2, Globe, Mail, Phone, MapPin, Image } from "lucide-react";
+import { Save, Loader2, Globe, Mail, Phone, MapPin, Image, Upload } from "lucide-react";
 
 interface SiteSettings {
   site_name: string;
@@ -58,6 +58,8 @@ const AdminSettingsManager = () => {
   const [settings, setSettings] = useState<SiteSettings>(defaults);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingWm, setUploadingWm] = useState(false);
+  const wmFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetch = async () => {
@@ -183,13 +185,49 @@ const AdminSettingsManager = () => {
         {settings.watermark_enabled && (
           <>
             <div className="space-y-1.5">
-              <Label className="text-xs">Logo URL</Label>
-              <Input
-                value={settings.watermark_url}
-                onChange={(e) => setSettings({ ...settings, watermark_url: e.target.value })}
-                className="h-9"
-                placeholder="https://... və ya /logo.png"
-              />
+              <Label className="text-xs">Logo (URL və ya fayl yüklə)</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={settings.watermark_url}
+                  onChange={(e) => setSettings({ ...settings, watermark_url: e.target.value })}
+                  className="h-9 flex-1"
+                  placeholder="https://... və ya /logo.png"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-1.5"
+                  disabled={uploadingWm}
+                  onClick={() => wmFileRef.current?.click()}
+                >
+                  {uploadingWm ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                  Yüklə
+                </Button>
+                <input
+                  ref={wmFileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setUploadingWm(true);
+                    try {
+                      const fileName = `watermark/${Date.now()}-${file.name}`;
+                      const { error } = await supabase.storage.from("banners").upload(fileName, file);
+                      if (error) throw error;
+                      const { data: urlData } = supabase.storage.from("banners").getPublicUrl(fileName);
+                      setSettings(prev => ({ ...prev, watermark_url: urlData.publicUrl }));
+                      toast({ title: "Logo yükləndi" });
+                    } catch (err: any) {
+                      toast({ title: "Yükləmə xətası", description: err.message, variant: "destructive" });
+                    } finally {
+                      setUploadingWm(false);
+                    }
+                  }}
+                />
+              </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">

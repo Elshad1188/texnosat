@@ -381,7 +381,6 @@ const CreateListing = () => {
                     <div key={field.id} className="space-y-2">
                       <Label>
                         {field.field_label}
-                        {field.is_required && <span className="text-destructive ml-1">*</span>}
                       </Label>
                       {field.field_type === "select" && Array.isArray(field.options) ? (
                         <Select
