@@ -4,6 +4,23 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+const useWatermarkSettings = () => {
+  return useQuery({
+    queryKey: ["watermark-settings"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "general").maybeSingle();
+      const val = data?.value as any;
+      if (!val?.watermark_enabled || !val?.watermark_url) return null;
+      return {
+        url: val.watermark_url as string,
+        position: (val.watermark_position || "bottom-right") as string,
+        opacity: (val.watermark_opacity || 50) as number,
+      };
+    },
+    staleTime: 60000,
+  });
+};
+
 interface ListingCardProps {
   id: string;
   title: string;
