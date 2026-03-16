@@ -36,6 +36,25 @@ interface ListingCardProps {
   storeLogo?: string | null;
 }
 
+const WatermarkOverlay = () => {
+  const { data: wm } = useWatermarkSettings();
+  if (!wm) return null;
+  const posClass =
+    wm.position === "top-left" ? "top-1 left-1" :
+    wm.position === "top-right" ? "top-1 right-1" :
+    wm.position === "bottom-left" ? "bottom-1 left-1" :
+    wm.position === "bottom-right" ? "bottom-1 right-1" :
+    "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2";
+  return (
+    <img
+      src={wm.url}
+      alt=""
+      className={`absolute ${posClass} h-6 w-auto pointer-events-none z-10`}
+      style={{ opacity: wm.opacity / 100 }}
+    />
+  );
+};
+
 const ListingCard = ({ id, title, price, location, time, image, condition, isPremium, isUrgent, storeId, storeName, storeLogo }: ListingCardProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
