@@ -58,6 +58,8 @@ const AdminSettingsManager = () => {
   const [settings, setSettings] = useState<SiteSettings>(defaults);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingWm, setUploadingWm] = useState(false);
+  const wmFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetch = async () => {
