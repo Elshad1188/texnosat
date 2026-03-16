@@ -511,6 +511,15 @@ const Reels = () => {
         );
       })}
 
+      {/* Price - top right corner */}
+      {currentReel && (
+        <div className="absolute top-14 right-4 z-30">
+          <span className="inline-block rounded-lg bg-primary px-3 py-1.5 text-primary-foreground font-bold text-base shadow-lg">
+            {currentReel.price} {currentReel.currency}
+          </span>
+        </div>
+      )}
+
       {/* Bottom info */}
       {currentReel && (
         <div className="absolute bottom-0 left-0 right-16 z-30 p-4 pb-8 bg-gradient-to-t from-black/80 via-black/30 to-transparent">
@@ -546,15 +555,6 @@ const Reels = () => {
                 {isFollowing ? "İzləmədən çıx" : "İzlə"}
               </button>
             )}
-
-            <span className="text-white/50 text-xs ml-auto">· {formatTime(currentReel.created_at)}</span>
-          </div>
-
-          {/* Price - prominent */}
-          <div className="mb-1">
-            <span className="inline-block rounded-lg bg-primary px-3 py-1 text-primary-foreground font-bold text-lg">
-              {currentReel.price} {currentReel.currency}
-            </span>
           </div>
 
           {/* Listing title - clickable to listing page */}
@@ -614,20 +614,23 @@ const Reels = () => {
         </div>
       )}
 
-      {/* Comments overlay - half-screen panel over video */}
+      {/* Comments overlay - sits ON TOP of video, video stays fully visible underneath */}
       {showComments && (
         <div
-          className="absolute inset-0 z-40 touch-auto"
-          onClick={() => setShowComments(false)}
+          className="absolute inset-0 z-40 touch-auto pointer-events-none"
           onTouchMove={e => e.stopPropagation()}
         >
-          {/* Semi-transparent backdrop */}
-          <div className="absolute inset-0 bg-black/40" />
-
-          {/* Comment panel - exactly 50% of screen from bottom */}
+          {/* Top half - tap to close, transparent so video is fully visible */}
           <div
-            className="absolute bottom-0 left-0 right-0 flex flex-col rounded-t-2xl bg-card"
-            style={{ height: "50vh" }}
+            className="absolute top-0 left-0 right-0 pointer-events-auto"
+            style={{ height: "45vh" }}
+            onClick={() => setShowComments(false)}
+          />
+
+          {/* Comment panel - bottom 55% with semi-transparent bg so video shows through */}
+          <div
+            className="absolute bottom-0 left-0 right-0 flex flex-col rounded-t-2xl bg-card/95 backdrop-blur-md pointer-events-auto"
+            style={{ height: "55vh" }}
             onClick={e => e.stopPropagation()}
             onTouchMove={e => e.stopPropagation()}
           >
