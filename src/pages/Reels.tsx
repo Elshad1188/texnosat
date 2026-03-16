@@ -550,6 +550,13 @@ const Reels = () => {
             <span className="text-white/50 text-xs ml-auto">· {formatTime(currentReel.created_at)}</span>
           </div>
 
+          {/* Price - prominent */}
+          <div className="mb-1">
+            <span className="inline-block rounded-lg bg-primary px-3 py-1 text-primary-foreground font-bold text-lg">
+              {currentReel.price} {currentReel.currency}
+            </span>
+          </div>
+
           {/* Listing title - clickable to listing page */}
           <button
             onClick={(e) => { e.stopPropagation(); navigate(`/product/${currentReel.id}`); }}
@@ -557,9 +564,6 @@ const Reels = () => {
           >
             <h3 className="text-white font-semibold text-base line-clamp-2 hover:underline">{currentReel.title}</h3>
           </button>
-
-          {/* Price */}
-          <p className="text-primary font-bold text-lg mt-0.5">{currentReel.price} {currentReel.currency}</p>
         </div>
       )}
 
