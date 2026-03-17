@@ -95,7 +95,7 @@ serve(async (req) => {
 
     await client.send({
       from: `${smtp.from_name} <${smtp.from_email}>`,
-      to,
+      to: recipientEmail,
       subject: finalSubject,
       content: finalBody,
     });
