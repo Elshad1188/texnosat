@@ -244,21 +244,12 @@ const Reels = () => {
     queryClient.invalidateQueries({ queryKey: ["reel-views", currentReel.id] });
   }, [currentReel?.id]);
 
-  // Scroll to bottom of comments
+  // Keep the latest comment visible when drawer is open
   useEffect(() => {
     if (showComments && commentsEndRef.current) {
-      commentsEndRef.current.scrollIntoView({ behavior: "smooth" });
+      commentsEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [showComments, comments.length]);
-
-  // Prevent pull-to-refresh
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const preventDefault = (e: TouchEvent) => { e.preventDefault(); };
-    el.addEventListener("touchmove", preventDefault, { passive: false });
-    return () => el.removeEventListener("touchmove", preventDefault);
-  }, []);
 
   const toggleLike = useMutation({
     mutationFn: async () => {
