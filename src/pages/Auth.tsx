@@ -10,9 +10,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, User, ArrowLeft, Gift } from "lucide-react";
 import { Link } from "react-router-dom";
 
+type AuthMode = "login" | "register" | "forgot";
+
 const Auth = () => {
   const [searchParams] = useSearchParams();
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -26,7 +28,7 @@ const Auth = () => {
     const ref = searchParams.get("ref");
     if (ref) {
       setReferralCode(ref);
-      setIsLogin(false);
+      setMode("register");
     }
   }, [searchParams]);
 
@@ -34,21 +36,26 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      if (isLogin) {
+      if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + "/auth",
+        });
+        if (error) throw error;
+        toast({ title: "Şifrə sıfırlama linki göndərildi", description: "E-mail qutunuzu yoxlayın" });
+        setMode("login");
+      } else if (mode === "login") {
         await signIn(email, password);
         toast({ title: "Uğurla daxil oldunuz!" });
+        navigate("/");
       } else {
         await signUp(email, password, fullName);
         toast({ title: "Hesab yaradıldı!", description: "Xoş gəldiniz!" });
-        // Process referral after signup
         if (referralCode) {
           setTimeout(async () => {
-            // Check if referral system is enabled
             const { data: refSettings } = await supabase
               .from("site_settings").select("value").eq("key", "referral").maybeSingle();
             const enabled = refSettings?.value ? (refSettings.value as any).referral_enabled !== false : true;
             if (!enabled) return;
-
             const { data: { user: newUser } } = await supabase.auth.getUser();
             if (newUser) {
               await supabase.rpc("process_referral", {
@@ -58,8 +65,8 @@ const Auth = () => {
             }
           }, 2000);
         }
+        navigate("/");
       }
-      navigate("/");
     } catch (error: any) {
       toast({
         title: "Xəta",
@@ -71,6 +78,18 @@ const Auth = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const titles: Record<AuthMode, string> = {
+    login: "Daxil ol",
+    register: "Qeydiyyat",
+    forgot: "Şifrəni sıfırla",
+  };
+
+  const descriptions: Record<AuthMode, string> = {
+    login: "Hesabınıza daxil olun",
+    register: "Yeni hesab yaradın və elan yerləşdirin",
+    forgot: "E-mail ünvanınızı daxil edin, şifrə sıfırlama linki göndəriləcək",
   };
 
   return (
@@ -89,45 +108,26 @@ const Auth = () => {
 
         <Card className="border-border bg-card">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-display">
-              {isLogin ? "Daxil ol" : "Qeydiyyat"}
-            </CardTitle>
-            <CardDescription>
-              {isLogin
-                ? "Hesabınıza daxil olun"
-                : "Yeni hesab yaradın və elan yerləşdirin"}
-            </CardDescription>
+            <CardTitle className="text-2xl font-display">{titles[mode]}</CardTitle>
+            <CardDescription>{descriptions[mode]}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              {!isLogin && (
+              {mode === "register" && (
                 <div className="space-y-2">
                   <Label htmlFor="fullName">Ad və soyad</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="fullName"
-                      placeholder="Ad Soyad"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="pl-10"
-                      required
-                    />
+                    <Input id="fullName" placeholder="Ad Soyad" value={fullName} onChange={(e) => setFullName(e.target.value)} className="pl-10" required />
                   </div>
                 </div>
               )}
-              {!isLogin && (
+              {mode === "register" && (
                 <div className="space-y-2">
                   <Label htmlFor="referral">Referal kodu (istəyə bağlı)</Label>
                   <div className="relative">
                     <Gift className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="referral"
-                      placeholder="XXXXXXXX"
-                      value={referralCode}
-                      onChange={(e) => setReferralCode(e.target.value)}
-                      className="pl-10 uppercase font-mono"
-                    />
+                    <Input id="referral" placeholder="XXXXXXXX" value={referralCode} onChange={(e) => setReferralCode(e.target.value)} className="pl-10 uppercase font-mono" />
                   </div>
                 </div>
               )}
@@ -135,49 +135,39 @@ const Auth = () => {
                 <Label htmlFor="email">E-mail</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="email@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                    required
-                  />
+                  <Input id="email" type="email" placeholder="email@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" required />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Şifrə</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
-                    minLength={6}
-                    required
-                  />
+              {mode !== "forgot" && (
+                <div className="space-y-2">
+                  <Label htmlFor="password">Şifrə</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" minLength={6} required />
+                  </div>
                 </div>
-              </div>
-              <Button
-                type="submit"
-                className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90"
-                disabled={loading}
-              >
-                {loading ? "Gözləyin..." : isLogin ? "Daxil ol" : "Qeydiyyatdan keç"}
+              )}
+              <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90" disabled={loading}>
+                {loading ? "Gözləyin..." : titles[mode]}
               </Button>
             </form>
-            <div className="mt-6 text-center text-sm text-muted-foreground">
-              {isLogin ? "Hesabınız yoxdur?" : "Artıq hesabınız var?"}{" "}
-              <button
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-primary font-medium hover:underline"
-              >
-                {isLogin ? "Qeydiyyatdan keçin" : "Daxil olun"}
-              </button>
+
+            {mode === "login" && (
+              <div className="mt-3 text-center">
+                <button onClick={() => setMode("forgot")} className="text-xs text-muted-foreground hover:text-primary hover:underline">
+                  Şifrəni unutmusunuz?
+                </button>
+              </div>
+            )}
+
+            <div className="mt-4 text-center text-sm text-muted-foreground">
+              {mode === "login" ? (
+                <>Hesabınız yoxdur?{" "}<button onClick={() => setMode("register")} className="text-primary font-medium hover:underline">Qeydiyyatdan keçin</button></>
+              ) : mode === "register" ? (
+                <>Artıq hesabınız var?{" "}<button onClick={() => setMode("login")} className="text-primary font-medium hover:underline">Daxil olun</button></>
+              ) : (
+                <button onClick={() => setMode("login")} className="text-primary font-medium hover:underline">Geri qayıt</button>
+              )}
             </div>
           </CardContent>
         </Card>

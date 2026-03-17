@@ -684,6 +684,7 @@ const Reels = () => {
                 className="flex items-center gap-2 px-4 py-3 border-t border-border shrink-0 bg-card"
               >
                 <input
+                  ref={commentInputRef}
                   autoFocus
                   placeholder="Şərh yazın..."
                   value={commentText}
