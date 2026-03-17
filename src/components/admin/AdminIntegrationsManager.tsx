@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Save, Loader2, Smartphone, Bell, Send, Link2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import AdminSmtpManager from "./AdminSmtpManager";
 
 interface FirebaseConfig {
   apiKey: string;
@@ -108,13 +109,9 @@ const AdminIntegrationsManager = () => {
     }
     setSending(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData?.session?.access_token;
-
       const res = await supabase.functions.invoke("send-push", {
         body: { title: pushTitle, body: pushBody, topic: "all" },
       });
-
       if (res.error) {
         toast({ title: "Xəta", description: res.error.message, variant: "destructive" });
       } else {
@@ -139,6 +136,9 @@ const AdminIntegrationsManager = () => {
 
   return (
     <div className="space-y-6">
+      {/* SMTP & Email Templates */}
+      <AdminSmtpManager />
+
       {/* App Store Links */}
       <Card>
         <CardHeader className="pb-3">
@@ -182,75 +182,36 @@ const AdminIntegrationsManager = () => {
         <CardContent className="space-y-3">
           <p className="text-[10px] text-muted-foreground">
             Firebase Console → Project Settings → General → Your apps → Web app konfiqurasiyasını daxil edin.
-            Service account JSON-u isə backend sirrlərinə əlavə olunub.
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label className="text-xs">API Key</Label>
-              <Input
-                value={config.firebase_config.apiKey}
-                onChange={(e) => updateFirebase("apiKey", e.target.value)}
-                placeholder="AIzaSy..."
-                className="h-9 font-mono text-xs"
-              />
+              <Input value={config.firebase_config.apiKey} onChange={(e) => updateFirebase("apiKey", e.target.value)} placeholder="AIzaSy..." className="h-9 font-mono text-xs" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Project ID</Label>
-              <Input
-                value={config.firebase_config.projectId}
-                onChange={(e) => updateFirebase("projectId", e.target.value)}
-                placeholder="my-project-id"
-                className="h-9 font-mono text-xs"
-              />
+              <Input value={config.firebase_config.projectId} onChange={(e) => updateFirebase("projectId", e.target.value)} placeholder="my-project-id" className="h-9 font-mono text-xs" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Auth Domain</Label>
-              <Input
-                value={config.firebase_config.authDomain}
-                onChange={(e) => updateFirebase("authDomain", e.target.value)}
-                placeholder="my-project.firebaseapp.com"
-                className="h-9 font-mono text-xs"
-              />
+              <Input value={config.firebase_config.authDomain} onChange={(e) => updateFirebase("authDomain", e.target.value)} placeholder="my-project.firebaseapp.com" className="h-9 font-mono text-xs" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Storage Bucket</Label>
-              <Input
-                value={config.firebase_config.storageBucket}
-                onChange={(e) => updateFirebase("storageBucket", e.target.value)}
-                placeholder="my-project.appspot.com"
-                className="h-9 font-mono text-xs"
-              />
+              <Input value={config.firebase_config.storageBucket} onChange={(e) => updateFirebase("storageBucket", e.target.value)} placeholder="my-project.appspot.com" className="h-9 font-mono text-xs" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Messaging Sender ID</Label>
-              <Input
-                value={config.firebase_config.messagingSenderId}
-                onChange={(e) => updateFirebase("messagingSenderId", e.target.value)}
-                placeholder="123456789"
-                className="h-9 font-mono text-xs"
-              />
+              <Input value={config.firebase_config.messagingSenderId} onChange={(e) => updateFirebase("messagingSenderId", e.target.value)} placeholder="123456789" className="h-9 font-mono text-xs" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">App ID</Label>
-              <Input
-                value={config.firebase_config.appId}
-                onChange={(e) => updateFirebase("appId", e.target.value)}
-                placeholder="1:123:web:abc"
-                className="h-9 font-mono text-xs"
-              />
+              <Input value={config.firebase_config.appId} onChange={(e) => updateFirebase("appId", e.target.value)} placeholder="1:123:web:abc" className="h-9 font-mono text-xs" />
             </div>
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">VAPID Key (Web Push sertifikatı)</Label>
-            <Input
-              value={config.firebase_config.vapidKey}
-              onChange={(e) => updateFirebase("vapidKey", e.target.value)}
-              placeholder="BHk4..."
-              className="h-9 font-mono text-xs"
-            />
-            <p className="text-[10px] text-muted-foreground">
-              Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → Generate key pair
-            </p>
+            <Input value={config.firebase_config.vapidKey} onChange={(e) => updateFirebase("vapidKey", e.target.value)} placeholder="BHk4..." className="h-9 font-mono text-xs" />
           </div>
         </CardContent>
       </Card>
@@ -270,32 +231,15 @@ const AdminIntegrationsManager = () => {
           <CardContent className="space-y-3">
             <div className="space-y-1.5">
               <Label className="text-xs">Başlıq</Label>
-              <Input
-                value={pushTitle}
-                onChange={(e) => setPushTitle(e.target.value)}
-                placeholder="Bildiriş başlığı"
-                className="h-9"
-              />
+              <Input value={pushTitle} onChange={(e) => setPushTitle(e.target.value)} placeholder="Bildiriş başlığı" className="h-9" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Mətn</Label>
-              <Textarea
-                value={pushBody}
-                onChange={(e) => setPushBody(e.target.value)}
-                placeholder="Bildiriş mətni"
-                rows={3}
-              />
+              <Textarea value={pushBody} onChange={(e) => setPushBody(e.target.value)} placeholder="Bildiriş mətni" rows={3} />
             </div>
-            <Button
-              onClick={sendPush}
-              disabled={sending}
-              className="gap-2 bg-gradient-primary text-primary-foreground"
-            >
+            <Button onClick={sendPush} disabled={sending} className="gap-2 bg-gradient-primary text-primary-foreground">
               <Send className="h-4 w-4" /> {sending ? "Göndərilir..." : "Göndər"}
             </Button>
-            <p className="text-[10px] text-muted-foreground">
-              FCM V1 API ilə "all" mövzusuna bildiriş göndəriləcək. Edge function vasitəsilə.
-            </p>
           </CardContent>
         </Card>
       )}

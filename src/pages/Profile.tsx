@@ -14,8 +14,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { User, Package, Store, Star, Edit2, Save, Eye, MapPin, Phone, Calendar, LogOut, ShieldCheck, Settings, Wallet, Trash2 } from "lucide-react";
+import { User, Package, Store, Star, Edit2, Save, Eye, MapPin, Phone, Calendar, LogOut, ShieldCheck, Settings, Wallet, Trash2, Mail } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
