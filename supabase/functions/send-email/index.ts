@@ -16,7 +16,20 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { to, subject, body, template, template_vars } = await req.json();
+    const { to, to_user_id, subject, body, template, template_vars } = await req.json();
+
+    // Resolve email from user_id if needed
+    let recipientEmail = to;
+    if (!recipientEmail && to_user_id) {
+      const { data: userData } = await supabase.auth.admin.getUserById(to_user_id);
+      recipientEmail = userData?.user?.email;
+      if (!recipientEmail) {
+        return new Response(JSON.stringify({ error: "İstifadəçi e-mail tapılmadı" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     // Get SMTP settings
     const { data: smtpData } = await supabase
