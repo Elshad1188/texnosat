@@ -345,20 +345,20 @@ const Reels = () => {
     lastTapRef.current = now;
   };
 
-  // Touch swipe - completely blocked when comments are open
+  // Touch swipe - allowed even when comments are open
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
   const swiping = useRef(false);
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (showComments || commentLockRef.current) return;
+    if (commentLockRef.current) return;
     touchStartY.current = e.touches[0].clientY;
     touchStartX.current = e.touches[0].clientX;
     swiping.current = true;
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!swiping.current || showComments || commentLockRef.current) return;
+    if (!swiping.current || commentLockRef.current) return;
     swiping.current = false;
     const diffY = touchStartY.current - e.changedTouches[0].clientY;
     const diffX = Math.abs(touchStartX.current - e.changedTouches[0].clientX);
