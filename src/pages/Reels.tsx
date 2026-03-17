@@ -343,6 +343,8 @@ const Reels = () => {
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (commentLockRef.current) return;
+    const target = e.target as HTMLElement;
+    if (target.closest("[data-comments-panel='true']")) return;
     touchStartY.current = e.touches[0].clientY;
     touchStartX.current = e.touches[0].clientX;
     swiping.current = true;
