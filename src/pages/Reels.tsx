@@ -304,18 +304,18 @@ const Reels = () => {
   });
 
   const goNext = useCallback(() => {
-    if (isTransitioning || commentLockRef.current || showComments || currentIndex >= reels.length - 1) return;
+    if (isTransitioning || commentLockRef.current || currentIndex >= reels.length - 1) return;
     setIsTransitioning(true);
     setCurrentIndex(prev => prev + 1);
     setTimeout(() => setIsTransitioning(false), 350);
-  }, [currentIndex, reels.length, isTransitioning, showComments]);
+  }, [currentIndex, reels.length, isTransitioning]);
 
   const goPrev = useCallback(() => {
-    if (isTransitioning || commentLockRef.current || showComments || currentIndex <= 0) return;
+    if (isTransitioning || commentLockRef.current || currentIndex <= 0) return;
     setIsTransitioning(true);
     setCurrentIndex(prev => prev - 1);
     setTimeout(() => setIsTransitioning(false), 350);
-  }, [currentIndex, isTransitioning, showComments]);
+  }, [currentIndex, isTransitioning]);
 
   const togglePlay = () => {
     if (!currentReel) return;
@@ -345,20 +345,20 @@ const Reels = () => {
     lastTapRef.current = now;
   };
 
-  // Touch swipe - completely blocked when comments are open
+  // Touch swipe - allowed even when comments are open
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
   const swiping = useRef(false);
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (showComments || commentLockRef.current) return;
+    if (commentLockRef.current) return;
     touchStartY.current = e.touches[0].clientY;
     touchStartX.current = e.touches[0].clientX;
     swiping.current = true;
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!swiping.current || showComments || commentLockRef.current) return;
+    if (!swiping.current || commentLockRef.current) return;
     swiping.current = false;
     const diffY = touchStartY.current - e.changedTouches[0].clientY;
     const diffX = Math.abs(touchStartX.current - e.changedTouches[0].clientX);
@@ -519,9 +519,12 @@ const Reels = () => {
         </div>
       )}
 
-      {/* Bottom info - always visible when not in comments */}
-      {currentReel && !showComments && (
-        <div className="absolute bottom-0 left-0 right-16 z-30 p-4 pb-8 bg-gradient-to-t from-black/80 via-black/30 to-transparent">
+      {/* Bottom info - always visible */}
+      {currentReel && (
+        <div className={cn(
+          "absolute left-0 right-16 z-30 p-4 bg-gradient-to-t from-black/80 via-black/30 to-transparent",
+          showComments ? "bottom-[55vh]" : "bottom-0 pb-8"
+        )}>
           {/* Owner row with follow button */}
           <div className="flex items-center gap-2 mb-2">
             <button
@@ -617,94 +620,81 @@ const Reels = () => {
         </div>
       )}
 
-      {/* Comments overlay - fully captures all touch events to prevent video change */}
+      {/* Comments panel - sits at bottom, doesn't block video area */}
       {showComments && currentReel && (
         <div
-          className="absolute inset-0 z-40"
+          className="absolute bottom-0 left-0 right-0 z-40 flex flex-col rounded-t-2xl bg-card/95 backdrop-blur-md"
+          style={{ height: "55vh" }}
           onClick={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
           onTouchEnd={(e) => e.stopPropagation()}
           onTouchMove={(e) => e.stopPropagation()}
         >
-          {/* Top area - tap to close, transparent so video shows */}
-          <div
-            className="absolute top-0 left-0 right-0"
-            style={{ height: "45vh" }}
-            onClick={() => setShowComments(false)}
-          />
-
-          {/* Comment panel */}
-          <div
-            className="absolute bottom-0 left-0 right-0 flex flex-col rounded-t-2xl bg-card/95 backdrop-blur-md"
-            style={{ height: "55vh" }}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-              <h3 className="font-semibold text-foreground text-sm">Şərhlər ({comments.length})</h3>
-              <button onClick={() => setShowComments(false)}><X className="h-5 w-5 text-muted-foreground" /></button>
-            </div>
-
-            {/* Scrollable comments list */}
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 overscroll-contain touch-auto">
-              {comments.length === 0 ? (
-                <p className="text-center text-sm text-muted-foreground py-8">Hələ şərh yoxdur</p>
-              ) : comments.map((c: any) => (
-                <div key={c.id} className="flex gap-2">
-                  <div className="h-7 w-7 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                    {(c.profile?.full_name || "?")[0].toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-semibold text-foreground">{c.profile?.full_name || "İstifadəçi"}</span>
-                      <span className="text-[10px] text-muted-foreground">{formatTime(c.created_at)}</span>
-                    </div>
-                    <p className="text-sm text-foreground/90 mt-0.5">{c.content}</p>
-                  </div>
-                </div>
-              ))}
-              <div ref={commentsEndRef} />
-            </div>
-
-            {/* Fixed comment input at bottom */}
-            {user ? (
-              <form
-                onSubmit={e => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (commentText.trim()) {
-                    commentLockRef.current = true;
-                    addComment.mutate(undefined, {
-                      onSettled: () => {
-                        // Release lock after mutation completes
-                        setTimeout(() => { commentLockRef.current = false; }, 500);
-                      }
-                    });
-                  }
-                }}
-                className="flex items-center gap-2 px-4 py-3 border-t border-border shrink-0 bg-card"
-              >
-                <input
-                  ref={commentInputRef}
-                  autoFocus
-                  placeholder="Şərh yazın..."
-                  value={commentText}
-                  onChange={e => setCommentText(e.target.value)}
-                  className="flex-1 h-9 rounded-full border border-input bg-background px-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                  onTouchStart={e => e.stopPropagation()}
-                  onTouchEnd={e => e.stopPropagation()}
-                />
-                <Button type="submit" size="icon" className="h-9 w-9 shrink-0 rounded-full" disabled={!commentText.trim() || addComment.isPending}>
-                  <Send className="h-4 w-4" />
-                </Button>
-              </form>
-            ) : (
-              <div className="px-4 py-3 border-t border-border text-center shrink-0 bg-card">
-                <button onClick={() => navigate("/auth")} className="text-sm text-primary font-medium">
-                  Şərh yazmaq üçün daxil olun
-                </button>
-              </div>
-            )}
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+            <h3 className="font-semibold text-foreground text-sm">Şərhlər ({comments.length})</h3>
+            <button onClick={() => setShowComments(false)}><X className="h-5 w-5 text-muted-foreground" /></button>
           </div>
+
+          {/* Scrollable comments list */}
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 overscroll-contain touch-auto">
+            {comments.length === 0 ? (
+              <p className="text-center text-sm text-muted-foreground py-8">Hələ şərh yoxdur</p>
+            ) : comments.map((c: any) => (
+              <div key={c.id} className="flex gap-2">
+                <div className="h-7 w-7 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                  {(c.profile?.full_name || "?")[0].toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-semibold text-foreground">{c.profile?.full_name || "İstifadəçi"}</span>
+                    <span className="text-[10px] text-muted-foreground">{formatTime(c.created_at)}</span>
+                  </div>
+                  <p className="text-sm text-foreground/90 mt-0.5">{c.content}</p>
+                </div>
+              </div>
+            ))}
+            <div ref={commentsEndRef} />
+          </div>
+
+          {/* Fixed comment input at bottom */}
+          {user ? (
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (commentText.trim()) {
+                  commentLockRef.current = true;
+                  addComment.mutate(undefined, {
+                    onSettled: () => {
+                      setTimeout(() => { commentLockRef.current = false; }, 500);
+                    }
+                  });
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-3 border-t border-border shrink-0 bg-card"
+            >
+              <input
+                ref={commentInputRef}
+                autoFocus
+                placeholder="Şərh yazın..."
+                value={commentText}
+                onChange={e => setCommentText(e.target.value)}
+                className="flex-1 h-9 rounded-full border border-input bg-background px-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                onTouchStart={e => e.stopPropagation()}
+                onTouchEnd={e => e.stopPropagation()}
+              />
+              <Button type="submit" size="icon" className="h-9 w-9 shrink-0 rounded-full" disabled={!commentText.trim() || addComment.isPending}>
+                <Send className="h-4 w-4" />
+              </Button>
+            </form>
+          ) : (
+            <div className="px-4 py-3 border-t border-border text-center shrink-0 bg-card">
+              <button onClick={() => navigate("/auth")} className="text-sm text-primary font-medium">
+                Şərh yazmaq üçün daxil olun
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
