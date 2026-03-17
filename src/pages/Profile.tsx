@@ -383,6 +383,25 @@ const Profile = () => {
                   )}
                 </div>
 
+                {/* Email notification toggle */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <Label className="text-xs">E-mail bildirişləri</Label>
+                      <p className="text-[10px] text-muted-foreground">Yeni mesaj gəldikdə e-mail göndərilsin</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={(profile as any)?.email_notifications !== false}
+                    onCheckedChange={async (checked) => {
+                      await supabase.from("profiles").update({ email_notifications: checked } as any).eq("user_id", user!.id);
+                      queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+                      toast({ title: checked ? "E-mail bildirişləri açıldı" : "E-mail bildirişləri bağlandı" });
+                    }}
+                  />
+                </div>
+
                 <Separator />
                 {isAdmin && (
                   <Button
