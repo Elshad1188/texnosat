@@ -142,12 +142,48 @@ const Messages = () => {
   const sendMessage = useMutation({
     mutationFn: async () => {
       if (!user || !activeConvoId || !messageText.trim()) return;
+      const content = messageText.trim();
       const { error } = await supabase.from("messages").insert({
         conversation_id: activeConvoId,
         sender_id: user.id,
-        content: messageText.trim(),
+        content,
       });
       if (error) throw error;
+
+      // Send email notification to recipient (fire-and-forget)
+      try {
+        const convo = conversations.find((c: any) => c.id === activeConvoId);
+        if (convo) {
+          const recipientId = convo.buyer_id === user.id ? convo.seller_id : convo.buyer_id;
+          // Check if recipient has email notifications enabled
+          const { data: recipientProfile } = await supabase
+            .from("profiles")
+            .select("full_name, email_notifications, user_id")
+            .eq("user_id", recipientId)
+            .maybeSingle();
+
+          if (recipientProfile && (recipientProfile as any).email_notifications !== false) {
+            const { data: senderProfile } = await supabase
+              .from("profiles")
+              .select("full_name")
+              .eq("user_id", user.id)
+              .maybeSingle();
+
+            supabase.functions.invoke("send-email", {
+              body: {
+                to_user_id: recipientId,
+                template: "new_message",
+                template_vars: {
+                  sender_name: senderProfile?.full_name || "İstifadəçi",
+                  recipient_name: recipientProfile?.full_name || "İstifadəçi",
+                  message_preview: content.substring(0, 150),
+                  site_url: window.location.origin,
+                },
+              },
+            }).catch(() => {}); // fire-and-forget
+          }
+        }
+      } catch {}
     },
     onSuccess: () => {
       setMessageText("");
