@@ -304,18 +304,18 @@ const Reels = () => {
   });
 
   const goNext = useCallback(() => {
-    if (isTransitioning || commentLockRef.current || showComments || currentIndex >= reels.length - 1) return;
+    if (isTransitioning || commentLockRef.current || currentIndex >= reels.length - 1) return;
     setIsTransitioning(true);
     setCurrentIndex(prev => prev + 1);
     setTimeout(() => setIsTransitioning(false), 350);
-  }, [currentIndex, reels.length, isTransitioning, showComments]);
+  }, [currentIndex, reels.length, isTransitioning]);
 
   const goPrev = useCallback(() => {
-    if (isTransitioning || commentLockRef.current || showComments || currentIndex <= 0) return;
+    if (isTransitioning || commentLockRef.current || currentIndex <= 0) return;
     setIsTransitioning(true);
     setCurrentIndex(prev => prev - 1);
     setTimeout(() => setIsTransitioning(false), 350);
-  }, [currentIndex, isTransitioning, showComments]);
+  }, [currentIndex, isTransitioning]);
 
   const togglePlay = () => {
     if (!currentReel) return;
