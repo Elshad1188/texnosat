@@ -519,9 +519,12 @@ const Reels = () => {
         </div>
       )}
 
-      {/* Bottom info - always visible when not in comments */}
-      {currentReel && !showComments && (
-        <div className="absolute bottom-0 left-0 right-16 z-30 p-4 pb-8 bg-gradient-to-t from-black/80 via-black/30 to-transparent">
+      {/* Bottom info - always visible */}
+      {currentReel && (
+        <div className={cn(
+          "absolute left-0 right-16 z-30 p-4 bg-gradient-to-t from-black/80 via-black/30 to-transparent",
+          showComments ? "bottom-[55vh]" : "bottom-0 pb-8"
+        )}>
           {/* Owner row with follow button */}
           <div className="flex items-center gap-2 mb-2">
             <button
