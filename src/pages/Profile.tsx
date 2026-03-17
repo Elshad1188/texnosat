@@ -14,8 +14,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { User, Package, Store, Star, Edit2, Save, Eye, MapPin, Phone, Calendar, LogOut, ShieldCheck, Settings, Wallet, Trash2 } from "lucide-react";
+import { User, Package, Store, Star, Edit2, Save, Eye, MapPin, Phone, Calendar, LogOut, ShieldCheck, Settings, Wallet, Trash2, Mail } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -380,6 +381,25 @@ const Profile = () => {
                   ) : (
                     <Button size="sm" variant="outline" onClick={() => setEditing(true)} className="gap-1"><Edit2 className="h-3.5 w-3.5" />Redaktə et</Button>
                   )}
+                </div>
+
+                {/* Email notification toggle */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <Label className="text-xs">E-mail bildirişləri</Label>
+                      <p className="text-[10px] text-muted-foreground">Yeni mesaj gəldikdə e-mail göndərilsin</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={(profile as any)?.email_notifications !== false}
+                    onCheckedChange={async (checked) => {
+                      await supabase.from("profiles").update({ email_notifications: checked } as any).eq("user_id", user!.id);
+                      queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+                      toast({ title: checked ? "E-mail bildirişləri açıldı" : "E-mail bildirişləri bağlandı" });
+                    }}
+                  />
                 </div>
 
                 <Separator />

@@ -417,6 +417,7 @@ export type Database = {
           balance: number
           city: string | null
           created_at: string
+          email_notifications: boolean
           full_name: string | null
           id: string
           phone: string | null
@@ -430,6 +431,7 @@ export type Database = {
           balance?: number
           city?: string | null
           created_at?: string
+          email_notifications?: boolean
           full_name?: string | null
           id?: string
           phone?: string | null
@@ -443,6 +445,7 @@ export type Database = {
           balance?: number
           city?: string | null
           created_at?: string
+          email_notifications?: boolean
           full_name?: string | null
           id?: string
           phone?: string | null
