@@ -288,6 +288,8 @@ const Reels = () => {
     },
   });
 
+  const commentInputRef = useRef<HTMLInputElement>(null);
+
   const addComment = useMutation({
     mutationFn: async () => {
       if (!user || !commentText.trim()) return;
@@ -295,6 +297,8 @@ const Reels = () => {
     },
     onSuccess: () => {
       setCommentText("");
+      // Dismiss keyboard by blurring input
+      commentInputRef.current?.blur();
       queryClient.invalidateQueries({ queryKey: ["reel-comments", currentReel?.id] });
     },
   });
