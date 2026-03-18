@@ -17,6 +17,7 @@ const Stores = () => {
       const { data } = await supabase
         .from("stores")
         .select("*")
+        .eq("status", "approved")
         .order("is_premium", { ascending: false })
         .order("created_at", { ascending: false });
       return data || [];

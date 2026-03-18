@@ -75,14 +75,16 @@ const CreateListing = () => {
     }
   }, [editListing]);
 
-  const { data: userStore } = useQuery({
-    queryKey: ["user-store", user?.id],
+  const { data: userStores = [] } = useQuery({
+    queryKey: ["user-stores", user?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("stores").select("id, name, logo_url").eq("user_id", user!.id).maybeSingle();
-      return data;
+      const { data } = await supabase.from("stores").select("id, name, logo_url, status").eq("user_id", user!.id).eq("status", "approved");
+      return data || [];
     },
     enabled: !!user,
   });
+
+  const userStore = userStores.length > 0 ? userStores[0] : null;
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories-all"],
