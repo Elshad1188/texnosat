@@ -302,6 +302,11 @@ const Profile = () => {
           </TabsContent>
 
           <TabsContent value="stores">
+            <div className="mb-3 flex justify-end">
+              <Button size="sm" className="gap-1 bg-gradient-primary text-primary-foreground" asChild>
+                <Link to="/create-store"><Plus className="h-3.5 w-3.5" />Yeni mağaza</Link>
+              </Button>
+            </div>
             {stores.length === 0 ? (
               <Card><CardContent className="py-10 text-center text-muted-foreground">
                 <Store className="mx-auto mb-3 h-10 w-10 opacity-40" />
@@ -310,26 +315,39 @@ const Profile = () => {
               </CardContent></Card>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
-                {stores.map((s) => (
-                  <Card key={s.id} className="overflow-hidden">
-                    {s.cover_url && <img src={s.cover_url} alt={s.name} className="h-28 w-full object-cover" />}
-                    <CardContent className="flex items-center gap-3 p-3">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={s.logo_url || ""} />
-                        <AvatarFallback className="bg-secondary text-secondary-foreground font-bold text-sm">{s.name[0]}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-foreground truncate">{s.name}</h3>
-                        <p className="text-xs text-muted-foreground line-clamp-1">{s.description || "Açıqlama yoxdur"}</p>
-                      </div>
-                      <div className="flex gap-1 shrink-0">
-                        <Button size="sm" variant="outline" className="h-8 text-xs gap-1" asChild>
-                          <Link to="/store-dashboard"><Settings className="h-3.5 w-3.5" />İdarə et</Link>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                {stores.map((s: any) => {
+                  const storeStatus = s.status || "approved";
+                  return (
+                    <Card key={s.id} className="overflow-hidden">
+                      {s.cover_url && <img src={s.cover_url} alt={s.name} className="h-28 w-full object-cover" />}
+                      <CardContent className="flex items-center gap-3 p-3">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={s.logo_url || ""} />
+                          <AvatarFallback className="bg-secondary text-secondary-foreground font-bold text-sm">{s.name[0]}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="text-sm font-semibold text-foreground truncate">{s.name}</h3>
+                            {storeStatus === "pending" && <Badge className="bg-amber-500/20 text-amber-600 border-0 text-[10px] gap-0.5"><Clock className="h-2.5 w-2.5" />Gözləmədə</Badge>}
+                            {storeStatus === "rejected" && <Badge variant="destructive" className="text-[10px]">Rədd edilib</Badge>}
+                            {storeStatus === "approved" && <Badge className="bg-green-500/20 text-green-600 border-0 text-[10px]">Aktiv</Badge>}
+                          </div>
+                          <p className="text-xs text-muted-foreground line-clamp-1">{s.description || "Açıqlama yoxdur"}</p>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          {storeStatus === "approved" && (
+                            <Button size="sm" variant="outline" className="h-8 text-xs gap-1" asChild>
+                              <Link to="/store-dashboard"><Settings className="h-3.5 w-3.5" />İdarə et</Link>
+                            </Button>
+                          )}
+                          <Button size="sm" variant="outline" className="h-8 text-xs gap-1" asChild>
+                            <Link to={`/create-store?edit=${s.id}`}><Edit2 className="h-3.5 w-3.5" /></Link>
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </TabsContent>
