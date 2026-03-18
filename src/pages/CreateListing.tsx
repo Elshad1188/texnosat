@@ -192,6 +192,17 @@ const CreateListing = () => {
 
       const allImages = [...existingImages, ...newImageUrls];
 
+      // Resolve "Digər" custom field values
+      const resolvedCustomFields: Record<string, string> = {};
+      for (const [key, value] of Object.entries(customFields)) {
+        if (key.endsWith("_other")) continue;
+        if (value === "__other__") {
+          resolvedCustomFields[key] = customFields[key + "_other"] || "";
+        } else {
+          resolvedCustomFields[key] = value;
+        }
+      }
+
       const listingData: any = {
         title: form.title, description: form.description,
         price: parseFloat(form.price), category: form.category,
@@ -199,7 +210,7 @@ const CreateListing = () => {
         image_urls: allImages,
         video_url: finalVideoUrl,
         store_id: publishToStore && userStore ? userStore.id : null,
-        custom_fields: Object.keys(customFields).length > 0 ? customFields : null,
+        custom_fields: Object.keys(resolvedCustomFields).length > 0 ? resolvedCustomFields : null,
       };
 
       if (editId) {
