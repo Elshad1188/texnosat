@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Store, ImagePlus, Loader2, Crown, Upload, CheckCircle, Image } from "lucide-react";
+import { Store, Loader2, Crown, Upload, CheckCircle, Image } from "lucide-react";
 
 const CreateStore = () => {
   const { user } = useAuth();
@@ -19,10 +19,10 @@ const CreateStore = () => {
   const { toast } = useToast();
   const logoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get("edit");
 
   const [loading, setLoading] = useState(false);
-  const [checking, setChecking] = useState(true);
-  const [existingStore, setExistingStore] = useState<any>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState("");
   const [coverFile, setCoverFile] = useState<File | null>(null);
@@ -31,7 +31,6 @@ const CreateStore = () => {
     name: "", description: "", address: "", city: "", phone: "", working_hours: "",
   });
 
-  // Fetch regions
   const { data: regions = [] } = useQuery({
     queryKey: ["regions-parent"],
     queryFn: async () => {
@@ -40,24 +39,43 @@ const CreateStore = () => {
     },
   });
 
-  useEffect(() => {
-    if (!user) { navigate("/auth"); return; }
-    const checkStore = async () => {
-      const { data } = await supabase.from("stores").select("*").eq("user_id", user.id).maybeSingle();
-      if (data) {
-        setExistingStore(data);
-        setForm({
-          name: data.name || "", description: data.description || "",
-          address: data.address || "", city: data.city || "",
-          phone: data.phone || "", working_hours: data.working_hours || "",
-        });
-        if (data.logo_url) setLogoPreview(data.logo_url);
-        if (data.cover_url) setCoverPreview(data.cover_url);
-      }
-      setChecking(false);
-    };
-    checkStore();
-  }, [user, navigate]);
+  // Load existing store for editing
+  const { data: editStore, isLoading: editLoading } = useQuery({
+    queryKey: ["edit-store", editId],
+    queryFn: async () => {
+      const { data } = await supabase.from("stores").select("*").eq("id", editId!).eq("user_id", user!.id).single();
+      return data;
+    },
+    enabled: !!editId && !!user,
+  });
+
+  // Set form values when editing
+  useState(() => {
+    if (editStore) {
+      setForm({
+        name: editStore.name || "", description: editStore.description || "",
+        address: editStore.address || "", city: editStore.city || "",
+        phone: editStore.phone || "", working_hours: editStore.working_hours || "",
+      });
+      if (editStore.logo_url) setLogoPreview(editStore.logo_url);
+      if (editStore.cover_url) setCoverPreview(editStore.cover_url);
+    }
+  });
+
+  // Re-populate when editStore loads
+  const [populated, setPopulated] = useState(false);
+  if (editStore && !populated) {
+    setForm({
+      name: editStore.name || "", description: editStore.description || "",
+      address: editStore.address || "", city: editStore.city || "",
+      phone: editStore.phone || "", working_hours: editStore.working_hours || "",
+    });
+    if (editStore.logo_url) setLogoPreview(editStore.logo_url);
+    if (editStore.cover_url) setCoverPreview(editStore.cover_url);
+    setPopulated(true);
+  }
+
+  if (!user) { navigate("/auth"); return null; }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: "logo" | "cover") => {
     const file = e.target.files?.[0];
@@ -82,29 +100,37 @@ const CreateStore = () => {
     if (!form.name) { toast({ title: "Mağaza adını daxil edin", variant: "destructive" }); return; }
     setLoading(true);
     try {
-      let logoUrl = existingStore?.logo_url || null;
-      let coverUrl = existingStore?.cover_url || null;
+      let logoUrl = editStore?.logo_url || null;
+      let coverUrl = editStore?.cover_url || null;
       if (logoFile) logoUrl = await uploadFile(logoFile, "logo", "store-logos");
       if (coverFile) coverUrl = await uploadFile(coverFile, "cover", "store-logos");
 
       const payload = { ...form, logo_url: logoUrl, cover_url: coverUrl };
 
-      if (existingStore) {
-        const { error } = await supabase.from("stores").update(payload).eq("id", existingStore.id);
+      if (editId && editStore) {
+        const { error } = await supabase.from("stores").update(payload).eq("id", editId);
         if (error) throw error;
         toast({ title: "Mağaza yeniləndi!" });
       } else {
-        const { error } = await supabase.from("stores").insert({ user_id: user!.id, ...payload });
+        const { error } = await supabase.from("stores").insert({ user_id: user!.id, ...payload, status: "pending" });
         if (error) throw error;
-        toast({ title: "Mağaza uğurla yaradıldı!" });
+        toast({ title: "Mağaza yaradıldı! Admin təsdiqi gözlənilir." });
       }
-      navigate("/");
+      navigate("/profile");
     } catch (err: any) {
       toast({ title: "Xəta baş verdi", description: err.message, variant: "destructive" });
     } finally { setLoading(false); }
   };
 
-  if (!user || checking) return null;
+  if (editId && editLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center py-32"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -116,13 +142,14 @@ const CreateStore = () => {
           </div>
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground">
-              {existingStore ? "Mağazanı redaktə et" : "Mağaza aç"}
+              {editId ? "Mağazanı redaktə et" : "Mağaza aç"}
             </h1>
-            <p className="text-sm text-muted-foreground">Öz mağazanızı yaradın və elanlarınızı idarə edin</p>
+            <p className="text-sm text-muted-foreground">
+              {editId ? "Mağaza məlumatlarını yeniləyin" : "Yeni mağaza yaradın — admin təsdiqi tələb olunur"}
+            </p>
           </div>
         </div>
 
-        {/* Freemium info */}
         <div className="mt-6 rounded-xl border border-border bg-card p-4">
           <h3 className="font-display text-sm font-semibold text-foreground">Mağaza imkanları</h3>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -145,9 +172,7 @@ const CreateStore = () => {
               {coverPreview ? (
                 <div className="relative h-40 w-full overflow-hidden rounded-xl border border-border">
                   <img src={coverPreview} alt="Cover" className="h-full w-full object-cover" />
-                  <Button type="button" variant="secondary" size="sm" className="absolute bottom-2 right-2" onClick={() => coverInputRef.current?.click()}>
-                    Dəyişdir
-                  </Button>
+                  <Button type="button" variant="secondary" size="sm" className="absolute bottom-2 right-2" onClick={() => coverInputRef.current?.click()}>Dəyişdir</Button>
                 </div>
               ) : (
                 <button type="button" onClick={() => coverInputRef.current?.click()}
@@ -215,7 +240,7 @@ const CreateStore = () => {
           </div>
 
           <Button type="submit" disabled={loading} className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90">
-            {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saxlanılır...</> : existingStore ? "Yenilə" : "Mağazanı yarat"}
+            {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saxlanılır...</> : editId ? "Yenilə" : "Mağazanı yarat"}
           </Button>
         </form>
       </main>
