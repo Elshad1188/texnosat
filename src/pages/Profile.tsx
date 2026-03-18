@@ -124,6 +124,24 @@ const Profile = () => {
     onError: () => toast({ title: "Xəta baş verdi", variant: "destructive" }),
   });
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setAvatarUploading(true);
+    try {
+      const fileName = `${user.id}/${Date.now()}-avatar.${file.name.split('.').pop()}`;
+      const { error: uploadError } = await supabase.storage.from("store-logos").upload(fileName, file);
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("store-logos").getPublicUrl(fileName);
+      const { error } = await supabase.from("profiles").update({ avatar_url: urlData.publicUrl }).eq("user_id", user.id);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
+      toast({ title: "Profil şəkli yeniləndi" });
+    } catch (err: any) {
+      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+    } finally { setAvatarUploading(false); }
+  };
+
   if (authLoading || profileLoading) {
     return (
       <div className="min-h-screen bg-background">
