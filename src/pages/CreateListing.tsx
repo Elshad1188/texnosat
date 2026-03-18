@@ -383,17 +383,28 @@ const CreateListing = () => {
                         {field.field_label}
                       </Label>
                       {field.field_type === "select" && Array.isArray(field.options) ? (
-                        <Select
-                          value={customFields[field.field_name] || ""}
-                          onValueChange={v => setCustomFields(prev => ({ ...prev, [field.field_name]: v }))}
-                        >
-                          <SelectTrigger><SelectValue placeholder="Seçin" /></SelectTrigger>
-                          <SelectContent>
-                            {field.options.map((opt: string) => (
-                              <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <>
+                          <Select
+                            value={customFields[field.field_name] || ""}
+                            onValueChange={v => setCustomFields(prev => ({ ...prev, [field.field_name]: v, [field.field_name + "_other"]: "" }))}
+                          >
+                            <SelectTrigger><SelectValue placeholder="Seçin" /></SelectTrigger>
+                            <SelectContent>
+                              {field.options.map((opt: string) => (
+                                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                              ))}
+                              <SelectItem value="__other__">Digər</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {customFields[field.field_name] === "__other__" && (
+                            <Input
+                              className="mt-2"
+                              placeholder={`${field.field_label} daxil edin...`}
+                              value={customFields[field.field_name + "_other"] || ""}
+                              onChange={e => setCustomFields(prev => ({ ...prev, [field.field_name + "_other"]: e.target.value }))}
+                            />
+                          )}
+                        </>
                       ) : field.field_type === "number" ? (
                         <Input
                           type="number"
