@@ -757,6 +757,7 @@ export type Database = {
           name: string
           phone: string | null
           premium_until: string | null
+          status: string
           updated_at: string
           user_id: string
           working_hours: string | null
@@ -773,6 +774,7 @@ export type Database = {
           name: string
           phone?: string | null
           premium_until?: string | null
+          status?: string
           updated_at?: string
           user_id: string
           working_hours?: string | null
@@ -789,6 +791,7 @@ export type Database = {
           name?: string
           phone?: string | null
           premium_until?: string | null
+          status?: string
           updated_at?: string
           user_id?: string
           working_hours?: string | null

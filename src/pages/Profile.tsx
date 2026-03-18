@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import ListingBoostDialog from "@/components/ListingBoostDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { User, Package, Store, Star, Edit2, Save, Eye, MapPin, Phone, Calendar, LogOut, ShieldCheck, Settings, Wallet, Trash2, Mail } from "lucide-react";
+import { User, Package, Store, Star, Edit2, Save, Eye, MapPin, Phone, Calendar, LogOut, ShieldCheck, Settings, Wallet, Trash2, Mail, Camera, Loader2, Clock, Plus } from "lucide-react";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -34,6 +34,8 @@ const Profile = () => {
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
   const [boostListingId, setBoostListingId] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["profile", user?.id],
@@ -122,6 +124,24 @@ const Profile = () => {
     onError: () => toast({ title: "Xəta baş verdi", variant: "destructive" }),
   });
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setAvatarUploading(true);
+    try {
+      const fileName = `${user.id}/${Date.now()}-avatar.${file.name.split('.').pop()}`;
+      const { error: uploadError } = await supabase.storage.from("store-logos").upload(fileName, file);
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("store-logos").getPublicUrl(fileName);
+      const { error } = await supabase.from("profiles").update({ avatar_url: urlData.publicUrl }).eq("user_id", user.id);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
+      toast({ title: "Profil şəkli yeniləndi" });
+    } catch (err: any) {
+      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+    } finally { setAvatarUploading(false); }
+  };
+
   if (authLoading || profileLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -148,12 +168,22 @@ const Profile = () => {
           <div className="h-20 bg-gradient-primary" />
           <CardContent className="relative px-4 pb-5 pt-0 sm:px-6">
             <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-end">
-              <Avatar className="-mt-10 h-20 w-20 border-4 border-card shadow-card sm:h-24 sm:w-24">
-                <AvatarImage src={profile?.avatar_url || ""} />
-                <AvatarFallback className="bg-secondary text-secondary-foreground text-xl font-bold">
-                  {(profile?.full_name || user.email)?.[0]?.toUpperCase() || "U"}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative -mt-10">
+                <Avatar className="h-20 w-20 border-4 border-card shadow-card sm:h-24 sm:w-24">
+                  <AvatarImage src={profile?.avatar_url || ""} />
+                  <AvatarFallback className="bg-secondary text-secondary-foreground text-xl font-bold">
+                    {(profile?.full_name || user.email)?.[0]?.toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <button
+                  onClick={() => avatarInputRef.current?.click()}
+                  className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md hover:opacity-90 transition-opacity"
+                  disabled={avatarUploading}
+                >
+                  {avatarUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+                </button>
+                <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+              </div>
               <div className="flex-1 text-center sm:text-left">
                 <div className="flex flex-col items-center gap-1.5 sm:flex-row">
                   <h1 className="text-xl font-bold text-foreground sm:text-2xl">{profile?.full_name || "İstifadəçi"}</h1>
@@ -272,6 +302,11 @@ const Profile = () => {
           </TabsContent>
 
           <TabsContent value="stores">
+            <div className="mb-3 flex justify-end">
+              <Button size="sm" className="gap-1 bg-gradient-primary text-primary-foreground" asChild>
+                <Link to="/create-store"><Plus className="h-3.5 w-3.5" />Yeni mağaza</Link>
+              </Button>
+            </div>
             {stores.length === 0 ? (
               <Card><CardContent className="py-10 text-center text-muted-foreground">
                 <Store className="mx-auto mb-3 h-10 w-10 opacity-40" />
@@ -280,26 +315,39 @@ const Profile = () => {
               </CardContent></Card>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
-                {stores.map((s) => (
-                  <Card key={s.id} className="overflow-hidden">
-                    {s.cover_url && <img src={s.cover_url} alt={s.name} className="h-28 w-full object-cover" />}
-                    <CardContent className="flex items-center gap-3 p-3">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={s.logo_url || ""} />
-                        <AvatarFallback className="bg-secondary text-secondary-foreground font-bold text-sm">{s.name[0]}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-foreground truncate">{s.name}</h3>
-                        <p className="text-xs text-muted-foreground line-clamp-1">{s.description || "Açıqlama yoxdur"}</p>
-                      </div>
-                      <div className="flex gap-1 shrink-0">
-                        <Button size="sm" variant="outline" className="h-8 text-xs gap-1" asChild>
-                          <Link to="/store-dashboard"><Settings className="h-3.5 w-3.5" />İdarə et</Link>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                {stores.map((s: any) => {
+                  const storeStatus = s.status || "approved";
+                  return (
+                    <Card key={s.id} className="overflow-hidden">
+                      {s.cover_url && <img src={s.cover_url} alt={s.name} className="h-28 w-full object-cover" />}
+                      <CardContent className="flex items-center gap-3 p-3">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={s.logo_url || ""} />
+                          <AvatarFallback className="bg-secondary text-secondary-foreground font-bold text-sm">{s.name[0]}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="text-sm font-semibold text-foreground truncate">{s.name}</h3>
+                            {storeStatus === "pending" && <Badge className="bg-amber-500/20 text-amber-600 border-0 text-[10px] gap-0.5"><Clock className="h-2.5 w-2.5" />Gözləmədə</Badge>}
+                            {storeStatus === "rejected" && <Badge variant="destructive" className="text-[10px]">Rədd edilib</Badge>}
+                            {storeStatus === "approved" && <Badge className="bg-green-500/20 text-green-600 border-0 text-[10px]">Aktiv</Badge>}
+                          </div>
+                          <p className="text-xs text-muted-foreground line-clamp-1">{s.description || "Açıqlama yoxdur"}</p>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          {storeStatus === "approved" && (
+                            <Button size="sm" variant="outline" className="h-8 text-xs gap-1" asChild>
+                              <Link to="/store-dashboard"><Settings className="h-3.5 w-3.5" />İdarə et</Link>
+                            </Button>
+                          )}
+                          <Button size="sm" variant="outline" className="h-8 text-xs gap-1" asChild>
+                            <Link to={`/create-store?edit=${s.id}`}><Edit2 className="h-3.5 w-3.5" /></Link>
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </TabsContent>

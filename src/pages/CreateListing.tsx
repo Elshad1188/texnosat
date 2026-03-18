@@ -75,14 +75,16 @@ const CreateListing = () => {
     }
   }, [editListing]);
 
-  const { data: userStore } = useQuery({
-    queryKey: ["user-store", user?.id],
+  const { data: userStores = [] } = useQuery({
+    queryKey: ["user-stores", user?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("stores").select("id, name, logo_url").eq("user_id", user!.id).maybeSingle();
-      return data;
+      const { data } = await supabase.from("stores").select("id, name, logo_url, status").eq("user_id", user!.id).eq("status", "approved");
+      return data || [];
     },
     enabled: !!user,
   });
+
+  const userStore = userStores.length > 0 ? userStores[0] : null;
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories-all"],
@@ -192,6 +194,17 @@ const CreateListing = () => {
 
       const allImages = [...existingImages, ...newImageUrls];
 
+      // Resolve "Digər" custom field values
+      const resolvedCustomFields: Record<string, string> = {};
+      for (const [key, value] of Object.entries(customFields)) {
+        if (key.endsWith("_other")) continue;
+        if (value === "__other__") {
+          resolvedCustomFields[key] = customFields[key + "_other"] || "";
+        } else {
+          resolvedCustomFields[key] = value;
+        }
+      }
+
       const listingData: any = {
         title: form.title, description: form.description,
         price: parseFloat(form.price), category: form.category,
@@ -199,7 +212,7 @@ const CreateListing = () => {
         image_urls: allImages,
         video_url: finalVideoUrl,
         store_id: publishToStore && userStore ? userStore.id : null,
-        custom_fields: Object.keys(customFields).length > 0 ? customFields : null,
+        custom_fields: Object.keys(resolvedCustomFields).length > 0 ? resolvedCustomFields : null,
       };
 
       if (editId) {
@@ -383,17 +396,28 @@ const CreateListing = () => {
                         {field.field_label}
                       </Label>
                       {field.field_type === "select" && Array.isArray(field.options) ? (
-                        <Select
-                          value={customFields[field.field_name] || ""}
-                          onValueChange={v => setCustomFields(prev => ({ ...prev, [field.field_name]: v }))}
-                        >
-                          <SelectTrigger><SelectValue placeholder="Seçin" /></SelectTrigger>
-                          <SelectContent>
-                            {field.options.map((opt: string) => (
-                              <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <>
+                          <Select
+                            value={customFields[field.field_name] || ""}
+                            onValueChange={v => setCustomFields(prev => ({ ...prev, [field.field_name]: v, [field.field_name + "_other"]: "" }))}
+                          >
+                            <SelectTrigger><SelectValue placeholder="Seçin" /></SelectTrigger>
+                            <SelectContent>
+                              {field.options.map((opt: string) => (
+                                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                              ))}
+                              <SelectItem value="__other__">Digər</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {customFields[field.field_name] === "__other__" && (
+                            <Input
+                              className="mt-2"
+                              placeholder={`${field.field_label} daxil edin...`}
+                              value={customFields[field.field_name + "_other"] || ""}
+                              onChange={e => setCustomFields(prev => ({ ...prev, [field.field_name + "_other"]: e.target.value }))}
+                            />
+                          )}
+                        </>
                       ) : field.field_type === "number" ? (
                         <Input
                           type="number"

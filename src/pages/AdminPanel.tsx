@@ -27,6 +27,7 @@ import AdminBalanceManager from "@/components/admin/AdminBalanceManager";
 import AdminReferralManager from "@/components/admin/AdminReferralManager";
 import AdminIntegrationsManager from "@/components/admin/AdminIntegrationsManager";
 import AdminVideoSettings from "@/components/admin/AdminVideoSettings";
+import AdminStoreModerationManager from "@/components/admin/AdminStoreModerationManager";
 import {
   ShieldCheck, Trash2, Eye, EyeOff, Search, Users, ShoppingBag, Store,
   Crown, Loader2, AlertTriangle, Zap, Star, MapPin, Pencil, MessageSquare,
@@ -263,32 +264,39 @@ const AdminPanel = () => {
 
           {/* Stores */}
           <TabsContent value="stores" className="mt-3">
-            {loading ? <LoadingState /> : fStores.length === 0 ? <EmptyState text="Mağaza tapılmadı" /> : (
-              <div className="space-y-2">
-                {fStores.map((s) => (
-                  <div key={s.id} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-card">
-                    <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
-                      {s.logo_url ? <img src={s.logo_url} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center"><Store className="h-4 w-4 text-muted-foreground" /></div>}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="truncate text-sm font-semibold text-foreground">{s.name}</h3>
-                        {s.is_premium && <Badge className="bg-amber-500/20 text-amber-600 border-0 text-[10px]">Premium</Badge>}
+            <div className="mb-4">
+              <h3 className="text-sm font-semibold text-foreground mb-2">Mağaza Moderasiyası</h3>
+              <AdminStoreModerationManager />
+            </div>
+            <div className="border-t border-border pt-4">
+              <h3 className="text-sm font-semibold text-foreground mb-2">Bütün Mağazalar</h3>
+              {loading ? <LoadingState /> : fStores.length === 0 ? <EmptyState text="Mağaza tapılmadı" /> : (
+                <div className="space-y-2">
+                  {fStores.map((s) => (
+                    <div key={s.id} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-card">
+                      <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
+                        {s.logo_url ? <img src={s.logo_url} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center"><Store className="h-4 w-4 text-muted-foreground" /></div>}
                       </div>
-                      <p className="text-xs text-muted-foreground">{s.city || "—"} · {getProfileName(s.user_id)} · {new Date(s.created_at).toLocaleDateString("az")}</p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="truncate text-sm font-semibold text-foreground">{s.name}</h3>
+                          {s.is_premium && <Badge className="bg-amber-500/20 text-amber-600 border-0 text-[10px]">Premium</Badge>}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{s.city || "—"} · {getProfileName(s.user_id)} · {new Date(s.created_at).toLocaleDateString("az")}</p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateStore(s.id, { is_premium: !s.is_premium })}>
+                          <Crown className={`h-4 w-4 ${s.is_premium ? "text-amber-500" : "text-muted-foreground"}`} />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteStore(s.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateStore(s.id, { is_premium: !s.is_premium })}>
-                        <Crown className={`h-4 w-4 ${s.is_premium ? "text-amber-500" : "text-muted-foreground"}`} />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteStore(s.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </TabsContent>
 
           {/* Users */}

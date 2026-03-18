@@ -1,4 +1,4 @@
-import { Plus, User, Heart, Menu, X, LogOut, Store, ShieldCheck, MessageCircle, Wallet } from "lucide-react";
+import { Plus, User, Heart, Menu, X, LogOut, Store, ShieldCheck, MessageCircle, Wallet, Phone, Mail, MapPin, FileText, FolderTree, Play, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
@@ -7,12 +7,14 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import NotificationBell from "@/components/NotificationBell";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
 
 const Header = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { isAdmin } = useIsAdmin();
   const queryClient = useQueryClient();
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ["unread-messages", user?.id],
@@ -35,6 +37,30 @@ const Header = () => {
     refetchInterval: 10000,
   });
 
+  const { data: siteSettings } = useQuery({
+    queryKey: ["site-settings-general-header"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("*").eq("key", "general").maybeSingle();
+      return data?.value as any || {};
+    },
+  });
+
+  const { data: pages = [] } = useQuery({
+    queryKey: ["menu-pages"],
+    queryFn: async () => {
+      const { data } = await supabase.from("pages").select("slug, title").eq("is_published", true);
+      return data || [];
+    },
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["menu-categories"],
+    queryFn: async () => {
+      const { data } = await supabase.from("categories").select("name, slug").eq("is_active", true).is("parent_id", null).order("sort_order").limit(8);
+      return data || [];
+    },
+  });
+
   useEffect(() => {
     if (!user) return;
     const channel = supabase
@@ -49,38 +75,137 @@ const Header = () => {
     return () => { supabase.removeChannel(channel); };
   }, [user?.id]);
 
+  const phone = siteSettings?.contact_phone || "+994 50 123 45 67";
+  const email = siteSettings?.contact_email || "info@texnosat.az";
+  const address = siteSettings?.contact_address || "Bakı, Azərbaycan";
+
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-primary">
-            <span className="font-display text-lg font-bold text-primary-foreground">T</span>
-          </div>
-          <span className="font-display text-xl font-bold text-foreground">
-            Texno<span className="text-primary">sat</span>
-          </span>
-        </Link>
+        <div className="flex items-center gap-2">
+          {/* Hamburger Menu */}
+          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-72 p-0 overflow-y-auto">
+              <div className="p-4">
+                <Link to="/" className="flex items-center gap-2" onClick={() => setSheetOpen(false)}>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-primary">
+                    <span className="font-display text-lg font-bold text-primary-foreground">T</span>
+                  </div>
+                  <span className="font-display text-xl font-bold text-foreground">
+                    Texno<span className="text-primary">sat</span>
+                  </span>
+                </Link>
+              </div>
+
+              <Separator />
+
+              {/* Nav links */}
+              <div className="p-4 space-y-1">
+                {[
+                  { to: "/", label: "Ana səhifə", icon: Home },
+                  { to: "/products", label: "Elanlar", icon: FolderTree },
+                  { to: "/stores", label: "Mağazalar", icon: Store },
+                  { to: "/reels", label: "Reels", icon: Play },
+                  { to: "/create-store", label: "Mağaza aç", icon: Store },
+                ].map(item => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => setSheetOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                  >
+                    <item.icon className="h-4 w-4 text-muted-foreground" />
+                    {item.label}
+                  </Link>
+                ))}
+                {isAdmin && (
+                  <Link to="/admin" onClick={() => setSheetOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-muted">
+                    <ShieldCheck className="h-4 w-4" /> Admin Paneli
+                  </Link>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Categories */}
+              <div className="p-4">
+                <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Kateqoriyalar</h4>
+                <div className="space-y-1">
+                  {categories.map((c: any) => (
+                    <Link key={c.slug} to={`/products?category=${c.slug}`} onClick={() => setSheetOpen(false)}
+                      className="block rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted">
+                      {c.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Pages */}
+              <div className="p-4">
+                <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Məlumat</h4>
+                <div className="space-y-1">
+                  {pages.length > 0 ? pages.map((p: any) => (
+                    <Link key={p.slug} to={`/page/${p.slug}`} onClick={() => setSheetOpen(false)}
+                      className="block rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted">
+                      {p.title}
+                    </Link>
+                  )) : (
+                    <>
+                      <Link to="/page/about" onClick={() => setSheetOpen(false)} className="block rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted">Haqqımızda</Link>
+                      <Link to="/page/rules" onClick={() => setSheetOpen(false)} className="block rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted">Qaydalar</Link>
+                      <Link to="/page/privacy" onClick={() => setSheetOpen(false)} className="block rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted">Məxfilik</Link>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Contact */}
+              <div className="p-4">
+                <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Əlaqə</h4>
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2"><Phone className="h-4 w-4" /> {phone}</div>
+                  <div className="flex items-center gap-2"><Mail className="h-4 w-4" /> {email}</div>
+                  <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {address}</div>
+                </div>
+              </div>
+
+              {/* Footer text */}
+              <div className="p-4 pt-0">
+                <p className="text-[10px] text-muted-foreground/50">
+                  {siteSettings?.footer_text || "© 2026 Texnosat. Bütün hüquqlar qorunur."}
+                </p>
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          <Link to="/" className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-primary">
+              <span className="font-display text-lg font-bold text-primary-foreground">T</span>
+            </div>
+            <span className="font-display text-xl font-bold text-foreground">
+              Texno<span className="text-primary">sat</span>
+            </span>
+          </Link>
+        </div>
 
         <nav className="hidden items-center gap-6 md:flex">
-          <Link to="/" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            Ana səhifə
-          </Link>
-          <Link to="/products" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            Elanlar
-          </Link>
-          <Link to="/stores" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            Mağazalar
-          </Link>
-          <Link to="/create-store" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            Mağaza aç
-          </Link>
-          <Link to="/page/about" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            Haqqımızda
-          </Link>
+          <Link to="/" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Ana səhifə</Link>
+          <Link to="/products" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Elanlar</Link>
+          <Link to="/stores" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Mağazalar</Link>
+          <Link to="/create-store" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Mağaza aç</Link>
           {isAdmin && (
             <Link to="/admin" className="flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary/80">
-              <ShieldCheck className="h-4 w-4" />
-              Admin
+              <ShieldCheck className="h-4 w-4" /> Admin
             </Link>
           )}
         </nav>
