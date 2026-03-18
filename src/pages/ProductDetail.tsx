@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Heart, Share2, MapPin, Clock, Star, Phone, MessageCircle, Shield, Eye, Loader2, Send, Store, ExternalLink, Edit2, Trash2, Crown, Zap, Gem, Play } from "lucide-react";
+import { ArrowLeft, Heart, Share2, MapPin, Clock, Star, Phone, MessageCircle, Shield, Eye, Loader2, Send, Store, ExternalLink, Edit2, Trash2, Crown, Zap, Gem, Play, UserPlus, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -163,6 +163,36 @@ const ProductDetail = () => {
       return data || [];
     },
     enabled: !!listing?.category,
+  });
+
+  // Check if current user follows the seller
+  const { data: isFollowingSeller } = useQuery({
+    queryKey: ["user-follow", listing?.user_id, user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_followers")
+        .select("id")
+        .eq("follower_id", user!.id)
+        .eq("followed_id", listing!.user_id)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!listing?.user_id && !!user && user.id !== listing?.user_id,
+  });
+
+  const toggleFollowSeller = useMutation({
+    mutationFn: async () => {
+      if (!user || !listing) throw new Error("Auth required");
+      if (isFollowingSeller) {
+        await supabase.from("user_followers").delete().eq("follower_id", user.id).eq("followed_id", listing.user_id);
+      } else {
+        await supabase.from("user_followers").insert({ follower_id: user.id, followed_id: listing.user_id });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-follow", listing?.user_id, user?.id] });
+      toast({ title: isFollowingSeller ? "İzləmə dayandırıldı" : "İzlənilir" });
+    },
   });
 
   // Fetch category fields for label mapping
@@ -443,9 +473,26 @@ const ProductDetail = () => {
                 {seller?.city && <><span>·</span><span>{seller.city}</span></>}
               </div>
             </Link>
-            <Link to={`/seller/${listing.user_id}`} className="text-muted-foreground hover:text-primary transition-colors">
-              <ExternalLink className="h-5 w-5" />
-            </Link>
+            <div className="flex items-center gap-2">
+              {user && user.id !== listing.user_id && (
+                <Button
+                  variant={isFollowingSeller ? "outline" : "default"}
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => {
+                    if (!user) { navigate("/auth"); return; }
+                    toggleFollowSeller.mutate();
+                  }}
+                  disabled={toggleFollowSeller.isPending}
+                >
+                  {isFollowingSeller ? <UserCheck className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
+                  {isFollowingSeller ? "İzlənirsən" : "İzlə"}
+                </Button>
+              )}
+              <Link to={`/seller/${listing.user_id}`} className="text-muted-foreground hover:text-primary transition-colors">
+                <ExternalLink className="h-5 w-5" />
+              </Link>
+            </div>
           </div>
 
           {/* Store Link */}
