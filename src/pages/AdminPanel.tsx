@@ -27,6 +27,7 @@ import AdminBalanceManager from "@/components/admin/AdminBalanceManager";
 import AdminReferralManager from "@/components/admin/AdminReferralManager";
 import AdminIntegrationsManager from "@/components/admin/AdminIntegrationsManager";
 import AdminVideoSettings from "@/components/admin/AdminVideoSettings";
+import AdminStoreModerationManager from "@/components/admin/AdminStoreModerationManager";
 import {
   ShieldCheck, Trash2, Eye, EyeOff, Search, Users, ShoppingBag, Store,
   Crown, Loader2, AlertTriangle, Zap, Star, MapPin, Pencil, MessageSquare,
