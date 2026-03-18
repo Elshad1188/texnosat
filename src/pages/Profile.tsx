@@ -34,6 +34,8 @@ const Profile = () => {
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
   const [boostListingId, setBoostListingId] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["profile", user?.id],
