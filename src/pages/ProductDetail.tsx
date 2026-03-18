@@ -165,6 +165,36 @@ const ProductDetail = () => {
     enabled: !!listing?.category,
   });
 
+  // Check if current user follows the seller
+  const { data: isFollowingSeller } = useQuery({
+    queryKey: ["user-follow", listing?.user_id, user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_followers")
+        .select("id")
+        .eq("follower_id", user!.id)
+        .eq("followed_id", listing!.user_id)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!listing?.user_id && !!user && user.id !== listing?.user_id,
+  });
+
+  const toggleFollowSeller = useMutation({
+    mutationFn: async () => {
+      if (!user || !listing) throw new Error("Auth required");
+      if (isFollowingSeller) {
+        await supabase.from("user_followers").delete().eq("follower_id", user.id).eq("followed_id", listing.user_id);
+      } else {
+        await supabase.from("user_followers").insert({ follower_id: user.id, followed_id: listing.user_id });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-follow", listing?.user_id, user?.id] });
+      toast({ title: isFollowingSeller ? "İzləmə dayandırıldı" : "İzlənilir" });
+    },
+  });
+
   // Fetch category fields for label mapping
   const { data: categoryFieldDefs = [] } = useQuery({
     queryKey: ["category-fields-detail", listing?.category],
