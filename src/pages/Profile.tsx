@@ -168,12 +168,22 @@ const Profile = () => {
           <div className="h-20 bg-gradient-primary" />
           <CardContent className="relative px-4 pb-5 pt-0 sm:px-6">
             <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-end">
-              <Avatar className="-mt-10 h-20 w-20 border-4 border-card shadow-card sm:h-24 sm:w-24">
-                <AvatarImage src={profile?.avatar_url || ""} />
-                <AvatarFallback className="bg-secondary text-secondary-foreground text-xl font-bold">
-                  {(profile?.full_name || user.email)?.[0]?.toUpperCase() || "U"}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative -mt-10">
+                <Avatar className="h-20 w-20 border-4 border-card shadow-card sm:h-24 sm:w-24">
+                  <AvatarImage src={profile?.avatar_url || ""} />
+                  <AvatarFallback className="bg-secondary text-secondary-foreground text-xl font-bold">
+                    {(profile?.full_name || user.email)?.[0]?.toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <button
+                  onClick={() => avatarInputRef.current?.click()}
+                  className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md hover:opacity-90 transition-opacity"
+                  disabled={avatarUploading}
+                >
+                  {avatarUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+                </button>
+                <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+              </div>
               <div className="flex-1 text-center sm:text-left">
                 <div className="flex flex-col items-center gap-1.5 sm:flex-row">
                   <h1 className="text-xl font-bold text-foreground sm:text-2xl">{profile?.full_name || "İstifadəçi"}</h1>
