@@ -28,10 +28,11 @@ import AdminReferralManager from "@/components/admin/AdminReferralManager";
 import AdminIntegrationsManager from "@/components/admin/AdminIntegrationsManager";
 import AdminVideoSettings from "@/components/admin/AdminVideoSettings";
 import AdminStoreModerationManager from "@/components/admin/AdminStoreModerationManager";
+import AdminScraperManager from "@/components/admin/AdminScraperManager";
 import {
   ShieldCheck, Trash2, Eye, EyeOff, Search, Users, ShoppingBag, Store,
   Crown, Loader2, AlertTriangle, Zap, Star, MapPin, Pencil, MessageSquare,
-  FolderTree, Map, Palette, BarChart3, CheckSquare, Image, Flag, Settings, FileText, Bell, Wallet, Gift, Plug, Video,
+  FolderTree, Map, Palette, BarChart3, CheckSquare, Image, Flag, Settings, FileText, Bell, Wallet, Gift, Plug, Video, Globe,
 } from "lucide-react";
 
 interface Listing {
@@ -192,6 +193,7 @@ const AdminPanel = () => {
                 <TabsTrigger value="integrations" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Plug className="h-3.5 w-3.5" /> İnteqrasiyalar</TabsTrigger>
                 <TabsTrigger value="settings" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Settings className="h-3.5 w-3.5" /> Tənzimləmələr</TabsTrigger>
                 <TabsTrigger value="video" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Video className="h-3.5 w-3.5" /> Video</TabsTrigger>
+                <TabsTrigger value="scraper" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Globe className="h-3.5 w-3.5" /> Scraper</TabsTrigger>
                 <TabsTrigger value="theme" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap"><Palette className="h-3.5 w-3.5" /> Dizayn</TabsTrigger>
               </TabsList>
             </div>
@@ -381,6 +383,7 @@ const AdminPanel = () => {
           <TabsContent value="referral" className="mt-3"><AdminReferralManager /></TabsContent>
           <TabsContent value="integrations" className="mt-3"><AdminIntegrationsManager /></TabsContent>
           <TabsContent value="video" className="mt-3"><AdminVideoSettings /></TabsContent>
+          <TabsContent value="scraper" className="mt-3"><AdminScraperManager /></TabsContent>
           <TabsContent value="theme" className="mt-3"><AdminThemeManager /></TabsContent>
         </Tabs>
       </main>
