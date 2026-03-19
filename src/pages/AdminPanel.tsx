@@ -32,7 +32,7 @@ import AdminScraperManager from "@/components/admin/AdminScraperManager";
 import {
   ShieldCheck, Trash2, Eye, EyeOff, Search, Users, ShoppingBag, Store,
   Crown, Loader2, AlertTriangle, Zap, Star, MapPin, Pencil, MessageSquare,
-  FolderTree, Map, Palette, BarChart3, CheckSquare, Image, Flag, Settings, FileText, Bell, Wallet, Gift, Plug, Video,
+  FolderTree, Map, Palette, BarChart3, CheckSquare, Image, Flag, Settings, FileText, Bell, Wallet, Gift, Plug, Video, Globe,
 } from "lucide-react";
 
 interface Listing {
