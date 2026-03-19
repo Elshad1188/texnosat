@@ -383,6 +383,7 @@ const AdminPanel = () => {
           <TabsContent value="referral" className="mt-3"><AdminReferralManager /></TabsContent>
           <TabsContent value="integrations" className="mt-3"><AdminIntegrationsManager /></TabsContent>
           <TabsContent value="video" className="mt-3"><AdminVideoSettings /></TabsContent>
+          <TabsContent value="scraper" className="mt-3"><AdminScraperManager /></TabsContent>
           <TabsContent value="theme" className="mt-3"><AdminThemeManager /></TabsContent>
         </Tabs>
       </main>
