@@ -12,6 +12,7 @@ interface Banner {
   id: string;
   title: string;
   image_url: string;
+  video_url: string | null;
   link: string | null;
   position: string;
   sort_order: number;
