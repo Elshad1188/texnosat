@@ -68,7 +68,24 @@ const BannerDisplay = ({ position, interval = 5000 }: BannerDisplayProps) => {
 
   const banner = banners[current] as any;
 
-  const imgEl = (
+  const mediaEl = banner.video_url ? (
+    <video
+      key={banner.id}
+      src={banner.video_url}
+      poster={banner.image_url}
+      autoPlay
+      muted
+      loop
+      playsInline
+      className={`w-full rounded-xl object-cover max-h-48 shadow-card transition-all duration-500 ease-in-out ${
+        isAnimating
+          ? direction === "right"
+            ? "animate-slide-in-from-right"
+            : "animate-slide-in-from-left"
+          : ""
+      }`}
+    />
+  ) : (
     <img
       key={banner.id}
       src={banner.image_url}
@@ -87,7 +104,7 @@ const BannerDisplay = ({ position, interval = 5000 }: BannerDisplayProps) => {
     <div className="relative w-full max-w-3xl mx-auto group">
       {/* Banner */}
       <div className="overflow-hidden rounded-xl">
-        {banner.link ? <Link to={banner.link}>{imgEl}</Link> : imgEl}
+        {banner.link ? <Link to={banner.link}>{mediaEl}</Link> : mediaEl}
       </div>
 
       {/* Arrows */}
