@@ -81,7 +81,7 @@ const AdminBannerManager = () => {
     });
     if (error) { toast({ title: "Xəta", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Banner əlavə edildi" });
-    setForm({ title: "", image_url: "", link: "", position: "home_top", starts_at: "", ends_at: "" });
+    setForm({ title: "", image_url: "", video_url: "", link: "", position: "home_top", starts_at: "", ends_at: "" });
     setAdding(false);
     fetchBanners();
   };
