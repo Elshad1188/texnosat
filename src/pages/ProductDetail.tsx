@@ -191,7 +191,7 @@ const ProductDetail = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-follow", listing?.user_id, user?.id] });
-      toast({ title: isFollowingSeller ? "İzləmə dayandırıldı" : "İzlənilir" });
+      toast({ title: isFollowingSeller ? "İzləmə dayandırıldı" : "İzləyirsən" });
     },
   });
 

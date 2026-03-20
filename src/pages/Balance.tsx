@@ -154,8 +154,8 @@ const Balance = () => {
           <CardContent className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">
-                Dostlarınızı dəvət edin, hər uğurlu qeydiyyat üçün <strong className="text-primary">2₼</strong> bonus qazanın!
-                Dəvət olunan şəxs isə <strong className="text-primary">1₼</strong> bonus alacaq.
+                Dostlarınızı dəvət edin, hər uğurlu qeydiyyat üçün <strong className="text-primary">{referrerBonus}₼</strong> bonus qazanın!
+                Dəvət olunan şəxs isə <strong className="text-primary">{referredBonus}₼</strong> bonus alacaq.
               </p>
             </div>
 
