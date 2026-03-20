@@ -34,8 +34,11 @@ const AdminBannerManager = () => {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadMode, setUploadMode] = useState<"url" | "file">("file");
+  const [videoUploadMode, setVideoUploadMode] = useState<"url" | "file">("file");
   const fileRef = useRef<HTMLInputElement>(null);
+  const videoFileRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({ title: "", image_url: "", video_url: "", link: "", position: "home_top", starts_at: "", ends_at: "" });
 
   const fetchBanners = async () => {
