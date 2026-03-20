@@ -87,7 +87,7 @@ const AdminBannerManager = () => {
     setUploadingVideo(false);
   };
 
-
+  const addBanner = async () => {
     if (!form.title || !form.image_url) {
       toast({ title: "Başlıq və şəkil tələb olunur", variant: "destructive" });
       return;
