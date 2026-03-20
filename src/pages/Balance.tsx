@@ -29,6 +29,17 @@ const Balance = () => {
     enabled: !!user,
   });
 
+  const { data: referralSettings } = useQuery({
+    queryKey: ["referral-settings"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "referral").maybeSingle();
+      return data?.value as { referral_enabled?: boolean; referrer_bonus?: number; referred_bonus?: number } | null;
+    },
+  });
+
+  const referrerBonus = referralSettings?.referrer_bonus ?? 2;
+  const referredBonus = referralSettings?.referred_bonus ?? 1;
+
   const { data: transactions = [] } = useQuery({
     queryKey: ["balance-transactions", user?.id],
     queryFn: async () => {
