@@ -170,6 +170,13 @@ const AdminBannerManager = () => {
             )}
           </div>
 
+          {/* Video URL */}
+          <div className="space-y-1.5">
+            <Label className="text-xs flex items-center gap-1"><Video className="h-3 w-3" /> Video URL (istəyə bağlı)</Label>
+            <Input value={form.video_url} onChange={(e) => setForm({ ...form, video_url: e.target.value })} placeholder="https://...mp4" className="h-9" />
+            <p className="text-[11px] text-muted-foreground">Təqdimat videosu əlavə edin (MP4 link)</p>
+          </div>
+
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label className="text-xs">Link (istəyə bağlı)</Label>
