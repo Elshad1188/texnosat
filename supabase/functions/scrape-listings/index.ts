@@ -100,6 +100,8 @@ Deno.serve(async (req) => {
       listings = await scrapeTapAz(categoryUrl, limit, fetchDetails);
     } else if (source === 'telefon.az') {
       listings = await scrapeTelefonAz(categoryUrl, limit, fetchDetails);
+    } else if (source === 'temu') {
+      listings = await scrapeTemu(categoryUrl, limit);
     } else {
       listings = await scrapeGeneric(categoryUrl, limit);
     }
