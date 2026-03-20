@@ -6,12 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Image, Loader2, Upload, Link as LinkIcon } from "lucide-react";
+import { Plus, Trash2, Image, Loader2, Upload, Link as LinkIcon, Video } from "lucide-react";
 
 interface Banner {
   id: string;
   title: string;
   image_url: string;
+  video_url: string | null;
   link: string | null;
   position: string;
   sort_order: number;
@@ -35,7 +36,7 @@ const AdminBannerManager = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadMode, setUploadMode] = useState<"url" | "file">("file");
   const fileRef = useRef<HTMLInputElement>(null);
-  const [form, setForm] = useState({ title: "", image_url: "", link: "", position: "home_top", starts_at: "", ends_at: "" });
+  const [form, setForm] = useState({ title: "", image_url: "", video_url: "", link: "", position: "home_top", starts_at: "", ends_at: "" });
 
   const fetchBanners = async () => {
     setLoading(true);
@@ -71,6 +72,7 @@ const AdminBannerManager = () => {
     const { error } = await supabase.from("banners").insert({
       title: form.title,
       image_url: form.image_url,
+      video_url: form.video_url || null,
       link: form.link || null,
       position: form.position,
       sort_order: banners.length,
@@ -79,7 +81,7 @@ const AdminBannerManager = () => {
     });
     if (error) { toast({ title: "Xəta", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Banner əlavə edildi" });
-    setForm({ title: "", image_url: "", link: "", position: "home_top", starts_at: "", ends_at: "" });
+    setForm({ title: "", image_url: "", video_url: "", link: "", position: "home_top", starts_at: "", ends_at: "" });
     setAdding(false);
     fetchBanners();
   };
@@ -166,6 +168,13 @@ const AdminBannerManager = () => {
             ) : (
               <Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="https://..." className="h-9" />
             )}
+          </div>
+
+          {/* Video URL */}
+          <div className="space-y-1.5">
+            <Label className="text-xs flex items-center gap-1"><Video className="h-3 w-3" /> Video URL (istəyə bağlı)</Label>
+            <Input value={form.video_url} onChange={(e) => setForm({ ...form, video_url: e.target.value })} placeholder="https://...mp4" className="h-9" />
+            <p className="text-[11px] text-muted-foreground">Təqdimat videosu əlavə edin (MP4 link)</p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">

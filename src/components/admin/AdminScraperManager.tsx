@@ -28,6 +28,7 @@ interface ScrapedListing {
 const SOURCES = [
   { value: "tap.az", label: "Tap.az" },
   { value: "telefon.az", label: "Telefon.az" },
+  { value: "temu", label: "Temu" },
   { value: "custom", label: "Digər sayt" },
 ];
 
@@ -167,12 +168,13 @@ const AdminScraperManager = () => {
           <Input
             value={categoryUrl}
             onChange={e => setCategoryUrl(e.target.value)}
-            placeholder={source === "tap.az" ? "https://tap.az/elanlar/elektronika/telefonlar" : source === "telefon.az" ? "https://telefon.az/category/telefonlar" : "https://example.com/category"}
+            placeholder={source === "tap.az" ? "https://tap.az/elanlar/elektronika/telefonlar" : source === "telefon.az" ? "https://telefon.az/category/telefonlar" : source === "temu" ? "https://www.temu.com/search_result.html?search_key=phone" : "https://example.com/category"}
             className="h-9 text-sm"
           />
           <p className="text-[11px] text-muted-foreground mt-1">
             {source === "tap.az" && "Misal: https://tap.az/elanlar/elektronika/telefonlar"}
             {source === "telefon.az" && "Misal: https://telefon.az/category/telefonlar"}
+            {source === "temu" && "Misal: https://www.temu.com/search_result.html?search_key=phone"}
             {source === "custom" && "İstənilən saytın kateqoriya URL-i"}
           </p>
         </div>

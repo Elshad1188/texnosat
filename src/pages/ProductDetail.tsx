@@ -191,7 +191,7 @@ const ProductDetail = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-follow", listing?.user_id, user?.id] });
-      toast({ title: isFollowingSeller ? "İzləmə dayandırıldı" : "İzlənilir" });
+      toast({ title: isFollowingSeller ? "İzləmə dayandırıldı" : "İzləyirsən" });
     },
   });
 
@@ -486,7 +486,7 @@ const ProductDetail = () => {
                   disabled={toggleFollowSeller.isPending}
                 >
                   {isFollowingSeller ? <UserCheck className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
-                  {isFollowingSeller ? "İzlənirsən" : "İzlə"}
+                  {isFollowingSeller ? "İzləyirsən" : "İzlə"}
                 </Button>
               )}
               <Link to={`/seller/${listing.user_id}`} className="text-muted-foreground hover:text-primary transition-colors">

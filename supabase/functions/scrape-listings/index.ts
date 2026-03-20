@@ -100,6 +100,8 @@ Deno.serve(async (req) => {
       listings = await scrapeTapAz(categoryUrl, limit, fetchDetails);
     } else if (source === 'telefon.az') {
       listings = await scrapeTelefonAz(categoryUrl, limit, fetchDetails);
+    } else if (source === 'temu') {
+      listings = await scrapeTemu(categoryUrl, limit);
     } else {
       listings = await scrapeGeneric(categoryUrl, limit);
     }
@@ -416,6 +418,128 @@ async function scrapeTelefonAz(url: string, limit: number, fetchDetails: boolean
     }
   }
 
+  return listings;
+}
+
+// ========== TEMU ==========
+async function scrapeTemu(url: string, limit: number): Promise<ScrapedListing[]> {
+  const listings: ScrapedListing[] = [];
+
+  let html: string;
+  try {
+    const resp = await fetchWithRetry(url);
+    html = await resp.text();
+  } catch (e) {
+    console.error(`Temu fetch failed: ${e}`);
+    return listings;
+  }
+
+  console.log(`Temu HTML: ${html.length} chars`);
+
+  // Temu uses JSON-LD or embedded JSON data for products
+  // Try to find __NEXT_DATA__ or similar JSON payload
+  const jsonDataMatch = html.match(/window\.__rawData__\s*=\s*(\{[\s\S]*?\});/) ||
+                         html.match(/"goods_list"\s*:\s*(\[[\s\S]*?\])\s*[,}]/) ||
+                         html.match(/"items"\s*:\s*(\[[\s\S]*?\])\s*[,}]/);
+
+  if (jsonDataMatch) {
+    try {
+      const data = JSON.parse(jsonDataMatch[1]);
+      const items = Array.isArray(data) ? data : (data?.goods_list || data?.items || []);
+      for (const item of items) {
+        if (listings.length >= limit) break;
+        const title = item.goods_name || item.title || item.name || '';
+        const price = parseFloat(item.price || item.sale_price || item.min_price || '0');
+        const imgUrl = item.image_url || item.thumb_url || item.goods_img || '';
+        
+        if (title) {
+          listings.push({
+            title: decode(title),
+            price: price || 0,
+            currency: '$',
+            image_urls: imgUrl ? [imgUrl.startsWith('//') ? `https:${imgUrl}` : imgUrl] : [],
+            location: 'Temu',
+            description: item.goods_desc || item.description || '',
+            source_url: item.link_url ? (item.link_url.startsWith('http') ? item.link_url : `https://www.temu.com${item.link_url}`) : url,
+            category: '',
+            condition: 'Yeni',
+            custom_fields: {},
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Temu JSON parse error:', e);
+    }
+  }
+
+  // Fallback: parse HTML product cards
+  if (listings.length === 0) {
+    console.log('Temu: Trying HTML parsing fallback...');
+    
+    // Look for product cards with various class patterns
+    const cardPatterns = [
+      /class="[^"]*_2rn4tSF[^"]*"([\s\S]*?)(?=class="[^"]*_2rn4tSF)/g,
+      /class="[^"]*product-card[^"]*"([\s\S]*?)(?=class="[^"]*product-card)/g,
+      /class="[^"]*goods-card[^"]*"([\s\S]*?)(?=class="[^"]*goods-card)/g,
+    ];
+
+    for (const pattern of cardPatterns) {
+      if (listings.length > 0) break;
+      let match;
+      while ((match = pattern.exec(html)) !== null && listings.length < limit) {
+        const block = match[1]?.substring(0, 3000) || '';
+        
+        const titleMatch = block.match(/title="([^"]+)"/) || block.match(/aria-label="([^"]+)"/) || block.match(/>([^<]{10,80})</);
+        const priceMatch = block.match(/(\d+[.,]\d{2})\s*(?:\$|€|₼)/) || block.match(/\$\s*(\d+[.,]\d{2})/);
+        const imgMatch = block.match(/(?:src|data-src)="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/i);
+        const linkMatch = block.match(/href="([^"]*goods[^"]*)"/);
+
+        const title = titleMatch ? decode(titleMatch[1]) : '';
+        if (title && title.length > 3) {
+          listings.push({
+            title,
+            price: priceMatch ? parseFloat(priceMatch[1].replace(',', '.')) : 0,
+            currency: '$',
+            image_urls: imgMatch ? [imgMatch[1]] : [],
+            location: 'Temu',
+            description: '',
+            source_url: linkMatch ? (linkMatch[1].startsWith('http') ? linkMatch[1] : `https://www.temu.com${linkMatch[1]}`) : url,
+            category: '',
+            condition: 'Yeni',
+            custom_fields: {},
+          });
+        }
+      }
+    }
+  }
+
+  // Last fallback: find all product-like links with images
+  if (listings.length === 0) {
+    console.log('Temu: Last resort parsing...');
+    const allImgs = [...html.matchAll(/<a[^>]+href="([^"]*(?:goods|product)[^"]*)"[^>]*>[\s\S]*?<img[^>]+(?:src|data-src)="([^"]+)"[^>]*(?:alt|title)="([^"]*)"[\s\S]*?<\/a>/gi)];
+    for (const m of allImgs) {
+      if (listings.length >= limit) break;
+      const link = m[1].startsWith('http') ? m[1] : `https://www.temu.com${m[1]}`;
+      const img = m[2].startsWith('//') ? `https:${m[2]}` : m[2];
+      const title = decode(m[3]);
+      if (title && title.length > 3) {
+        listings.push({
+          title,
+          price: 0,
+          currency: '$',
+          image_urls: [img],
+          location: 'Temu',
+          description: '',
+          source_url: link,
+          category: '',
+          condition: 'Yeni',
+          custom_fields: {},
+        });
+      }
+    }
+  }
+
+  console.log(`Temu: Found ${listings.length} listings`);
   return listings;
 }
 

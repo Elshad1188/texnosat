@@ -29,6 +29,17 @@ const Balance = () => {
     enabled: !!user,
   });
 
+  const { data: referralSettings } = useQuery({
+    queryKey: ["referral-settings"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "referral").maybeSingle();
+      return data?.value as { referral_enabled?: boolean; referrer_bonus?: number; referred_bonus?: number } | null;
+    },
+  });
+
+  const referrerBonus = referralSettings?.referrer_bonus ?? 2;
+  const referredBonus = referralSettings?.referred_bonus ?? 1;
+
   const { data: transactions = [] } = useQuery({
     queryKey: ["balance-transactions", user?.id],
     queryFn: async () => {
@@ -143,8 +154,8 @@ const Balance = () => {
           <CardContent className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">
-                Dostlarınızı dəvət edin, hər uğurlu qeydiyyat üçün <strong className="text-primary">2₼</strong> bonus qazanın!
-                Dəvət olunan şəxs isə <strong className="text-primary">1₼</strong> bonus alacaq.
+                Dostlarınızı dəvət edin, hər uğurlu qeydiyyat üçün <strong className="text-primary">{referrerBonus}₼</strong> bonus qazanın!
+                Dəvət olunan şəxs isə <strong className="text-primary">{referredBonus}₼</strong> bonus alacaq.
               </p>
             </div>
 

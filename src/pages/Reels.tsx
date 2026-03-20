@@ -275,7 +275,7 @@ const Reels = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reel-user-follow", currentReel?.user_id] });
-      toast({ title: isFollowing ? "İzləmə dayandırıldı" : "İzlənilir" });
+      toast({ title: isFollowing ? "İzləmə dayandırıldı" : "İzləyirsən" });
     },
   });
 
