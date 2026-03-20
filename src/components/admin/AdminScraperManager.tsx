@@ -28,6 +28,7 @@ interface ScrapedListing {
 const SOURCES = [
   { value: "tap.az", label: "Tap.az" },
   { value: "telefon.az", label: "Telefon.az" },
+  { value: "temu", label: "Temu" },
   { value: "custom", label: "Digər sayt" },
 ];
 
