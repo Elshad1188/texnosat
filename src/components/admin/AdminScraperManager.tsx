@@ -112,7 +112,24 @@ const AdminScraperManager = () => {
 
     setSaving(true);
     try {
-      const insertData = selected.map(l => ({
+      // Duplicate check: find existing titles
+      const titles = selected.map(l => l.title);
+      const { data: existing } = await supabase
+        .from("listings")
+        .select("title")
+        .in("title", titles);
+      
+      const existingTitles = new Set((existing || []).map(e => e.title));
+      const unique = selected.filter(l => !existingTitles.has(l.title));
+      const duplicateCount = selected.length - unique.length;
+
+      if (unique.length === 0) {
+        toast({ title: "Dublikat", description: `Bütün ${selected.length} elan artıq mövcuddur`, variant: "destructive" });
+        setSaving(false);
+        return;
+      }
+
+      const insertData = unique.map(l => ({
         title: l.title,
         price: l.price || 0,
         currency: l.currency || '₼',
@@ -129,7 +146,10 @@ const AdminScraperManager = () => {
       const { error } = await supabase.from("listings").insert(insertData);
       if (error) throw error;
 
-      toast({ title: "Uğurlu", description: `${selected.length} elan əlavə edildi` });
+      const msg = duplicateCount > 0
+        ? `${unique.length} elan əlavə edildi, ${duplicateCount} dublikat atlandı`
+        : `${unique.length} elan əlavə edildi`;
+      toast({ title: "Uğurlu", description: msg });
       setResults([]);
     } catch (error: any) {
       toast({ title: "Xəta", description: error.message, variant: "destructive" });
