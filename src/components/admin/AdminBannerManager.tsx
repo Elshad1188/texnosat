@@ -72,6 +72,7 @@ const AdminBannerManager = () => {
     const { error } = await supabase.from("banners").insert({
       title: form.title,
       image_url: form.image_url,
+      video_url: form.video_url || null,
       link: form.link || null,
       position: form.position,
       sort_order: banners.length,
