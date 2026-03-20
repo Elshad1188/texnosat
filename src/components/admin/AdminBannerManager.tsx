@@ -34,8 +34,11 @@ const AdminBannerManager = () => {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadMode, setUploadMode] = useState<"url" | "file">("file");
+  const [videoUploadMode, setVideoUploadMode] = useState<"url" | "file">("file");
   const fileRef = useRef<HTMLInputElement>(null);
+  const videoFileRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({ title: "", image_url: "", video_url: "", link: "", position: "home_top", starts_at: "", ends_at: "" });
 
   const fetchBanners = async () => {
@@ -62,6 +65,26 @@ const AdminBannerManager = () => {
     const { data: urlData } = supabase.storage.from("banners").getPublicUrl(path);
     setForm(f => ({ ...f, image_url: urlData.publicUrl }));
     setUploading(false);
+  };
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 100 * 1024 * 1024) {
+      toast({ title: "Xəta", description: "Video 100MB-dan böyük ola bilməz", variant: "destructive" });
+      return;
+    }
+    setUploadingVideo(true);
+    const ext = file.name.split(".").pop();
+    const path = `banner-videos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("listing-videos").upload(path, file);
+    if (error) {
+      toast({ title: "Video yükləmə xətası", description: error.message, variant: "destructive" });
+      setUploadingVideo(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage.from("listing-videos").getPublicUrl(path);
+    setForm(f => ({ ...f, video_url: urlData.publicUrl }));
+    setUploadingVideo(false);
   };
 
   const addBanner = async () => {
@@ -170,11 +193,51 @@ const AdminBannerManager = () => {
             )}
           </div>
 
-          {/* Video URL */}
-          <div className="space-y-1.5">
-            <Label className="text-xs flex items-center gap-1"><Video className="h-3 w-3" /> Video URL (istəyə bağlı)</Label>
-            <Input value={form.video_url} onChange={(e) => setForm({ ...form, video_url: e.target.value })} placeholder="https://...mp4" className="h-9" />
-            <p className="text-[11px] text-muted-foreground">Təqdimat videosu əlavə edin (MP4 link)</p>
+          {/* Video source toggle */}
+          <div className="space-y-2">
+            <Label className="text-xs flex items-center gap-1"><Video className="h-3 w-3" /> Təqdimat videosu (istəyə bağlı)</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={videoUploadMode === "file" ? "default" : "outline"}
+                onClick={() => setVideoUploadMode("file")}
+                className="gap-1.5"
+              >
+                <Upload className="h-3.5 w-3.5" /> Fayl yüklə
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={videoUploadMode === "url" ? "default" : "outline"}
+                onClick={() => setVideoUploadMode("url")}
+                className="gap-1.5"
+              >
+                <LinkIcon className="h-3.5 w-3.5" /> URL
+              </Button>
+            </div>
+
+            {videoUploadMode === "file" ? (
+              <div>
+                <input ref={videoFileRef} type="file" accept="video/*" className="hidden" onChange={handleVideoUpload} />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => videoFileRef.current?.click()}
+                  disabled={uploadingVideo}
+                  className="gap-1.5 w-full"
+                >
+                  {uploadingVideo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Video className="h-3.5 w-3.5" />}
+                  {uploadingVideo ? "Yüklənir..." : form.video_url ? "Başqa video seç" : "Video seç"}
+                </Button>
+              </div>
+            ) : (
+              <Input value={form.video_url} onChange={(e) => setForm({ ...form, video_url: e.target.value })} placeholder="https://...mp4" className="h-9" />
+            )}
+            {form.video_url && (
+              <p className="text-[11px] text-muted-foreground truncate">✓ {form.video_url.split('/').pop()}</p>
+            )}
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
