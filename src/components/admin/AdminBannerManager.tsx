@@ -66,8 +66,28 @@ const AdminBannerManager = () => {
     setForm(f => ({ ...f, image_url: urlData.publicUrl }));
     setUploading(false);
   };
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 100 * 1024 * 1024) {
+      toast({ title: "Xəta", description: "Video 100MB-dan böyük ola bilməz", variant: "destructive" });
+      return;
+    }
+    setUploadingVideo(true);
+    const ext = file.name.split(".").pop();
+    const path = `banner-videos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("listing-videos").upload(path, file);
+    if (error) {
+      toast({ title: "Video yükləmə xətası", description: error.message, variant: "destructive" });
+      setUploadingVideo(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage.from("listing-videos").getPublicUrl(path);
+    setForm(f => ({ ...f, video_url: urlData.publicUrl }));
+    setUploadingVideo(false);
+  };
 
-  const addBanner = async () => {
+
     if (!form.title || !form.image_url) {
       toast({ title: "Başlıq və şəkil tələb olunur", variant: "destructive" });
       return;
