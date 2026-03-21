@@ -35,9 +35,25 @@ const BROWSER_HEADERS = {
   'Upgrade-Insecure-Requests': '1',
 };
 
+let proxyClient: any;
+try {
+  const proxyUrl = Deno.env.get('PROXY_URL');
+  if (proxyUrl) {
+    proxyClient = Deno.createHttpClient({ proxy: { url: proxyUrl } });
+    console.log('Proxy configuration initialized.');
+  }
+} catch (e) {
+  console.log('Failed to initialize proxy client:', e);
+}
+
 async function fetchWithRetry(url: string, retries = 2): Promise<Response> {
   for (let i = 0; i <= retries; i++) {
-    const resp = await fetch(url, { headers: BROWSER_HEADERS, redirect: 'follow' });
+    const fetchOptions: any = { headers: BROWSER_HEADERS, redirect: 'follow' };
+    if (proxyClient) {
+      fetchOptions.client = proxyClient;
+    }
+    
+    const resp = await fetch(url, fetchOptions);
     if (resp.ok) return resp;
     if (resp.status === 403 && i < retries) {
       console.log(`Got 403, retrying (${i + 1})...`);
