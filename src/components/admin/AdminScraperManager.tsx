@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Download, Eye, Globe, CheckSquare, Square, ExternalLink, ImageIcon } from "lucide-react";
+import { Loader2, Download, Eye, Globe, CheckSquare, Square, ExternalLink, ImageIcon, Clock, Trash2, Play, Pause } from "lucide-react";
 
 interface ScrapedListing {
   title: string;
@@ -25,11 +25,37 @@ interface ScrapedListing {
   selected?: boolean;
 }
 
+interface ScraperSchedule {
+  id: string;
+  source: string;
+  category_url: string;
+  target_category: string;
+  target_location: string;
+  scrape_limit: number;
+  fetch_details: boolean;
+  cron_expression: string;
+  is_active: boolean;
+  user_id: string;
+  last_run_at: string | null;
+  last_run_result: any;
+  created_at: string;
+}
+
 const SOURCES = [
   { value: "tap.az", label: "Tap.az" },
   { value: "telefon.az", label: "Telefon.az" },
   { value: "temu", label: "Temu" },
   { value: "custom", label: "Digər sayt" },
+];
+
+const CRON_PRESETS = [
+  { value: "0 */1 * * *", label: "Hər saat" },
+  { value: "0 */3 * * *", label: "Hər 3 saat" },
+  { value: "0 */6 * * *", label: "Hər 6 saat" },
+  { value: "0 */12 * * *", label: "Hər 12 saat" },
+  { value: "0 9 * * *", label: "Hər gün saat 9:00" },
+  { value: "0 9,21 * * *", label: "Hər gün saat 9:00 və 21:00" },
+  { value: "0 0 * * 1", label: "Hər həftə bazar ertəsi" },
 ];
 
 const AdminScraperManager = () => {
@@ -48,14 +74,22 @@ const AdminScraperManager = () => {
   const [categories, setCategories] = useState<{ slug: string; name: string }[]>([]);
   const [regions, setRegions] = useState<{ name: string }[]>([]);
 
+  // Cron scheduling state
+  const [schedules, setSchedules] = useState<ScraperSchedule[]>([]);
+  const [showScheduleForm, setShowScheduleForm] = useState(false);
+  const [cronExpression, setCronExpression] = useState("0 */6 * * *");
+  const [savingSchedule, setSavingSchedule] = useState(false);
+
   useEffect(() => {
     const fetchData = async () => {
-      const [cats, regs] = await Promise.all([
+      const [cats, regs, scheds] = await Promise.all([
         supabase.from("categories").select("slug, name").eq("is_active", true).order("sort_order"),
         supabase.from("regions").select("name").eq("is_active", true).is("parent_id", null).order("sort_order"),
+        supabase.from("scraper_schedules").select("*").order("created_at", { ascending: false }),
       ]);
       if (cats.data) setCategories(cats.data);
       if (regs.data) setRegions(regs.data);
+      if (scheds.data) setSchedules(scheds.data as any);
     };
     fetchData();
   }, []);
@@ -158,10 +192,150 @@ const AdminScraperManager = () => {
     }
   };
 
+  const saveSchedule = async () => {
+    if (!categoryUrl || !targetCategory) {
+      toast({ title: "Xəta", description: "URL və hədəf kateqoriya tələb olunur", variant: "destructive" });
+      return;
+    }
+    setSavingSchedule(true);
+    try {
+      const { data, error } = await supabase.from("scraper_schedules").insert({
+        source,
+        category_url: categoryUrl,
+        target_category: targetCategory,
+        target_location: targetLocation,
+        scrape_limit: parseInt(limit) || 20,
+        fetch_details: fetchDetails,
+        cron_expression: cronExpression,
+        user_id: session?.user?.id,
+        is_active: true,
+      } as any).select().single();
+      
+      if (error) throw error;
+      setSchedules(prev => [data as any, ...prev]);
+      setShowScheduleForm(false);
+      toast({ title: "Planlaşdırma yaradıldı", description: `Scraper ${CRON_PRESETS.find(c => c.value === cronExpression)?.label || cronExpression} tezliyində işləyəcək` });
+    } catch (error: any) {
+      toast({ title: "Xəta", description: error.message, variant: "destructive" });
+    } finally {
+      setSavingSchedule(false);
+    }
+  };
+
+  const toggleSchedule = async (id: string, currentActive: boolean) => {
+    const { error } = await supabase.from("scraper_schedules").update({ is_active: !currentActive } as any).eq("id", id);
+    if (!error) {
+      setSchedules(prev => prev.map(s => s.id === id ? { ...s, is_active: !currentActive } : s));
+    }
+  };
+
+  const deleteSchedule = async (id: string) => {
+    const { error } = await supabase.from("scraper_schedules").delete().eq("id", id);
+    if (!error) {
+      setSchedules(prev => prev.filter(s => s.id !== id));
+      toast({ title: "Planlaşdırma silindi" });
+    }
+  };
+
+  const runScheduleNow = async (schedule: ScraperSchedule) => {
+    toast({ title: "İcra edilir...", description: "Scraper işə düşdü" });
+    try {
+      const { data, error } = await supabase.functions.invoke("scrape-listings", {
+        body: {
+          source: schedule.source,
+          categoryUrl: schedule.category_url,
+          limit: schedule.scrape_limit,
+          fetchDetails: schedule.fetch_details,
+          cronMode: true,
+          targetCategory: schedule.target_category,
+          targetLocation: schedule.target_location,
+          userId: schedule.user_id,
+        },
+      });
+      if (error) throw error;
+      // Update last run
+      await supabase.from("scraper_schedules").update({
+        last_run_at: new Date().toISOString(),
+        last_run_result: data,
+      } as any).eq("id", schedule.id);
+      setSchedules(prev => prev.map(s => s.id === schedule.id ? { ...s, last_run_at: new Date().toISOString(), last_run_result: data } : s));
+      toast({ title: "Uğurlu", description: `${data?.inserted || 0} yeni elan əlavə edildi` });
+    } catch (error: any) {
+      toast({ title: "Xəta", description: error.message, variant: "destructive" });
+    }
+  };
+
   const selectedCount = results.filter(r => r.selected).length;
 
   return (
     <div className="space-y-4">
+      {/* Scheduled Jobs Section */}
+      <Card className="p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Clock className="h-4 w-4" /> Avtomatik planlaşdırma ({schedules.length})
+          </h3>
+          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setShowScheduleForm(!showScheduleForm)}>
+            {showScheduleForm ? "Ləğv et" : "Yeni plan"}
+          </Button>
+        </div>
+
+        {showScheduleForm && (
+          <div className="rounded-lg border border-border p-3 space-y-3 bg-muted/30">
+            <p className="text-xs text-muted-foreground">Aşağıdakı scraper parametrlərindən istifadə edərək avtomatik plan yaradın. Əvvəlcə yuxarıdakı formda URL, mənbə və kateqoriya seçin.</p>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Tezlik</label>
+              <Select value={cronExpression} onValueChange={setCronExpression}>
+                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CRON_PRESETS.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button size="sm" onClick={saveSchedule} disabled={savingSchedule} className="gap-1.5">
+              {savingSchedule ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Clock className="h-3.5 w-3.5" />}
+              Planı yarat
+            </Button>
+          </div>
+        )}
+
+        {schedules.length > 0 ? (
+          <div className="space-y-2">
+            {schedules.map(schedule => (
+              <div key={schedule.id} className="flex items-center gap-2 rounded-lg border border-border p-2.5 bg-card">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <Badge variant={schedule.is_active ? "default" : "secondary"} className="text-[10px]">
+                      {schedule.is_active ? "Aktiv" : "Dayandırılıb"}
+                    </Badge>
+                    <span className="text-xs font-medium text-foreground truncate">
+                      {SOURCES.find(s => s.value === schedule.source)?.label} → {categories.find(c => c.slug === schedule.target_category)?.name || schedule.target_category}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                    {CRON_PRESETS.find(c => c.value === schedule.cron_expression)?.label || schedule.cron_expression}
+                    {" · "}{schedule.scrape_limit} limit
+                    {schedule.last_run_at && ` · Son: ${new Date(schedule.last_run_at).toLocaleDateString('az')}`}
+                  </p>
+                </div>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => runScheduleNow(schedule)} title="İndi işlət">
+                  <Play className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toggleSchedule(schedule.id, schedule.is_active)}>
+                  {schedule.is_active ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 text-green-500" />}
+                </Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteSchedule(schedule.id)}>
+                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground text-center py-3">Planlaşdırılmış scraper yoxdur</p>
+        )}
+      </Card>
+
+      {/* Manual Scraper */}
       <Card className="p-4 space-y-4">
         <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
           <Globe className="h-4 w-4" /> Elan Scraper

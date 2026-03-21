@@ -694,6 +694,60 @@ export type Database = {
           },
         ]
       }
+      scraper_schedules: {
+        Row: {
+          category_url: string
+          created_at: string
+          cron_expression: string
+          cron_job_id: number | null
+          fetch_details: boolean
+          id: string
+          is_active: boolean
+          last_run_at: string | null
+          last_run_result: Json | null
+          scrape_limit: number
+          source: string
+          target_category: string
+          target_location: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category_url: string
+          created_at?: string
+          cron_expression?: string
+          cron_job_id?: number | null
+          fetch_details?: boolean
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          last_run_result?: Json | null
+          scrape_limit?: number
+          source: string
+          target_category: string
+          target_location?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category_url?: string
+          created_at?: string
+          cron_expression?: string
+          cron_job_id?: number | null
+          fetch_details?: boolean
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          last_run_result?: Json | null
+          scrape_limit?: number
+          source?: string
+          target_category?: string
+          target_location?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           id: string

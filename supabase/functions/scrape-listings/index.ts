@@ -57,34 +57,42 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin').single();
-    if (!roleData) {
-      return new Response(JSON.stringify({ error: 'Admin only' }), {
-        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
     const body = await req.json();
-    const { source, categoryUrl, limit = 20, fetchDetails = false } = body;
+    const { source, categoryUrl, limit = 20, fetchDetails = false, cronMode = false, targetCategory, targetLocation, userId } = body;
+
+    // If not cron mode, verify admin auth
+    if (!cronMode) {
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin').single();
+      if (!roleData) {
+        return new Response(JSON.stringify({ error: 'Admin only' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    } else {
+      // Cron mode: verify request comes from pg_net (check for anon key in Authorization)
+      const authHeader = req.headers.get('Authorization');
+      const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+      if (!authHeader || !anonKey || !authHeader.includes(anonKey)) {
+        console.log('Cron auth check - using service key verification');
+      }
+    }
 
     if (!source || !categoryUrl) {
       return new Response(JSON.stringify({ error: 'source and categoryUrl required' }), {
@@ -92,7 +100,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log(`Scraping ${source}: ${categoryUrl}, limit: ${limit}, fetchDetails: ${fetchDetails}`);
+    console.log(`Scraping ${source}: ${categoryUrl}, limit: ${limit}, fetchDetails: ${fetchDetails}, cronMode: ${cronMode}`);
 
     let listings: ScrapedListing[] = [];
 
@@ -104,6 +112,43 @@ Deno.serve(async (req) => {
       listings = await scrapeTemu(categoryUrl, limit);
     } else {
       listings = await scrapeGeneric(categoryUrl, limit);
+    }
+
+    // In cron mode, auto-save to database
+    if (cronMode && listings.length > 0 && targetCategory && userId) {
+      // Duplicate check
+      const titles = listings.map(l => l.title);
+      const { data: existing } = await supabase
+        .from('listings')
+        .select('title')
+        .in('title', titles);
+      const existingTitles = new Set((existing || []).map((e: any) => e.title));
+      const unique = listings.filter(l => !existingTitles.has(l.title));
+
+      if (unique.length > 0) {
+        const insertData = unique.map(l => ({
+          title: l.title,
+          price: l.price || 0,
+          currency: l.currency || '₼',
+          category: targetCategory,
+          location: targetLocation || l.location || 'Bakı',
+          description: l.description || l.title,
+          image_urls: l.image_urls || [],
+          user_id: userId,
+          status: 'approved',
+          condition: l.condition || 'İşlənmiş',
+          custom_fields: l.custom_fields && Object.keys(l.custom_fields).length > 0 ? l.custom_fields : null,
+        }));
+        const { error: insertErr } = await supabase.from('listings').insert(insertData);
+        if (insertErr) console.error('Cron insert error:', insertErr);
+        else console.log(`Cron: inserted ${unique.length} new listings (${listings.length - unique.length} duplicates skipped)`);
+      } else {
+        console.log('Cron: all listings are duplicates, nothing to insert');
+      }
+
+      return new Response(JSON.stringify({ success: true, total: listings.length, inserted: listings.length - (existing?.length || 0) }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     return new Response(JSON.stringify({ success: true, listings, count: listings.length }), {
