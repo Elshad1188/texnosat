@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Download, Eye, Globe, CheckSquare, Square, ExternalLink, ImageIcon } from "lucide-react";
+import { Loader2, Download, Eye, Globe, CheckSquare, Square, ExternalLink, ImageIcon, Clock, Trash2, Play, Pause } from "lucide-react";
 
 interface ScrapedListing {
   title: string;
@@ -25,11 +25,37 @@ interface ScrapedListing {
   selected?: boolean;
 }
 
+interface ScraperSchedule {
+  id: string;
+  source: string;
+  category_url: string;
+  target_category: string;
+  target_location: string;
+  scrape_limit: number;
+  fetch_details: boolean;
+  cron_expression: string;
+  is_active: boolean;
+  user_id: string;
+  last_run_at: string | null;
+  last_run_result: any;
+  created_at: string;
+}
+
 const SOURCES = [
   { value: "tap.az", label: "Tap.az" },
   { value: "telefon.az", label: "Telefon.az" },
   { value: "temu", label: "Temu" },
   { value: "custom", label: "Digər sayt" },
+];
+
+const CRON_PRESETS = [
+  { value: "0 */1 * * *", label: "Hər saat" },
+  { value: "0 */3 * * *", label: "Hər 3 saat" },
+  { value: "0 */6 * * *", label: "Hər 6 saat" },
+  { value: "0 */12 * * *", label: "Hər 12 saat" },
+  { value: "0 9 * * *", label: "Hər gün saat 9:00" },
+  { value: "0 9,21 * * *", label: "Hər gün saat 9:00 və 21:00" },
+  { value: "0 0 * * 1", label: "Hər həftə bazar ertəsi" },
 ];
 
 const AdminScraperManager = () => {
@@ -48,14 +74,22 @@ const AdminScraperManager = () => {
   const [categories, setCategories] = useState<{ slug: string; name: string }[]>([]);
   const [regions, setRegions] = useState<{ name: string }[]>([]);
 
+  // Cron scheduling state
+  const [schedules, setSchedules] = useState<ScraperSchedule[]>([]);
+  const [showScheduleForm, setShowScheduleForm] = useState(false);
+  const [cronExpression, setCronExpression] = useState("0 */6 * * *");
+  const [savingSchedule, setSavingSchedule] = useState(false);
+
   useEffect(() => {
     const fetchData = async () => {
-      const [cats, regs] = await Promise.all([
+      const [cats, regs, scheds] = await Promise.all([
         supabase.from("categories").select("slug, name").eq("is_active", true).order("sort_order"),
         supabase.from("regions").select("name").eq("is_active", true).is("parent_id", null).order("sort_order"),
+        supabase.from("scraper_schedules").select("*").order("created_at", { ascending: false }),
       ]);
       if (cats.data) setCategories(cats.data);
       if (regs.data) setRegions(regs.data);
+      if (scheds.data) setSchedules(scheds.data as any);
     };
     fetchData();
   }, []);
