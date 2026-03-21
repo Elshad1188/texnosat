@@ -47,10 +47,18 @@ try {
 }
 
 async function fetchWithRetry(url: string, retries = 2): Promise<Response> {
+  let currentClient = proxyClient;
+  const overrideProxyUrl = activeProxyUrl || Deno.env.get('PROXY_URL');
+  if (overrideProxyUrl && overrideProxyUrl !== Deno.env.get('PROXY_URL')) {
+    try { currentClient = Deno.createHttpClient({ proxy: { url: overrideProxyUrl } }); } catch(e){}
+  } else if (!overrideProxyUrl) {
+    currentClient = undefined;
+  }
+
   for (let i = 0; i <= retries; i++) {
     const fetchOptions: any = { headers: BROWSER_HEADERS, redirect: 'follow' };
-    if (proxyClient) {
-      fetchOptions.client = proxyClient;
+    if (currentClient) {
+      fetchOptions.client = currentClient;
     }
     
     const resp = await fetch(url, fetchOptions);
@@ -67,6 +75,8 @@ async function fetchWithRetry(url: string, retries = 2): Promise<Response> {
   throw new Error(`Failed after ${retries} retries for ${url}`);
 }
 
+let activeProxyUrl: string | undefined = undefined;
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -78,7 +88,8 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body = await req.json();
-    const { source, categoryUrl, limit = 20, fetchDetails = false, cronMode = false, targetCategory, targetLocation, userId } = body;
+    const { source, categoryUrl, limit = 20, fetchDetails = false, cronMode = false, targetCategory, targetLocation, userId, customProxyUrl } = body;
+    activeProxyUrl = customProxyUrl;
 
     // If not cron mode, verify admin auth
     if (!cronMode) {

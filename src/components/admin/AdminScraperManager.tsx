@@ -69,6 +69,7 @@ const AdminScraperManager = () => {
   const [targetLocation, setTargetLocation] = useState("Bakı");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [proxyUrl, setProxyUrl] = useState(() => localStorage.getItem("scraper_proxy_url") || "");
   const [results, setResults] = useState<ScrapedListing[]>([]);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const [categories, setCategories] = useState<{ slug: string; name: string }[]>([]);
@@ -94,6 +95,10 @@ const AdminScraperManager = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem("scraper_proxy_url", proxyUrl);
+  }, [proxyUrl]);
+
   const handleScrape = async () => {
     if (!categoryUrl) {
       toast({ title: "Xəta", description: "URL daxil edin", variant: "destructive" });
@@ -105,7 +110,7 @@ const AdminScraperManager = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke("scrape-listings", {
-        body: { source, categoryUrl, limit: parseInt(limit) || 20, fetchDetails },
+        body: { source, categoryUrl, limit: parseInt(limit) || 20, fetchDetails, customProxyUrl: proxyUrl },
       });
 
       if (error) throw error;
@@ -392,6 +397,19 @@ const AdminScraperManager = () => {
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        <div>
+          <label className="text-xs text-muted-foreground mb-1 block">Xüsusi Proxy URL (istəyə bağlı)</label>
+          <Input
+            value={proxyUrl}
+            onChange={e => setProxyUrl(e.target.value)}
+            placeholder="http://user:pass@12.34.56.78:8080"
+            className="h-9 text-sm"
+          />
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Tap.az kimi saytların bloka salmaması üçün xüsusi proxy məlumatı daxil edə bilərsiniz.
+          </p>
         </div>
 
         {/* Detail fetching toggle */}
