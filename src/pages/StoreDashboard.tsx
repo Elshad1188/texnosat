@@ -14,13 +14,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
 import {
   Store, Package, Users, Eye, Crown, Edit2, Plus, Trash2,
-  MapPin, Phone, Clock, TrendingUp, Loader2, BarChart3, Rocket
+  MapPin, Phone, Clock, TrendingUp, Loader2, BarChart3, Rocket, Upload
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import BulkListingUpload from "@/components/BulkListingUpload";
 
 const StoreDashboard = () => {
   const { user } = useAuth();
@@ -193,6 +194,7 @@ const StoreDashboard = () => {
         <Tabs defaultValue="listings" className="space-y-4">
           <TabsList className="w-full justify-start overflow-x-auto">
             <TabsTrigger value="listings" className="gap-1 text-xs sm:text-sm"><Package className="h-3.5 w-3.5" />Elanlar</TabsTrigger>
+            <TabsTrigger value="bulk" className="gap-1 text-xs sm:text-sm"><Upload className="h-3.5 w-3.5" />Toplu yükləmə</TabsTrigger>
             <TabsTrigger value="followers" className="gap-1 text-xs sm:text-sm"><Users className="h-3.5 w-3.5" />Abunəçilər</TabsTrigger>
           </TabsList>
 
@@ -271,6 +273,10 @@ const StoreDashboard = () => {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="bulk">
+            <BulkListingUpload storeId={store.id} />
           </TabsContent>
 
           <TabsContent value="followers">
