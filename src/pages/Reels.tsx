@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useIsAdminOrMod } from "@/hooks/useIsAdmin";
-import { Heart, MessageCircle, Share2, Eye, ShoppingBag, X, Send, Play, Image as ImageIcon, UserPlus, UserCheck, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, Share2, Eye, ShoppingBag, X, Send, Play, Image as ImageIcon, UserPlus, UserCheck, Trash2, Crown, Zap } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -123,24 +123,44 @@ const Reels = () => {
     queryFn: async () => {
       const { data: allListings } = await supabase
         .from("listings")
-        .select("id, title, price, currency, video_url, image_urls, user_id, store_id, created_at, category, views_count")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false });
+        .select("id, title, price, currency, video_url, image_urls, user_id, store_id, created_at, category, views_count, is_premium, is_urgent, reel_comments(count)")
+        .eq("is_active", true);
 
       if (!allListings || allListings.length === 0) return [];
 
+      // Sorting logic: VIP > Premium > Urgent > (Views + Comments*10)
+      const getScore = (r: any) => {
+        let score = 0;
+        const isVip = r.is_premium && r.is_urgent;
+        if (isVip) score += 1000000;
+        else if (r.is_premium) score += 100000;
+        else if (r.is_urgent) score += 10000;
+        
+        score += (r.views_count || 0);
+        // reel_comments(count) returns an array like [{ count: 0 }]
+        const commentCount = r.reel_comments?.[0]?.count || 0;
+        score += commentCount * 10;
+        return score;
+      };
+
+      let sorted = [...allListings].sort((a, b) => getScore(b) - getScore(a));
+
+      // Separate videos from images (Videos always first)
+      const withVideo = sorted.filter(l => l.video_url);
+      const withoutVideo = sorted.filter(l => !l.video_url);
+      sorted = [...withVideo, ...withoutVideo];
+
       if (startId) {
-        const target = allListings.find(l => l.id === startId);
-        if (target) {
-          const sameCategory = allListings.filter(l => l.id !== startId && l.category === target.category);
-          const rest = allListings.filter(l => l.id !== startId && l.category !== target.category);
-          return [target, ...sameCategory, ...rest];
+        const targetIndex = sorted.findIndex(l => l.id === startId);
+        if (targetIndex !== -1) {
+          const [target] = sorted.splice(targetIndex, 1);
+          // When opening a specific reel, we keep it first, 
+          // but the rest remain in their ranked order
+          return [target, ...sorted];
         }
       }
 
-      const withVideo = allListings.filter(l => l.video_url);
-      const withoutVideo = allListings.filter(l => !l.video_url);
-      return [...withVideo, ...withoutVideo];
+      return sorted;
     },
   });
 
@@ -160,6 +180,9 @@ const Reels = () => {
   }, [selectedCategory]);
 
   const currentReel = reels[currentIndex];
+  const isVip = currentReel?.is_premium && currentReel?.is_urgent;
+  const isPremium = currentReel?.is_premium;
+  const isUrgent = currentReel?.is_urgent;
 
   // Play only current reel's video, pause all others
   useEffect(() => {
@@ -554,10 +577,25 @@ const Reels = () => {
 
       {/* Price - top right corner */}
       {currentReel && (
-        <div className="absolute top-14 right-4 z-30">
+        <div className="absolute top-14 right-4 z-30 flex flex-col items-end gap-2">
           <span className="inline-block rounded-lg bg-primary px-3 py-1.5 text-primary-foreground font-bold text-base shadow-lg">
             {currentReel.price} {currentReel.currency}
           </span>
+          {isVip && (
+            <div className="flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 px-2.5 py-1 text-[10px] font-bold text-white shadow-lg ring-1 ring-white/20">
+              <Crown className="h-3 w-3" /> VIP
+            </div>
+          )}
+          {!isVip && isPremium && (
+            <div className="flex items-center gap-1 rounded-full bg-amber-500/90 px-2.5 py-1 text-[10px] font-bold text-white shadow-lg ring-1 ring-white/10">
+              <Crown className="h-3 w-3" /> Premium
+            </div>
+          )}
+          {!isVip && isUrgent && (
+            <div className="flex items-center gap-1 rounded-full bg-red-500/90 px-2.5 py-1 text-[10px] font-bold text-white shadow-lg ring-1 ring-white/10">
+              <Zap className="h-3 w-3" /> Təcili
+            </div>
+          )}
         </div>
       )}
 
