@@ -7,17 +7,24 @@ const SplashScreen = () => {
 
   // Allow a minimum display time for better UX
   useEffect(() => {
+    // Prevent scrolling while splash is active
+    document.body.style.overflow = 'hidden';
+
     // Hide the static HTML splash once React takes over
     const initialSplash = document.getElementById("initial-splash");
     if (initialSplash) {
       initialSplash.style.opacity = "0";
-      setTimeout(() => initialSplash.remove(), 400);
+      setTimeout(() => {
+        if (initialSplash.parentNode) {
+          initialSplash.remove();
+        }
+      }, 400);
     }
 
-    const timer = setTimeout(() => {
-      // We don't hide it here, the parent will unmount it
-    }, 1500);
-    return () => clearTimeout(timer);
+    return () => {
+      // Re-enable scrolling when splash is removed
+      document.body.style.overflow = 'auto';
+    };
   }, []);
 
   return (
