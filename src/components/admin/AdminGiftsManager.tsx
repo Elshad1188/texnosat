@@ -61,6 +61,8 @@ const AdminGiftsManager = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPrize, setEditingPrize] = useState<Partial<SpinPrize> | null>(null);
   const [saving, setSaving] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [updatingSettings, setUpdatingSettings] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -80,8 +82,17 @@ const AdminGiftsManager = () => {
         .order("created_at", { ascending: false })
         .limit(50);
 
+      const { data: settingsData } = await supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "spin_settings")
+        .maybeSingle();
+
       setPrizes(prizesData || []);
       setHistory(historyData || []);
+      if (settingsData?.value) {
+        setNotificationsEnabled((settingsData.value as any).notifications_enabled ?? true);
+      }
     } catch (err: any) {
       toast({ title: "Məlumat yüklənmədi", description: err.message, variant: "destructive" });
     } finally {
@@ -179,6 +190,27 @@ const AdminGiftsManager = () => {
     }
   };
 
+  const handleToggleNotifications = async (enabled: boolean) => {
+    setUpdatingSettings(true);
+    try {
+      const { error } = await supabase
+        .from("site_settings")
+        .upsert({ 
+          key: "spin_settings", 
+          value: { notifications_enabled: enabled },
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key' });
+
+      if (error) throw error;
+      setNotificationsEnabled(enabled);
+      toast({ title: enabled ? "Bildirişlər aktiv edildi" : "Bildirişlər söndürüldü" });
+    } catch (err: any) {
+      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+    } finally {
+      setUpdatingSettings(false);
+    }
+  };
+
   const handleDeletePrize = async (id: string) => {
     if (!confirm("Bu hədiyyəni silmək istədiyinizə əminsiniz?")) return;
     try {
@@ -231,6 +263,27 @@ const AdminGiftsManager = () => {
           </div>
           <div className="text-2xl font-bold text-foreground">{stats.activePrizes}</div>
           <div className="text-xs text-muted-foreground">Çarx üzərindəki bölmələr</div>
+        </div>
+      </div>
+
+      {/* Notification Toggle Section */}
+      <div className="bg-muted/30 border border-border rounded-2xl p-4 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+            <AlertCircle className="h-5 w-5" />
+          </div>
+          <div className="flex flex-col">
+            <span className="font-bold text-sm">Hədiyyə Bildirişləri</span>
+            <span className="text-xs text-muted-foreground">Qazanclar barədə həm istifadəçiyə, həm də adminlərə bildiriş göndərilsin</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+            {updatingSettings && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+            <Switch 
+                checked={notificationsEnabled} 
+                onCheckedChange={handleToggleNotifications}
+                disabled={updatingSettings}
+            />
         </div>
       </div>
 
