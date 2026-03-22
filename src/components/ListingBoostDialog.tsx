@@ -15,38 +15,12 @@ interface ListingBoostDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const boostOptions = [
-  {
-    key: "premium",
-    label: "Premium elan",
-    description: "Elanınız axtarış nəticələrində birinci sırada göstərilir",
-    price: 5,
-    duration: "7 gün",
-    icon: Crown,
-    color: "text-amber-500",
-    bg: "bg-amber-500/10",
-  },
-  {
-    key: "urgent",
-    label: "Təcili elan",
-    description: "Elanınız \"Təcili\" etiketi ilə fərqlənir",
-    price: 3,
-    duration: "7 gün",
-    icon: Zap,
-    color: "text-red-500",
-    bg: "bg-red-500/10",
-  },
-  {
-    key: "vip",
-    label: "VIP elan",
-    description: "Premium + Təcili birlikdə, ana səhifədə önə çıxarılır",
-    price: 10,
-    duration: "14 gün",
-    icon: Star,
-    color: "text-primary",
-    bg: "bg-primary/10",
-  },
-];
+const DEFAULT_PRICES = {
+  premium: 5,
+  urgent: 3,
+  vip: 10,
+};
+
 
 const ListingBoostDialog = ({ listingId, open, onOpenChange }: ListingBoostDialogProps) => {
   const { user } = useAuth();
@@ -61,6 +35,52 @@ const ListingBoostDialog = ({ listingId, open, onOpenChange }: ListingBoostDialo
     },
     enabled: !!user,
   });
+
+  const { data: siteSettings } = useQuery({
+    queryKey: ["site-settings-general"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "general").maybeSingle();
+      return (data?.value as any) || {};
+    },
+  });
+
+  const getPrice = (key: keyof typeof DEFAULT_PRICES) => {
+    const settingKey = `${key}_price`;
+    return siteSettings?.[settingKey] !== undefined ? Number(siteSettings[settingKey]) : DEFAULT_PRICES[key];
+  };
+
+  const boostOptions = [
+    {
+      key: "premium",
+      label: "Premium elan",
+      description: "Elanınız axtarış nəticələrində birinci sırada göstərilir",
+      price: getPrice("premium"),
+      duration: "7 gün",
+      icon: Crown,
+      color: "text-amber-500",
+      bg: "bg-amber-500/10",
+    },
+    {
+      key: "urgent",
+      label: "Təcili elan",
+      description: "Elanınız \"Təcili\" etiketi ilə fərqlənir",
+      price: getPrice("urgent"),
+      duration: "7 gün",
+      icon: Zap,
+      color: "text-red-500",
+      bg: "bg-red-500/10",
+    },
+    {
+      key: "vip",
+      label: "VIP elan",
+      description: "Premium + Təcili birlikdə, ana səhifədə önə çıxarılır",
+      price: getPrice("vip"),
+      duration: "14 gün",
+      icon: Star,
+      color: "text-primary",
+      bg: "bg-primary/10",
+    },
+  ];
 
   const balance = Number((profile as any)?.balance || 0);
 

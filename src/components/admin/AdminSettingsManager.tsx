@@ -25,6 +25,9 @@ interface SiteSettings {
   watermark_url: string;
   watermark_position: string;
   watermark_opacity: number;
+  premium_price: number;
+  vip_price: number;
+  urgent_price: number;
 }
 
 const defaults: SiteSettings = {
@@ -42,6 +45,9 @@ const defaults: SiteSettings = {
   watermark_url: "",
   watermark_position: "bottom-right",
   watermark_opacity: 50,
+  premium_price: 5,
+  vip_price: 10,
+  urgent_price: 3,
 };
 
 const watermarkPositions = [
@@ -166,6 +172,46 @@ const AdminSettingsManager = () => {
             min={1}
             max={20}
           />
+        </div>
+      </div>
+
+      {/* Ad Prices */}
+      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-foreground">💰 Reklam Qiymətləri (AZN)</h3>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Premium (7 gün)</Label>
+            <Input
+              type="number"
+              value={settings.premium_price}
+              onChange={(e) => setSettings({ ...settings, premium_price: Number(e.target.value) })}
+              className="h-9"
+              min={0}
+              step={0.1}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">VIP (14 gün)</Label>
+            <Input
+              type="number"
+              value={settings.vip_price}
+              onChange={(e) => setSettings({ ...settings, vip_price: Number(e.target.value) })}
+              className="h-9"
+              min={0}
+              step={0.1}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Təcili (7 gün)</Label>
+            <Input
+              type="number"
+              value={settings.urgent_price}
+              onChange={(e) => setSettings({ ...settings, urgent_price: Number(e.target.value) })}
+              className="h-9"
+              min={0}
+              step={0.1}
+            />
+          </div>
         </div>
       </div>
 
