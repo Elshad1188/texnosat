@@ -71,6 +71,7 @@ const AdminScraperManager = () => {
   const [saving, setSaving] = useState(false);
   const [proxyUrl, setProxyUrl] = useState(() => localStorage.getItem("scraper_proxy_url") || "");
   const [singleUrl, setSingleUrl] = useState("");
+  const [singleSource, setSingleSource] = useState("tap.az");
   const [singleLoading, setSingleLoading] = useState(false);
   const [results, setResults] = useState<ScrapedListing[]>([]);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
@@ -140,7 +141,7 @@ const AdminScraperManager = () => {
     try {
       const { data, error } = await supabase.functions.invoke("scrape-listings", {
         body: { 
-          source: "tap.az", 
+          source: singleSource, 
           categoryUrl: singleUrl, 
           singleUrlMode: true, 
           fetchDetails: true,
@@ -155,7 +156,7 @@ const AdminScraperManager = () => {
         setExpandedIndex(0);
         toast({ title: "Uğurlu", description: "Məlumatlar çəkildi. İndi 'Saxla' düyməsi ilə elanı paylaşa bilərsiniz." });
       } else {
-        toast({ title: "Xəta", description: "Məlumat tapılmadı", variant: "destructive" });
+        toast({ title: "Nəticə yoxdur", description: "Məlumat tapılmadı. Sayt bot qoruması istifadə edir və ya link səhvdir.", variant: "destructive" });
       }
     } catch (error: any) {
       toast({ title: "Xəta", description: error.message, variant: "destructive" });
@@ -384,16 +385,24 @@ const AdminScraperManager = () => {
         <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
           <ExternalLink className="h-4 w-4" /> Tək linkdən avtomatik idxal (Yeni)
         </h3>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="w-full sm:w-32">
+            <Select value={singleSource} onValueChange={setSingleSource}>
+              <SelectTrigger className="h-10 bg-background"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {SOURCES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
           <Input 
             value={singleUrl} 
             onChange={e => setSingleUrl(e.target.value)} 
-            placeholder="Tap.az elan linkini bura yapışdırın..." 
+            placeholder="Məs: https://tap.az/elanlar/..." 
             className="flex-1 h-10 bg-background"
           />
           <Button onClick={handleSingleImport} disabled={singleLoading} className="gap-2 px-6">
             {singleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            {singleLoading ? "Çəkilir..." : "Məlumatları çək"}
+            {singleLoading ? "Çəkilir..." : "İdxal et"}
           </Button>
         </div>
         <p className="text-[11px] text-muted-foreground">

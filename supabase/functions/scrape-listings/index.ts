@@ -364,12 +364,15 @@ async function fetchTapAzDetail(url: string): Promise<Partial<ScrapedListing> | 
     const resp = await fetchWithRetry(url);
     const html = await resp.text();
 
+    console.log(`Analyzing detail page: ${url} (${html.length} chars)`);
+
     // Title
-    const titleMatch = html.match(/<h1[^>]*>([^<]+)<\/h1>/);
+    const titleMatch = html.match(/<h1[^>]*class="[^"]*(?:product-title|product-header__title|title)[^"]*"[^>]*>([^<]+)<\/h1>/) ||
+                       html.match(/<h1[^>]*>([^<]+)<\/h1>/);
     const title = titleMatch ? decode(titleMatch[1]) : undefined;
 
     // Description
-    const descMatch = html.match(/class="[^"]*product-description[^"]*"[^>]*>([\s\S]*?)<\/div>/);
+    const descMatch = html.match(/class="[^"]*(?:product-description__content|product-description|description)[^"]*"[^>]*>([\s\S]*?)<\/div>/);
     let description = '';
     if (descMatch) {
       description = descMatch[1]
@@ -379,78 +382,56 @@ async function fetchTapAzDetail(url: string): Promise<Partial<ScrapedListing> | 
       description = decode(description);
     }
 
-    // All images
+    // Images
     const imageUrls: string[] = [];
-    const imgRegex = /class="[^"]*product-photos[^"]*"[\s\S]*?(<\/div>)/;
-    const photosBlock = html.match(imgRegex);
-    if (photosBlock) {
-      const allImgs = photosBlock[0].matchAll(/(?:src|data-src|href)="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi);
-      for (const im of allImgs) {
-        const imgUrl = im[1];
-        if (!imageUrls.includes(imgUrl)) {
-          imageUrls.push(imgUrl);
-        }
-      }
-    }
-    // Fallback: find all large images on page
-    if (imageUrls.length === 0) {
-      const allImgs = html.matchAll(/(?:src|data-src)="(https?:\/\/tap\.az\/uploads\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi);
-      for (const im of allImgs) {
-        if (!imageUrls.includes(im[1])) {
-          imageUrls.push(im[1]);
-        }
-      }
+    // Try to find large images in slider
+    const imgMatches = html.matchAll(/<(?:img|a)[^>]+(?:src|data-src|href)="(https?:\/\/tap\.az\/uploads\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi);
+    for (const im of imgMatches) {
+      if (!imageUrls.includes(im[1])) imageUrls.push(im[1]);
     }
 
-    // Properties/specs
+    // Properties/Specs
     const custom_fields: Record<string, string> = {};
-    const propsRegex = /class="[^"]*product-properties[^"]*"[\s\S]*?<\/(?:table|div|ul)>/;
-    const propsBlock = html.match(propsRegex);
-    if (propsBlock) {
-      const rowRegex = /<(?:tr|li|div)[^>]*>\s*<(?:td|span|div)[^>]*>([^<]+)<\/(?:td|span|div)>\s*<(?:td|span|div)[^>]*>([^<]+)/g;
-      let propMatch;
-      while ((propMatch = rowRegex.exec(propsBlock[0])) !== null) {
-        const key = decode(propMatch[1]).trim();
-        const val = decode(propMatch[2]).trim();
-        if (key && val) {
-          custom_fields[key] = val;
-        }
-      }
+    const propItemRegex = /<div class="product-properties__i">[\s\S]*?<label class="product-properties__i-name">([^<]+)<\/label>[\s\S]*?<span class="product-properties__i-value">([\s\S]*?)<\/span>/g;
+    let pMatch;
+    while ((pMatch = propItemRegex.exec(html)) !== null) {
+      const key = decode(pMatch[1]).trim();
+      const val = decode(pMatch[2].replace(/<[^>]+>/g, '')).trim();
+      if (key && val) custom_fields[key] = val;
     }
 
     // Price
-    const priceMatch = html.match(/class="[^"]*product-price[^"]*"[^>]*>([\s\S]*?)<\//) ||
-                       html.match(/([\d\s.,]+)\s*₼/);
+    const priceValMatch = html.match(/class="price-val">([^<]+)/);
+    const priceCurMatch = html.match(/class="price-cur">([^<]+)/);
     let price: number | undefined;
-    if (priceMatch) {
-      const cleaned = priceMatch[1].replace(/<[^>]+>/g, '').replace(/\s/g, '').replace(',', '.');
-      price = parseFloat(cleaned) || undefined;
+    if (priceValMatch) {
+      price = parseFloat(priceValMatch[1].replace(/\s/g, '').replace(',', '.')) || undefined;
     }
 
     // Location
-    const locMatch = html.match(/class="[^"]*product-location[^"]*"[^>]*>([^<]+)/);
-    const location = locMatch ? decode(locMatch[1]).trim() : undefined;
+    const locMatch = html.match(/class="product-location">([^<]+)/) || 
+                     html.match(/class="product-properties__i-value">Bakı<\/span>/);
+    let location = locMatch ? decode(locMatch[1]).trim() : undefined;
+    if (!location && html.includes('>Bakı</span>')) location = 'Bakı';
 
     // Seller Info
-    const sellerNameMatch = html.match(/class="[^"]*(?:shop-name|name|product-owner)[^"]*"[^>]*>([^<]+)/);
+    const sellerNameMatch = html.match(/class="product-owner__name">([^<]+)/) ||
+                            html.match(/class="product-owner">([^<]+)/);
     const sellerPhoneMatch = html.match(/class="[^"]*phone[^"]*"[^>]*>([^<]+)/) ||
-                             html.match(/href="tel:([^"]+)"/);
-
-    // Condition
-    const condMatch = custom_fields['Vəziyyəti'] || custom_fields['Vəziyyət'];
+                             html.match(/data-phone="([^"]+)"/) ||
+                             html.match(/tel:([^"]+)/);
 
     const result: Partial<ScrapedListing> = {};
     if (title) result.title = title;
     if (description) result.description = description;
     if (imageUrls.length > 0) result.image_urls = imageUrls;
     if (price) result.price = price;
-    if (location) result.location = location;
-    if (condMatch) result.condition = condMatch;
+    if (location) result.location = location || 'Bakı';
+    if (custom_fields['Vəziyyəti']) result.condition = custom_fields['Vəziyyəti'];
     if (Object.keys(custom_fields).length > 0) result.custom_fields = custom_fields;
     if (sellerNameMatch) result.seller_name = decode(sellerNameMatch[1]).trim();
     if (sellerPhoneMatch) result.seller_phone = sellerPhoneMatch[1].replace(/\D/g, '').trim();
 
-    console.log(`Detail for ${url}: ${imageUrls.length} images, ${Object.keys(custom_fields).length} props`);
     return result;
   } catch (e) {
     console.error(`Detail error: ${e}`);
