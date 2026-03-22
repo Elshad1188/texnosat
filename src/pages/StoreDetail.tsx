@@ -10,8 +10,20 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   Store, MapPin, Phone, Clock, Crown, MessageCircle, Loader2, ArrowLeft,
-  Users, UserPlus, UserMinus, Settings
+  Users, UserPlus, UserMinus, Settings, Star, Send
 } from "lucide-react";
+import { useState } from "react";
+import { Textarea } from "@/components/ui/textarea";
+
+function formatTime(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const hours = Math.floor(diff / 3600000);
+  if (hours < 1) return "Az əvvəl";
+  if (hours < 24) return `${hours} saat əvvəl`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} gün əvvəl`;
+  return new Date(dateStr).toLocaleDateString("az");
+}
 
 const StoreDetail = () => {
   const { id } = useParams();
@@ -19,6 +31,8 @@ const StoreDetail = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
 
   const { data: store, isLoading } = useQuery({
     queryKey: ["store", id],
@@ -42,6 +56,66 @@ const StoreDetail = () => {
       return data || [];
     },
     enabled: !!id,
+  });
+
+  const { data: reviews = [] } = useQuery({
+    queryKey: ["store-reviews", store?.user_id],
+    queryFn: async () => {
+      const { data } = await supabase.from("reviews").select("*").eq("reviewed_user_id", store!.user_id).order("created_at", { ascending: false });
+      return data || [];
+    },
+    enabled: !!store?.user_id,
+  });
+
+  const reviewerIds = reviews.map((r: any) => r.reviewer_id);
+  const { data: reviewerProfiles = [] } = useQuery({
+    queryKey: ["reviewer-profiles", reviewerIds],
+    queryFn: async () => {
+      if (reviewerIds.length === 0) return [];
+      const { data } = await supabase.from("profiles").select("*").in("user_id", reviewerIds);
+      return data || [];
+    },
+    enabled: reviewerIds.length > 0,
+  });
+
+  const getReviewerName = (uid: string) =>
+    (reviewerProfiles as any[]).find((p) => p.user_id === uid)?.full_name || "Adsız";
+
+  const avgRating = reviews.length > 0
+    ? reviews.reduce((s: number, r: any) => s + r.rating, 0) / reviews.length
+    : 0;
+
+  const canReview = user && store && user.id !== store.user_id && !reviews.some((r: any) => r.reviewer_id === user.id);
+
+  const submitReview = useMutation({
+    mutationFn: async () => {
+      if (!user || !store) throw new Error("Auth required");
+      const { error } = await supabase.from("reviews").insert({
+        reviewer_id: user.id,
+        reviewed_user_id: store.user_id,
+        rating: reviewRating,
+        comment: reviewComment || null,
+      });
+      if (error) throw error;
+      // Notify store owner
+      const stars = "⭐".repeat(reviewRating);
+      await supabase.from("notifications").insert({
+        user_id: store.user_id,
+        title: `${stars} Yeni rəy`,
+        message: `"${store.name}" mağazanız üçün ${reviewRating}/5 ulduz reytinq aldınız.${reviewComment ? `\n\nŞərh: ${reviewComment}` : ""}`,
+        type: reviewRating >= 4 ? "success" : reviewRating >= 3 ? "info" : "warning",
+        is_read: false,
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Rəyiniz əlavə edildi!" });
+      setReviewComment("");
+      setReviewRating(5);
+      queryClient.invalidateQueries({ queryKey: ["store-reviews", store?.user_id] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+    },
   });
 
   const { data: followersCount = 0 } = useQuery({
@@ -178,6 +252,7 @@ const StoreDetail = () => {
                 {store.phone && <span className="flex items-center gap-1"><Phone className="h-4 w-4" /> {store.phone}</span>}
                 {store.working_hours && <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {store.working_hours}</span>}
                 <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {followersCount} abunəçi</span>
+                <span className="flex items-center gap-1"><Star className="h-4 w-4 fill-amber-400 text-amber-400" /> {avgRating.toFixed(1)} ({reviews.length} rəy)</span>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
@@ -241,6 +316,59 @@ const StoreDetail = () => {
                   isUrgent={listing.is_urgent} storeId={store.id}
                   storeName={store.name} storeLogo={store.logo_url}
                 />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Reviews */}
+        <div className="mb-8">
+          <h2 className="mb-4 font-display text-xl font-bold text-foreground">
+            Mağaza rəyləri ({reviews.length})
+          </h2>
+
+          {/* Review Form */}
+          {canReview && (
+            <div className="mb-6 rounded-xl border border-border bg-card p-4 shadow-sm">
+              <h3 className="mb-3 text-sm font-semibold text-foreground">Mağaza haqqında rəy yazın</h3>
+              <div className="mb-3 flex gap-1">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <button key={s} onClick={() => setReviewRating(s)}>
+                    <Star className={`h-6 w-6 transition-colors ${s <= reviewRating ? "fill-amber-400 text-amber-400" : "text-muted-foreground hover:text-amber-400/50"}`} />
+                  </button>
+                ))}
+              </div>
+              <Textarea placeholder="Mağaza haqqında rəyiniz..." value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} rows={3} className="resize-none" />
+              <Button onClick={() => submitReview.mutate()} disabled={submitReview.isPending} className="mt-3 gap-2">
+                <Send className="h-4 w-4" /> {submitReview.isPending ? "Göndərilir..." : "Rəy göndər"}
+              </Button>
+            </div>
+          )}
+
+          {reviews.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Hələ rəy yoxdur</p>
+          ) : (
+            <div className="space-y-4">
+              {reviews.map((r: any) => (
+                <div key={r.id} className="rounded-xl border border-border bg-card p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-bold">
+                        {getReviewerName(r.reviewer_id)[0]?.toUpperCase() || "?"}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground">{getReviewerName(r.reviewer_id)}</p>
+                        <p className="text-xs text-muted-foreground">{formatTime(r.created_at)}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star key={s} className={`h-4 w-4 ${s <= r.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`} />
+                      ))}
+                    </div>
+                  </div>
+                  {r.comment && <p className="mt-3 text-sm text-muted-foreground">{r.comment}</p>}
+                </div>
               ))}
             </div>
           )}

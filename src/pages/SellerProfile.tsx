@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -7,8 +7,12 @@ import ListingCard from "@/components/ListingCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  User, MapPin, Star, Calendar, Package, ArrowLeft, Loader2, Store, Crown, ExternalLink
+  User, MapPin, Star, Calendar, Package, ArrowLeft, Loader2, Store, Crown, ExternalLink, Send
 } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { Textarea } from "@/components/ui/textarea";
 
 function formatTime(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -29,6 +33,11 @@ function getUserLevel(reviewCount: number, avg: number) {
 
 const SellerProfile = () => {
   const { id } = useParams();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
 
   // Fetch profile
   const { data: profile, isLoading: profileLoading } = useQuery({
@@ -111,6 +120,41 @@ const SellerProfile = () => {
   const level = getUserLevel(reviews.length, avgRating);
   const getReviewerName = (uid: string) =>
     (reviewerProfiles as any[]).find((p) => p.user_id === uid)?.full_name || "Adsız";
+
+  const canReview = user && user.id !== id && !reviews.some((r: any) => r.reviewer_id === user.id);
+
+  const submitReview = useMutation({
+    mutationFn: async () => {
+      if (!user || !id) throw new Error("Auth required");
+      const { error } = await supabase.from("reviews").insert({
+        reviewer_id: user.id,
+        reviewed_user_id: id,
+        rating: reviewRating,
+        comment: reviewComment || null,
+      });
+      if (error) throw error;
+      // Notify seller of new review
+      if (profile) {
+        const stars = "⭐".repeat(reviewRating);
+        await supabase.from("notifications").insert({
+          user_id: id,
+          title: `${stars} Yeni rəy`,
+          message: `Profiliniz üçün ${reviewRating}/5 ulduz reytinq aldınız.${reviewComment ? `\n\nŞərh: ${reviewComment}` : ""}`,
+          type: reviewRating >= 4 ? "success" : reviewRating >= 3 ? "info" : "warning",
+          is_read: false,
+        });
+      }
+    },
+    onSuccess: () => {
+      toast({ title: "Rəyiniz əlavə edildi!" });
+      setReviewComment("");
+      setReviewRating(5);
+      queryClient.invalidateQueries({ queryKey: ["seller-reviews", id] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+    },
+  });
 
   if (profileLoading) {
     return (
@@ -270,6 +314,25 @@ const SellerProfile = () => {
           <h2 className="mb-4 font-display text-xl font-bold text-foreground">
             Rəylər ({reviews.length})
           </h2>
+
+          {/* Review Form */}
+          {canReview && (
+            <div className="mb-6 rounded-xl border border-border bg-card p-4 shadow-sm">
+              <h3 className="mb-3 text-sm font-semibold text-foreground">Satıcı haqqında rəy yazın</h3>
+              <div className="mb-3 flex gap-1">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <button key={s} onClick={() => setReviewRating(s)}>
+                    <Star className={`h-6 w-6 transition-colors ${s <= reviewRating ? "fill-amber-400 text-amber-400" : "text-muted-foreground hover:text-amber-400/50"}`} />
+                  </button>
+                ))}
+              </div>
+              <Textarea placeholder="Satıcı haqqında rəyiniz..." value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} rows={3} className="resize-none" />
+              <Button onClick={() => submitReview.mutate()} disabled={submitReview.isPending} className="mt-3 gap-2">
+                <Send className="h-4 w-4" /> {submitReview.isPending ? "Göndərilir..." : "Rəy göndər"}
+              </Button>
+            </div>
+          )}
+
           {reviews.length === 0 ? (
             <p className="text-sm text-muted-foreground">Hələ rəy yoxdur</p>
           ) : (

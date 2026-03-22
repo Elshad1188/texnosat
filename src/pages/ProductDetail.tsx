@@ -47,8 +47,7 @@ const ProductDetail = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
-  const [reviewRating, setReviewRating] = useState(5);
-  const [reviewComment, setReviewComment] = useState("");
+  const [commentText, setCommentText] = useState("");
 
   // Check if listing is favorited
   const { data: favoriteData } = useQuery({
@@ -117,16 +116,22 @@ const ProductDetail = () => {
     enabled: !!listing?.user_id,
   });
 
-  // Fetch reviewer profiles
-  const reviewerIds = sellerReviews.map((r: any) => r.reviewer_id);
-  const { data: reviewerProfiles = [] } = useQuery({
-    queryKey: ["reviewer-profiles", reviewerIds],
+  // Fetch comments for this listing
+  const { data: comments = [] } = useQuery({
+    queryKey: ["reel-comments", id],
     queryFn: async () => {
-      if (reviewerIds.length === 0) return [];
-      const { data } = await supabase.from("profiles").select("*").in("user_id", reviewerIds);
-      return data || [];
+      const { data } = await supabase
+        .from("reel_comments")
+        .select("*")
+        .eq("listing_id", id!)
+        .order("created_at", { ascending: true });
+      if (!data) return [];
+      const userIds = [...new Set(data.map(c => c.user_id))];
+      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", userIds);
+      const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+      return data.map(c => ({ ...c, profile: profileMap.get(c.user_id) }));
     },
-    enabled: reviewerIds.length > 0,
+    enabled: !!id,
   });
 
   // Fetch store if listing belongs to one
@@ -205,33 +210,16 @@ const ProductDetail = () => {
     enabled: !!listing?.category,
   });
 
-  // Submit review
-  const submitReview = useMutation({
+  // Add comment
+  const addComment = useMutation({
     mutationFn: async () => {
-      if (!user || !listing) throw new Error("Auth required");
-      const { error } = await supabase.from("reviews").insert({
-        reviewer_id: user.id,
-        reviewed_user_id: listing.user_id,
-        listing_id: listing.id,
-        rating: reviewRating,
-        comment: reviewComment || null,
-      });
-      if (error) throw error;
-      // Notify seller of new review
-      const stars = "⭐".repeat(reviewRating);
-      await supabase.from("notifications").insert({
-        user_id: listing.user_id,
-        title: `${stars} Yeni rəy`,
-        message: `"${listing.title}" elanınız üçün ${reviewRating}/5 ulduz reytinq aldınız.${reviewComment ? `\n\nŞərh: ${reviewComment}` : ""}`,
-        type: reviewRating >= 4 ? "success" : reviewRating >= 3 ? "info" : "warning",
-        is_read: false,
-      });
+      if (!user || !commentText.trim()) return;
+      await supabase.from("reel_comments").insert({ listing_id: id!, user_id: user.id, content: commentText.trim() });
     },
     onSuccess: () => {
-      toast({ title: "Rəyiniz əlavə edildi!" });
-      setReviewComment("");
-      setReviewRating(5);
-      queryClient.invalidateQueries({ queryKey: ["reviews", listing?.user_id] });
+      setCommentText("");
+      queryClient.invalidateQueries({ queryKey: ["reel-comments", id] });
+      toast({ title: "Şərh əlavə edildi" });
     },
     onError: (err: any) => {
       toast({ title: "Xəta", description: err.message, variant: "destructive" });
@@ -277,8 +265,6 @@ const ProductDetail = () => {
   const images = listing.image_urls?.length ? listing.image_urls : ["/placeholder.svg"];
   const avgRating = sellerReviews.length > 0 ? sellerReviews.reduce((s: number, r: any) => s + r.rating, 0) / sellerReviews.length : 0;
   const level = getUserLevel(sellerReviews.length, avgRating);
-  const getReviewerName = (uid: string) => (reviewerProfiles as any[]).find((p) => p.user_id === uid)?.full_name || "Adsız";
-  const canReview = user && user.id !== listing.user_id && !sellerReviews.some((r: any) => r.reviewer_id === user.id);
 
   return (
     <div className="min-h-screen bg-background">
@@ -571,56 +557,63 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* Reviews */}
+        {/* Comments */}
         <div className="mt-8">
           <h2 className="mb-4 font-display text-xl font-bold text-foreground">
-            Satıcı rəyləri ({sellerReviews.length})
+            Şərhlər ({comments.length})
           </h2>
 
-          {/* Review Form */}
-          {canReview && (
-            <div className="mb-6 rounded-xl border border-border bg-card p-4">
-              <h3 className="mb-3 text-sm font-semibold text-foreground">Rəy yazın</h3>
-              <div className="mb-3 flex gap-1">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <button key={s} onClick={() => setReviewRating(s)}>
-                    <Star className={`h-6 w-6 ${s <= reviewRating ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`} />
-                  </button>
-                ))}
-              </div>
-              <Textarea placeholder="Şərhinizi yazın..." value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} rows={3} />
-              <Button onClick={() => submitReview.mutate()} disabled={submitReview.isPending} className="mt-3 gap-2">
-                <Send className="h-4 w-4" /> {submitReview.isPending ? "Göndərilir..." : "Rəy göndər"}
+          {/* Comment Form */}
+          {user ? (
+            <div className="mb-6 flex gap-3 rounded-xl border border-border bg-card p-4">
+              <Textarea
+                placeholder="Şərhiniz..."
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                rows={2}
+                className="resize-none"
+              />
+              <Button
+                onClick={() => addComment.mutate()}
+                disabled={!commentText.trim() || addComment.isPending}
+                className="h-auto shrink-0 gap-2"
+              >
+                <Send className="h-4 w-4" /> Göndər
               </Button>
+            </div>
+          ) : (
+            <div className="mb-6 rounded-xl border border-border bg-card p-4 text-center">
+              <button onClick={() => navigate("/auth")} className="text-sm font-medium text-primary hover:underline">
+                Şərh yazmaq üçün daxil olun
+              </button>
             </div>
           )}
 
-          {sellerReviews.length > 0 ? (
-            <div className="space-y-3">
-              {sellerReviews.map((r: any) => (
-                <div key={r.id} className="rounded-xl border border-border bg-card p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold">
-                        {getReviewerName(r.reviewer_id)[0]?.toUpperCase() || "?"}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{getReviewerName(r.reviewer_id)}</p>
-                        <p className="text-xs text-muted-foreground">{formatTime(r.created_at)}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-0.5">
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <Star key={s} className={`h-3.5 w-3.5 ${s <= r.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`} />
-                      ))}
-                    </div>
+          {comments.length > 0 ? (
+            <div className="space-y-4">
+              {comments.map((c: any) => (
+                <div key={c.id} className="flex gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-sm font-bold text-muted-foreground ring-1 ring-border">
+                    {c.profile?.avatar_url ? (
+                      <img src={c.profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      (c.profile?.full_name || "?")[0].toUpperCase()
+                    )}
                   </div>
-                  {r.comment && <p className="mt-2 text-sm text-muted-foreground">{r.comment}</p>}
+                  <div className="min-w-0 flex-1 rounded-2xl rounded-tl-none bg-muted/50 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-sm font-semibold text-foreground">
+                        {c.profile?.full_name || "İstifadəçi"}
+                      </span>
+                      <span className="shrink-0 text-[10px] text-muted-foreground">{formatTime(c.created_at)}</span>
+                    </div>
+                    <p className="mt-1 break-words text-sm text-foreground">{c.content}</p>
+                  </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Hələ rəy yoxdur</p>
+            <p className="text-sm text-muted-foreground">Hələ şərh yoxdur. İlk şərhi siz yazın!</p>
           )}
         </div>
 
