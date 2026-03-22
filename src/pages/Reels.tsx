@@ -666,7 +666,7 @@ const Reels = () => {
       {showComments && currentReel && (
         <div
           data-comments-panel="true"
-          className="absolute bottom-0 left-0 right-0 z-40 flex flex-col rounded-t-3xl bg-background shadow-2xl"
+          className="absolute bottom-0 left-0 right-0 z-[60] flex flex-col rounded-t-3xl bg-background shadow-2xl"
           style={{ height: "58vh" }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -804,7 +804,7 @@ const Reels = () => {
           </div>
 
           {user ? (
-            <div className="shrink-0 border-t border-border bg-background px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px)+3.5rem)] lg:pb-3">
+            <div className="shrink-0 border-t border-border bg-background px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
               {replyingTo && (
                 <div className="mb-2 flex items-center justify-between px-1 text-xs text-muted-foreground transition-all">
                   <span>
