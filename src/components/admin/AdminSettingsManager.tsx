@@ -65,6 +65,7 @@ const AdminSettingsManager = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingWm, setUploadingWm] = useState(false);
+  const [siteLogo, setSiteLogo] = useState<string | null>(null);
   const wmFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -73,6 +74,13 @@ const AdminSettingsManager = () => {
       if (data?.value) {
         setSettings({ ...defaults, ...(data.value as any) });
       }
+      
+      const { data: themeData } = await supabase.from("site_settings").select("value").eq("key", "theme").maybeSingle();
+      const themeVal = themeData?.value as any;
+      if (themeVal?.logo_url) {
+        setSiteLogo(themeVal.logo_url);
+      }
+      
       setLoading(false);
     };
     fetch();
@@ -239,6 +247,17 @@ const AdminSettingsManager = () => {
                   className="h-9 flex-1"
                   placeholder="https://... və ya /logo.png"
                 />
+                {siteLogo && siteLogo !== settings.watermark_url && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="h-9 px-2"
+                    onClick={() => setSettings({ ...settings, watermark_url: siteLogo })}
+                  >
+                    Sayt loqosunu istifadə et
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="outline"

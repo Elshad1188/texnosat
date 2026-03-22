@@ -19,6 +19,7 @@ interface ThemeColors {
   logo_text_accent?: string;
   logo_icon?: string;
   logo_color?: string;
+  logo_url?: string;
 }
 
 const defaultTheme: ThemeColors = {
@@ -32,6 +33,7 @@ const defaultTheme: ThemeColors = {
   logo_text_accent: "sat",
   logo_icon: "T",
   logo_color: "",
+  logo_url: "",
 };
 
 const presets: { name: string; colors: ThemeColors }[] = [
@@ -209,6 +211,49 @@ const AdminThemeManager = () => {
           <div className="space-y-1.5">
             <Label className="text-xs">Rəngli Mətn</Label>
             <Input value={colors.logo_text_accent ?? "sat"} onChange={(e) => setColors({ ...colors, logo_text_accent: e.target.value })} className="h-9" />
+          </div>
+          <div className="space-y-1.5 sm:col-span-2 border-t border-border pt-3 mt-1">
+            <Label className="text-xs">Şəkil Loqo (Mətn loqosunu əvəz edir)</Label>
+            <div className="flex gap-2">
+              <Input
+                value={colors.logo_url ?? ""}
+                onChange={(e) => setColors({ ...colors, logo_url: e.target.value })}
+                className="h-9 flex-1"
+                placeholder="https://... və ya loqo yüklə"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9"
+                onClick={() => {
+                   const input = document.createElement('input');
+                   input.type = 'file';
+                   input.accept = 'image/*';
+                   input.onchange = async (e) => {
+                     const file = (e.target as HTMLInputElement).files?.[0];
+                     if (!file) return;
+                     const fileName = `logos/${Date.now()}-${file.name}`;
+                     const { error } = await supabase.storage.from("banners").upload(fileName, file);
+                     if (error) {
+                       toast({ title: "Yükləmə xətası", description: error.message, variant: "destructive" });
+                       return;
+                     }
+                     const { data: urlData } = supabase.storage.from("banners").getPublicUrl(fileName);
+                     setColors({ ...colors, logo_url: urlData.publicUrl });
+                     toast({ title: "Loqo yükləndi ✓" });
+                   };
+                   input.click();
+                }}
+              >
+                Yüklə
+              </Button>
+            </div>
+            {colors.logo_url && (
+              <div className="mt-2 h-10 w-auto inline-block border border-border rounded p-1 bg-muted/30">
+                <img src={colors.logo_url} alt="Logo preview" className="h-full w-auto object-contain" />
+              </div>
+            )}
           </div>
         </div>
       </div>
