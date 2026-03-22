@@ -111,9 +111,14 @@ const Products = () => {
 
     if (query) {
       const q = query.toLowerCase();
-      result = result.filter((p: any) =>
-        p.title.toLowerCase().includes(q) || (p.description || "").toLowerCase().includes(q)
-      );
+      result = result.filter((p: any) => {
+        const inTitle = p.title.toLowerCase().includes(q);
+        const inDesc = (p.description || "").toLowerCase().includes(q);
+        const inFields = Object.values((p as any).custom_fields || {}).some(val => 
+          String(val).toLowerCase().includes(q)
+        );
+        return inTitle || inDesc || inFields;
+      });
     }
 
     if (selectedCategory) {
@@ -219,20 +224,29 @@ const Products = () => {
                 </div>
               </div>
               {/* Custom fields filters */}
-              {categoryFields.map((field: any) => (
-                <div key={field.id}>
-                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{field.field_label}</label>
-                  <Select value={customFilters[field.field_name] || "all"} onValueChange={(v) => setCustomFilters(prev => ({ ...prev, [field.field_name]: v === "all" ? "" : v }))}>
-                    <SelectTrigger className="w-40"><SelectValue placeholder="Seçin" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Hamısı</SelectItem>
-                      {Array.isArray(field.options) && field.options.map((opt: string) => (
-                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+              {categoryFields.length > 0 && (
+                <div className="flex flex-wrap gap-4 pt-4 mt-4 border-t border-border w-full">
+                  <div className="w-full">
+                    <h4 className="text-[10px] font-bold text-primary uppercase tracking-wider mb-3">Kateqoriyaya özəl filtrlər</h4>
+                    <div className="flex flex-wrap gap-4">
+                      {categoryFields.map((field: any) => (
+                        <div key={field.id}>
+                          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{field.field_label}</label>
+                          <Select value={customFilters[field.field_name] || "all"} onValueChange={(v) => setCustomFilters(prev => ({ ...prev, [field.field_name]: v === "all" ? "" : v }))}>
+                            <SelectTrigger className="w-44 bg-muted/30"><SelectValue placeholder="Seçin" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Hamısı</SelectItem>
+                              {Array.isArray(field.options) && field.options.map((opt: string) => (
+                                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </div>
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
             {hasActiveFilters && (
               <button onClick={clearFilters} className="mt-3 flex items-center gap-1 text-xs text-primary hover:underline">
