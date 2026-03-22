@@ -211,7 +211,7 @@ const Header = () => {
           </Link>
         </div>
 
-        <nav className="hidden items-center gap-6 md:flex">
+        <nav className="hidden items-center gap-6 lg:flex">
           <Link to="/" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Ana səhifə</Link>
           <Link to="/products" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Elanlar</Link>
           <Link to="/stores" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Mağazalar</Link>
@@ -225,7 +225,7 @@ const Header = () => {
 
         <div className="flex items-center gap-2">
           {user && (
-            <Link to="/balance" className="hidden md:flex items-center gap-1.5 rounded-lg bg-muted px-2.5 py-1.5 text-sm font-semibold text-foreground hover:bg-accent transition-colors">
+            <Link to="/balance" className="hidden lg:flex items-center gap-1.5 rounded-lg bg-muted px-2.5 py-1.5 text-sm font-semibold text-foreground hover:bg-accent transition-colors">
               <Wallet className="h-4 w-4 text-primary" />
               <BalanceDisplay userId={user.id} />
             </Link>
@@ -235,7 +235,7 @@ const Header = () => {
           </Button>
           {user ? (
             <>
-              <Button variant="ghost" size="icon" className="hidden md:flex relative" asChild>
+              <Button variant="ghost" size="icon" className="hidden lg:flex relative" asChild>
                 <Link to="/messages">
                   <MessageCircle className="h-5 w-5" />
                   {unreadCount > 0 && (
@@ -246,20 +246,20 @@ const Header = () => {
                 </Link>
               </Button>
               {isAdmin && (
-                <Button variant="ghost" size="icon" className="hidden md:flex" asChild>
+                <Button variant="ghost" size="icon" className="hidden lg:flex" asChild>
                   <Link to="/admin"><ShieldCheck className="h-5 w-5 text-primary" /></Link>
                 </Button>
               )}
-              <Button variant="ghost" size="icon" className="hidden md:flex" asChild>
+              <Button variant="ghost" size="icon" className="hidden lg:flex" asChild>
                 <Link to="/profile"><User className="h-5 w-5" /></Link>
               </Button>
-              <Button variant="ghost" size="icon" className="hidden md:flex" onClick={() => signOut()}>
+              <Button variant="ghost" size="icon" className="hidden lg:flex" onClick={() => signOut()}>
                 <LogOut className="h-5 w-5" />
               </Button>
               
               <NotificationBell />
               
-              <Button className="hidden md:flex bg-gradient-primary text-primary-foreground hover:opacity-90 gap-1.5" asChild>
+              <Button className="hidden lg:flex bg-gradient-primary text-primary-foreground hover:opacity-90 gap-1.5" asChild>
                 <Link to="/create-listing">
                   <Plus className="h-4 w-4" />
                   <span>Elan yerləşdir</span>
