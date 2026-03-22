@@ -44,6 +44,7 @@ const Products = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
+  const [customFilters, setCustomFilters] = useState<Record<string, string>>({});
 
   // Fetch categories
   const { data: categories = [] } = useQuery({
@@ -61,6 +62,17 @@ const Products = () => {
       const { data } = await supabase.from("regions").select("*").eq("is_active", true).order("sort_order");
       return data || [];
     },
+  });
+
+  // Fetch custom fields for selected category
+  const { data: categoryFields = [] } = useQuery({
+    queryKey: ["category-fields", selectedCategory],
+    queryFn: async () => {
+      if (!selectedCategory) return [];
+      const { data } = await supabase.from("category_fields").select("*").eq("category_slug", selectedCategory).eq("is_active", true).order("sort_order");
+      return data || [];
+    },
+    enabled: !!selectedCategory,
   });
 
   // Fetch listings from DB
@@ -122,6 +134,16 @@ const Products = () => {
     if (priceMin) result = result.filter((p: any) => Number(p.price) >= Number(priceMin));
     if (priceMax) result = result.filter((p: any) => Number(p.price) <= Number(priceMax));
 
+    // Custom fields filtering
+    Object.entries(customFilters).forEach(([fieldName, selectedValue]) => {
+      if (selectedValue) {
+        result = result.filter((p: any) => {
+          const customFields = (p as any).custom_fields || {};
+          return customFields[fieldName] === selectedValue;
+        });
+      }
+    });
+
     if (sortBy === "price-asc") result.sort((a: any, b: any) => Number(a.price) - Number(b.price));
     else if (sortBy === "price-desc") result.sort((a: any, b: any) => Number(b.price) - Number(a.price));
     else if (sortBy === "views") result.sort((a: any, b: any) => (b.views_count || 0) - (a.views_count || 0));
@@ -133,10 +155,11 @@ const Products = () => {
     setQuery(""); setSelectedCategory(""); setSelectedSubcategory("");
     setSelectedRegion(""); setSelectedCondition("Hamısı");
     setPriceMin(""); setPriceMax(""); setSortBy("newest");
+    setCustomFilters({});
     setSearchParams({});
   };
 
-  const hasActiveFilters = query || selectedCategory || selectedCondition !== "Hamısı" || priceMin || priceMax || selectedRegion;
+  const hasActiveFilters = query || selectedCategory || selectedCondition !== "Hamısı" || priceMin || priceMax || selectedRegion || Object.values(customFilters).some(v => v !== "");
 
   return (
     <div className="min-h-screen bg-background">
@@ -195,6 +218,21 @@ const Products = () => {
                     className="h-9 w-24 rounded-lg border border-border bg-muted px-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
                 </div>
               </div>
+              {/* Custom fields filters */}
+              {categoryFields.map((field: any) => (
+                <div key={field.id}>
+                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{field.field_label}</label>
+                  <Select value={customFilters[field.field_name] || "all"} onValueChange={(v) => setCustomFilters(prev => ({ ...prev, [field.field_name]: v === "all" ? "" : v }))}>
+                    <SelectTrigger className="w-40"><SelectValue placeholder="Seçin" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Hamısı</SelectItem>
+                      {Array.isArray(field.options) && field.options.map((opt: string) => (
+                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
             </div>
             {hasActiveFilters && (
               <button onClick={clearFilters} className="mt-3 flex items-center gap-1 text-xs text-primary hover:underline">
