@@ -11,8 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ImagePlus, X, Loader2, Store, Video, ChevronDown, ChevronUp } from "lucide-react";
+import { ImagePlus, X, Loader2, Store, Video, ChevronDown, ChevronUp, ShoppingBag, MessageSquareText } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const conditions = ["Yeni", "Yeni kimi", "İşlənmiş"];
 
@@ -32,7 +33,6 @@ const CreateListing = () => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string>("");
   const [existingVideo, setExistingVideo] = useState<string>("");
-  const [publishToStore, setPublishToStore] = useState(false);
   const [customFields, setCustomFields] = useState<Record<string, string>>({});
   const [showCustomFields, setShowCustomFields] = useState(false);
   const [form, setForm] = useState({
@@ -68,9 +68,6 @@ const CreateListing = () => {
         condition: editListing.condition,
         location: editListing.location,
       });
-      setExistingImages(editListing.image_urls || []);
-      setExistingVideo((editListing as any).video_url || "");
-      setPublishToStore(!!editListing.store_id);
       setCustomFields((editListing as any).custom_fields || {});
     }
   }, [editListing]);
@@ -78,13 +75,14 @@ const CreateListing = () => {
   const { data: userStores = [] } = useQuery({
     queryKey: ["user-stores", user?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("stores").select("id, name, logo_url, status").eq("user_id", user!.id).eq("status", "approved");
+      const { data } = await supabase.from("stores").select("id, name, logo_url, status").eq("user_id", user!.id);
       return data || [];
     },
     enabled: !!user,
   });
 
   const userStore = userStores.length > 0 ? userStores[0] : null;
+
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories-all"],
@@ -211,7 +209,7 @@ const CreateListing = () => {
         condition: form.condition, location: form.location || "Bakı",
         image_urls: allImages,
         video_url: finalVideoUrl,
-        store_id: publishToStore && userStore ? userStore.id : null,
+        store_id: userStore ? userStore.id : null,
         custom_fields: Object.keys(resolvedCustomFields).length > 0 ? resolvedCustomFields : null,
       };
 
@@ -310,25 +308,6 @@ const CreateListing = () => {
             <p className="mt-1 text-xs text-muted-foreground">Video əlavə etsəniz, elanınız Reels bölməsində görünəcək</p>
           </div>
 
-          {/* Store option */}
-          {userStore && (
-            <div className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  {userStore.logo_url ? (
-                    <img src={userStore.logo_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
-                  ) : (
-                    <Store className="h-5 w-5 text-primary" />
-                  )}
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{userStore.name} mağazasında paylaş</p>
-                  <p className="text-xs text-muted-foreground">Elan mağaza profili altında göstəriləcək</p>
-                </div>
-              </div>
-              <Switch checked={publishToStore} onCheckedChange={setPublishToStore} />
-            </div>
-          )}
 
           <div className="space-y-2">
             <Label htmlFor="title">Başlıq *</Label>

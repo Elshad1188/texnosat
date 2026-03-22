@@ -51,6 +51,7 @@ const StoreDashboard = () => {
     enabled: !!store?.id,
   });
 
+
   const { data: followers = [] } = useQuery({
     queryKey: ["store-followers", store?.id],
     queryFn: async () => {
@@ -274,6 +275,7 @@ const StoreDashboard = () => {
               </div>
             )}
           </TabsContent>
+
 
           <TabsContent value="bulk">
             <BulkListingUpload storeId={store.id} />

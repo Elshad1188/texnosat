@@ -1,8 +1,11 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Share2, MapPin, Grid, Phone, MessageSquare, MessageCircle, ChevronLeft, Flag, Send, Heart, X, Trash2, Clock, Star, Shield, Eye, Loader2, Store, ExternalLink, Edit2, Crown, Zap, Gem, Play, UserPlus, UserCheck } from "lucide-react";
+import { ArrowLeft, Share2, MapPin, Grid, Phone, MessageSquare, MessageCircle, ChevronLeft, Flag, Send, Heart, X, Trash2, Clock, Star, Shield, Eye, Loader2, Store, ExternalLink, Edit2, Crown, Zap, Gem, Play, UserPlus, UserCheck, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from "@/components/ui/carousel";
 import ImageViewer from "@/components/ImageViewer";
 import { useState } from "react";
@@ -565,39 +568,53 @@ const ProductDetail = () => {
             </Link>
           )}
 
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-            <Button className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2" onClick={() => setShowPhone(!showPhone)}>
-              <Phone className="h-4 w-4" />
-              {showPhone ? (seller?.phone || "Nömrə yoxdur") : "Nömrəni göstər"}
-            </Button>
-            <Button
-              variant="outline"
-              className="flex-1 gap-2"
-              onClick={async () => {
-                if (!user) { navigate("/auth"); return; }
-                const { data: existing } = await supabase
-                  .from("conversations")
-                  .select("id")
-                  .eq("listing_id", listing.id)
-                  .eq("buyer_id", user.id)
-                  .eq("seller_id", listing.user_id)
-                  .maybeSingle();
-                if (existing) {
-                  navigate(`/messages?c=${existing.id}`);
-                } else {
-                  const { data: newConvo } = await supabase
+          <div className="mt-4 flex flex-col gap-2">
+            {store && user?.id !== listing.user_id && (
+              <Button 
+                className="w-full bg-green-600 text-white hover:bg-green-700 gap-2 h-12 text-lg font-bold shadow-lg shadow-green-600/20"
+                onClick={() => {
+                  if (!user) { navigate("/auth"); return; }
+                  // Open chat as default action for store items or just show phone
+                }}
+              >
+                <MessageSquare className="h-5 w-5" /> Mağaza ilə əlaqə
+              </Button>
+            )}
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2" onClick={() => setShowPhone(!showPhone)}>
+                <Phone className="h-4 w-4" />
+                {showPhone ? (seller?.phone || "Nömrə yoxdur") : "Nömrəni göstər"}
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 gap-2"
+                onClick={async () => {
+                  if (!user) { navigate("/auth"); return; }
+                  const { data: existing } = await supabase
                     .from("conversations")
-                    .insert({ listing_id: listing.id, buyer_id: user.id, seller_id: listing.user_id })
                     .select("id")
-                    .single();
-                  if (newConvo) navigate(`/messages?c=${newConvo.id}`);
-                }
-              }}
-            >
-              <MessageCircle className="h-4 w-4" /> Mesaj yaz
-            </Button>
+                    .eq("listing_id", listing.id)
+                    .eq("buyer_id", user.id)
+                    .eq("seller_id", listing.user_id)
+                    .maybeSingle();
+                  if (existing) {
+                    navigate(`/messages?c=${existing.id}`);
+                  } else {
+                    const { data: newConvo } = await supabase
+                      .from("conversations")
+                      .insert({ listing_id: listing.id, buyer_id: user.id, seller_id: listing.user_id })
+                      .select("id")
+                      .single();
+                    if (newConvo) navigate(`/messages?c=${newConvo.id}`);
+                  }
+                }}
+              >
+                <MessageCircle className="h-4 w-4" /> Mesaj yaz
+              </Button>
+            </div>
           </div>
         </div>
+
 
         {/* Comments */}
         <div className="mt-8">

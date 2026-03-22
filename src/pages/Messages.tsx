@@ -1,6 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { MessageCircle, Send, ArrowLeft, Loader2, Check, CheckCheck, Store } from "lucide-react";
+import { MessageCircle, Send, ArrowLeft, Loader2, Check, CheckCheck, Store, Trash2, MoreVertical, XCircle, Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +20,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { toast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 function formatTime(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -109,7 +133,7 @@ const Messages = () => {
     if (!activeConvoId || !user || messages.length === 0) return;
     const unreadIds = messages.filter((m: any) => !m.is_read && m.sender_id !== user.id).map((m: any) => m.id);
     if (unreadIds.length > 0) {
-      supabase.from("messages").update({ is_read: true }).in("id", unreadIds).then(() => {
+      supabase.rpc("mark_messages_as_read", { msg_ids: unreadIds }).then(() => {
         queryClient.invalidateQueries({ queryKey: ["conversations", user.id] });
       });
     }
@@ -191,6 +215,45 @@ const Messages = () => {
       queryClient.invalidateQueries({ queryKey: ["conversations", user?.id] });
     },
   });
+  
+  // Delete message
+  const deleteMessage = useMutation({
+    mutationFn: async (messageId: string) => {
+      const { error } = await supabase
+        .from("messages")
+        .update({ is_deleted: true })
+        .eq("id", messageId)
+        .eq("sender_id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["messages", activeConvoId] });
+      toast({ title: "Mesaj silindi" });
+    },
+  });
+
+  // Delete conversation (for me)
+  const deleteConversation = useMutation({
+    mutationFn: async (convoId: string) => {
+      if (!user) return;
+      const convo = conversations.find((c: any) => c.id === convoId);
+      if (!convo) return;
+      
+      const isBuyer = convo.buyer_id === user.id;
+      const updateData = isBuyer ? { buyer_deleted_at: new Date().toISOString() } : { seller_deleted_at: new Date().toISOString() };
+      
+      const { error } = await supabase
+        .from("conversations")
+        .update(updateData)
+        .eq("id", convoId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      navigate("/messages");
+      queryClient.invalidateQueries({ queryKey: ["conversations", user?.id] });
+      toast({ title: "Söhbət silindi" });
+    },
+  });
 
   const activeConvo = conversations.find((c: any) => c.id === activeConvoId);
 
@@ -245,7 +308,15 @@ const Messages = () => {
                   <p className="text-sm text-muted-foreground">Hələ mesajınız yoxdur</p>
                 </div>
               ) : (
-                conversations.map((c: any) => (
+                conversations
+                  .filter((c: any) => {
+                    const isBuyer = c.buyer_id === user.id;
+                    const deletedAt = isBuyer ? c.buyer_deleted_at : c.seller_deleted_at;
+                    if (!deletedAt) return true;
+                    // Only hide if deleted_at is after last_message_at
+                    return new Date(deletedAt) < new Date(c.last_message_at);
+                  })
+                  .map((c: any) => (
                   <button
                     key={c.id}
                     onClick={() => navigate(`/messages?c=${c.id}`)}
@@ -282,6 +353,15 @@ const Messages = () => {
                       )}
                       <div className="flex items-center justify-between mt-0.5">
                         <p className="text-xs text-muted-foreground truncate">
+                          {c.lastMsg?.sender_id === user.id && (
+                            <span className="mr-1">
+                              {c.lastMsg.is_read ? (
+                                <CheckCheck className="inline h-3 w-3 text-sky-500" />
+                              ) : (
+                                <Check className="inline h-3 w-3 text-muted-foreground" />
+                              )}
+                            </span>
+                          )}
                           {c.lastMsg?.content || "Mesaj yoxdur"}
                         </p>
                         {c.unread > 0 && (
@@ -330,6 +410,24 @@ const Messages = () => {
                       </p>
                     )}
                   </div>
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Söhbəti silmək istəyirsiniz?</AlertDialogTitle>
+                        <AlertDialogDescription>Bu söhbət sizin siyahınızdan silinəcək.</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Ləğv et</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => deleteConversation.mutate(activeConvo.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Sil</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
 
                 {/* Messages */}
@@ -346,8 +444,8 @@ const Messages = () => {
                     messages.map((m: any) => {
                       const isMine = m.sender_id === user.id;
                       return (
-                        <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
-                          <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
+                        <div key={m.id} className={`flex group ${isMine ? "justify-end" : "justify-start"}`}>
+                          <div className={`relative max-w-[75%] rounded-2xl px-4 py-2.5 ${
                             isMine
                               ? "bg-gradient-primary text-primary-foreground rounded-br-md"
                               : "bg-muted text-foreground rounded-bl-md"
@@ -358,11 +456,50 @@ const Messages = () => {
                                 {new Date(m.created_at).toLocaleTimeString("az", { hour: "2-digit", minute: "2-digit" })}
                               </span>
                               {isMine && (
-                                m.is_read
-                                  ? <CheckCheck className="h-3 w-3" />
-                                  : <Check className="h-3 w-3" />
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div className="flex items-center gap-0.5 ml-1">
+                                        {m.is_read ? (
+                                          <CheckCheck className="h-3.5 w-3.5 text-sky-300 fill-sky-300/20" />
+                                        ) : (
+                                          <Check className="h-3.5 w-3.5 opacity-70" />
+                                        )}
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">
+                                      <p className="text-[10px]">
+                                        {m.is_read 
+                                          ? `Oxundu: ${m.read_at ? new Date(m.read_at).toLocaleTimeString("az", { hour: "2-digit", minute: "2-digit" }) : "Bilinmir"}`
+                                          : "Göndərildi"
+                                        }
+                                      </p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               )}
                             </div>
+                            
+                            {isMine && !m.is_deleted && (
+                              <div className="absolute -right-2 -top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button size="icon" variant="secondary" className="h-6 w-6 rounded-full shadow-sm border border-border">
+                                      <MoreVertical className="h-3 w-3" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem 
+                                      className="text-destructive gap-2 font-medium"
+                                      onClick={() => deleteMessage.mutate(m.id)}
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                      Mesajı sil
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            )}
                           </div>
                         </div>
                       );

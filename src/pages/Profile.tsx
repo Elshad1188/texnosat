@@ -82,6 +82,7 @@ const Profile = () => {
     enabled: !!user,
   });
 
+
   const { data: reviews = [] } = useQuery({
     queryKey: ["my-reviews", user?.id],
     queryFn: async () => {
@@ -300,6 +301,7 @@ const Profile = () => {
               </div>
             )}
           </TabsContent>
+
 
           <TabsContent value="stores">
             <div className="mb-3 flex justify-end">
