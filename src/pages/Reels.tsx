@@ -565,7 +565,7 @@ const Reels = () => {
       {currentReel && (
         <div className={cn(
           "absolute left-0 right-16 z-30 p-4 bg-gradient-to-t from-black/80 via-black/30 to-transparent transition-all",
-          showComments ? "bottom-[58vh]" : "bottom-16 lg:bottom-0 pb-8"
+          showComments ? "bottom-[58vh]" : "bottom-20 lg:bottom-0 pb-8"
         )}>
           {/* Owner row with follow button */}
           <div className="flex items-center gap-2 mb-2">
@@ -804,7 +804,7 @@ const Reels = () => {
           </div>
 
           {user ? (
-            <div className="shrink-0 border-t border-border bg-background px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+            <div className="shrink-0 border-t border-border bg-background px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px)+3.5rem)] lg:pb-3">
               {replyingTo && (
                 <div className="mb-2 flex items-center justify-between px-1 text-xs text-muted-foreground transition-all">
                   <span>
