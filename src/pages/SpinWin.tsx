@@ -226,7 +226,7 @@ const SpinWin = () => {
             ) : !canSpin() ? (
               <span className="flex items-center gap-2">
                 <Calendar className="h-5 w-5 opacity-60" />
-                DÖVBƏTİ ŞANS: {getTimeRemaining()}
+                NÖVBƏTİ ŞANS: {getTimeRemaining()}
               </span>
             ) : (
               <span className="flex items-center gap-2 uppercase tracking-wide">
