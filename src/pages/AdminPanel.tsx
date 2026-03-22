@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
 import AdminCategoryManager from "@/components/admin/AdminCategoryManager";
 import AdminCategoryFieldsManager from "@/components/admin/AdminCategoryFieldsManager";
 import AdminRegionManager from "@/components/admin/AdminRegionManager";
@@ -132,6 +134,7 @@ const AdminPanel = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [pendingReports, setPendingReports] = useState(0);
+  const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const tabsScrollRef = useRef<HTMLDivElement>(null);
 
   const scrollTabs = (direction: 'left' | 'right') => {
@@ -234,6 +237,17 @@ const AdminPanel = () => {
     }
     setReviews((prev) => prev.filter((r) => r.id !== id));
     toast({ title: "Rəy silindi" });
+  };
+
+  const deleteUser = async (userId: string) => {
+    const { error } = await supabase.from("profiles").delete().eq("user_id", userId);
+    if (error) {
+      toast({ title: "Xəta", description: error.message, variant: "destructive" });
+      return;
+    }
+    setProfiles((prev) => prev.filter((p) => p.user_id !== userId));
+    setSelectedUser(null);
+    toast({ title: "İstifadəçi silindi" });
   };
 
   const getUserLevel = (userId: string) => {
@@ -551,6 +565,94 @@ const AdminPanel = () => {
 
           {/* Users */}
           <TabsContent value="users" className="mt-3">
+            {/* User Detail Sheet */}
+            <Sheet open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
+              <SheetContent side="right" className="w-full sm:max-w-sm overflow-y-auto">
+                {selectedUser && (() => {
+                  const isUserAdmin = userRoles.some((r) => r.user_id === selectedUser.user_id && r.role === "admin");
+                  const isUserMod = userRoles.some((r) => r.user_id === selectedUser.user_id && r.role === "moderator");
+                  const isSelf = selectedUser.user_id === user?.id;
+                  const level = getUserLevel(selectedUser.user_id);
+                  const userListings = listings.filter(l => l.user_id === selectedUser.user_id);
+                  const userReviews = reviews.filter(r => r.reviewed_user_id === selectedUser.user_id);
+                  return (
+                    <>
+                      <SheetHeader className="pb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-xl">
+                            {(selectedUser.full_name || "?")[0].toUpperCase()}
+                          </div>
+                          <div>
+                            <SheetTitle className="text-base">{selectedUser.full_name || "Adsız"}</SheetTitle>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {isUserAdmin && <Badge className="bg-primary/20 text-primary border-0 text-[10px]">Admin</Badge>}
+                              {isUserMod && <Badge className="bg-blue-500/20 text-blue-600 border-0 text-[10px]">Mod</Badge>}
+                              <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>
+                              {isSelf && <Badge variant="outline" className="text-[10px]">Siz</Badge>}
+                            </div>
+                          </div>
+                        </div>
+                      </SheetHeader>
+                      <Separator className="mb-4" />
+                      <div className="space-y-3 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Şəhər</span>
+                          <span className="font-medium">{selectedUser.city || "—"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Telefon</span>
+                          <span className="font-medium">{selectedUser.phone || "—"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Qeydiyyat tarixi</span>
+                          <span className="font-medium">{new Date(selectedUser.created_at).toLocaleDateString("az")}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Elan sayı</span>
+                          <span className="font-medium">{userListings.length}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Rəy sayı</span>
+                          <span className="font-medium">{userReviews.length}</span>
+                        </div>
+                      </div>
+                      {!isSelf && (
+                        <>
+                          <Separator className="my-4" />
+                          <div className="space-y-2">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Rol idarəsi</p>
+                            <div className="flex gap-2">
+                              <Button
+                                variant={isUserAdmin ? "destructive" : "outline"}
+                                size="sm" className="flex-1 gap-1.5"
+                                onClick={() => toggleRole(selectedUser.user_id, "admin")}
+                              >
+                                <ShieldCheck className="h-3.5 w-3.5" />
+                                {isUserAdmin ? "Admin rolu sil" : "Admin et"}
+                              </Button>
+                              <Button
+                                variant={isUserMod ? "destructive" : "outline"}
+                                size="sm" className="flex-1 gap-1.5"
+                                onClick={() => toggleRole(selectedUser.user_id, "moderator")}
+                              >
+                                {isUserMod ? "Mod rolu sil" : "Mod et"}
+                              </Button>
+                            </div>
+                            <Button
+                              variant="destructive" size="sm" className="w-full gap-1.5 mt-2"
+                              onClick={() => deleteUser(selectedUser.user_id)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" /> İstifadəçini sil
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
+              </SheetContent>
+            </Sheet>
+
             {loading ? (
               <LoadingState />
             ) : fProfiles.length === 0 ? (
@@ -565,7 +667,8 @@ const AdminPanel = () => {
                   return (
                     <div
                       key={p.id}
-                      className="flex items-center gap-2 rounded-xl border border-border bg-card p-3 shadow-card"
+                      className="flex items-center gap-2 rounded-xl border border-border bg-card p-3 shadow-card cursor-pointer hover:border-primary/30 transition-colors"
+                      onClick={() => setSelectedUser(p)}
                     >
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
                         {(p.full_name || "?")[0].toUpperCase()}
@@ -573,29 +676,20 @@ const AdminPanel = () => {
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-1">
                           <h3 className="truncate text-xs font-semibold text-foreground">{p.full_name || "Adsız"}</h3>
-                          {isUserAdmin && (
-                            <Badge className="bg-primary/20 text-primary border-0 text-[10px]">Admin</Badge>
-                          )}
-                          {isUserMod && (
-                            <Badge className="bg-blue-500/20 text-blue-600 border-0 text-[10px]">Mod</Badge>
-                          )}
+                          {isUserAdmin && <Badge className="bg-primary/20 text-primary border-0 text-[10px]">Admin</Badge>}
+                          {isUserMod && <Badge className="bg-blue-500/20 text-blue-600 border-0 text-[10px]">Mod</Badge>}
                           <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>
-                          {isSelf && (
-                            <Badge variant="outline" className="text-[10px]">
-                              Siz
-                            </Badge>
-                          )}
+                          {isSelf && <Badge variant="outline" className="text-[10px]">Siz</Badge>}
                         </div>
                         <p className="text-[11px] text-muted-foreground truncate">
-                          {p.city || "—"} · {new Date(p.created_at).toLocaleDateString("az")}
+                          {p.city || "—"} · {p.phone || "—"} · {new Date(p.created_at).toLocaleDateString("az")}
                         </p>
                       </div>
                       {!isSelf && (
-                        <div className="flex shrink-0 items-center gap-1">
+                        <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
                           <Button
                             variant={isUserAdmin ? "destructive" : "outline"}
-                            size="sm"
-                            className="text-[11px] h-7 px-2"
+                            size="sm" className="text-[11px] h-7 px-2"
                             onClick={() => toggleRole(p.user_id, "admin")}
                           >
                             <ShieldCheck className="mr-0.5 h-3 w-3" />
@@ -603,11 +697,16 @@ const AdminPanel = () => {
                           </Button>
                           <Button
                             variant={isUserMod ? "destructive" : "outline"}
-                            size="sm"
-                            className="text-[11px] h-7 px-2"
+                            size="sm" className="text-[11px] h-7 px-2"
                             onClick={() => toggleRole(p.user_id, "moderator")}
                           >
                             {isUserMod ? "Sil" : "Mod"}
+                          </Button>
+                          <Button
+                            variant="ghost" size="icon" className="h-7 w-7"
+                            onClick={() => deleteUser(p.user_id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
                           </Button>
                         </div>
                       )}
