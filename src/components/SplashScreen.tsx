@@ -7,6 +7,13 @@ const SplashScreen = () => {
 
   // Allow a minimum display time for better UX
   useEffect(() => {
+    // Hide the static HTML splash once React takes over
+    const initialSplash = document.getElementById("initial-splash");
+    if (initialSplash) {
+      initialSplash.style.opacity = "0";
+      setTimeout(() => initialSplash.remove(), 400);
+    }
+
     const timer = setTimeout(() => {
       // We don't hide it here, the parent will unmount it
     }, 1500);
