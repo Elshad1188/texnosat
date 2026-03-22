@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 
 const Header = () => {
   const { user, signOut } = useAuth();
+  const { theme } = useTheme();
   const { isAdmin } = useIsAdmin();
   const queryClient = useQueryClient();
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -93,11 +95,14 @@ const Header = () => {
             <SheetContent side="left" className="w-72 p-0 overflow-y-auto">
               <div className="p-4">
                 <Link to="/" className="flex items-center gap-2" onClick={() => setSheetOpen(false)}>
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-primary">
-                    <span className="font-display text-lg font-bold text-primary-foreground">T</span>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: theme.logo_color ? `linear-gradient(135deg, ${theme.logo_color}, ${theme.logo_color}dd)` : 'var(--gradient-primary)' }}>
+                    <span className="font-display text-lg font-bold text-white">{theme.logo_icon ?? "T"}</span>
                   </div>
                   <span className="font-display text-xl font-bold text-foreground">
-                    Texno<span className="text-primary">sat</span>
+                    {theme.logo_text_main ?? "Texno"}
+                    <span className="text-primary" style={{ color: theme.logo_color ? theme.logo_color : undefined }}>
+                      {theme.logo_text_accent ?? "sat"}
+                    </span>
                   </span>
                 </Link>
               </div>
@@ -189,11 +194,14 @@ const Header = () => {
           </Sheet>
 
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-primary">
-              <span className="font-display text-lg font-bold text-primary-foreground">T</span>
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: theme.logo_color ? `linear-gradient(135deg, ${theme.logo_color}, ${theme.logo_color}dd)` : 'var(--gradient-primary)' }}>
+              <span className="font-display text-lg font-bold text-white">{theme.logo_icon ?? "T"}</span>
             </div>
             <span className="font-display text-xl font-bold text-foreground">
-              Texno<span className="text-primary">sat</span>
+              {theme.logo_text_main ?? "Texno"}
+              <span className="text-primary" style={{ color: theme.logo_color ? theme.logo_color : undefined }}>
+                {theme.logo_text_accent ?? "sat"}
+              </span>
             </span>
           </Link>
         </div>

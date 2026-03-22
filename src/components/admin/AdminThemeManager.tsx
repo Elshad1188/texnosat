@@ -15,6 +15,10 @@ interface ThemeColors {
   background_h: number; background_s: number; background_l: number;
   card_h: number; card_s: number; card_l: number;
   radius: number;
+  logo_text_main?: string;
+  logo_text_accent?: string;
+  logo_icon?: string;
+  logo_color?: string;
 }
 
 const defaultTheme: ThemeColors = {
@@ -24,6 +28,10 @@ const defaultTheme: ThemeColors = {
   background_h: 30, background_s: 25, background_l: 97,
   card_h: 0, card_s: 0, card_l: 100,
   radius: 0.75,
+  logo_text_main: "Texno",
+  logo_text_accent: "sat",
+  logo_icon: "T",
+  logo_color: "",
 };
 
 const presets: { name: string; colors: ThemeColors }[] = [
@@ -171,6 +179,37 @@ const AdminThemeManager = () => {
               <span className="truncate text-xs">{p.name}</span>
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Logo Settings */}
+      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+        <Label className="text-sm font-semibold">Loqo Tənzimləmələri</Label>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Loqo İkonu (Mərkəzdəki Hərf)</Label>
+            <Input value={colors.logo_icon ?? "T"} onChange={(e) => setColors({ ...colors, logo_icon: e.target.value })} className="h-9" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Loqo Rəngi</Label>
+            <div className="flex items-center gap-2">
+               <Input 
+                 type="color" 
+                 value={colors.logo_color || hslToHex(colors.primary_h, colors.primary_s, colors.primary_l)} 
+                 onChange={(e) => setColors({ ...colors, logo_color: e.target.value })} 
+                 className="h-9 w-12 p-1" 
+               />
+               <span className="text-xs text-muted-foreground w-full">Bu həm ikonun fonuna, həm də rəngli mətnə təsir edir</span>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Əsas Mətn (Qara/Ağ)</Label>
+            <Input value={colors.logo_text_main ?? "Texno"} onChange={(e) => setColors({ ...colors, logo_text_main: e.target.value })} className="h-9" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Rəngli Mətn</Label>
+            <Input value={colors.logo_text_accent ?? "sat"} onChange={(e) => setColors({ ...colors, logo_text_accent: e.target.value })} className="h-9" />
+          </div>
         </div>
       </div>
 
