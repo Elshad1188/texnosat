@@ -28,13 +28,13 @@ const SplashScreen = () => {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-primary transition-opacity duration-500">
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white transition-opacity duration-500">
       <div className="animate-in fade-in zoom-in duration-700">
         <div className="flex flex-col items-center gap-4">
           <div className="text-center">
-            <span className="font-display text-4xl font-bold text-white tracking-tight">
+            <span className="font-display text-4xl font-bold text-[#1a1a1b] tracking-tight">
               {theme.logo_text_main ?? "Texno"}
-              <span className="opacity-80">
+              <span className="text-primary">
                 {theme.logo_text_accent ?? "sat"}
               </span>
             </span>
@@ -44,8 +44,8 @@ const SplashScreen = () => {
       
       {/* Loading bar or spinner could go here */}
       <div className="absolute bottom-12">
-        <div className="h-1 w-32 overflow-hidden rounded-full bg-white/20">
-          <div className="h-full w-full origin-left animate-progress bg-white" />
+        <div className="h-1 w-32 overflow-hidden rounded-full bg-gray-100">
+          <div className="h-full w-full origin-left animate-progress bg-primary" />
         </div>
       </div>
       
