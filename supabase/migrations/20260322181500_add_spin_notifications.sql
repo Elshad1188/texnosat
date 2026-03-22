@@ -16,15 +16,18 @@ DECLARE
   _prize record;
   _last_spin timestamptz;
   _notifications_enabled boolean;
+  _notifications_enabled_str text;
   _admin_id uuid;
 BEGIN
   -- Validate user
   IF _user_id IS NULL THEN RAISE EXCEPTION 'Not authenticated'; END IF;
 
-  -- Check notifications setting
-  SELECT (value->>'notifications_enabled')::boolean INTO _notifications_enabled 
-  FROM public.site_settings WHERE key = 'spin_settings';
-  _notifications_enabled := COALESCE(_notifications_enabled, true);
+  -- Check notifications setting (from admin_notifications JSON)
+  SELECT (value->>'spin_win') INTO _notifications_enabled_str
+  FROM public.site_settings WHERE key = 'admin_notifications';
+  
+  -- AdminNotificationSettings stores boolean as string 'true'/'false'
+  _notifications_enabled := COALESCE(_notifications_enabled_str != 'false', true);
 
   -- Check cooldown (24 hours)
   SELECT last_spin_at INTO _last_spin FROM public.profiles WHERE user_id = _user_id;

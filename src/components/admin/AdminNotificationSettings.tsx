@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Save, ShoppingBag, Store, Flag, MessageSquare, Star, Heart, UserPlus } from "lucide-react";
+import { Loader2, Save, ShoppingBag, Store, Flag, MessageSquare, Star, Heart, UserPlus, Gift } from "lucide-react";
 
 interface NotifSettings {
   new_listing: boolean;
@@ -14,6 +14,7 @@ interface NotifSettings {
   new_user: boolean;
   new_message: boolean;
   new_favorite: boolean;
+  spin_win: boolean;
 }
 
 const defaults: NotifSettings = {
@@ -24,6 +25,7 @@ const defaults: NotifSettings = {
   new_user: true,
   new_message: true,
   new_favorite: true,
+  spin_win: true,
 };
 
 const categories = [
@@ -34,6 +36,7 @@ const categories = [
   { key: "new_user" as const, label: "Yeni istifadəçi", desc: "Qeydiyyat olduqda", icon: UserPlus },
   { key: "new_message" as const, label: "Yeni mesaj", desc: "Mesaj göndərildikdə", icon: MessageSquare },
   { key: "new_favorite" as const, label: "Yeni seçilmiş", desc: "Elan seçilmişlərə əlavə edildikdə", icon: Heart },
+  { key: "spin_win" as const, label: "Hədiyyə çarxı", desc: "Yeni hədiyyə qazanıldıqda", icon: Gift },
 ];
 
 const AdminNotificationSettings = () => {
