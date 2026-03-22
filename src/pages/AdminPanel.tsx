@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -61,6 +61,8 @@ import {
   Plug,
   Video,
   Globe,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 interface Listing {
@@ -127,6 +129,13 @@ const AdminPanel = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const tabsScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollTabs = (direction: 'left' | 'right') => {
+    if (tabsScrollRef.current) {
+      tabsScrollRef.current.scrollBy({ left: direction === 'left' ? -300 : 300, behavior: 'smooth' });
+    }
+  };
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) navigate("/");
@@ -258,8 +267,18 @@ const AdminPanel = () => {
 
         <Tabs defaultValue="stats">
           <div className="sticky top-[57px] z-30 -mx-3 bg-background/95 backdrop-blur-sm px-3 pb-2 sm:-mx-4 sm:px-4">
-            <div className="overflow-x-auto scrollbar-none">
-              <TabsList className="inline-flex h-auto min-w-full w-max gap-1 rounded-xl bg-muted/60 p-1">
+            <div className="relative group flex items-center">
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute left-1 z-40 hidden h-7 w-7 rounded-full shadow border-border md:flex opacity-0 transition-opacity group-hover:opacity-100 bg-background/90 hover:bg-muted"
+                onClick={() => scrollTabs('left')}
+              >
+                <ChevronLeft className="h-4 w-4 text-foreground/70" />
+              </Button>
+              
+              <div ref={tabsScrollRef} className="overflow-x-auto scrollbar-none w-full" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                <TabsList className="inline-flex h-auto min-w-full w-max gap-1 rounded-xl bg-muted/60 p-1">
                 <TabsTrigger value="stats" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <BarChart3 className="h-3.5 w-3.5" /> Statistika
                 </TabsTrigger>
@@ -318,6 +337,16 @@ const AdminPanel = () => {
                   <Palette className="h-3.5 w-3.5" /> Dizayn
                 </TabsTrigger>
               </TabsList>
+            </div>
+
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute right-1 z-40 hidden h-7 w-7 rounded-full shadow border-border md:flex opacity-0 transition-opacity group-hover:opacity-100 bg-background/90 hover:bg-muted"
+              onClick={() => scrollTabs('right')}
+            >
+              <ChevronRight className="h-4 w-4 text-foreground/70" />
+            </Button>
             </div>
           </div>
 
