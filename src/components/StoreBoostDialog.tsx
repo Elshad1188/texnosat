@@ -44,10 +44,12 @@ const StoreBoostDialog = ({ storeId, storeName, open, onOpenChange }: StoreBoost
   const balance = Number((profile as any)?.balance || 0);
   const canAfford = balance >= price;
 
+  const isAlreadyPremium = !!(queryClient.getQueryData(["store", storeId]) as any)?.is_premium;
+
   const handleUpgrade = async () => {
     if (!user) return;
-    if (!canAfford) {
-      toast({ title: "Balans kifayət deyil", description: "Balansınızı artırın", variant: "destructive" });
+    if (!canAfford || isAlreadyPremium) {
+      toast({ title: isAlreadyPremium ? "Artıq Premiumdur" : "Balans kifayət deyil", variant: "destructive" });
       return;
     }
 
@@ -132,11 +134,13 @@ const StoreBoostDialog = ({ storeId, storeName, open, onOpenChange }: StoreBoost
 
           <Button
             className="w-full bg-primary text-primary-foreground hover:opacity-90 py-6 text-base font-bold shadow-lg shadow-primary/20"
-            disabled={!canAfford || processing}
+            disabled={!canAfford || processing || isAlreadyPremium}
             onClick={handleUpgrade}
           >
             {processing ? (
               <Loader2 className="h-5 w-5 animate-spin" />
+            ) : isAlreadyPremium ? (
+              "Artıq Premiumdur"
             ) : canAfford ? (
               "İndi Yüksəlt"
             ) : (

@@ -24,6 +24,7 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 const Profile = () => {
   const { user, signOut, loading: authLoading } = useAuth();
@@ -264,11 +265,18 @@ const Profile = () => {
                           <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" />{l.location}</span>
                         </div>
                         <div className="flex gap-1">
-                          {!l.is_premium && !l.is_urgent && (
-                            <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" onClick={() => setBoostListingId(l.id)}>
-                              <Wallet className="h-3 w-3" /> Yüksəlt
-                            </Button>
-                          )}
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className={cn(
+                              "h-6 text-[10px] gap-1",
+                              (l.is_premium || l.is_urgent) ? "bg-muted text-muted-foreground opacity-70" : ""
+                            )}
+                            disabled={l.is_premium || l.is_urgent}
+                            onClick={() => setBoostListingId(l.id)}
+                          >
+                            <Wallet className="h-3 w-3" /> {(l.is_premium || l.is_urgent) ? "Aktivdir" : "Yüksəlt"}
+                          </Button>
                           <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" asChild>
                             <Link to={`/create-listing?edit=${l.id}`}><Edit2 className="h-3 w-3" /></Link>
                           </Button>

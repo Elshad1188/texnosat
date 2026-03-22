@@ -36,6 +36,15 @@ const ListingBoostDialog = ({ listingId, open, onOpenChange }: ListingBoostDialo
     enabled: !!user,
   });
 
+  const { data: listing } = useQuery({
+    queryKey: ["listing-boost-status", listingId],
+    queryFn: async () => {
+      const { data } = await supabase.from("listings").select("is_premium, is_urgent, premium_until").eq("id", listingId).single();
+      return data;
+    },
+    enabled: !!listingId,
+  });
+
   const { data: siteSettings } = useQuery({
     queryKey: ["site-settings-general"],
     queryFn: async () => {
@@ -147,10 +156,19 @@ const ListingBoostDialog = ({ listingId, open, onOpenChange }: ListingBoostDialo
           {boostOptions.map((opt) => {
             const Icon = opt.icon;
             const canAfford = balance >= opt.price;
+            
+            const isCurrentlyPremium = listing?.is_premium && listing?.premium_until && new Date(listing.premium_until) > new Date();
+            const isCurrentlyUrgent = listing?.is_urgent && listing?.premium_until && new Date(listing.premium_until) > new Date();
+            
+            let isActive = false;
+            if (opt.key === "premium") isActive = !!isCurrentlyPremium;
+            if (opt.key === "urgent") isActive = !!isCurrentlyUrgent;
+            if (opt.key === "vip") isActive = !!isCurrentlyPremium && !!isCurrentlyUrgent;
+
             return (
               <div
                 key={opt.key}
-                className={`rounded-xl border border-border p-4 transition-colors ${canAfford ? "hover:border-primary/50" : "opacity-60"}`}
+                className={`rounded-xl border border-border p-4 transition-colors ${canAfford && !isActive ? "hover:border-primary/50" : "opacity-60"}`}
               >
                 <div className="flex items-start gap-3">
                   <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${opt.bg}`}>
@@ -170,11 +188,13 @@ const ListingBoostDialog = ({ listingId, open, onOpenChange }: ListingBoostDialo
                 <Button
                   size="sm"
                   className="mt-3 w-full bg-gradient-primary text-primary-foreground"
-                  disabled={!canAfford || !!processing}
+                  disabled={!canAfford || !!processing || isActive}
                   onClick={() => handleBoost(opt)}
                 >
                   {processing === opt.key ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : isActive ? (
+                    "Artıq aktivdir"
                   ) : canAfford ? (
                     "Aktivləşdir"
                   ) : (

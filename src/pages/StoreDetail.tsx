@@ -22,6 +22,7 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 function formatTime(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -285,8 +286,18 @@ const StoreDetail = () => {
               <div className="mt-4 flex flex-wrap gap-2">
                 {isOwner ? (
                   <>
-                    <Button size="sm" variant="outline" className="gap-1 bg-gradient-primary text-primary-foreground border-0 hover:opacity-90" onClick={() => setShowBoostDialog(true)}>
-                      <Crown className="h-4 w-4" />Yüksəlt
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className={cn(
+                        "gap-1 border-0 hover:opacity-90",
+                        store.is_premium ? "bg-muted text-muted-foreground" : "bg-gradient-primary text-primary-foreground"
+                      )}
+                      onClick={() => !store.is_premium && setShowBoostDialog(true)}
+                      disabled={store.is_premium}
+                    >
+                      <Crown className="h-4 w-4" />
+                      {store.is_premium ? "Premium aktivdir" : "Yüksəlt"}
                     </Button>
                     {fromProfile && (
                       <Button size="sm" variant="outline" className="gap-1" asChild>
