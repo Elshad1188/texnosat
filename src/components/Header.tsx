@@ -1,4 +1,4 @@
-import { Plus, User, Heart, Menu, X, LogOut, Store, ShieldCheck, MessageCircle, Wallet, Phone, Mail, MapPin, FileText, FolderTree, Play, Home, CircuitBoard } from "lucide-react";
+import { Plus, User, Heart, Menu, X, LogOut, Store, ShieldCheck, MessageCircle, Wallet, Phone, Mail, MapPin, FileText, FolderTree, Play, Home, CircuitBoard, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
@@ -160,6 +160,22 @@ const Header = () => {
                     );
                   })}
                 </div>
+              </div>
+
+              <Separator />
+
+              {/* Spin & Win Link */}
+              <div className="p-4">
+                <Link
+                  to="/spin-win"
+                  onClick={() => setSheetOpen(false)}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-100 text-orange-600">
+                    <Trophy className="h-4 w-4" />
+                  </div>
+                  Hədiyyə Çarxı
+                </Link>
               </div>
 
               <Separator />

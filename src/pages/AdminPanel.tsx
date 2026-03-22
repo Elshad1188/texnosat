@@ -31,6 +31,7 @@ import AdminNotificationSettings from "@/components/admin/AdminNotificationSetti
 import AdminBalanceManager from "@/components/admin/AdminBalanceManager";
 import AdminReferralManager from "@/components/admin/AdminReferralManager";
 import AdminIntegrationsManager from "@/components/admin/AdminIntegrationsManager";
+import AdminGiftsManager from "@/components/admin/AdminGiftsManager";
 import AdminVideoSettings from "@/components/admin/AdminVideoSettings";
 import AdminStoreModerationManager from "@/components/admin/AdminStoreModerationManager";
 import AdminScraperManager from "@/components/admin/AdminScraperManager";
@@ -386,6 +387,9 @@ const AdminPanel = () => {
                 </TabsTrigger>
                 <TabsTrigger value="settings" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <Settings className="h-3.5 w-3.5" /> Tənzimləmələr
+                </TabsTrigger>
+                <TabsTrigger value="gifts" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <Gift className="h-3.5 w-3.5" /> Hədiyyələr
                 </TabsTrigger>
                 <TabsTrigger value="video" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <Video className="h-3.5 w-3.5" /> Video
@@ -855,6 +859,9 @@ const AdminPanel = () => {
           </TabsContent>
           <TabsContent value="integrations" className="mt-3">
             <AdminIntegrationsManager />
+          </TabsContent>
+          <TabsContent value="gifts" className="mt-3">
+            <AdminGiftsManager />
           </TabsContent>
           <TabsContent value="video" className="mt-3">
             <AdminVideoSettings />

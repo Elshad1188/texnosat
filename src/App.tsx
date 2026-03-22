@@ -23,6 +23,7 @@ import Profile from "./pages/Profile";
 import Favorites from "./pages/Favorites";
 import StaticPage from "./pages/StaticPage";
 import Balance from "./pages/Balance";
+import SpinWin from "./pages/SpinWin";
 import NotFound from "./pages/NotFound";
 import MobileBottomNav from "./components/MobileBottomNav";
 import AppDownloadBanner from "./components/AppDownloadBanner";
@@ -69,6 +70,7 @@ const App = () => (
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/favorites" element={<Favorites />} />
                   <Route path="/balance" element={<Balance />} />
+                  <Route path="/spin-win" element={<SpinWin />} />
                   <Route path="/page/:slug" element={<StaticPage />} />
                   <Route path="/compare" element={<ComparePage />} />
                   <Route path="*" element={<NotFound />} />
