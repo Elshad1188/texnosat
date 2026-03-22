@@ -30,6 +30,7 @@ interface SiteSettings {
   vip_price: number;
   urgent_price: number;
   store_premium_price: number;
+  use_site_logo_as_watermark: boolean;
 }
 
 const defaults: SiteSettings = {
@@ -51,6 +52,7 @@ const defaults: SiteSettings = {
   vip_price: 10,
   urgent_price: 3,
   store_premium_price: 20,
+  use_site_logo_as_watermark: false,
 };
 
 const watermarkPositions = [
@@ -317,6 +319,18 @@ const AdminSettingsManager = () => {
           />
         </div>
         {settings.watermark_enabled && (
+          <div className="flex items-center justify-between py-2 border-t border-border/50">
+            <div>
+              <p className="text-sm text-foreground">Sayt loqosunu watermark kimi istifadə et</p>
+              <p className="text-xs text-muted-foreground">Aktiv edildikdə yuxarıdakı loqo avtomatik istifadə olunacaq</p>
+            </div>
+            <Switch
+              checked={settings.use_site_logo_as_watermark}
+              onCheckedChange={(v) => setSettings({ ...settings, use_site_logo_as_watermark: v })}
+            />
+          </div>
+        )}
+        {settings.watermark_enabled && !settings.use_site_logo_as_watermark && (
           <>
             <div className="space-y-1.5">
               <Label className="text-xs">Logo (URL və ya fayl yüklə)</Label>

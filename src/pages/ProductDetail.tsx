@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ListingCard from "@/components/ListingCard";
+import WatermarkOverlay from "@/components/WatermarkOverlay";
 import ReportButton from "@/components/ReportButton";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -334,12 +335,15 @@ const ProductDetail = () => {
                 <CarouselContent>
                   {images.map((img: string, i: number) => (
                     <CarouselItem key={i}>
-                      <img
-                        src={img}
-                        alt={listing.title}
-                        className="aspect-[4/3] w-full object-cover cursor-pointer"
-                        onClick={() => { setViewerIndex(i); setViewerOpen(true); }}
-                      />
+                      <div className="relative aspect-[4/3] w-full">
+                        <img
+                          src={img}
+                          alt={listing.title}
+                          className="h-full w-full object-cover cursor-pointer"
+                          onClick={() => { setViewerIndex(i); setViewerOpen(true); }}
+                        />
+                        <WatermarkOverlay />
+                      </div>
                     </CarouselItem>
                   ))}
                 </CarouselContent>

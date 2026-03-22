@@ -4,23 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompare } from "@/contexts/CompareContext";
-
-const useWatermarkSettings = () => {
-  return useQuery({
-    queryKey: ["watermark-settings"],
-    queryFn: async () => {
-      const { data } = await supabase.from("site_settings").select("value").eq("key", "general").maybeSingle();
-      const val = data?.value as any;
-      if (!val?.watermark_enabled || !val?.watermark_url) return null;
-      return {
-        url: val.watermark_url as string,
-        position: (val.watermark_position || "bottom-right") as string,
-        opacity: (val.watermark_opacity || 50) as number,
-      };
-    },
-    staleTime: 60000,
-  });
-};
+import WatermarkOverlay from "@/components/WatermarkOverlay";
 
 interface ListingCardProps {
   id: string;
@@ -36,25 +20,6 @@ interface ListingCardProps {
   storeName?: string;
   storeLogo?: string | null;
 }
-
-const WatermarkOverlay = () => {
-  const { data: wm } = useWatermarkSettings();
-  if (!wm) return null;
-  const posClass =
-    wm.position === "top-left" ? "top-1 left-1" :
-    wm.position === "top-right" ? "top-1 right-1" :
-    wm.position === "bottom-left" ? "bottom-1 left-1" :
-    wm.position === "bottom-right" ? "bottom-1 right-1" :
-    "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2";
-  return (
-    <img
-      src={wm.url}
-      alt=""
-      className={`absolute ${posClass} h-6 w-auto pointer-events-none z-10`}
-      style={{ opacity: wm.opacity / 100 }}
-    />
-  );
-};
 
 const ListingCard = ({ id, title, price, location, time, image, condition, isPremium, isUrgent, storeId, storeName, storeLogo }: ListingCardProps) => {
   const navigate = useNavigate();
