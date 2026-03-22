@@ -96,9 +96,6 @@ const Header = () => {
             <SheetContent side="left" className="w-72 p-0 overflow-y-auto">
               <div className="p-4">
                 <Link to="/" className="flex items-center gap-2" onClick={() => setSheetOpen(false)}>
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: theme.logo_color ? `linear-gradient(135deg, ${theme.logo_color}, ${theme.logo_color}dd)` : 'var(--gradient-primary)' }}>
-                    <span className="font-display text-lg font-bold text-white">{theme.logo_icon ?? "T"}</span>
-                  </div>
                   <span className="font-display text-xl font-bold text-foreground">
                     {theme.logo_text_main ?? "Texno"}
                     <span className="text-primary" style={{ color: theme.logo_color ? theme.logo_color : undefined }}>

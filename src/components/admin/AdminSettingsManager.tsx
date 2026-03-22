@@ -187,16 +187,6 @@ const AdminSettingsManager = () => {
               placeholder="sat"
             />
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Loqo İkonu (Tək hərf)</Label>
-            <Input 
-              value={themeSettings?.logo_icon || ""} 
-              onChange={(e) => setThemeSettings({ ...themeSettings, logo_icon: e.target.value.substring(0, 1) })} 
-              className="h-9 w-16 uppercase" 
-              placeholder="T"
-              maxLength={1}
-            />
-          </div>
         </div>
       </div>
 
