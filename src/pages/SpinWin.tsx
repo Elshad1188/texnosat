@@ -114,9 +114,18 @@ const SpinWin = () => {
         
         const res = data as any;
         if (res.success) {
-          setResult(selectedPrize);
-          setShowResultModal(true);
-          queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
+          if (res.can_spin_again) {
+            toast({
+              title: "Yenidən cəhd edin!",
+              description: "Bu dəfə bəxtiniz gətirmədi, amma dərhal yenidən fırlada bilərsiniz.",
+            });
+            setResult(null);
+            setShowResultModal(false);
+          } else {
+            setResult(selectedPrize);
+            setShowResultModal(true);
+            queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
+          }
         } else {
           toast({ title: "Xəta", description: res.error, variant: "destructive" });
         }

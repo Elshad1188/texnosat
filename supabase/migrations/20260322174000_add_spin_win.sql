@@ -76,22 +76,21 @@ BEGIN
     RETURN json_build_object('success', false, 'error', 'Hədiyyə tapılmadı və ya aktiv deyil');
   END IF;
 
-  -- Update profile last_spin_at
-  UPDATE public.profiles SET last_spin_at = now() WHERE user_id = _user_id;
-
-  -- If amount > 0, update balance and record transaction
+  -- Only update cooldown if user won something > 0
   IF _prize.amount > 0 THEN
+    UPDATE public.profiles SET last_spin_at = now() WHERE user_id = _user_id;
     UPDATE public.profiles SET balance = balance + _prize.amount WHERE user_id = _user_id;
     INSERT INTO public.balance_transactions (user_id, amount, type, description)
     VALUES (_user_id, _prize.amount, 'credit', 'Hədiyyə çarxı udulmuş məbləğ: ' || _prize.label);
+    
+    -- Record spin history only for wins
+    INSERT INTO public.spin_history (user_id, prize_id, amount)
+    VALUES (_user_id, _prize.id, _prize.amount);
   END IF;
-
-  -- Record spin history
-  INSERT INTO public.spin_history (user_id, prize_id, amount)
-  VALUES (_user_id, _prize.id, _prize.amount);
 
   RETURN json_build_object(
     'success', true, 
+    'can_spin_again', (_prize.amount = 0),
     'prize', json_build_object(
       'id', _prize.id,
       'label', _prize.label,
