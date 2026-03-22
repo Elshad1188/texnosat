@@ -152,6 +152,15 @@ const AdminSettingsManager = () => {
             <Label className="text-xs">Footer mətni</Label>
             <Input value={settings.footer_text} onChange={(e) => setSettings({ ...settings, footer_text: e.target.value })} className="h-9" />
           </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Maks. şəkil sayı</Label>
+            <Input 
+              type="number" 
+              value={settings.max_images_per_listing} 
+              onChange={(e) => setSettings({ ...settings, max_images_per_listing: Number(e.target.value) })} 
+              className="h-9" 
+            />
+          </div>
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Sayt açıqlaması</Label>

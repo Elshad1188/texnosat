@@ -39,7 +39,6 @@ const CreateListing = () => {
     title: "", description: "", price: "", category: "", condition: "Yeni", location: "",
   });
 
-  // Fetch max video duration from settings
   const { data: videoSettings } = useQuery({
     queryKey: ["video-settings"],
     queryFn: async () => {
@@ -47,6 +46,16 @@ const CreateListing = () => {
       return (data?.value as any) || { max_duration: 60 };
     },
   });
+
+  const { data: generalSettings } = useQuery({
+    queryKey: ["site-settings-general"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "general").maybeSingle();
+      return (data?.value as any) || { max_images_per_listing: 10 };
+    },
+  });
+
+  const maxImages = generalSettings?.max_images_per_listing || 10;
 
   // Fetch existing listing for editing
   const { data: editListing, isLoading: editLoading } = useQuery({
@@ -117,8 +126,8 @@ const CreateListing = () => {
   const handleImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const totalImages = existingImages.length + images.length + files.length;
-    if (totalImages > 5) {
-      toast({ title: "Maksimum 5 şəkil yükləyə bilərsiniz", variant: "destructive" });
+    if (totalImages > maxImages) {
+      toast({ title: `Maksimum ${maxImages} şəkil yükləyə bilərsiniz`, variant: "destructive" });
       return;
     }
     setImages((prev) => [...prev, ...files]);
@@ -243,185 +252,187 @@ const CreateListing = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto max-w-2xl px-4 py-8">
-        <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl">
-          {editId ? "Elanı redaktə et" : "Elan yerləşdir"}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {editId ? "Elanınızın məlumatlarını yeniləyin" : "Məhsulunuzu satışa çıxarın"}
-        </p>
+        <div className="rounded-2xl border-2 border-primary p-6 shadow-lg shadow-primary/5 bg-card">
+          <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl">
+            {editId ? "Elanı redaktə et" : "Elan yerləşdir"}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {editId ? "Elanınızın məlumatlarını yeniləyin" : "Məhsulunuzu satışa çıxarın"}
+          </p>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          {/* Images */}
-          <div>
-            <Label>Şəkillər (maks. 5)</Label>
-            <div className="mt-2 flex flex-wrap gap-3">
-              {existingImages.map((src, i) => (
-                <div key={`existing-${i}`} className="relative h-24 w-24 overflow-hidden rounded-xl border border-border">
-                  <img src={src} alt="" className="h-full w-full object-cover" />
-                  <button type="button" onClick={() => removeExistingImage(i)}
-                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
-                    <X className="h-3 w-3" />
+          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+            {/* Images */}
+            <div>
+              <Label>Şəkillər (maks. {maxImages})</Label>
+              <div className="mt-2 flex flex-wrap gap-3">
+                {existingImages.map((src, i) => (
+                  <div key={`existing-${i}`} className="relative h-24 w-24 overflow-hidden rounded-xl border border-border">
+                    <img src={src} alt="" className="h-full w-full object-cover" />
+                    <button type="button" onClick={() => removeExistingImage(i)}
+                      className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                {previews.map((src, i) => (
+                  <div key={i} className="relative h-24 w-24 overflow-hidden rounded-xl border border-border">
+                    <img src={src} alt="" className="h-full w-full object-cover" />
+                    <button type="button" onClick={() => removeImage(i)}
+                      className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                {existingImages.length + images.length < maxImages && (
+                  <button type="button" onClick={() => fileInputRef.current?.click()}
+                    className="flex h-24 w-24 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary">
+                    <ImagePlus className="h-6 w-6" /><span className="mt-1 text-xs">Əlavə et</span>
                   </button>
-                </div>
-              ))}
-              {previews.map((src, i) => (
-                <div key={i} className="relative h-24 w-24 overflow-hidden rounded-xl border border-border">
-                  <img src={src} alt="" className="h-full w-full object-cover" />
-                  <button type="button" onClick={() => removeImage(i)}
-                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
-                    <X className="h-3 w-3" />
+                )}
+                <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageAdd} />
+              </div>
+            </div>
+
+            {/* Video */}
+            <div>
+              <Label>Video (maks. {videoSettings?.max_duration || 60} san.)</Label>
+              <div className="mt-2 flex flex-wrap gap-3">
+                {(existingVideo || videoPreview) && (
+                  <div className="relative h-24 w-36 overflow-hidden rounded-xl border border-border bg-black">
+                    <video src={existingVideo || videoPreview} className="h-full w-full object-cover" muted />
+                    <button type="button" onClick={removeVideo}
+                      className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
+                      <X className="h-3 w-3" />
+                    </button>
+                    <div className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">Video</div>
+                  </div>
+                )}
+                {!existingVideo && !videoPreview && (
+                  <button type="button" onClick={() => videoInputRef.current?.click()}
+                    className="flex h-24 w-36 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary">
+                    <Video className="h-6 w-6" /><span className="mt-1 text-xs">Video əlavə et</span>
                   </button>
-                </div>
-              ))}
-              {existingImages.length + images.length < 5 && (
-                <button type="button" onClick={() => fileInputRef.current?.click()}
-                  className="flex h-24 w-24 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary">
-                  <ImagePlus className="h-6 w-6" /><span className="mt-1 text-xs">Əlavə et</span>
+                )}
+                <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={handleVideoAdd} />
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">Video əlavə etsəniz, elanınız Reels bölməsində görünəcək</p>
+            </div>
+
+
+            <div className="space-y-2">
+              <Label htmlFor="title">Başlıq *</Label>
+              <Input id="title" placeholder="Məs: iPhone 15 Pro Max 256GB" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="desc">Təsvir</Label>
+              <Textarea id="desc" placeholder="Məhsul haqqında ətraflı məlumat..." rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="price">Qiymət (₼) *</Label>
+                <Input id="price" type="number" min="0" placeholder="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Kateqoriya *</Label>
+                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                  <SelectTrigger><SelectValue placeholder="Seçin" /></SelectTrigger>
+                  <SelectContent>
+                    {parentCategories.map((c: any) => <SelectItem key={c.id} value={c.slug}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Vəziyyət</Label>
+                <Select value={form.condition} onValueChange={(v) => setForm({ ...form, condition: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {conditions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Bölgə</Label>
+                <Select value={form.location} onValueChange={(v) => setForm({ ...form, location: v })}>
+                  <SelectTrigger><SelectValue placeholder="Bölgə seçin" /></SelectTrigger>
+                  <SelectContent>
+                    {regions.map((r: any) => <SelectItem key={r.id} value={r.name}>{r.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Category custom fields */}
+            {categoryFields.length > 0 && (
+              <div className="rounded-xl border border-border bg-card">
+                <button
+                  type="button"
+                  onClick={() => setShowCustomFields(!showCustomFields)}
+                  className="flex w-full items-center justify-between p-4"
+                >
+                  <span className="text-sm font-semibold text-foreground">Əlavə məlumatlar ({categoryFields.length})</span>
+                  {showCustomFields ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                 </button>
-              )}
-              <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageAdd} />
-            </div>
-          </div>
-
-          {/* Video */}
-          <div>
-            <Label>Video (maks. {videoSettings?.max_duration || 60} san.)</Label>
-            <div className="mt-2 flex flex-wrap gap-3">
-              {(existingVideo || videoPreview) && (
-                <div className="relative h-24 w-36 overflow-hidden rounded-xl border border-border bg-black">
-                  <video src={existingVideo || videoPreview} className="h-full w-full object-cover" muted />
-                  <button type="button" onClick={removeVideo}
-                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
-                    <X className="h-3 w-3" />
-                  </button>
-                  <div className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">Video</div>
-                </div>
-              )}
-              {!existingVideo && !videoPreview && (
-                <button type="button" onClick={() => videoInputRef.current?.click()}
-                  className="flex h-24 w-36 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary">
-                  <Video className="h-6 w-6" /><span className="mt-1 text-xs">Video əlavə et</span>
-                </button>
-              )}
-              <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={handleVideoAdd} />
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">Video əlavə etsəniz, elanınız Reels bölməsində görünəcək</p>
-          </div>
-
-
-          <div className="space-y-2">
-            <Label htmlFor="title">Başlıq *</Label>
-            <Input id="title" placeholder="Məs: iPhone 15 Pro Max 256GB" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="desc">Təsvir</Label>
-            <Textarea id="desc" placeholder="Məhsul haqqında ətraflı məlumat..." rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="price">Qiymət (₼) *</Label>
-              <Input id="price" type="number" min="0" placeholder="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
-            </div>
-            <div className="space-y-2">
-              <Label>Kateqoriya *</Label>
-              <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                <SelectTrigger><SelectValue placeholder="Seçin" /></SelectTrigger>
-                <SelectContent>
-                  {parentCategories.map((c: any) => <SelectItem key={c.id} value={c.slug}>{c.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Vəziyyət</Label>
-              <Select value={form.condition} onValueChange={(v) => setForm({ ...form, condition: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {conditions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Bölgə</Label>
-              <Select value={form.location} onValueChange={(v) => setForm({ ...form, location: v })}>
-                <SelectTrigger><SelectValue placeholder="Bölgə seçin" /></SelectTrigger>
-                <SelectContent>
-                  {regions.map((r: any) => <SelectItem key={r.id} value={r.name}>{r.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Category custom fields */}
-          {categoryFields.length > 0 && (
-            <div className="rounded-xl border border-border bg-card">
-              <button
-                type="button"
-                onClick={() => setShowCustomFields(!showCustomFields)}
-                className="flex w-full items-center justify-between p-4"
-              >
-                <span className="text-sm font-semibold text-foreground">Əlavə məlumatlar ({categoryFields.length})</span>
-                {showCustomFields ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
-              </button>
-              {showCustomFields && (
-                <div className="space-y-4 px-4 pb-4">
-                  {categoryFields.map((field: any) => (
-                    <div key={field.id} className="space-y-2">
-                      <Label>
-                        {field.field_label}
-                      </Label>
-                      {field.field_type === "select" && Array.isArray(field.options) ? (
-                        <>
-                          <Select
+                {showCustomFields && (
+                  <div className="space-y-4 px-4 pb-4">
+                    {categoryFields.map((field: any) => (
+                      <div key={field.id} className="space-y-2">
+                        <Label>
+                          {field.field_label}
+                        </Label>
+                        {field.field_type === "select" && Array.isArray(field.options) ? (
+                          <>
+                            <Select
+                              value={customFields[field.field_name] || ""}
+                              onValueChange={v => setCustomFields(prev => ({ ...prev, [field.field_name]: v, [field.field_name + "_other"]: "" }))}
+                            >
+                              <SelectTrigger><SelectValue placeholder="Seçin" /></SelectTrigger>
+                              <SelectContent>
+                                {field.options.map((opt: string) => (
+                                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                ))}
+                                <SelectItem value="__other__">Digər</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            {customFields[field.field_name] === "__other__" && (
+                              <Input
+                                className="mt-2"
+                                placeholder={`${field.field_label} daxil edin...`}
+                                value={customFields[field.field_name + "_other"] || ""}
+                                onChange={e => setCustomFields(prev => ({ ...prev, [field.field_name + "_other"]: e.target.value }))}
+                              />
+                            )}
+                          </>
+                        ) : field.field_type === "number" ? (
+                          <Input
+                            type="number"
+                            placeholder={field.field_label}
                             value={customFields[field.field_name] || ""}
-                            onValueChange={v => setCustomFields(prev => ({ ...prev, [field.field_name]: v, [field.field_name + "_other"]: "" }))}
-                          >
-                            <SelectTrigger><SelectValue placeholder="Seçin" /></SelectTrigger>
-                            <SelectContent>
-                              {field.options.map((opt: string) => (
-                                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                              ))}
-                              <SelectItem value="__other__">Digər</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          {customFields[field.field_name] === "__other__" && (
-                            <Input
-                              className="mt-2"
-                              placeholder={`${field.field_label} daxil edin...`}
-                              value={customFields[field.field_name + "_other"] || ""}
-                              onChange={e => setCustomFields(prev => ({ ...prev, [field.field_name + "_other"]: e.target.value }))}
-                            />
-                          )}
-                        </>
-                      ) : field.field_type === "number" ? (
-                        <Input
-                          type="number"
-                          placeholder={field.field_label}
-                          value={customFields[field.field_name] || ""}
-                          onChange={e => setCustomFields(prev => ({ ...prev, [field.field_name]: e.target.value }))}
-                        />
-                      ) : (
-                        <Input
-                          placeholder={field.field_label}
-                          value={customFields[field.field_name] || ""}
-                          onChange={e => setCustomFields(prev => ({ ...prev, [field.field_name]: e.target.value }))}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                            onChange={e => setCustomFields(prev => ({ ...prev, [field.field_name]: e.target.value }))}
+                          />
+                        ) : (
+                          <Input
+                            placeholder={field.field_label}
+                            value={customFields[field.field_name] || ""}
+                            onChange={e => setCustomFields(prev => ({ ...prev, [field.field_name]: e.target.value }))}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-          <Button type="submit" disabled={loading} className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90">
-            {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {editId ? "Yenilənir..." : "Yerləşdirilir..."}</> : (editId ? "Elanı yenilə" : "Elanı yerləşdir")}
-          </Button>
-        </form>
+            <Button type="submit" disabled={loading} className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90">
+              {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {editId ? "Yenilənir..." : "Yerləşdirilir..."}</> : (editId ? "Elanı yenilə" : "Elanı yerləşdir")}
+            </Button>
+          </form>
+        </div>
       </main>
       <Footer />
     </div>
