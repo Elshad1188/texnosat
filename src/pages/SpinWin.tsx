@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,11 +13,9 @@ import {
   RotateCw, 
   Info, 
   Calendar,
-  Wallet,
   Loader2,
   AlertCircle
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface SpinPrize {
   id: string;
@@ -140,11 +138,7 @@ const SpinWin = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto max-w-lg px-4 py-8 flex flex-col items-center text-center">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <div className="mb-8 opacity-0 animate-in fade-in slide-in-from-bottom-5 duration-700">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold mb-3">
             <Sparkles className="h-3.5 w-3.5" />
             HƏR GÜN HƏDİYYƏ QAZAN
@@ -153,7 +147,7 @@ const SpinWin = () => {
           <p className="text-muted-foreground text-sm max-w-xs mx-auto">
             Hər 24 saatda bir dəfə çarxı fırladaraq balansınıza hədiyyə məbləğlər qazana bilərsiniz.
           </p>
-        </motion.div>
+        </div>
 
         {/* Wheel Container */}
         <div className="relative mb-12">
@@ -166,11 +160,13 @@ const SpinWin = () => {
 
           {/* Exterior Ring */}
           <div className="w-[320px] h-[320px] sm:w-[380px] sm:h-[380px] rounded-full border-[12px] border-foreground/5 shadow-2xl relative overflow-hidden bg-background p-2">
-            <motion.div 
-              className="w-full h-full rounded-full relative overflow-hidden shadow-inner"
-              animate={{ rotate: rotation }}
-              transition={{ duration: 5, ease: [0.12, 0, 0.1, 1] }}
-              style={{ transformOrigin: "center center" }}
+            <div 
+              className="w-full h-full rounded-full relative overflow-hidden shadow-inner flex items-center justify-center"
+              style={{ 
+                transform: `rotate(${rotation}deg)`,
+                transition: "transform 5s cubic-bezier(0.12, 0, 0.1, 1)",
+                transformOrigin: "center center"
+              }}
             >
               <svg viewBox="0 0 100 100" className="w-full h-full">
                 {prizes.map((prize, i) => {
@@ -204,7 +200,7 @@ const SpinWin = () => {
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-background rounded-full border-4 border-foreground/5 shadow-lg flex items-center justify-center z-10">
                 <div className="w-6 h-6 rounded-full bg-gradient-primary" />
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
 
@@ -277,42 +273,37 @@ const SpinWin = () => {
       </main>
 
       {/* Success Modal */}
-      <AnimatePresence>
-        {showResultModal && result && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <motion.div 
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-card w-full max-w-sm rounded-[32px] p-8 text-center shadow-2xl relative overflow-hidden border border-border"
+      {showResultModal && result && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div 
+            className="bg-card w-full max-w-sm rounded-[32px] p-8 text-center shadow-2xl relative overflow-hidden border border-border animate-in zoom-in-95 duration-300"
+          >
+            {/* Confetti-like decoration */}
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-primary" />
+            
+            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Trophy className="h-10 w-10 text-primary" />
+            </div>
+            
+            <h2 className="text-2xl font-bold mb-2">TƏBRİKLƏR! 🎉</h2>
+            <p className="text-muted-foreground text-sm mb-6">
+              Siz çarxı fırladaraq hədiyyə qazandınız:
+            </p>
+            
+            <div className="bg-muted p-6 rounded-2xl mb-8 border border-border/50">
+              <div className="text-4xl font-black text-foreground">{result.label}</div>
+              <div className="text-[10px] text-primary font-bold mt-1 tracking-widest uppercase">Balansınıza əlavə edildi</div>
+            </div>
+            
+            <Button 
+              onClick={() => setShowResultModal(false)}
+              className="w-full h-12 bg-foreground text-background font-bold rounded-2xl"
             >
-              {/* Confetti-like decoration */}
-              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-primary" />
-              
-              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Trophy className="h-10 w-10 text-primary" />
-              </div>
-              
-              <h2 className="text-2xl font-bold mb-2">TƏBRİKLƏR! 🎉</h2>
-              <p className="text-muted-foreground text-sm mb-6">
-                Siz çarxı fırladaraq hədiyyə qazandınız:
-              </p>
-              
-              <div className="bg-muted p-6 rounded-2xl mb-8 border border-border/50">
-                <div className="text-4xl font-black text-foreground">{result.label}</div>
-                <div className="text-[10px] text-primary font-bold mt-1 tracking-widest uppercase">Balansınıza əlavə edildi</div>
-              </div>
-              
-              <Button 
-                onClick={() => setShowResultModal(false)}
-                className="w-full h-12 bg-foreground text-background font-bold rounded-2xl"
-              >
-                BAĞLA
-              </Button>
-            </motion.div>
+              BAĞLA
+            </Button>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
 
       <Footer />
     </div>
