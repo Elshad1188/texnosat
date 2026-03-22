@@ -18,6 +18,7 @@ DECLARE
   _notifications_enabled boolean;
   _notifications_enabled_str text;
   _admin_id uuid;
+  _full_name text;
 BEGIN
   -- Validate user
   IF _user_id IS NULL THEN RAISE EXCEPTION 'Not authenticated'; END IF;
@@ -28,6 +29,9 @@ BEGIN
   
   -- AdminNotificationSettings stores boolean as string 'true'/'false'
   _notifications_enabled := COALESCE(_notifications_enabled_str != 'false', true);
+
+  -- Get user name
+  SELECT full_name INTO _full_name FROM public.profiles WHERE user_id = _user_id;
 
   -- Check cooldown (24 hours)
   SELECT last_spin_at INTO _last_spin FROM public.profiles WHERE user_id = _user_id;
@@ -58,7 +62,7 @@ BEGIN
       -- Notification to all admins
       FOR _admin_id IN (SELECT user_id FROM public.user_roles WHERE role = 'admin'::public.app_role) LOOP
         INSERT INTO public.notifications (user_id, type, title, message)
-        VALUES (_admin_id, 'admin_alert', 'Yeni çarx qalibi! 🎡', 'İstifadəçi (ID: ' || _user_id || ') çarxı fırladaraq ' || _prize.label || ' qazandı.');
+        VALUES (_admin_id, 'admin_alert', 'Yeni çarx qalibi! 🎡', COALESCE(_full_name, 'Naməlum') || ' (' || _user_id || ') çarxı fırladaraq ' || _prize.label || ' qazandı.');
       END LOOP;
     END IF;
   END IF;

@@ -78,7 +78,7 @@ const AdminGiftsManager = () => {
         .from("spin_history")
         .select(`
           *,
-          profiles:user_id (full_name)
+          profiles(full_name)
         `)
         .order("created_at", { ascending: false })
         .limit(50);
