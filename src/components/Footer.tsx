@@ -2,8 +2,10 @@ import { Phone, Mail, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const Footer = () => {
+  const { theme } = useTheme();
   const { data: settings } = useQuery({
     queryKey: ["site-settings-general"],
     queryFn: async () => {
@@ -31,12 +33,18 @@ const Footer = () => {
         <div className="grid gap-8 md:grid-cols-4">
           <div>
             <Link to="/" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-primary">
-                <span className="font-display text-lg font-bold text-primary-foreground">T</span>
-              </div>
-              <span className="font-display text-xl font-bold">
-                Texno<span className="text-primary">sat</span>
-              </span>
+              {(theme as any).logo_url ? (
+                <img src={(theme as any).logo_url} alt={theme.logo_text_main || "Logo"} className="h-9 w-auto object-contain" />
+              ) : (
+                <>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: theme.logo_color ? `linear-gradient(135deg, ${theme.logo_color}, ${theme.logo_color}dd)` : 'var(--gradient-primary)' }}>
+                    <span className="font-display text-lg font-bold text-white">{theme.logo_icon ?? "T"}</span>
+                  </div>
+                  <span className="font-display text-xl font-bold">
+                    {theme.logo_text_main ?? "Texno"}<span className="text-primary" style={{ color: theme.logo_color ? theme.logo_color : undefined }}>{theme.logo_text_accent ?? "sat"}</span>
+                  </span>
+                </>
+              )}
             </Link>
             <p className="mt-3 text-sm text-secondary-foreground/60">
               {settings?.site_description || "Azərbaycanın ən etibarlı elektronika al-sat platforması."}
