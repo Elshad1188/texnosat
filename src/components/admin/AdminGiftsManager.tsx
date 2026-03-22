@@ -74,7 +74,10 @@ const AdminGiftsManager = () => {
         .select("*")
         .order("chance", { ascending: false });
       
-      const { data: historyData } = await supabase
+      setPrizes(prizesData || []);
+
+      // Try with join first
+      const { data: historyWithProfiles, error: joinError } = await supabase
         .from("spin_history")
         .select(`
           *,
@@ -83,9 +86,21 @@ const AdminGiftsManager = () => {
         .order("created_at", { ascending: false })
         .limit(50);
 
-      setPrizes(prizesData || []);
-      setHistory(historyData || []);
+      if (joinError) {
+        console.warn("History join failed, falling back to simple fetch:", joinError);
+        const { data: simpleHistory, error: simpleError } = await supabase
+          .from("spin_history")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(50);
+        
+        if (simpleError) throw simpleError;
+        setHistory(simpleHistory || []);
+      } else {
+        setHistory(historyWithProfiles || []);
+      }
     } catch (err: any) {
+      console.error("Fetch data error:", err);
       toast({ title: "Məlumat yüklənmədi", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
@@ -383,7 +398,9 @@ const AdminGiftsManager = () => {
                                 <TableRow key={h.id}>
                                     <TableCell>
                                         <div className="flex flex-col">
-                                            <span className="text-sm font-medium">{h.profiles?.full_name || "Adsız"}</span>
+                                            <span className="text-sm font-medium">
+                                                {h.profiles?.full_name || (Array.isArray(h.profiles) ? h.profiles[0]?.full_name : null) || "Adsız"}
+                                            </span>
                                             <span className="text-[10px] text-muted-foreground font-mono truncate max-w-[100px]">{h.user_id}</span>
                                         </div>
                                     </TableCell>
