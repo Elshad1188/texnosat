@@ -121,6 +121,7 @@ const Messages = () => {
         .from("messages")
         .select("*")
         .eq("conversation_id", activeConvoId)
+        .eq("is_deleted", false)
         .order("created_at", { ascending: true });
       return data || [];
     },
@@ -150,7 +151,7 @@ const Messages = () => {
     const channel = supabase
       .channel(`messages-${activeConvoId}`)
       .on("postgres_changes", {
-        event: "INSERT",
+        event: "*",
         schema: "public",
         table: "messages",
         filter: `conversation_id=eq.${activeConvoId}`,
@@ -230,6 +231,10 @@ const Messages = () => {
       queryClient.invalidateQueries({ queryKey: ["messages", activeConvoId] });
       toast({ title: "Mesaj silindi" });
     },
+    onError: (error: any) => {
+      console.error("Delete message error:", error);
+      toast({ title: "Xəta baş verdi", description: error.message, variant: "destructive" });
+    },
   });
 
   // Delete conversation (for me)
@@ -252,6 +257,10 @@ const Messages = () => {
       navigate("/messages");
       queryClient.invalidateQueries({ queryKey: ["conversations", user?.id] });
       toast({ title: "Söhbət silindi" });
+    },
+    onError: (error: any) => {
+      console.error("Delete conversation error:", error);
+      toast({ title: "Xəta baş verdi", description: error.message, variant: "destructive" });
     },
   });
 

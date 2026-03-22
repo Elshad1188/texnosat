@@ -125,6 +125,10 @@ const Products = () => {
       result = result.filter((p: any) => p.category === selectedCategory);
     }
 
+    if (selectedSubcategory) {
+      result = result.filter((p: any) => p.subcategory === selectedSubcategory);
+    }
+
     if (selectedCondition !== "Hamısı") {
       result = result.filter((p: any) => p.condition === selectedCondition);
     }
@@ -154,7 +158,7 @@ const Products = () => {
     else if (sortBy === "views") result.sort((a: any, b: any) => (b.views_count || 0) - (a.views_count || 0));
 
     return result;
-  }, [query, selectedCategory, selectedCondition, sortBy, priceMin, priceMax, allListings, selectedRegion, regions]);
+  }, [query, selectedCategory, selectedSubcategory, selectedCondition, sortBy, priceMin, priceMax, allListings, selectedRegion, regions, customFilters]);
 
   const clearFilters = () => {
     setQuery(""); setSelectedCategory(""); setSelectedSubcategory("");
