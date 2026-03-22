@@ -1,4 +1,4 @@
-import { Plus, User, Heart, Menu, X, LogOut, Store, ShieldCheck, MessageCircle, Wallet, Phone, Mail, MapPin, FileText, FolderTree, Play, Home } from "lucide-react";
+import { Plus, User, Heart, Menu, X, LogOut, Store, ShieldCheck, MessageCircle, Wallet, Phone, Mail, MapPin, FileText, FolderTree, Play, Home, CircuitBoard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import NotificationBell from "@/components/NotificationBell";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import { iconMap } from "@/lib/icons";
 
 const Header = () => {
   const { user, signOut } = useAuth();
@@ -58,7 +59,7 @@ const Header = () => {
   const { data: categories = [] } = useQuery({
     queryKey: ["menu-categories"],
     queryFn: async () => {
-      const { data } = await supabase.from("categories").select("name, slug").eq("is_active", true).is("parent_id", null).order("sort_order").limit(8);
+      const { data } = await supabase.from("categories").select("name, slug, icon").eq("is_active", true).is("parent_id", null).order("sort_order").limit(8);
       return data || [];
     },
   });
@@ -142,12 +143,16 @@ const Header = () => {
               <div className="p-4">
                 <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Kateqoriyalar</h4>
                 <div className="space-y-1">
-                  {categories.map((c: any) => (
-                    <Link key={c.slug} to={`/products?category=${c.slug}`} onClick={() => setSheetOpen(false)}
-                      className="block rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted">
-                      {c.name}
-                    </Link>
-                  ))}
+                  {categories.map((c: any) => {
+                    const Icon = iconMap[c.icon] || CircuitBoard;
+                    return (
+                      <Link key={c.slug} to={`/products?category=${c.slug}`} onClick={() => setSheetOpen(false)}
+                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted">
+                        <Icon className="h-4 w-4 text-primary shrink-0" />
+                        {c.name}
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
 
