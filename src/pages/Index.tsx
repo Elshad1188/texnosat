@@ -13,11 +13,11 @@ const Index = () => {
       <main>
         <HeroSection />
         <Categories />
-        <StoresSlider />
         <div className="container mx-auto px-4">
           <BannerDisplay position="home_top" />
         </div>
         <FeaturedListings />
+        <StoresSlider />
         <div className="container mx-auto px-4 pb-8">
           <BannerDisplay position="home_middle" />
         </div>

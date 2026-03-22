@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Store, ChevronLeft, ChevronRight, ChevronRight as ArrowRight } from "lucide-react";
+import { Store, ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRef } from "react";
 
@@ -24,7 +24,7 @@ const StoresSlider = () => {
 
   const scroll = (dir: "left" | "right") => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: dir === "left" ? -280 : 280, behavior: "smooth" });
+      scrollRef.current.scrollBy({ left: dir === "left" ? -320 : 320, behavior: "smooth" });
     }
   };
 
@@ -36,9 +36,9 @@ const StoresSlider = () => {
             <Skeleton className="h-5 w-32" />
             <Skeleton className="h-4 w-20" />
           </div>
-          <div className="flex gap-4 overflow-hidden">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-28 w-32 flex-shrink-0 rounded-2xl" />
+          <div className="flex gap-3 overflow-hidden">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 w-44 flex-shrink-0 rounded-2xl" />
             ))}
           </div>
         </div>
@@ -60,7 +60,6 @@ const StoresSlider = () => {
             <h2 className="text-base font-bold text-foreground">Mağazalar</h2>
           </div>
           <div className="flex items-center gap-2">
-            {/* Desktop scroll arrows */}
             <div className="hidden md:flex gap-1">
               <button
                 onClick={() => scroll("left")}
@@ -79,7 +78,7 @@ const StoresSlider = () => {
               onClick={() => navigate("/stores")}
               className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
             >
-              Hamısı <ArrowRight className="h-3.5 w-3.5" />
+              Hamısı <ChevronRight className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
@@ -87,17 +86,17 @@ const StoresSlider = () => {
         {/* Slider */}
         <div
           ref={scrollRef}
-          className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4"
+          className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {stores.map((store: any) => (
             <button
               key={store.id}
               onClick={() => navigate(`/store/${store.id}`)}
-              className="group flex flex-col items-center gap-2.5 flex-shrink-0 w-28"
+              className="group flex flex-shrink-0 w-44 items-center gap-3 rounded-2xl border border-border bg-card p-3 shadow-sm transition-all hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5"
             >
-              {/* Logo circle */}
-              <div className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-border bg-card shadow-md transition-all group-hover:scale-105 group-hover:border-primary/40 group-hover:shadow-lg">
+              {/* Logo box */}
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted">
                 {store.logo_url ? (
                   <img
                     src={store.logo_url}
@@ -105,23 +104,25 @@ const StoresSlider = () => {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-                    <Store className="h-8 w-8 text-primary/60" />
-                  </div>
-                )}
-                {store.is_premium && (
-                  <div className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-white shadow">
-                    ★
-                  </div>
+                  <Store className="h-6 w-6 text-muted-foreground/60" />
                 )}
               </div>
-              {/* Name */}
-              <span className="line-clamp-2 text-center text-[11px] font-medium leading-tight text-foreground">
-                {store.name}
-              </span>
-              {store.city && (
-                <span className="text-[10px] text-muted-foreground -mt-1">{store.city}</span>
-              )}
+
+              {/* Info */}
+              <div className="min-w-0 flex-1 text-left">
+                <div className="flex items-center gap-1">
+                  <p className="truncate text-xs font-semibold text-foreground leading-tight">
+                    {store.name}
+                  </p>
+                  {store.is_premium && (
+                    <Star className="h-3 w-3 shrink-0 text-amber-500 fill-amber-500" />
+                  )}
+                </div>
+                {store.city && (
+                  <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{store.city}</p>
+                )}
+                <p className="mt-1 text-[10px] font-medium text-primary">Mağazaya keç →</p>
+              </div>
             </button>
           ))}
         </div>
