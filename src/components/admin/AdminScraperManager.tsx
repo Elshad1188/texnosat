@@ -70,6 +70,8 @@ const AdminScraperManager = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [proxyUrl, setProxyUrl] = useState(() => localStorage.getItem("scraper_proxy_url") || "");
+  const [singleUrl, setSingleUrl] = useState("");
+  const [singleLoading, setSingleLoading] = useState(false);
   const [results, setResults] = useState<ScrapedListing[]>([]);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const [categories, setCategories] = useState<{ slug: string; name: string }[]>([]);
@@ -129,6 +131,39 @@ const AdminScraperManager = () => {
     }
   };
 
+  const handleSingleImport = async () => {
+    if (!singleUrl) {
+      toast({ title: "Xəta", description: "Link daxil edin", variant: "destructive" });
+      return;
+    }
+    setSingleLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("scrape-listings", {
+        body: { 
+          source: "tap.az", 
+          categoryUrl: singleUrl, 
+          singleUrlMode: true, 
+          fetchDetails: true,
+          customProxyUrl: proxyUrl 
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.listings?.length > 0) {
+        setResults(data.listings.map((l: ScrapedListing) => ({ ...l, selected: true })));
+        setExpandedIndex(0);
+        toast({ title: "Uğurlu", description: "Məlumatlar çəkildi. İndi 'Saxla' düyməsi ilə elanı paylaşa bilərsiniz." });
+      } else {
+        toast({ title: "Xəta", description: "Məlumat tapılmadı", variant: "destructive" });
+      }
+    } catch (error: any) {
+      toast({ title: "Xəta", description: error.message, variant: "destructive" });
+    } finally {
+      setSingleLoading(false);
+    }
+  };
+
   const toggleSelect = (index: number) => {
     setResults(prev => prev.map((r, i) => i === index ? { ...r, selected: !r.selected } : r));
   };
@@ -179,7 +214,11 @@ const AdminScraperManager = () => {
         user_id: session?.user?.id,
         status: 'approved' as const,
         condition: l.condition || 'İşlənmiş',
-        custom_fields: l.custom_fields && Object.keys(l.custom_fields).length > 0 ? l.custom_fields : null,
+        custom_fields: {
+          ...(l.custom_fields || {}),
+          ...(l.seller_name ? { original_seller: l.seller_name } : {}),
+          ...(l.seller_phone ? { original_phone: l.seller_phone } : {}),
+        },
       }));
 
       const { error } = await supabase.from("listings").insert(insertData);
@@ -338,6 +377,28 @@ const AdminScraperManager = () => {
         ) : (
           <p className="text-xs text-muted-foreground text-center py-3">Planlaşdırılmış scraper yoxdur</p>
         )}
+      </Card>
+
+      {/* Single Link Importer */}
+      <Card className="p-4 space-y-4 border-2 border-primary/20 bg-primary/5">
+        <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
+          <ExternalLink className="h-4 w-4" /> Tək linkdən avtomatik idxal (Yeni)
+        </h3>
+        <div className="flex gap-2">
+          <Input 
+            value={singleUrl} 
+            onChange={e => setSingleUrl(e.target.value)} 
+            placeholder="Tap.az elan linkini bura yapışdırın..." 
+            className="flex-1 h-10 bg-background"
+          />
+          <Button onClick={handleSingleImport} disabled={singleLoading} className="gap-2 px-6">
+            {singleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {singleLoading ? "Çəkilir..." : "Məlumatları çək"}
+          </Button>
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          Sistem avtomatik olaraq başlığı, qiyməti, şəkilləri, açıqlamanı və satıcı məlumatlarını çəkəcək.
+        </p>
       </Card>
 
       {/* Manual Scraper */}

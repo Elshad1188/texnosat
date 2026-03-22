@@ -16,6 +16,8 @@ interface ScrapedListing {
   category: string;
   condition: string;
   custom_fields: Record<string, string>;
+  seller_name?: string;
+  seller_phone?: string;
 }
 
 const BROWSER_HEADERS = {
@@ -88,7 +90,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body = await req.json();
-    const { source, categoryUrl, limit = 20, fetchDetails = false, cronMode = false, targetCategory, targetLocation, userId, customProxyUrl } = body;
+    const { source, categoryUrl, limit = 20, fetchDetails = false, cronMode = false, targetCategory, targetLocation, userId, customProxyUrl, singleUrlMode = false } = body;
     activeProxyUrl = customProxyUrl;
 
     // If not cron mode, verify admin auth
@@ -131,7 +133,27 @@ Deno.serve(async (req) => {
 
     let listings: ScrapedListing[] = [];
 
-    if (source === 'tap.az') {
+    // Check if it is a single detail page instead of a category URL
+    if (singleUrlMode && source === 'tap.az' && categoryUrl.includes('/elanlar/')) {
+      console.log('Single detail page detected for tap.az');
+      const detail = await fetchTapAzDetail(categoryUrl);
+      if (detail) {
+        listings = [{ 
+          title: detail.title || '',
+          price: detail.price || 0,
+          currency: '₼',
+          image_urls: detail.image_urls || [],
+          location: detail.location || 'Bakı',
+          description: detail.description || '',
+          source_url: categoryUrl,
+          category: '',
+          condition: detail.condition || 'İşlənmiş',
+          custom_fields: detail.custom_fields || {},
+          seller_name: detail.seller_name,
+          seller_phone: detail.seller_phone,
+        }];
+      }
+    } else if (source === 'tap.az') {
       listings = await scrapeTapAz(categoryUrl, limit, fetchDetails);
     } else if (source === 'telefon.az') {
       listings = await scrapeTelefonAz(categoryUrl, limit, fetchDetails);
@@ -139,6 +161,12 @@ Deno.serve(async (req) => {
       listings = await scrapeTemu(categoryUrl, limit);
     } else {
       listings = await scrapeGeneric(categoryUrl, limit);
+    }
+
+    // Handle single URL mode (auto-import or return single result)
+    if (singleUrlMode && listings.length > 0) {
+      console.log('Single URL mode triggered');
+      // Already fetched in scrapeFunctions
     }
 
     // In cron mode, auto-save to database
@@ -403,6 +431,11 @@ async function fetchTapAzDetail(url: string): Promise<Partial<ScrapedListing> | 
     const locMatch = html.match(/class="[^"]*product-location[^"]*"[^>]*>([^<]+)/);
     const location = locMatch ? decode(locMatch[1]).trim() : undefined;
 
+    // Seller Info
+    const sellerNameMatch = html.match(/class="[^"]*(?:shop-name|name|product-owner)[^"]*"[^>]*>([^<]+)/);
+    const sellerPhoneMatch = html.match(/class="[^"]*phone[^"]*"[^>]*>([^<]+)/) ||
+                             html.match(/href="tel:([^"]+)"/);
+
     // Condition
     const condMatch = custom_fields['Vəziyyəti'] || custom_fields['Vəziyyət'];
 
@@ -414,6 +447,8 @@ async function fetchTapAzDetail(url: string): Promise<Partial<ScrapedListing> | 
     if (location) result.location = location;
     if (condMatch) result.condition = condMatch;
     if (Object.keys(custom_fields).length > 0) result.custom_fields = custom_fields;
+    if (sellerNameMatch) result.seller_name = decode(sellerNameMatch[1]).trim();
+    if (sellerPhoneMatch) result.seller_phone = sellerPhoneMatch[1].replace(/\D/g, '').trim();
 
     console.log(`Detail for ${url}: ${imageUrls.length} images, ${Object.keys(custom_fields).length} props`);
     return result;
