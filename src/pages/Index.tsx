@@ -16,8 +16,8 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <BannerDisplay position="home_top" />
         </div>
-        <FeaturedListings />
         <StoresSlider />
+        <FeaturedListings />
         <div className="container mx-auto px-4 pb-8">
           <BannerDisplay position="home_middle" />
         </div>
