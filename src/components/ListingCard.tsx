@@ -1,8 +1,9 @@
-import { Heart, MapPin, Clock, Store, Crown, Zap, Gem } from "lucide-react";
+import { Heart, MapPin, Clock, Store, Crown, Zap, GitCompareArrows } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCompare } from "@/contexts/CompareContext";
 
 const useWatermarkSettings = () => {
   return useQuery({
@@ -59,6 +60,8 @@ const ListingCard = ({ id, title, price, location, time, image, condition, isPre
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { toggle, has } = useCompare();
+  const isComparing = has(id);
 
   const { data: favoriteData } = useQuery({
     queryKey: ["favorite", id, user?.id],
@@ -158,6 +161,22 @@ const ListingCard = ({ id, title, price, location, time, image, condition, isPre
             <Clock className="h-3 w-3" /> {time}
           </span>
         </div>
+
+        {/* Compare button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            toggle({ id, title, price, image, location, condition });
+          }}
+          className={`mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border py-1.5 text-[11px] font-medium transition-colors ${
+            isComparing
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border text-muted-foreground hover:border-primary/40 hover:text-primary"
+          }`}
+        >
+          <GitCompareArrows className="h-3.5 w-3.5" />
+          {isComparing ? "Müqayisədə" : "Müqayisə et"}
+        </button>
       </div>
     </div>
   );

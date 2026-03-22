@@ -27,6 +27,9 @@ import NotFound from "./pages/NotFound";
 import MobileBottomNav from "./components/MobileBottomNav";
 import AppDownloadBanner from "./components/AppDownloadBanner";
 import FirebaseInit from "./components/FirebaseInit";
+import { CompareProvider } from "@/contexts/CompareContext";
+import CompareBar from "./components/CompareBar";
+import ComparePage from "./pages/ComparePage";
 
 const queryClient = new QueryClient();
 
@@ -44,36 +47,40 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
-          <ThemeProvider>
-            <ScrollToTop />
-            <div className="pb-16 md:pb-0">
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/products" element={<Products />} />
-                <Route path="/product/:id" element={<ProductDetail />} />
-                <Route path="/seller/:id" element={<SellerProfile />} />
-                <Route path="/create-listing" element={<CreateListing />} />
-                <Route path="/reels" element={<Reels />} />
-                <Route path="/create-store" element={<CreateStore />} />
-                <Route path="/stores" element={<Stores />} />
-                <Route path="/store/:id" element={<StoreDetail />} />
-                <Route path="/store-dashboard" element={<StoreDashboard />} />
-                <Route path="/admin" element={<AdminPanel />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/messages" element={<Messages />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/favorites" element={<Favorites />} />
-                <Route path="/balance" element={<Balance />} />
-                <Route path="/page/:slug" element={<StaticPage />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </div>
-            <MobileBottomNav />
-            <AppDownloadBanner />
-            <FirebaseInit />
-          </ThemeProvider>
-        </AuthProvider>
+        <CompareProvider>
+          <AuthProvider>
+            <ThemeProvider>
+              <ScrollToTop />
+              <div className="pb-16 md:pb-0">
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/products" element={<Products />} />
+                  <Route path="/product/:id" element={<ProductDetail />} />
+                  <Route path="/seller/:id" element={<SellerProfile />} />
+                  <Route path="/create-listing" element={<CreateListing />} />
+                  <Route path="/reels" element={<Reels />} />
+                  <Route path="/create-store" element={<CreateStore />} />
+                  <Route path="/stores" element={<Stores />} />
+                  <Route path="/store/:id" element={<StoreDetail />} />
+                  <Route path="/store-dashboard" element={<StoreDashboard />} />
+                  <Route path="/admin" element={<AdminPanel />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/messages" element={<Messages />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/favorites" element={<Favorites />} />
+                  <Route path="/balance" element={<Balance />} />
+                  <Route path="/page/:slug" element={<StaticPage />} />
+                  <Route path="/compare" element={<ComparePage />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </div>
+              <CompareBar />
+              <MobileBottomNav />
+              <AppDownloadBanner />
+              <FirebaseInit />
+            </ThemeProvider>
+          </AuthProvider>
+        </CompareProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
