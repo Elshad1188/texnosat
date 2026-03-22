@@ -28,3 +28,40 @@ export const useIsAdmin = () => {
 
   return { isAdmin, loading };
 };
+
+export const useIsAdminOrMod = () => {
+  const { user } = useAuth();
+  const [isPrivileged, setIsPrivileged] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) {
+      setIsPrivileged(false);
+      setLoading(false);
+      return;
+    }
+
+    const checkPrivilege = async () => {
+      const { data: adminData, error: adminError } = await supabase.rpc("has_role", {
+        _user_id: user.id,
+        _role: "admin",
+      });
+      if (!adminError && adminData === true) {
+        setIsPrivileged(true);
+        setLoading(false);
+        return;
+      }
+
+      const { data: modData, error: modError } = await supabase.rpc("has_role", {
+        _user_id: user.id,
+        _role: "moderator",
+      });
+      setIsPrivileged(!modError && modData === true);
+      setLoading(false);
+    };
+
+    checkPrivilege();
+  }, [user]);
+
+  return { isPrivileged, loading };
+};

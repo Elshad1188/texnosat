@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useIsAdminOrMod } from "@/hooks/useIsAdmin";
 import { Heart, MessageCircle, Share2, Eye, ShoppingBag, X, Send, Play, Image as ImageIcon, UserPlus, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -80,6 +81,7 @@ const Reels = () => {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const startId = searchParams.get("id");
+  const { isPrivileged } = useIsAdminOrMod();
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showComments, setShowComments] = useState(false);
@@ -285,6 +287,24 @@ const Reels = () => {
   const addComment = useMutation({
     mutationFn: async () => {
       if (!user || !commentText.trim()) return;
+
+      // Antispam check
+      const { data: antispamData } = await supabase.from("site_settings").select("value").eq("key", "antispam").maybeSingle();
+      if (antispamData?.value && Array.isArray((antispamData.value as any)?.words)) {
+        const words = (antispamData.value as any).words as string[];
+        const lowerText = commentText.toLowerCase();
+        for (const word of words) {
+          if (word.trim() && lowerText.includes(word.toLowerCase().trim())) {
+            await supabase.rpc('notify_admins', {
+              _event_type: 'antispam',
+              _message: `İstifadəçi şərhdə uyğunsuz sözə cəhd etdi: "${commentText}"`,
+              _title: 'Söyüş / Təhqir cəhdi'
+            });
+            throw new Error("Şərhinizdə icazə verilməyən (uyğunsuz) sözlər var.");
+          }
+        }
+      }
+
       await supabase.from("reel_comments").insert({ 
         listing_id: currentReel!.id, 
         user_id: user.id, 
@@ -298,6 +318,23 @@ const Reels = () => {
       // Dismiss keyboard by blurring input
       commentInputRef.current?.blur();
       queryClient.invalidateQueries({ queryKey: ["reel-comments", currentReel?.id] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const deleteComment = useMutation({
+    mutationFn: async (commentId: string) => {
+      const { error } = await supabase.from("reel_comments").delete().eq("id", commentId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reel-comments", currentReel?.id] });
+      toast({ title: "Şərh silindi" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Xəta", description: err.message, variant: "destructive" });
     },
   });
 
@@ -667,16 +704,29 @@ const Reels = () => {
                     </div>
                     <p className="mt-1 break-words text-sm leading-5 text-foreground">{c.content}</p>
                     {user && (
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setReplyingTo({ id: c.id, name: c.profile?.full_name || "İstifadəçi" });
-                          setTimeout(() => commentInputRef.current?.focus(), 50);
-                        }}
-                        className="mt-1 text-[10px] font-semibold text-muted-foreground"
-                      >
-                        Cavab yaz
-                      </button>
+                      <div className="flex items-center gap-3 mt-1">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setReplyingTo({ id: c.id, name: c.profile?.full_name || "İstifadəçi" });
+                            setTimeout(() => commentInputRef.current?.focus(), 50);
+                          }}
+                          className="text-[10px] font-semibold text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          Cavab yaz
+                        </button>
+                        {(user?.id === c.user_id || isPrivileged) && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteComment.mutate(c.id);
+                            }}
+                            className="text-[10px] font-semibold text-destructive hover:underline"
+                          >
+                            Sil
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -699,6 +749,17 @@ const Reels = () => {
                             <span className="text-[10px] text-muted-foreground">{formatTime(reply.created_at)}</span>
                           </div>
                           <p className="mt-1 break-words text-xs leading-4 text-foreground">{reply.content}</p>
+                          {(user?.id === reply.user_id || isPrivileged) && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteComment.mutate(reply.id);
+                              }}
+                              className="mt-1 text-[10px] font-semibold text-destructive hover:underline"
+                            >
+                              Sil
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}

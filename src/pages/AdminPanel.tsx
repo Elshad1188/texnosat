@@ -34,8 +34,10 @@ import AdminIntegrationsManager from "@/components/admin/AdminIntegrationsManage
 import AdminVideoSettings from "@/components/admin/AdminVideoSettings";
 import AdminStoreModerationManager from "@/components/admin/AdminStoreModerationManager";
 import AdminScraperManager from "@/components/admin/AdminScraperManager";
+import AdminAntispamManager from "@/components/admin/AdminAntispamManager";
 import {
   ShieldCheck,
+  ShieldAlert,
   Trash2,
   Eye,
   EyeOff,
@@ -394,6 +396,9 @@ const AdminPanel = () => {
                 <TabsTrigger value="theme" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <Palette className="h-3.5 w-3.5" /> Dizayn
                 </TabsTrigger>
+                <TabsTrigger value="antispam" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <ShieldAlert className="h-3.5 w-3.5" /> Antispam
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -422,6 +427,11 @@ const AdminPanel = () => {
           <TabsContent value="notifications" className="mt-3 space-y-6">
             <AdminNotificationSettings />
             <AdminNotificationSender />
+          </TabsContent>
+
+          {/* Antispam */}
+          <TabsContent value="antispam" className="mt-3">
+            <AdminAntispamManager />
           </TabsContent>
 
           {/* Search for listings/stores/users */}

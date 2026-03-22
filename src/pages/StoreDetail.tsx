@@ -10,10 +10,16 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   Store, MapPin, Phone, Clock, Crown, MessageCircle, Loader2, ArrowLeft,
-  Users, UserPlus, UserMinus, Settings, Star, Send
+  Users, UserPlus, UserMinus, Settings, Star, Send, Trash2
 } from "lucide-react";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
+import { useIsAdminOrMod } from "@/hooks/useIsAdmin";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 function formatTime(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -33,6 +39,7 @@ const StoreDetail = () => {
   const queryClient = useQueryClient();
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  const { isPrivileged } = useIsAdminOrMod();
 
   const { data: store, isLoading } = useQuery({
     queryKey: ["store", id],
@@ -112,6 +119,21 @@ const StoreDetail = () => {
       setReviewComment("");
       setReviewRating(5);
       queryClient.invalidateQueries({ queryKey: ["store-reviews", store?.user_id] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const deleteReview = useMutation({
+    mutationFn: async (reviewId: string) => {
+      const { error } = await supabase.from("reviews").delete().eq("id", reviewId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Rəy silindi" });
+      queryClient.invalidateQueries({ queryKey: ["store-reviews", store?.user_id] });
+      queryClient.invalidateQueries({ queryKey: ["seller-reviews", store?.user_id] });
     },
     onError: (err: any) => {
       toast({ title: "Xəta", description: err.message, variant: "destructive" });
@@ -368,6 +390,34 @@ const StoreDetail = () => {
                     </div>
                   </div>
                   {r.comment && <p className="mt-3 text-sm text-muted-foreground">{r.comment}</p>}
+                  
+                  {(user?.id === r.reviewer_id || store.user_id === user?.id || isPrivileged) && (
+                    <div className="mt-3 flex justify-end">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5">
+                            <Trash2 className="h-3.5 w-3.5" />
+                            <span>Sil</span>
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Rəyi silmək istəyirsiniz?</AlertDialogTitle>
+                            <AlertDialogDescription>Bu əməliyyat geri alına bilməz.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Ləğv et</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => deleteReview.mutate(r.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Sil
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Heart, Share2, MapPin, Clock, Star, Phone, MessageCircle, Shield, Eye, Loader2, Send, Store, ExternalLink, Edit2, Trash2, Crown, Zap, Gem, Play, UserPlus, UserCheck, X } from "lucide-react";
+import { ArrowLeft, Share2, MapPin, Grid, Phone, MessageSquare, MessageCircle, ChevronLeft, Flag, Send, Heart, X, Trash2, Clock, Star, Shield, Eye, Loader2, Store, ExternalLink, Edit2, Crown, Zap, Gem, Play, UserPlus, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsAdminOrMod } from "@/hooks/useIsAdmin";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -41,6 +42,7 @@ const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isPrivileged } = useIsAdminOrMod();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showPhone, setShowPhone] = useState(false);
@@ -215,6 +217,24 @@ const ProductDetail = () => {
   const addComment = useMutation({
     mutationFn: async () => {
       if (!user || !commentText.trim()) return;
+
+      // Antispam check
+      const { data: antispamData } = await supabase.from("site_settings").select("value").eq("key", "antispam").maybeSingle();
+      if (antispamData?.value && Array.isArray((antispamData.value as any)?.words)) {
+        const words = (antispamData.value as any).words as string[];
+        const lowerText = commentText.toLowerCase();
+        for (const word of words) {
+          if (word.trim() && lowerText.includes(word.toLowerCase().trim())) {
+            await supabase.rpc('notify_admins', {
+              _event_type: 'antispam',
+              _message: `İstifadəçi şərhdə uyğunsuz sözə cəhd etdi: "${commentText}"`,
+              _title: 'Söyüş / Təhqir cəhdi'
+            });
+            throw new Error("Şərhinizdə icazə verilməyən (uyğunsuz) sözlər var.");
+          }
+        }
+      }
+
       await supabase.from("reel_comments").insert({ 
         listing_id: id!, 
         user_id: user.id, 
@@ -227,6 +247,21 @@ const ProductDetail = () => {
       setReplyingTo(null);
       queryClient.invalidateQueries({ queryKey: ["reel-comments", id] });
       toast({ title: replyingTo ? "Cavab əlavə edildi" : "Şərh əlavə edildi" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+    },
+  });
+
+  // Delete comment
+  const deleteComment = useMutation({
+    mutationFn: async (commentId: string) => {
+      const { error } = await supabase.from("reel_comments").delete().eq("id", commentId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reel-comments", id] });
+      toast({ title: "Şərh silindi" });
     },
     onError: (err: any) => {
       toast({ title: "Xəta", description: err.message, variant: "destructive" });
@@ -640,6 +675,14 @@ const ProductDetail = () => {
                           Cavab yaz
                         </button>
                       )}
+                      {(user?.id === c.user_id || isPrivileged) && (
+                        <button
+                          onClick={() => deleteComment.mutate(c.id)}
+                          className="mt-1 ml-4 text-[10px] font-semibold text-destructive hover:underline"
+                        >
+                          Sil
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -663,6 +706,14 @@ const ProductDetail = () => {
                               <span className="shrink-0 text-[10px] text-muted-foreground">{formatTime(reply.created_at)}</span>
                             </div>
                             <p className="mt-1 break-words text-sm text-foreground">{reply.content}</p>
+                            {(user?.id === reply.user_id || isPrivileged) && (
+                              <button
+                                onClick={() => deleteComment.mutate(reply.id)}
+                                className="mt-1 text-[10px] font-semibold text-destructive hover:underline"
+                              >
+                                Sil
+                              </button>
+                            )}
                           </div>
                         </div>
                       ))}
