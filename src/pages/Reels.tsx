@@ -4,7 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useIsAdminOrMod } from "@/hooks/useIsAdmin";
-import { Heart, MessageCircle, Share2, Eye, ShoppingBag, X, Send, Play, Image as ImageIcon, UserPlus, UserCheck } from "lucide-react";
+import { Heart, MessageCircle, Share2, Eye, ShoppingBag, X, Send, Play, Image as ImageIcon, UserPlus, UserCheck, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -716,15 +721,29 @@ const Reels = () => {
                           Cavab yaz
                         </button>
                         {(user?.id === c.user_id || isPrivileged) && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteComment.mutate(c.id);
-                            }}
-                            className="text-[10px] font-semibold text-destructive hover:underline"
-                          >
-                            Sil
-                          </button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <button className="text-[10px] font-semibold text-destructive hover:underline flex items-center gap-1">
+                                <Trash2 className="h-2.5 w-2.5" />
+                                Sil
+                              </button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Şərhi silmək istəyirsiniz?</AlertDialogTitle>
+                                <AlertDialogDescription>Bu əməliyyat geri alına bilməz.</AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Ləğv et</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => deleteComment.mutate(c.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Sil
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         )}
                       </div>
                     )}
@@ -750,15 +769,29 @@ const Reels = () => {
                           </div>
                           <p className="mt-1 break-words text-xs leading-4 text-foreground">{reply.content}</p>
                           {(user?.id === reply.user_id || isPrivileged) && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteComment.mutate(reply.id);
-                              }}
-                              className="mt-1 text-[10px] font-semibold text-destructive hover:underline"
-                            >
-                              Sil
-                            </button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <button className="mt-1 text-[10px] font-semibold text-destructive hover:underline flex items-center gap-1">
+                                  <Trash2 className="h-2.5 w-2.5" />
+                                  Sil
+                                </button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Şərhi silmək istəyirsiniz?</AlertDialogTitle>
+                                  <AlertDialogDescription>Bu əməliyyat geri alına bilməz.</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Ləğv et</AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    onClick={() => deleteComment.mutate(reply.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Sil
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           )}
                         </div>
                       </div>

@@ -676,12 +676,29 @@ const ProductDetail = () => {
                         </button>
                       )}
                       {(user?.id === c.user_id || isPrivileged) && (
-                        <button
-                          onClick={() => deleteComment.mutate(c.id)}
-                          className="mt-1 ml-4 text-[10px] font-semibold text-destructive hover:underline"
-                        >
-                          Sil
-                        </button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button className="mt-1 ml-4 text-[10px] font-semibold text-destructive hover:underline flex items-center gap-1">
+                              <Trash2 className="h-3 w-3" />
+                              Sil
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Şərhi silmək istəyirsiniz?</AlertDialogTitle>
+                              <AlertDialogDescription>Bu əməliyyat geri alına bilməz.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Ləğv et</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => deleteComment.mutate(c.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Sil
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       )}
                     </div>
                   </div>
@@ -707,12 +724,29 @@ const ProductDetail = () => {
                             </div>
                             <p className="mt-1 break-words text-sm text-foreground">{reply.content}</p>
                             {(user?.id === reply.user_id || isPrivileged) && (
-                              <button
-                                onClick={() => deleteComment.mutate(reply.id)}
-                                className="mt-1 text-[10px] font-semibold text-destructive hover:underline"
-                              >
-                                Sil
-                              </button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <button className="mt-1 text-[10px] font-semibold text-destructive hover:underline flex items-center gap-1">
+                                    <Trash2 className="h-3 w-3" />
+                                    Sil
+                                  </button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Şərhi silmək istəyirsiniz?</AlertDialogTitle>
+                                    <AlertDialogDescription>Bu əməliyyat geri alına bilməz.</AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Ləğv et</AlertDialogCancel>
+                                    <AlertDialogAction 
+                                      onClick={() => deleteComment.mutate(reply.id)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Sil
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                             )}
                           </div>
                         </div>
