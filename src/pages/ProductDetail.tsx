@@ -1,8 +1,8 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Heart, Share2, MapPin, Clock, Star, Phone, MessageCircle, Shield, Eye, Loader2, Send, Store, ExternalLink, Edit2, Trash2, Crown, Zap, Gem, Play, UserPlus, UserCheck } from "lucide-react";
+import { ArrowLeft, Heart, Share2, MapPin, Clock, Star, Phone, MessageCircle, Shield, Eye, Loader2, Send, Store, ExternalLink, Edit2, Trash2, Crown, Zap, Gem, Play, UserPlus, UserCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from "@/components/ui/carousel";
 import ImageViewer from "@/components/ImageViewer";
 import { useState } from "react";
@@ -48,6 +48,7 @@ const ProductDetail = () => {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [commentText, setCommentText] = useState("");
+  const [replyingTo, setReplyingTo] = useState<{ id: string, name: string } | null>(null);
 
   // Check if listing is favorited
   const { data: favoriteData } = useQuery({
@@ -214,12 +215,18 @@ const ProductDetail = () => {
   const addComment = useMutation({
     mutationFn: async () => {
       if (!user || !commentText.trim()) return;
-      await supabase.from("reel_comments").insert({ listing_id: id!, user_id: user.id, content: commentText.trim() });
+      await supabase.from("reel_comments").insert({ 
+        listing_id: id!, 
+        user_id: user.id, 
+        content: commentText.trim(),
+        parent_id: replyingTo?.id || null 
+      });
     },
     onSuccess: () => {
       setCommentText("");
+      setReplyingTo(null);
       queryClient.invalidateQueries({ queryKey: ["reel-comments", id] });
-      toast({ title: "Şərh əlavə edildi" });
+      toast({ title: replyingTo ? "Cavab əlavə edildi" : "Şərh əlavə edildi" });
     },
     onError: (err: any) => {
       toast({ title: "Xəta", description: err.message, variant: "destructive" });
@@ -565,21 +572,37 @@ const ProductDetail = () => {
 
           {/* Comment Form */}
           {user ? (
-            <div className="mb-6 flex gap-3 rounded-xl border border-border bg-card p-4">
-              <Textarea
-                placeholder="Şərhiniz..."
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                rows={2}
-                className="resize-none"
-              />
-              <Button
-                onClick={() => addComment.mutate()}
-                disabled={!commentText.trim() || addComment.isPending}
-                className="h-auto shrink-0 gap-2"
-              >
-                <Send className="h-4 w-4" /> Göndər
-              </Button>
+            <div className="mb-6 rounded-xl border border-border bg-card p-4">
+              {replyingTo && (
+                <div className="mb-2 flex items-center justify-between rounded-md bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground">
+                  <span>
+                    <span className="font-semibold text-foreground">{replyingTo.name}</span> istifadəçisinə cavab yazırsınız...
+                  </span>
+                  <button onClick={() => setReplyingTo(null)} className="flex items-center gap-1 hover:text-foreground">
+                    <X className="h-3 w-3" /> Ləğv et
+                  </button>
+                </div>
+              )}
+              <div className="flex gap-3">
+                <Input
+                  placeholder={replyingTo ? "Cavabınız..." : "Şərhiniz..."}
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !!commentText.trim() && !addComment.isPending) {
+                      addComment.mutate();
+                    }
+                  }}
+                  className="bg-transparent"
+                />
+                <Button
+                  onClick={() => addComment.mutate()}
+                  disabled={!commentText.trim() || addComment.isPending}
+                  className="shrink-0 gap-2"
+                >
+                  <Send className="h-4 w-4" /> Göndər
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="mb-6 rounded-xl border border-border bg-card p-4 text-center">
@@ -590,25 +613,61 @@ const ProductDetail = () => {
           )}
 
           {comments.length > 0 ? (
-            <div className="space-y-4">
-              {comments.map((c: any) => (
-                <div key={c.id} className="flex gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-sm font-bold text-muted-foreground ring-1 ring-border">
-                    {c.profile?.avatar_url ? (
-                      <img src={c.profile.avatar_url} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      (c.profile?.full_name || "?")[0].toUpperCase()
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1 rounded-2xl rounded-tl-none bg-muted/50 p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-sm font-semibold text-foreground">
-                        {c.profile?.full_name || "İstifadəçi"}
-                      </span>
-                      <span className="shrink-0 text-[10px] text-muted-foreground">{formatTime(c.created_at)}</span>
+            <div className="space-y-6">
+              {comments.filter((c: any) => !c.parent_id).map((c: any) => (
+                <div key={c.id} className="flex flex-col gap-3">
+                  <div className="flex gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-sm font-bold text-muted-foreground ring-1 ring-border">
+                      {c.profile?.avatar_url ? (
+                        <img src={c.profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        (c.profile?.full_name || "?")[0].toUpperCase()
+                      )}
                     </div>
-                    <p className="mt-1 break-words text-sm text-foreground">{c.content}</p>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate text-sm font-semibold text-foreground">
+                          {c.profile?.full_name || "İstifadəçi"}
+                        </span>
+                        <span className="shrink-0 text-[10px] text-muted-foreground">{formatTime(c.created_at)}</span>
+                      </div>
+                      <p className="mt-1 break-words text-sm text-foreground">{c.content}</p>
+                      {user && (
+                        <button 
+                          onClick={() => setReplyingTo({ id: c.id, name: c.profile?.full_name || "İstifadəçi" })}
+                          className="mt-1 text-xs font-semibold text-muted-foreground transition-colors hover:text-primary"
+                        >
+                          Cavab yaz
+                        </button>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Replies */}
+                  {comments.filter((reply: any) => reply.parent_id === c.id).length > 0 && (
+                    <div className="ml-10 flex flex-col gap-3 border-l-2 border-muted/50 pl-4">
+                      {comments.filter((reply: any) => reply.parent_id === c.id).map((reply: any) => (
+                        <div key={reply.id} className="flex gap-3">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-xs font-bold text-muted-foreground ring-1 ring-border">
+                            {reply.profile?.avatar_url ? (
+                              <img src={reply.profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              (reply.profile?.full_name || "?")[0].toUpperCase()
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="truncate text-sm font-semibold text-foreground">
+                                {reply.profile?.full_name || "İstifadəçi"}
+                              </span>
+                              <span className="shrink-0 text-[10px] text-muted-foreground">{formatTime(reply.created_at)}</span>
+                            </div>
+                            <p className="mt-1 break-words text-sm text-foreground">{reply.content}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

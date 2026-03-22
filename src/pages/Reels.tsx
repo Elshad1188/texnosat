@@ -84,6 +84,7 @@ const Reels = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
+  const [replyingTo, setReplyingTo] = useState<{ id: string, name: string } | null>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [showLikeAnim, setShowLikeAnim] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -284,10 +285,16 @@ const Reels = () => {
   const addComment = useMutation({
     mutationFn: async () => {
       if (!user || !commentText.trim()) return;
-      await supabase.from("reel_comments").insert({ listing_id: currentReel!.id, user_id: user.id, content: commentText.trim() });
+      await supabase.from("reel_comments").insert({ 
+        listing_id: currentReel!.id, 
+        user_id: user.id, 
+        content: commentText.trim(),
+        parent_id: replyingTo?.id || null 
+      });
     },
     onSuccess: () => {
       setCommentText("");
+      setReplyingTo(null);
       // Dismiss keyboard by blurring input
       commentInputRef.current?.blur();
       queryClient.invalidateQueries({ queryKey: ["reel-comments", currentReel?.id] });
@@ -643,63 +650,112 @@ const Reels = () => {
               <div className="flex h-full min-h-40 items-center justify-center text-center text-sm text-muted-foreground">
                 Hələ şərh yoxdur
               </div>
-            ) : comments.map((c: any) => (
-              <div key={c.id} className="flex gap-3">
-                <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">
-                  {c.profile?.avatar_url ? (
-                    <img src={c.profile.avatar_url} alt={c.profile?.full_name || "İstifadəçi"} className="h-full w-full object-cover" />
-                  ) : (
-                    (c.profile?.full_name || "?")[0].toUpperCase()
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-xs font-semibold text-foreground">{c.profile?.full_name || "İstifadəçi"}</span>
-                    <span className="text-[10px] text-muted-foreground">{formatTime(c.created_at)}</span>
+            ) : comments.filter((c: any) => !c.parent_id).map((c: any) => (
+              <div key={c.id} className="flex flex-col gap-3">
+                <div className="flex gap-3">
+                  <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground">
+                    {c.profile?.avatar_url ? (
+                      <img src={c.profile.avatar_url} alt={c.profile?.full_name || "İstifadəçi"} className="h-full w-full object-cover" />
+                    ) : (
+                      (c.profile?.full_name || "?")[0].toUpperCase()
+                    )}
                   </div>
-                  <p className="mt-1 break-words text-sm leading-5 text-foreground">{c.content}</p>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-xs font-semibold text-foreground">{c.profile?.full_name || "İstifadəçi"}</span>
+                      <span className="text-[10px] text-muted-foreground">{formatTime(c.created_at)}</span>
+                    </div>
+                    <p className="mt-1 break-words text-sm leading-5 text-foreground">{c.content}</p>
+                    {user && (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setReplyingTo({ id: c.id, name: c.profile?.full_name || "İstifadəçi" });
+                          setTimeout(() => commentInputRef.current?.focus(), 50);
+                        }}
+                        className="mt-1 text-[10px] font-semibold text-muted-foreground"
+                      >
+                        Cavab yaz
+                      </button>
+                    )}
+                  </div>
                 </div>
+
+                {/* Replies */}
+                {comments.filter((reply: any) => reply.parent_id === c.id).length > 0 && (
+                  <div className="ml-11 flex flex-col gap-3 border-l px-3">
+                    {comments.filter((reply: any) => reply.parent_id === c.id).map((reply: any) => (
+                      <div key={reply.id} className="flex gap-2">
+                        <div className="h-6 w-6 shrink-0 overflow-hidden rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">
+                          {reply.profile?.avatar_url ? (
+                            <img src={reply.profile.avatar_url} alt={reply.profile?.full_name || "İstifadəçi"} className="h-full w-full object-cover" />
+                          ) : (
+                            (reply.profile?.full_name || "?")[0].toUpperCase()
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate text-xs font-semibold text-foreground">{reply.profile?.full_name || "İstifadəçi"}</span>
+                            <span className="text-[10px] text-muted-foreground">{formatTime(reply.created_at)}</span>
+                          </div>
+                          <p className="mt-1 break-words text-xs leading-4 text-foreground">{reply.content}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
             <div ref={commentsEndRef} />
           </div>
 
           {user ? (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (commentText.trim()) {
-                  commentLockRef.current = true;
-                  addComment.mutate(undefined, {
-                    onSettled: () => {
-                      setTimeout(() => { commentLockRef.current = false; }, 250);
-                    },
-                  });
-                }
-              }}
-              className="shrink-0 border-t border-border bg-background px-3 py-3"
-            >
-              <div className="flex items-center gap-2 rounded-full bg-muted px-3 py-2">
-                <input
-                  ref={commentInputRef}
-                  autoFocus
-                  placeholder="Şərh əlavə et..."
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  className="h-8 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
-                  onTouchStart={(e) => e.stopPropagation()}
-                  onTouchEnd={(e) => e.stopPropagation()}
-                />
-                <button
-                  type="submit"
-                  disabled={!commentText.trim() || addComment.isPending}
-                  className="shrink-0 text-sm font-semibold text-primary disabled:text-muted-foreground"
-                >
-                  Göndər
-                </button>
-              </div>
-            </form>
+            <div className="shrink-0 border-t border-border bg-background px-3 py-3">
+              {replyingTo && (
+                <div className="mb-2 flex items-center justify-between px-1 text-xs text-muted-foreground transition-all">
+                  <span>
+                    <span className="font-semibold text-foreground">{replyingTo.name}</span> istifadəçisinə cavab
+                  </span>
+                  <button onClick={() => setReplyingTo(null)}>
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (commentText.trim()) {
+                    commentLockRef.current = true;
+                    addComment.mutate(undefined, {
+                      onSettled: () => {
+                        setTimeout(() => { commentLockRef.current = false; }, 250);
+                      },
+                    });
+                  }
+                }}
+              >
+                <div className="flex items-center gap-2 rounded-full bg-muted px-3 py-2">
+                  <input
+                    ref={commentInputRef}
+                    autoFocus
+                    placeholder={replyingTo ? "Cavab əlavə et..." : "Şərh əlavə et..."}
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    className="h-8 flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchEnd={(e) => e.stopPropagation()}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!commentText.trim() || addComment.isPending}
+                    className="shrink-0 text-sm font-semibold text-primary disabled:text-muted-foreground"
+                  >
+                    Göndər
+                  </button>
+                </div>
+              </form>
+            </div>
           ) : (
             <div className="shrink-0 border-t border-border bg-background px-4 py-4 text-center">
               <button onClick={() => navigate("/auth")} className="text-sm font-medium text-primary">
