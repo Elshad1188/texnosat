@@ -93,10 +93,22 @@ const AdminGiftsManager = () => {
     if (!searchQuery.trim()) return;
     setSearching(true);
     try {
+      const q = searchQuery.trim();
+      
+      // Build filters safe for or()
+      const filters = [];
+      filters.push(`full_name.ilike.*${q}*`);
+      
+      // Only add user_id filter if it looks like a UUID to prevent DB error
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (uuidRegex.test(q)) {
+        filters.push(`user_id.eq.${q}`);
+      }
+
       const { data, error } = await supabase
         .from("profiles")
         .select("user_id, full_name, last_spin_at")
-        .or(`full_name.ilike.%${searchQuery}%,user_id.eq.${searchQuery.trim()}`)
+        .or(filters.join(','))
         .limit(10);
       
       if (error) throw error;
@@ -105,6 +117,7 @@ const AdminGiftsManager = () => {
         toast({ title: "Nəticə tapılmadı" });
       }
     } catch (err: any) {
+      console.error("User search error:", err);
       toast({ title: "Axtarış xətası", description: err.message, variant: "destructive" });
     } finally {
       setSearching(false);
