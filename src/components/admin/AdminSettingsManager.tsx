@@ -86,7 +86,6 @@ const AdminSettingsManager = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingWm, setUploadingWm] = useState(false);
-  const [siteLogo, setSiteLogo] = useState<string | null>(null);
   const [themeSettings, setThemeSettings] = useState<any>(DEFAULT_THEME);
   const wmFileRef = useRef<HTMLInputElement>(null);
 
@@ -101,9 +100,6 @@ const AdminSettingsManager = () => {
       const themeVal = themeData?.value as any;
       if (themeVal) {
         setThemeSettings({ ...DEFAULT_THEME, ...themeVal });
-        if (themeVal.logo_url) {
-          setSiteLogo(themeVal.logo_url);
-        }
       }
       
       setLoading(false);
