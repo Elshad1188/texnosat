@@ -34,12 +34,50 @@ import ComparePage from "./pages/ComparePage";
 
 const queryClient = new QueryClient();
 
+import SplashScreen from "./components/SplashScreen";
+import { useTheme } from "@/contexts/ThemeContext";
+
 const ScrollToTop = () => {
   const { pathname } = useLocation();
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
   return null;
+};
+
+const AppWrapper = () => {
+  const { isLoaded } = useTheme();
+
+  if (!isLoaded) {
+    return <SplashScreen />;
+  }
+
+  return (
+    <div className="pb-16 md:pb-0">
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/products" element={<Products />} />
+        <Route path="/product/:id" element={<ProductDetail />} />
+        <Route path="/seller/:id" element={<SellerProfile />} />
+        <Route path="/create-listing" element={<CreateListing />} />
+        <Route path="/reels" element={<Reels />} />
+        <Route path="/create-store" element={<CreateStore />} />
+        <Route path="/stores" element={<Stores />} />
+        <Route path="/store/:id" element={<StoreDetail />} />
+        <Route path="/store-dashboard" element={<StoreDashboard />} />
+        <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/messages" element={<Messages />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/favorites" element={<Favorites />} />
+        <Route path="/balance" element={<Balance />} />
+        <Route path="/spin-win" element={<SpinWin />} />
+        <Route path="/page/:slug" element={<StaticPage />} />
+        <Route path="/compare" element={<ComparePage />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </div>
+  );
 };
 
 const App = () => (
@@ -52,30 +90,7 @@ const App = () => (
           <AuthProvider>
             <ThemeProvider>
               <ScrollToTop />
-              <div className="pb-16 md:pb-0">
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/products" element={<Products />} />
-                  <Route path="/product/:id" element={<ProductDetail />} />
-                  <Route path="/seller/:id" element={<SellerProfile />} />
-                  <Route path="/create-listing" element={<CreateListing />} />
-                  <Route path="/reels" element={<Reels />} />
-                  <Route path="/create-store" element={<CreateStore />} />
-                  <Route path="/stores" element={<Stores />} />
-                  <Route path="/store/:id" element={<StoreDetail />} />
-                  <Route path="/store-dashboard" element={<StoreDashboard />} />
-                  <Route path="/admin" element={<AdminPanel />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/messages" element={<Messages />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/favorites" element={<Favorites />} />
-                  <Route path="/balance" element={<Balance />} />
-                  <Route path="/spin-win" element={<SpinWin />} />
-                  <Route path="/page/:slug" element={<StaticPage />} />
-                  <Route path="/compare" element={<ComparePage />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </div>
+              <AppWrapper />
               <CompareBar />
               <MobileBottomNav />
               <AppDownloadBanner />

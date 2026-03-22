@@ -39,10 +39,11 @@ const defaultTheme: ThemeColors = {
 
 interface ThemeContextType {
   theme: ThemeColors;
+  isLoaded: boolean;
   refreshTheme: () => Promise<void>;
 }
 
-const ThemeContext = createContext<ThemeContextType>({ theme: defaultTheme, refreshTheme: async () => {} });
+const ThemeContext = createContext<ThemeContextType>({ theme: defaultTheme, isLoaded: false, refreshTheme: async () => {} });
 
 export const useTheme = () => useContext(ThemeContext);
 
@@ -72,17 +73,22 @@ function applyTheme(t: ThemeColors) {
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState<ThemeColors>(defaultTheme);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const refreshTheme = async () => {
-    const { data } = await supabase
-      .from("site_settings")
-      .select("value")
-      .eq("key", "theme")
-      .single();
-    if (data?.value) {
-      const t = data.value as unknown as ThemeColors;
-      setTheme(t);
-      applyTheme(t);
+    try {
+      const { data } = await supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "theme")
+        .single();
+      if (data?.value) {
+        const t = data.value as unknown as ThemeColors;
+        setTheme(t);
+        applyTheme(t);
+      }
+    } finally {
+      setIsLoaded(true);
     }
   };
 
@@ -91,7 +97,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, refreshTheme }}>
+    <ThemeContext.Provider value={{ theme, isLoaded, refreshTheme }}>
       {children}
     </ThemeContext.Provider>
   );
