@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import Categories from "@/components/Categories";
+import StoresSlider from "@/components/StoresSlider";
 import FeaturedListings from "@/components/FeaturedListings";
 import BannerDisplay from "@/components/BannerDisplay";
 import Footer from "@/components/Footer";
@@ -12,6 +13,7 @@ const Index = () => {
       <main>
         <HeroSection />
         <Categories />
+        <StoresSlider />
         <div className="container mx-auto px-4">
           <BannerDisplay position="home_top" />
         </div>
