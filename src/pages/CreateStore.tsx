@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Store, Loader2, Crown, Upload, CheckCircle, Image } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const CreateStore = () => {
   const { user } = useAuth();
@@ -30,6 +31,49 @@ const CreateStore = () => {
   const [form, setForm] = useState({
     name: "", description: "", address: "", city: "", phone: "", working_hours: "",
   });
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("18:00");
+
+  const daysOfWeek = [
+    { id: "B.e", label: "B.e" },
+    { id: "Ç.a", label: "Ç.a" },
+    { id: "Ç.", label: "Ç." },
+    { id: "C.a", label: "C.a" },
+    { id: "Cü", label: "Cü" },
+    { id: "Ş.", label: "Ş." },
+    { id: "B.", label: "B." },
+  ];
+
+  const timeOptions = Array.from({ length: 48 }, (_, i) => {
+    const hour = Math.floor(i / 2).toString().padStart(2, "0");
+    const minute = (i % 2 === 0 ? "00" : "30");
+    return `${hour}:${minute}`;
+  });
+
+  const toggleDay = (dayId: string) => {
+    setSelectedDays(prev => 
+      prev.includes(dayId) ? prev.filter(d => d !== dayId) : [...prev, dayId]
+    );
+  };
+
+  const getDayRangeString = (days: string[]) => {
+    if (days.length === 0) return "";
+    if (days.length === 7) return "Hər gün";
+    if (days.length === 5 && days.every(d => ["B.e", "Ç.a", "Ç.", "C.a", "Cü"].includes(d))) return "B.e - Cü";
+    
+    // Check for continuous range
+    const indices = days.map(d => daysOfWeek.findIndex(dw => dw.id === d)).sort((a, b) => a - b);
+    const isContinuous = indices.every((val, i) => i === 0 || val === indices[i-1] + 1);
+    
+    if (isContinuous && days.length > 2) {
+      return `${daysOfWeek[indices[0]].label} - ${daysOfWeek[indices[indices.length-1]].label}`;
+    }
+    
+    return days.join(", ");
+  };
+
+  const formattedWorkingHours = `${getDayRangeString(selectedDays)}, ${startTime} - ${endTime}`;
 
   const { data: regions = [] } = useQuery({
     queryKey: ["regions-parent"],
@@ -59,6 +103,33 @@ const CreateStore = () => {
       });
       if (editStore.logo_url) setLogoPreview(editStore.logo_url);
       if (editStore.cover_url) setCoverPreview(editStore.cover_url);
+      
+      // Try to parse working hours
+      if (editStore.working_hours) {
+        const parts = editStore.working_hours.split(",");
+        if (parts.length >= 2) {
+          const daysPart = parts[0].trim();
+          const timePart = parts[1].trim();
+          
+          if (daysPart === "Hər gün") setSelectedDays(daysOfWeek.map(d => d.id));
+          else if (daysPart.includes("-")) {
+            const [start, end] = daysPart.split("-").map(d => d.trim());
+            const sIdx = daysOfWeek.findIndex(dw => dw.label === start);
+            const eIdx = daysOfWeek.findIndex(dw => dw.label === end);
+            if (sIdx !== -1 && eIdx !== -1) {
+              setSelectedDays(daysOfWeek.slice(sIdx, eIdx + 1).map(d => d.id));
+            }
+          } else {
+            setSelectedDays(daysPart.split(",").map(d => d.trim()).filter(d => daysOfWeek.some(dw => dw.id === d)));
+          }
+          
+          const times = timePart.split("-").map(t => t.trim());
+          if (times.length === 2) {
+            setStartTime(times[0]);
+            setEndTime(times[1]);
+          }
+        }
+      }
     }
   });
 
@@ -105,7 +176,12 @@ const CreateStore = () => {
       if (logoFile) logoUrl = await uploadFile(logoFile, "logo", "store-logos");
       if (coverFile) coverUrl = await uploadFile(coverFile, "cover", "store-logos");
 
-      const payload = { ...form, logo_url: logoUrl, cover_url: coverUrl };
+      const payload = { 
+        ...form, 
+        logo_url: logoUrl, 
+        cover_url: coverUrl,
+        working_hours: selectedDays.length > 0 ? formattedWorkingHours : form.working_hours 
+      };
 
       if (editId && editStore) {
         const { error } = await supabase.from("stores").update(payload).eq("id", editId);
@@ -234,9 +310,53 @@ const CreateStore = () => {
             <Input id="address" placeholder="Küçə, bina" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="hours">İş saatları</Label>
-            <Input id="hours" placeholder="Məs: 09:00 - 18:00" value={form.working_hours} onChange={(e) => setForm({ ...form, working_hours: e.target.value })} />
+          <div className="space-y-4 rounded-xl border border-border p-4 bg-muted/30">
+            <Label>İş günləri və saatları</Label>
+            
+            <div className="flex flex-wrap gap-2">
+              {daysOfWeek.map((day) => (
+                <button
+                  key={day.id}
+                  type="button"
+                  onClick={() => toggleDay(day.id)}
+                  className={cn(
+                    "h-10 w-10 rounded-lg text-xs font-semibold transition-all border",
+                    selectedDays.includes(day.id)
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                      : "bg-background text-muted-foreground border-border hover:border-primary/50"
+                  )}
+                >
+                  {day.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] uppercase text-muted-foreground">Açılış</Label>
+                <Select value={startTime} onValueChange={setStartTime}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent className="max-h-[200px]">
+                    {timeOptions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] uppercase text-muted-foreground">Qapanış</Label>
+                <Select value={endTime} onValueChange={setEndTime}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent className="max-h-[200px]">
+                    {timeOptions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-border/50">
+              <p className="text-xs text-muted-foreground italic">
+                Nəticə: <span className="text-foreground font-medium">{selectedDays.length > 0 ? formattedWorkingHours : "Seçilməyib"}</span>
+              </p>
+            </div>
           </div>
 
           <Button type="submit" disabled={loading} className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90">
