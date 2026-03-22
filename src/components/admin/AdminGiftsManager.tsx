@@ -18,7 +18,10 @@ import {
   TrendingUp, 
   DollarSign,
   AlertCircle,
-  RotateCw
+  RotateCw,
+  Search,
+  Users,
+  Edit
 } from "lucide-react";
 import {
   Table,
@@ -35,6 +38,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface SpinPrize {
   id: string;
@@ -46,19 +50,13 @@ interface SpinPrize {
   created_at: string;
 }
 
-interface SpinHistory {
-  id: string;
-  user_id: string;
-  prize_id: string;
-  amount: number;
-  created_at: string;
-  user_email?: string;
-}
-
 const AdminGiftsManager = () => {
   const { toast } = useToast();
   const [prizes, setPrizes] = useState<SpinPrize[]>([]);
-  const [history, setHistory] = useState<SpinHistory[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPrize, setEditingPrize] = useState<Partial<SpinPrize> | null>(null);
@@ -78,10 +76,7 @@ const AdminGiftsManager = () => {
       
       const { data: historyData } = await supabase
         .from("spin_history")
-        .select(`
-          *,
-          user_id
-        `)
+        .select(`*`)
         .order("created_at", { ascending: false })
         .limit(50);
 
@@ -94,6 +89,43 @@ const AdminGiftsManager = () => {
     }
   };
 
+  const handleSearchUsers = async () => {
+    if (!searchQuery.trim()) return;
+    setSearching(true);
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, last_spin_at")
+        .or(`full_name.ilike.%${searchQuery}%,user_id.eq.${searchQuery.trim()}`)
+        .limit(10);
+      
+      if (error) throw error;
+      setSearchResults(data || []);
+      if (data?.length === 0) {
+        toast({ title: "Nəticə tapılmadı" });
+      }
+    } catch (err: any) {
+      toast({ title: "Axtarış xətası", description: err.message, variant: "destructive" });
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleResetCooldown = async (userId: string) => {
+    try {
+      const { data, error } = await supabase.rpc("reset_user_spin_cooldown", {
+        _user_id: userId
+      });
+      if (error) throw error;
+      toast({ title: "İstifadəçinin şansı yeniləndi" });
+      
+      // Update local results if relevant
+      setSearchResults(prev => prev.map(u => u.user_id === userId ? { ...u, last_spin_at: null } : u));
+    } catch (err: any) {
+      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+    }
+  };
+
   const handleSavePrize = async () => {
     if (!editingPrize?.label) {
       toast({ title: "Ad sahəsi vacibdir", variant: "destructive" });
@@ -102,7 +134,6 @@ const AdminGiftsManager = () => {
     
     setSaving(true);
     try {
-      // Prepare data object to avoid sending undefined/extra fields
       const prizeData = {
         label: editingPrize.label,
         amount: Number(editingPrize.amount) || 0,
@@ -129,26 +160,9 @@ const AdminGiftsManager = () => {
       setIsDialogOpen(false);
       fetchData();
     } catch (err: any) {
-      console.error("Save Prize Error:", err);
-      toast({ 
-        title: "Xəta baş verdi", 
-        description: err.message || "Məlumatı yadda saxlamaq mümkün olmadı", 
-        variant: "destructive" 
-      });
+      toast({ title: "Xəta baş verdi", description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleResetCooldown = async (userId: string) => {
-    try {
-      const { data, error } = await supabase.rpc("reset_user_spin_cooldown", {
-        _user_id: userId
-      });
-      if (error) throw error;
-      toast({ title: "İstifadəçinin şansı yeniləndi" });
-    } catch (err: any) {
-      toast({ title: "Xəta", description: err.message, variant: "destructive" });
     }
   };
 
@@ -178,16 +192,15 @@ const AdminGiftsManager = () => {
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-border bg-card p-4 shadow-sm space-y-2">
           <div className="flex items-center gap-2 text-muted-foreground">
             <DollarSign className="h-4 w-4" />
             <span className="text-xs font-medium uppercase tracking-wider">Cəmi Verilən</span>
           </div>
-          <div className="text-2xl font-bold text-foreground">{stats.totalGiven.toFixed(2)} AZN</div>
+          <div className="text-2xl font-bold text-foreground">{stats.totalGiven.toFixed(2)} ₼</div>
           <div className="flex items-center gap-1 text-[10px] text-green-500">
-            <TrendingUp className="h-3 w-3" /> Son 50 fırlatma üzrə
+            <TrendingUp className="h-3 w-3" /> Son 50 fırlatma
           </div>
         </div>
         <div className="rounded-2xl border border-border bg-card p-4 shadow-sm space-y-2">
@@ -196,7 +209,7 @@ const AdminGiftsManager = () => {
             <span className="text-xs font-medium uppercase tracking-wider">Cəmi Fırlatma</span>
           </div>
           <div className="text-2xl font-bold text-foreground">{stats.totalSpins}</div>
-          <div className="text-xs text-muted-foreground">İstifadəçi aktivliyi</div>
+          <div className="text-xs text-muted-foreground">Mövcut tarixçə üzrə</div>
         </div>
         <div className="rounded-2xl border border-border bg-card p-4 shadow-sm space-y-2">
           <div className="flex items-center gap-2 text-muted-foreground">
@@ -208,137 +221,172 @@ const AdminGiftsManager = () => {
         </div>
       </div>
 
-      {/* Prizes Management */}
-      <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
-        <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
-          <div className="flex items-center gap-2">
-            <Gift className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold text-foreground">🎡 Çarx Hədiyyələri</h3>
-          </div>
-          <Button 
-            size="sm" 
-            className="h-8 gap-1.5 bg-gradient-primary" 
-            onClick={() => {
-              setEditingPrize({ label: "", amount: 0, chance: 1, color: "#f97316", is_active: true });
-              setIsDialogOpen(true);
-            }}
-          >
-            <Plus className="h-3.5 w-3.5" /> Əlavə et
-          </Button>
-        </div>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Adı</TableHead>
-                <TableHead>Məbləğ</TableHead>
-                <TableHead>Şans (Weight)</TableHead>
-                <TableHead>Rəng</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Əməliyyat</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {prizes.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.label}</TableCell>
-                  <TableCell>{p.amount} AZN</TableCell>
-                  <TableCell>{p.chance}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded-full border border-border" style={{ backgroundColor: p.color }} />
-                      <span className="text-xs font-mono">{p.color}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                      p.is_active ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"
-                    }`}>
-                      {p.is_active ? "Aktiv" : "Deaktiv"}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8" 
-                        onClick={() => {
-                          setEditingPrize(p);
-                          setIsDialogOpen(true);
-                        }}
-                      >
-                        <Save className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-destructive" 
-                        onClick={() => handleDeletePrize(p.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+        <Tabs defaultValue="prizes">
+            <div className="border-b border-border bg-muted/30 px-4 pt-1">
+                <TabsList className="bg-transparent h-12 gap-6">
+                    <TabsTrigger value="prizes" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-12 px-0 font-semibold gap-2">
+                        <Gift className="h-4 w-4" /> Hədiyyələr
+                    </TabsTrigger>
+                    <TabsTrigger value="users" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-12 px-0 font-semibold gap-2">
+                        <Users className="h-4 w-4" /> Şans Sıfırlama
+                    </TabsTrigger>
+                    <TabsTrigger value="history" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none h-12 px-0 font-semibold gap-2">
+                        <History className="h-4 w-4" /> Son Qazananlar
+                    </TabsTrigger>
+                </TabsList>
+            </div>
 
-      {/* History Table */}
-      <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-border bg-muted/30">
-          <div className="flex items-center gap-2">
-            <History className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold text-foreground">Son Qazananlar</h3>
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>İstifadəçi ID</TableHead>
-                <TableHead>Məbləğ</TableHead>
-                <TableHead>Tarix</TableHead>
-                <TableHead className="text-right">Əməliyyat</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {history.map((item: any) => (
-                <TableRow key={item.id}>
-                  <TableCell className="text-xs text-muted-foreground">{item.user_id}</TableCell>
-                  <TableCell className="font-semibold text-green-600">+{item.amount.toFixed(2)} ₼</TableCell>
-                  <TableCell className="text-xs">
-                    {new Date(item.created_at).toLocaleString("az-AZ")}
-                  </TableCell>
-                  <TableCell className="text-right">
+            <TabsContent value="prizes" className="p-0 animate-in fade-in-50 duration-500">
+                <div className="p-4 border-b border-border flex items-center justify-between bg-muted/5">
+                    <h3 className="text-sm font-bold uppercase tracking-tight">Hədiyyə Siyahısı</h3>
                     <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="h-7 text-[10px]"
-                      onClick={() => handleResetCooldown(item.user_id)}
+                        size="sm" 
+                        className="h-8 gap-1.5 bg-gradient-primary" 
+                        onClick={() => {
+                            setEditingPrize({ label: "", amount: 0, chance: 1, color: "#f97316", is_active: true });
+                            setIsDialogOpen(true);
+                        }}
                     >
-                      <RotateCw className="h-3 w-3 mr-1" />
-                      Sıfırla
+                        <Plus className="h-3.5 w-3.5" /> Əlavə et
                     </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {history.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                    Hələ qalib yoxdur
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                </div>
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Adı</TableHead>
+                                <TableHead>Məbləğ</TableHead>
+                                <TableHead>Şans</TableHead>
+                                <TableHead>Rəng</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Əməliyyat</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {prizes.map((p) => (
+                                <TableRow key={p.id}>
+                                    <TableCell className="font-medium">{p.label}</TableCell>
+                                    <TableCell>{p.amount} ₼</TableCell>
+                                    <TableCell>{p.chance}</TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-4 w-4 rounded-full border border-border" style={{ backgroundColor: p.color }} />
+                                            <span className="text-[10px] font-mono opacity-60 uppercase">{p.color}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                            p.is_active ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"
+                                        }`}>
+                                            {p.is_active ? "Aktiv" : "Deaktiv"}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex justify-end gap-1">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingPrize(p); setIsDialogOpen(true); }}>
+                                                <Edit className="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeletePrize(p.id)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            </TabsContent>
+
+            <TabsContent value="users" className="p-4 space-y-6 animate-in fade-in-50 duration-500">
+                <div className="max-w-md space-y-4">
+                    <div className="space-y-1.5">
+                        <Label>İstifadəçi Axtarışı</Label>
+                        <div className="flex gap-2">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input 
+                                    placeholder="Ad və ya User ID yazın..." 
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSearchUsers()}
+                                    className="pl-9"
+                                />
+                            </div>
+                            <Button onClick={handleSearchUsers} disabled={searching}>
+                                {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Axtar"}
+                            </Button>
+                        </div>
+                    </div>
+
+                    {searchResults.length > 0 && (
+                        <div className="space-y-2 border-t pt-4">
+                            {searchResults.map(user => (
+                                <div key={user.user_id} className="flex items-center justify-between p-3 bg-muted/20 rounded-xl border border-border shadow-sm">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold">{user.full_name || "Adsız İstifadəçi"}</span>
+                                        <span className="text-[10px] text-muted-foreground font-mono">{user.user_id}</span>
+                                        {user.last_spin_at ? (
+                                            <span className="text-[10px] text-orange-600 font-bold mt-0.5">
+                                                Son fırlatma: {new Date(user.last_spin_at).toLocaleString('az-AZ')}
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] text-green-600 font-bold mt-0.5">Şansı var</span>
+                                        )}
+                                    </div>
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        className="h-8 text-xs font-bold gap-1"
+                                        onClick={() => handleResetCooldown(user.user_id)}
+                                        disabled={!user.last_spin_at}
+                                    >
+                                        <RotateCw className="h-3.5 w-3.5" /> Sıfırla
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </TabsContent>
+
+            <TabsContent value="history" className="p-0 animate-in fade-in-50 duration-500">
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>User ID</TableHead>
+                                <TableHead>Məbləğ</TableHead>
+                                <TableHead>Tarix</TableHead>
+                                <TableHead className="text-right">Əməliyyat</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {history.map((h) => (
+                                <TableRow key={h.id}>
+                                    <TableCell className="text-xs text-muted-foreground font-mono truncate max-w-[150px]">{h.user_id}</TableCell>
+                                    <TableCell className="font-bold text-green-600">+{h.amount.toFixed(2)} ₼</TableCell>
+                                    <TableCell className="text-xs">{new Date(h.created_at).toLocaleString("az-AZ")}</TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={() => handleResetCooldown(h.user_id)}>
+                                            <RotateCw className="h-3 w-3 mr-1" /> Sıfırla
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                            {history.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center py-12 text-muted-foreground">Son qazanan yoxdur</TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            </TabsContent>
+        </Tabs>
       </div>
 
-      {/* Edit/Add Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -346,59 +394,29 @@ const AdminGiftsManager = () => {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-1.5">
-              <Label htmlFor="label">Adı (Məsələn: 1 AZN)</Label>
-              <Input 
-                id="label" 
-                value={editingPrize?.label || ""} 
-                onChange={(e) => setEditingPrize(prev => ({ ...prev, label: e.target.value }))}
-                placeholder="0.50 AZN"
-              />
+              <Label htmlFor="label">Adı</Label>
+              <Input id="label" value={editingPrize?.label || ""} onChange={(e) => setEditingPrize(prev => ({ ...prev, label: e.target.value }))} placeholder="0.50 AZN" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="amount">Məbləğ (AZN)</Label>
-                <Input 
-                  id="amount" 
-                  type="number" 
-                  step="0.01"
-                  value={editingPrize?.amount || 0} 
-                  onChange={(e) => setEditingPrize(prev => ({ ...prev, amount: Number(e.target.value) }))}
-                />
+                <Label htmlFor="amount">Məbləğ (₼)</Label>
+                <Input id="amount" type="number" step="0.01" value={editingPrize?.amount || 0} onChange={(e) => setEditingPrize(prev => ({ ...prev, amount: Number(e.target.value) }))} />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="chance">Şans (Weight)</Label>
-                <Input 
-                  id="chance" 
-                  type="number" 
-                  value={editingPrize?.chance || 1} 
-                  onChange={(e) => setEditingPrize(prev => ({ ...prev, chance: Number(e.target.value) }))}
-                />
+                <Input id="chance" type="number" value={editingPrize?.chance || 1} onChange={(e) => setEditingPrize(prev => ({ ...prev, chance: Number(e.target.value) }))} />
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="color">Fond Rəngi</Label>
+              <Label htmlFor="color">Rəng</Label>
               <div className="flex gap-2">
-                <Input 
-                  id="color" 
-                  type="color" 
-                  className="h-10 w-12 p-1"
-                  value={editingPrize?.color || "#f97316"} 
-                  onChange={(e) => setEditingPrize(prev => ({ ...prev, color: e.target.value }))}
-                />
-                <Input 
-                  value={editingPrize?.color || "#f97316"} 
-                  onChange={(e) => setEditingPrize(prev => ({ ...prev, color: e.target.value }))}
-                  className="h-10 font-mono"
-                />
+                <Input id="color" type="color" className="h-10 w-12 p-1" value={editingPrize?.color || "#f97316"} onChange={(e) => setEditingPrize(prev => ({ ...prev, color: e.target.value }))} />
+                <Input value={editingPrize?.color || "#f97316"} onChange={(e) => setEditingPrize(prev => ({ ...prev, color: e.target.value }))} className="h-10 font-mono" />
               </div>
             </div>
             <div className="flex items-center justify-between">
               <Label htmlFor="active">Aktivdir</Label>
-              <Switch 
-                id="active" 
-                checked={editingPrize?.is_active || false} 
-                onCheckedChange={(v) => setEditingPrize(prev => ({ ...prev, is_active: v }))}
-              />
+              <Switch id="active" checked={editingPrize?.is_active || false} onCheckedChange={(v) => setEditingPrize(prev => ({ ...prev, is_active: v }))} />
             </div>
           </div>
           <DialogFooter>
