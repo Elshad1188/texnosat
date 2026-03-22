@@ -28,6 +28,7 @@ interface SiteSettings {
   premium_price: number;
   vip_price: number;
   urgent_price: number;
+  store_premium_price: number;
 }
 
 const defaults: SiteSettings = {
@@ -48,6 +49,7 @@ const defaults: SiteSettings = {
   premium_price: 5,
   vip_price: 10,
   urgent_price: 3,
+  store_premium_price: 20,
 };
 
 const watermarkPositions = [
@@ -209,18 +211,31 @@ const AdminSettingsManager = () => {
               step={0.1}
             />
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Təcili (7 gün)</Label>
-            <Input
-              type="number"
-              value={settings.urgent_price}
-              onChange={(e) => setSettings({ ...settings, urgent_price: Number(e.target.value) })}
-              className="h-9"
-              min={0}
-              step={0.1}
-            />
+            <div className="space-y-1.5">
+              <Label className="text-xs">Təcili (7 gün)</Label>
+              <Input
+                type="number"
+                value={settings.urgent_price}
+                onChange={(e) => setSettings({ ...settings, urgent_price: Number(e.target.value) })}
+                className="h-9"
+                min={0}
+                step={0.1}
+              />
+            </div>
           </div>
-        </div>
+          <div className="pt-2 border-t border-border/50">
+            <div className="space-y-1.5 max-w-[200px]">
+              <Label className="text-xs">Mağaza Premium (30 gün)</Label>
+              <Input
+                type="number"
+                value={settings.store_premium_price}
+                onChange={(e) => setSettings({ ...settings, store_premium_price: Number(e.target.value) })}
+                className="h-9"
+                min={0}
+                step={0.1}
+              />
+            </div>
+          </div>
       </div>
 
       {/* Watermark settings */}

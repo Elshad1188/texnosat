@@ -321,7 +321,9 @@ const Profile = () => {
                   const storeStatus = s.status || "approved";
                   return (
                     <Card key={s.id} className="overflow-hidden">
-                      {s.cover_url && <img src={s.cover_url} alt={s.name} className="h-28 w-full object-cover" />}
+                      <Link to={`/store/${s.id}`} state={{ fromProfile: true }}>
+                        {s.cover_url && <img src={s.cover_url} alt={s.name} className="h-28 w-full object-cover" />}
+                      </Link>
                       <CardContent className="flex items-center gap-3 p-3">
                         <Avatar className="h-12 w-12">
                           <AvatarImage src={s.logo_url || ""} />
@@ -329,7 +331,9 @@ const Profile = () => {
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <h3 className="text-sm font-semibold text-foreground truncate">{s.name}</h3>
+                            <Link to={`/store/${s.id}`} state={{ fromProfile: true }} className="hover:text-primary transition-colors truncate">
+                              <h3 className="text-sm font-semibold text-foreground truncate">{s.name}</h3>
+                            </Link>
                             {storeStatus === "pending" && <Badge className="bg-amber-500/20 text-amber-600 border-0 text-[10px] gap-0.5"><Clock className="h-2.5 w-2.5" />Gözləmədə</Badge>}
                             {storeStatus === "rejected" && <Badge variant="destructive" className="text-[10px]">Rədd edilib</Badge>}
                             {storeStatus === "approved" && <Badge className="bg-green-500/20 text-green-600 border-0 text-[10px]">Aktiv</Badge>}

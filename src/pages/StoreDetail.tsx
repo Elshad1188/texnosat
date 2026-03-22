@@ -15,6 +15,8 @@ import {
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { useIsAdminOrMod } from "@/hooks/useIsAdmin";
+import { useLocation } from "react-router-dom";
+import StoreBoostDialog from "@/components/StoreBoostDialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -40,6 +42,9 @@ const StoreDetail = () => {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const { isPrivileged } = useIsAdminOrMod();
+  const location = useLocation();
+  const [showBoostDialog, setShowBoostDialog] = useState(false);
+  const fromProfile = location.state?.fromProfile === true;
 
   const { data: store, isLoading } = useQuery({
     queryKey: ["store", id],
@@ -280,12 +285,14 @@ const StoreDetail = () => {
               <div className="mt-4 flex flex-wrap gap-2">
                 {isOwner ? (
                   <>
-                    <Button size="sm" variant="outline" className="gap-1" asChild>
-                      <Link to="/store-dashboard"><Settings className="h-4 w-4" />İdarə paneli</Link>
+                    <Button size="sm" variant="outline" className="gap-1 bg-gradient-primary text-primary-foreground border-0 hover:opacity-90" onClick={() => setShowBoostDialog(true)}>
+                      <Crown className="h-4 w-4" />Yüksəlt
                     </Button>
-                    <Button size="sm" variant="outline" className="gap-1" asChild>
-                      <Link to="/create-store"><Settings className="h-4 w-4" />Redaktə et</Link>
-                    </Button>
+                    {fromProfile && (
+                      <Button size="sm" variant="outline" className="gap-1" asChild>
+                        <Link to="/create-store"><Settings className="h-4 w-4" />Redaktə et</Link>
+                      </Button>
+                    )}
                   </>
                 ) : (
                   <>
@@ -425,6 +432,14 @@ const StoreDetail = () => {
         </div>
       </main>
       <Footer />
+      {store && (
+        <StoreBoostDialog
+          storeId={store.id}
+          storeName={store.name}
+          open={showBoostDialog}
+          onOpenChange={setShowBoostDialog}
+        />
+      )}
     </div>
   );
 };
