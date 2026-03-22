@@ -8,6 +8,14 @@ import { Loader2 } from "lucide-react";
 const StaticPage = () => {
   const { slug } = useParams();
 
+  const { data: settings } = useQuery({
+    queryKey: ["site-settings-general"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("*").eq("key", "general").maybeSingle();
+      return data?.value as any || {};
+    },
+  });
+
   const { data: page, isLoading } = useQuery({
     queryKey: ["page", slug],
     queryFn: async () => {
@@ -22,6 +30,11 @@ const StaticPage = () => {
     enabled: !!slug,
   });
 
+  const siteName = settings?.site_name || "Texnosat";
+
+  // Replace {{site_name}} placeholder in content with actual site name
+  const processedContent = page?.content?.replace(/\{\{site_name\}\}/g, siteName) || "";
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -32,7 +45,7 @@ const StaticPage = () => {
           <div className="mx-auto max-w-3xl">
             <h1 className="font-display text-3xl font-bold text-foreground mb-6">{page.title}</h1>
             <div className="prose prose-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
-              {(page as any).content}
+              {processedContent}
             </div>
           </div>
         ) : (
