@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
@@ -136,6 +137,7 @@ const AdminPanel = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [pendingReports, setPendingReports] = useState(0);
+  const [regions, setRegions] = useState<{ id: string; name: string }[]>([]);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [editForm, setEditForm] = useState({ title: "", description: "", price: 0, location: "" });
@@ -156,13 +158,14 @@ const AdminPanel = () => {
 
   const fetchAll = async () => {
     setLoading(true);
-    const [l, s, p, r, rev, rep] = await Promise.all([
+    const [l, s, p, r, rev, rep, reg] = await Promise.all([
       supabase.from("listings").select("*").order("created_at", { ascending: false }),
       supabase.from("stores").select("*").order("created_at", { ascending: false }),
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("*"),
       supabase.from("reviews").select("*").order("created_at", { ascending: false }),
       supabase.from("reports").select("*", { count: "exact", head: true }).eq("status", "pending"),
+      supabase.from("regions").select("id, name").eq("is_active", true).order("sort_order"),
     ]);
     if (l.data) setListings(l.data as Listing[]);
     if (s.data) setStores(s.data as StoreItem[]);
@@ -170,6 +173,7 @@ const AdminPanel = () => {
     if (r.data) setUserRoles(r.data as UserRole[]);
     if (rev.data) setReviews(rev.data as Review[]);
     if (rep.count !== null) setPendingReports(rep.count);
+    if (reg.data) setRegions(reg.data as { id: string; name: string }[]);
     setLoading(false);
   };
 
@@ -456,7 +460,16 @@ const AdminPanel = () => {
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs">Məkan</Label>
-                      <Input value={editForm.location} onChange={(e) => setEditForm({ ...editForm, location: e.target.value })} className="h-9" />
+                      <Select value={editForm.location} onValueChange={(val) => setEditForm({ ...editForm, location: val })}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Məkan seçin" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {regions.map((reg) => (
+                            <SelectItem key={reg.id} value={reg.name}>{reg.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <Button onClick={saveListing} className="w-full gap-2 bg-gradient-primary text-primary-foreground">
