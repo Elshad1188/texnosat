@@ -91,12 +91,27 @@ BEGIN
   RETURN json_build_object(
     'success', true, 
     'can_spin_again', (_prize.amount = 0),
-    'prize', json_build_object(
-      'id', _prize.id,
-      'label', _prize.label,
-      'amount', _prize.amount
-    )
+    'prize', json_build_object('id', _prize.id, 'label', _prize.label, 'amount', _prize.amount)
   );
+END;
+$$;
+
+-- Function to reset user spin cooldown (Admin only)
+CREATE OR REPLACE FUNCTION public.reset_user_spin_cooldown(_user_id uuid)
+RETURNS json
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  -- Check if caller is admin
+  IF NOT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'admin'::public.app_role) THEN
+    RAISE EXCEPTION 'Only admins can reset cooldowns';
+  END IF;
+
+  UPDATE public.profiles SET last_spin_at = NULL WHERE user_id = _user_id;
+  
+  RETURN json_build_object('success', true);
 END;
 $$;
 

@@ -17,7 +17,8 @@ import {
   History, 
   TrendingUp, 
   DollarSign,
-  AlertCircle
+  AlertCircle,
+  RotateCw
 } from "lucide-react";
 import {
   Table,
@@ -136,6 +137,18 @@ const AdminGiftsManager = () => {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleResetCooldown = async (userId: string) => {
+    try {
+      const { data, error } = await supabase.rpc("reset_user_spin_cooldown", {
+        _user_id: userId
+      });
+      if (error) throw error;
+      toast({ title: "İstifadəçinin şansı yeniləndi" });
+    } catch (err: any) {
+      toast({ title: "Xəta", description: err.message, variant: "destructive" });
     }
   };
 
@@ -287,23 +300,35 @@ const AdminGiftsManager = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>İstifadəçi ID</TableHead>
-                <TableHead>Udulmuş Məbləğ</TableHead>
+                <TableHead>Məbləğ</TableHead>
                 <TableHead>Tarix</TableHead>
+                <TableHead className="text-right">Əməliyyat</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {history.map((h) => (
-                <TableRow key={h.id}>
-                  <TableCell className="text-xs text-muted-foreground">{h.user_id}</TableCell>
-                  <TableCell className="font-semibold text-green-600">+{h.amount} AZN</TableCell>
+              {history.map((item: any) => (
+                <TableRow key={item.id}>
+                  <TableCell className="text-xs text-muted-foreground">{item.user_id}</TableCell>
+                  <TableCell className="font-semibold text-green-600">+{item.amount.toFixed(2)} ₼</TableCell>
                   <TableCell className="text-xs">
-                    {new Date(h.created_at).toLocaleString("az-AZ")}
+                    {new Date(item.created_at).toLocaleString("az-AZ")}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-7 text-[10px]"
+                      onClick={() => handleResetCooldown(item.user_id)}
+                    >
+                      <RotateCw className="h-3 w-3 mr-1" />
+                      Sıfırla
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
               {history.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                     Hələ qalib yoxdur
                   </TableCell>
                 </TableRow>
