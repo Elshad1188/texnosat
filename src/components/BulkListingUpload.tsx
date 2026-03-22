@@ -3,7 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Download, CheckCircle, XCircle, Loader2, FileText, AlertTriangle, ImagePlus, X } from "lucide-react";
+import {
+  Upload, Download, CheckCircle, XCircle,
+  Loader2, FileText, AlertTriangle, X,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface BulkRow {
@@ -13,7 +16,7 @@ interface BulkRow {
   category: string;
   condition: string;
   location: string;
-  image_files: string; // semicolon-separated filenames e.g. "foto1.jpg;foto2.jpg"
+  image_files: string; // semicolon-separated filenames
   status?: "ok" | "error";
   error?: string;
 }
@@ -57,8 +60,7 @@ const parseCSV = (text: string): BulkRow[] => {
 const BulkListingUpload = ({ storeId }: BulkListingUploadProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const csvRef = useRef<HTMLInputElement>(null);
-  const imgRef = useRef<HTMLInputElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const [rows, setRows] = useState<BulkRow[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -76,39 +78,32 @@ const BulkListingUpload = ({ storeId }: BulkListingUploadProps) => {
     URL.revokeObjectURL(url);
   };
 
-  const handleCSVFile = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFiles = (e: ChangeEvent<HTMLInputElement>) => {
+    const all = Array.from(e.target.files || []);
+    const csv = all.find(f => f.name.endsWith(".csv"));
+    const imgs = all.filter(f => f.type.startsWith("image/"));
+    setImageFiles(imgs);
     setDone(false);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const text = ev.target?.result as string;
-      const parsed = parseCSV(text);
-      const validated = parsed.map(row => {
-        if (!row.title) return { ...row, status: "error" as const, error: "Başlıq boşdur" };
-        if (!row.price || isNaN(Number(row.price))) return { ...row, status: "error" as const, error: "Qiymət düzgün deyil" };
-        if (!row.category) return { ...row, status: "error" as const, error: "Kateqoriya boşdur" };
-        return { ...row, status: "ok" as const };
-      });
-      setRows(validated);
-    };
-    reader.readAsText(file, "UTF-8");
+
+    if (csv) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const text = ev.target?.result as string;
+        const parsed = parseCSV(text);
+        const validated = parsed.map(row => {
+          if (!row.title) return { ...row, status: "error" as const, error: "Başlıq boşdur" };
+          if (!row.price || isNaN(Number(row.price))) return { ...row, status: "error" as const, error: "Qiymət düzgün deyil" };
+          if (!row.category) return { ...row, status: "error" as const, error: "Kateqoriya boşdur" };
+          return { ...row, status: "ok" as const };
+        });
+        setRows(validated);
+      };
+      reader.readAsText(csv, "UTF-8");
+    }
     e.target.value = "";
   };
 
-  const handleImageFiles = (e: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setImageFiles(prev => {
-      const existing = new Map(prev.map(f => [f.name, f]));
-      files.forEach(f => existing.set(f.name, f));
-      return Array.from(existing.values());
-    });
-    e.target.value = "";
-  };
-
-  const removeImage = (name: string) => {
-    setImageFiles(prev => prev.filter(f => f.name !== name));
-  };
+  const removeImage = (name: string) => setImageFiles(prev => prev.filter(f => f.name !== name));
 
   const handleUpload = async () => {
     if (!user || !storeId) return;
@@ -119,37 +114,27 @@ const BulkListingUpload = ({ storeId }: BulkListingUploadProps) => {
     }
     setUploading(true);
     setProgress(0);
-
     try {
-      // Build image file map by filename
       const imgMap = new Map<string, File>(imageFiles.map(f => [f.name.toLowerCase(), f]));
-
       const inserts: any[] = [];
 
       for (let i = 0; i < valid.length; i++) {
         const row = valid[i];
         const imageUrls: string[] = [];
-
-        // Upload each referenced image file
         if (row.image_files) {
-          const filenames = row.image_files.split(";").map(s => s.trim()).filter(Boolean);
-          for (const fname of filenames) {
+          const fnames = row.image_files.split(";").map(s => s.trim()).filter(Boolean);
+          for (const fname of fnames) {
             const file = imgMap.get(fname.toLowerCase());
             if (file) {
               const path = `${user.id}/${Date.now()}-${file.name}`;
-              const { error: upErr } = await supabase.storage
-                .from("listing-images")
-                .upload(path, file);
+              const { error: upErr } = await supabase.storage.from("listing-images").upload(path, file);
               if (!upErr) {
-                const { data: urlData } = supabase.storage
-                  .from("listing-images")
-                  .getPublicUrl(path);
+                const { data: urlData } = supabase.storage.from("listing-images").getPublicUrl(path);
                 imageUrls.push(urlData.publicUrl);
               }
             }
           }
         }
-
         inserts.push({
           title: row.title,
           description: row.description,
@@ -162,14 +147,11 @@ const BulkListingUpload = ({ storeId }: BulkListingUploadProps) => {
           is_active: true,
           image_urls: imageUrls,
         });
-
         setProgress(Math.round(((i + 1) / valid.length) * 80));
       }
 
-      // Batch insert all
       const { error } = await supabase.from("listings").insert(inserts);
       if (error) throw error;
-
       setProgress(100);
       setDone(true);
       setRows([]);
@@ -187,78 +169,67 @@ const BulkListingUpload = ({ storeId }: BulkListingUploadProps) => {
 
   return (
     <div className="space-y-4">
-      {/* Info + sample download */}
+      {/* Info card */}
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="flex items-start gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
             <FileText className="h-4 w-4 text-primary" />
           </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-foreground">CSV + şəkil ilə toplu yükləmə</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Nümunə faylı yükləyin, doldurun, şəkilləri seçin və sayta yükləyin.
-              CSV-dəki <code className="rounded bg-muted px-1 text-[10px]">image_files</code> sütununa şəkil fayllarının adlarını yazın (bir neçəsi üçün <code className="rounded bg-muted px-1 text-[10px]">;</code> ilə ayırın).
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">Toplu yükləmə — CSV + şəkillər birlikdə</p>
+            <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
+              Faylları seçdikdə <strong>həm CSV, həm şəkilləri eyni anda seçin</strong>.
+              CSV-nin <code className="rounded bg-muted px-1 text-[10px]">image_files</code> sütununa şəkil faylının adını yazın.
+              Bir neçə şəkil üçün <code className="rounded bg-muted px-1 text-[10px]">;</code> ilə ayırın.
             </p>
-            <Button
-              size="sm"
-              variant="outline"
-              className="mt-3 gap-2 h-8 text-xs"
-              onClick={downloadSample}
-            >
-              <Download className="h-3.5 w-3.5" />
-              Nümunə CSV faylını yüklə
+            <Button size="sm" variant="outline" className="mt-3 gap-2 h-8 text-xs" onClick={downloadSample}>
+              <Download className="h-3.5 w-3.5" /> Nümunə CSV-ni yüklə
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Step 1: CSV */}
-      <div className="space-y-2">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Addım 1 — CSV faylı</p>
-        <div
-          className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/30 p-6 text-center cursor-pointer transition-colors hover:border-primary/40 hover:bg-primary/5"
-          onClick={() => csvRef.current?.click()}
-        >
-          <Upload className="h-7 w-7 text-muted-foreground mb-1.5" />
-          <p className="text-sm font-medium text-foreground">
-            {rows.length > 0 ? `${rows.length} sətir yükləndi — dəyişmək üçün klikləyin` : "CSV faylını seçin"}
-          </p>
-          <p className="text-xs text-muted-foreground mt-0.5">.csv formatı</p>
-          <input ref={csvRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleCSVFile} />
-        </div>
+      {/* Single drop zone */}
+      <div
+        className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/30 p-8 text-center cursor-pointer transition-colors hover:border-primary/40 hover:bg-primary/5"
+        onClick={() => fileRef.current?.click()}
+      >
+        <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+        <p className="text-sm font-semibold text-foreground">CSV + şəkilləri eyni anda seçin</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Faylı seçərkən Ctrl/Cmd ilə CSV faylı + bütün şəkilləri birlikdə işarələyin
+        </p>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".csv,image/*"
+          multiple
+          className="hidden"
+          onChange={handleFiles}
+        />
       </div>
 
-      {/* Step 2: Images */}
-      <div className="space-y-2">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Addım 2 — Şəkillər (istəyə bağlı)</p>
-        <div
-          className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/30 p-6 text-center cursor-pointer transition-colors hover:border-primary/40 hover:bg-primary/5"
-          onClick={() => imgRef.current?.click()}
-        >
-          <ImagePlus className="h-7 w-7 text-muted-foreground mb-1.5" />
-          <p className="text-sm font-medium text-foreground">Şəkil faylları seçin</p>
-          <p className="text-xs text-muted-foreground mt-0.5">JPG, PNG — çoxlu seçim mümkündür</p>
-          <input ref={imgRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageFiles} />
+      {/* Image thumbnails */}
+      {imageFiles.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {imageFiles.map(f => (
+            <div key={f.name} className="relative group">
+              <img
+                src={URL.createObjectURL(f)}
+                alt={f.name}
+                className="h-16 w-16 rounded-xl object-cover border border-border"
+              />
+              <button
+                onClick={() => removeImage(f.name)}
+                className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X className="h-3 w-3" />
+              </button>
+              <p className="mt-0.5 text-center text-[9px] text-muted-foreground truncate w-16">{f.name}</p>
+            </div>
+          ))}
         </div>
-
-        {imageFiles.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-1">
-            {imageFiles.map(f => (
-              <div key={f.name} className="flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1">
-                <img
-                  src={URL.createObjectURL(f)}
-                  alt={f.name}
-                  className="h-5 w-5 rounded-full object-cover"
-                />
-                <span className="text-[11px] font-medium text-foreground max-w-[100px] truncate">{f.name}</span>
-                <button onClick={() => removeImage(f.name)} className="text-muted-foreground hover:text-destructive">
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Preview table */}
       {rows.length > 0 && (
@@ -266,12 +237,8 @@ const BulkListingUpload = ({ storeId }: BulkListingUploadProps) => {
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-foreground">Önizləmə</span>
-              {validCount > 0 && (
-                <Badge className="bg-green-500/20 text-green-600 border-0 text-[10px]">{validCount} hazır</Badge>
-              )}
-              {errorCount > 0 && (
-                <Badge className="bg-destructive/20 text-destructive border-0 text-[10px]">{errorCount} xəta</Badge>
-              )}
+              {validCount > 0 && <Badge className="bg-green-500/20 text-green-600 border-0 text-[10px]">{validCount} hazır</Badge>}
+              {errorCount > 0 && <Badge className="bg-destructive/20 text-destructive border-0 text-[10px]">{errorCount} xəta</Badge>}
             </div>
             <Button
               size="sm"
@@ -279,21 +246,15 @@ const BulkListingUpload = ({ storeId }: BulkListingUploadProps) => {
               disabled={uploading || validCount === 0}
               className="gap-1.5 bg-gradient-primary text-primary-foreground h-8 text-xs"
             >
-              {uploading ? (
-                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {progress}% yüklənir...</>
-              ) : (
-                <><Upload className="h-3.5 w-3.5" /> {validCount} elanı yüklə</>
-              )}
+              {uploading
+                ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {progress}%...</>
+                : <><Upload className="h-3.5 w-3.5" /> {validCount} elanı yüklə</>}
             </Button>
           </div>
 
-          {/* Progress bar */}
           {uploading && (
-            <div className="h-1 bg-muted">
-              <div
-                className="h-1 bg-primary transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
+            <div className="h-1.5 bg-muted">
+              <div className="h-1.5 bg-primary transition-all duration-300" style={{ width: `${progress}%` }} />
             </div>
           )}
 
@@ -301,41 +262,49 @@ const BulkListingUpload = ({ storeId }: BulkListingUploadProps) => {
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">#</th>
-                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">Başlıq</th>
-                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">Qiymət</th>
-                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">Kateqoriya</th>
-                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">Bölgə</th>
-                  <th className="text-left px-3 py-2 font-medium text-muted-foreground">Şəkillər</th>
-                  <th className="text-left px-3 py-2 font-medium text-muted-foreground w-6"></th>
+                  <th className="text-left px-3 py-2 text-muted-foreground font-medium">#</th>
+                  <th className="text-left px-3 py-2 text-muted-foreground font-medium">Başlıq</th>
+                  <th className="text-left px-3 py-2 text-muted-foreground font-medium">Qiymət</th>
+                  <th className="text-left px-3 py-2 text-muted-foreground font-medium">Kateqoriya</th>
+                  <th className="text-left px-3 py-2 text-muted-foreground font-medium">Bölgə</th>
+                  <th className="text-left px-3 py-2 text-muted-foreground font-medium">Şəkillər</th>
+                  <th className="px-3 py-2 w-6"></th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row, i) => {
                   const fnames = row.image_files ? row.image_files.split(";").map(s => s.trim()).filter(Boolean) : [];
                   const matched = fnames.filter(n => imageFiles.some(f => f.name.toLowerCase() === n.toLowerCase()));
+                  const matchedFiles = matched.map(n => imageFiles.find(f => f.name.toLowerCase() === n.toLowerCase())!);
                   return (
                     <tr key={i} className={`border-b border-border last:border-0 ${row.status === "error" ? "bg-destructive/5" : ""}`}>
                       <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
-                      <td className="px-3 py-2 font-medium max-w-[140px] truncate">{row.title}</td>
+                      <td className="px-3 py-2 font-medium max-w-[130px] truncate">{row.title}</td>
                       <td className="px-3 py-2">{row.price} ₼</td>
                       <td className="px-3 py-2">{row.category}</td>
                       <td className="px-3 py-2">{row.location}</td>
                       <td className="px-3 py-2">
-                        {fnames.length > 0 ? (
-                          <span className={matched.length === fnames.length ? "text-green-600" : "text-amber-500"}>
-                            {matched.length}/{fnames.length} şəkil
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
+                        <div className="flex items-center gap-1">
+                          {matchedFiles.slice(0, 3).map(f => (
+                            <img
+                              key={f.name}
+                              src={URL.createObjectURL(f)}
+                              alt={f.name}
+                              className="h-7 w-7 rounded-md object-cover border border-border"
+                            />
+                          ))}
+                          {fnames.length > 0 && (
+                            <span className={`text-[10px] font-medium ${matched.length === fnames.length ? "text-green-600" : "text-amber-500"}`}>
+                              {fnames.length === 0 ? "—" : `${matched.length}/${fnames.length}`}
+                            </span>
+                          )}
+                          {fnames.length === 0 && <span className="text-muted-foreground">—</span>}
+                        </div>
                       </td>
                       <td className="px-3 py-2">
-                        {row.status === "ok" ? (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                        ) : (
-                          <span title={row.error}><XCircle className="h-4 w-4 text-destructive" /></span>
-                        )}
+                        {row.status === "ok"
+                          ? <CheckCircle className="h-4 w-4 text-green-500" />
+                          : <span title={row.error}><XCircle className="h-4 w-4 text-destructive" /></span>}
                       </td>
                     </tr>
                   );
