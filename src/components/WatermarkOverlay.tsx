@@ -30,7 +30,7 @@ export const useWatermarkSettings = () => {
         opacity: (gen.watermark_opacity || 50) as number,
       };
     },
-    staleTime: 60000,
+    staleTime: 0,
   });
 };
 
@@ -46,11 +46,11 @@ const WatermarkOverlay = ({ className = "" }: { className?: string }) => {
     "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2";
 
   return (
-    <div className={`absolute inset-0 pointer-events-none z-10 ${className}`}>
+    <div className={`absolute inset-0 pointer-events-none z-30 ${className}`}>
       <img
         src={wm.url}
         alt=""
-        className={`absolute ${posClass} h-10 w-auto object-contain max-w-[40%] max-h-[30%]`}
+        className={`absolute ${posClass} h-12 w-auto object-contain max-w-[40%] max-h-[30%] pointer-events-none`}
         style={{ opacity: wm.opacity / 100 }}
       />
     </div>

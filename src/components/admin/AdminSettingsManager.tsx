@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -80,6 +81,7 @@ const AdminSettingsManager = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { refreshTheme } = useTheme();
+  const queryClient = useQueryClient();
   const [settings, setSettings] = useState<SiteSettings>(defaults);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -129,6 +131,7 @@ const AdminSettingsManager = () => {
     }
     
     await refreshTheme();
+    queryClient.invalidateQueries({ queryKey: ["watermark-settings"] });
     toast({ title: "Tənzimləmələr saxlanıldı" });
     setSaving(false);
   };
