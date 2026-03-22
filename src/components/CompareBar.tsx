@@ -10,7 +10,7 @@ const CompareBar = () => {
   if (items.length === 0) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-xl shadow-2xl">
+    <div className="fixed bottom-16 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-xl shadow-2xl md:bottom-0">
       <div className="container mx-auto flex items-center gap-3 px-4 py-3">
         {/* Items */}
         <div className="flex flex-1 items-center gap-2 overflow-x-auto scrollbar-hide">
