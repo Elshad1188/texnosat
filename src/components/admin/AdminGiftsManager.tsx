@@ -94,27 +94,46 @@ const AdminGiftsManager = () => {
   };
 
   const handleSavePrize = async () => {
-    if (!editingPrize?.label || editingPrize.chance === undefined) return;
+    if (!editingPrize?.label) {
+      toast({ title: "Ad sahəsi vacibdir", variant: "destructive" });
+      return;
+    }
+    
     setSaving(true);
     try {
+      // Prepare data object to avoid sending undefined/extra fields
+      const prizeData = {
+        label: editingPrize.label,
+        amount: Number(editingPrize.amount) || 0,
+        chance: Number(editingPrize.chance) || 1,
+        color: editingPrize.color || "#f97316",
+        is_active: editingPrize.is_active ?? true
+      };
+
+      let result;
       if (editingPrize.id) {
-        const { error } = await supabase
+        result = await supabase
           .from("spin_prizes")
-          .update(editingPrize)
+          .update(prizeData)
           .eq("id", editingPrize.id);
-        if (error) throw error;
-        toast({ title: "Hədiyyə yeniləndi" });
       } else {
-        const { error } = await supabase
+        result = await supabase
           .from("spin_prizes")
-          .insert(editingPrize);
-        if (error) throw error;
-        toast({ title: "Yeni hədiyyə əlavə edildi" });
+          .insert([prizeData]);
       }
+
+      if (result.error) throw result.error;
+
+      toast({ title: editingPrize.id ? "Hədiyyə yeniləndi" : "Yeni hədiyyə əlavə edildi" });
       setIsDialogOpen(false);
       fetchData();
     } catch (err: any) {
-      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+      console.error("Save Prize Error:", err);
+      toast({ 
+        title: "Xəta baş verdi", 
+        description: err.message || "Məlumatı yadda saxlamaq mümkün olmadı", 
+        variant: "destructive" 
+      });
     } finally {
       setSaving(false);
     }
