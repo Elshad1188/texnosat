@@ -72,6 +72,16 @@ const StoreDetail = () => {
         await supabase.from("store_followers").delete().eq("store_id", id!).eq("user_id", user!.id);
       } else {
         await supabase.from("store_followers").insert({ store_id: id!, user_id: user!.id });
+        // Notify the store owner of new follower
+        if (store && store.user_id !== user!.id) {
+          await supabase.from("notifications").insert({
+            user_id: store.user_id,
+            title: "🏪 Yeni abunəçi",
+            message: `Biri "${store.name}" mağazanıza abunə oldu.`,
+            type: "info",
+            is_read: false,
+          });
+        }
       }
     },
     onSuccess: () => {

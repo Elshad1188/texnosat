@@ -217,6 +217,15 @@ const ProductDetail = () => {
         comment: reviewComment || null,
       });
       if (error) throw error;
+      // Notify seller of new review
+      const stars = "⭐".repeat(reviewRating);
+      await supabase.from("notifications").insert({
+        user_id: listing.user_id,
+        title: `${stars} Yeni rəy`,
+        message: `"${listing.title}" elanınız üçün ${reviewRating}/5 ulduz reytinq aldınız.${reviewComment ? `\n\nŞərh: ${reviewComment}` : ""}`,
+        type: reviewRating >= 4 ? "success" : reviewRating >= 3 ? "info" : "warning",
+        is_read: false,
+      });
     },
     onSuccess: () => {
       toast({ title: "Rəyiniz əlavə edildi!" });
