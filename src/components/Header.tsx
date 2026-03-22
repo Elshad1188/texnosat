@@ -257,6 +257,10 @@ const Header = () => {
                 <LogOut className="h-5 w-5" />
               </Button>
               
+              <Button variant="ghost" size="icon" asChild>
+                <Link to="/favorites"><Heart className="h-5 w-5" /></Link>
+              </Button>
+              
               <NotificationBell />
               
               <Button className="hidden lg:flex bg-gradient-primary text-primary-foreground hover:opacity-90 gap-1.5" asChild>
