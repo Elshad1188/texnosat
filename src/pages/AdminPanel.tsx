@@ -13,6 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import AdminCategoryManager from "@/components/admin/AdminCategoryManager";
 import AdminCategoryFieldsManager from "@/components/admin/AdminCategoryFieldsManager";
 import AdminRegionManager from "@/components/admin/AdminRegionManager";
@@ -135,6 +137,8 @@ const AdminPanel = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [pendingReports, setPendingReports] = useState(0);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [editForm, setEditForm] = useState({ title: "", description: "", price: 0, location: "" });
   const tabsScrollRef = useRef<HTMLDivElement>(null);
 
   const scrollTabs = (direction: 'left' | 'right') => {
@@ -177,6 +181,24 @@ const AdminPanel = () => {
     }
     setListings((prev) => prev.map((l) => (l.id === id ? { ...l, ...updates } : l)));
     toast({ title: "Elan yeniləndi" });
+  };
+
+  const saveListing = async () => {
+    if (!selectedListing) return;
+    const updates = {
+      title: editForm.title,
+      description: editForm.description,
+      price: editForm.price,
+      location: editForm.location,
+    };
+    const { error } = await supabase.from("listings").update(updates).eq("id", selectedListing.id);
+    if (error) {
+      toast({ title: "Xəta", description: error.message, variant: "destructive" });
+      return;
+    }
+    setListings((prev) => prev.map((l) => (l.id === selectedListing.id ? { ...l, ...updates } : l)));
+    setSelectedListing(null);
+    toast({ title: "Elan yəniləndə ✓" });
   };
 
   const deleteListing = async (id: string) => {
@@ -411,6 +433,39 @@ const AdminPanel = () => {
 
           {/* Listings */}
           <TabsContent value="listings">
+            {/* Edit Listing Sheet */}
+            <Sheet open={!!selectedListing} onOpenChange={(open) => !open && setSelectedListing(null)}>
+              <SheetContent side="right" className="w-full sm:max-w-sm overflow-y-auto">
+                <SheetHeader className="pb-4">
+                  <SheetTitle>Elanı Redaktə Et</SheetTitle>
+                </SheetHeader>
+                <Separator className="mb-4" />
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Başlıq</Label>
+                    <Input value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} className="h-9" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Açıqlama</Label>
+                    <Textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} rows={5} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Qiymət (₼)</Label>
+                      <Input type="number" value={editForm.price} onChange={(e) => setEditForm({ ...editForm, price: Number(e.target.value) })} className="h-9" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Məkan</Label>
+                      <Input value={editForm.location} onChange={(e) => setEditForm({ ...editForm, location: e.target.value })} className="h-9" />
+                    </div>
+                  </div>
+                  <Button onClick={saveListing} className="w-full gap-2 bg-gradient-primary text-primary-foreground">
+                    <Pencil className="h-4 w-4" /> Dəyişlikləri saxla
+                  </Button>
+                </div>
+              </SheetContent>
+            </Sheet>
+
             {loading ? (
               <LoadingState />
             ) : fListings.length === 0 ? (
@@ -438,14 +493,10 @@ const AdminPanel = () => {
                           <Badge className="bg-amber-500/20 text-amber-600 border-0 text-[10px]">Premium</Badge>
                         )}
                         {l.is_urgent && (
-                          <Badge variant="destructive" className="text-[10px]">
-                            Təcili
-                          </Badge>
+                          <Badge variant="destructive" className="text-[10px]">Təcili</Badge>
                         )}
                         {!l.is_active && (
-                          <Badge variant="secondary" className="text-[10px]">
-                            Deaktiv
-                          </Badge>
+                          <Badge variant="secondary" className="text-[10px]">Deaktiv</Badge>
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">
@@ -456,9 +507,13 @@ const AdminPanel = () => {
                     </div>
                     <div className="flex flex-wrap items-center gap-1">
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
+                        variant="ghost" size="icon" className="h-8 w-8"
+                        onClick={() => { setSelectedListing(l); setEditForm({ title: l.title, description: l.description || "", price: l.price, location: l.location }); }}
+                      >
+                        <Pencil className="h-4 w-4 text-primary" />
+                      </Button>
+                      <Button
+                        variant="ghost" size="icon" className="h-8 w-8"
                         onClick={() => updateListing(l.id, { is_active: !l.is_active })}
                       >
                         {l.is_active ? (
@@ -468,17 +523,13 @@ const AdminPanel = () => {
                         )}
                       </Button>
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
+                        variant="ghost" size="icon" className="h-8 w-8"
                         onClick={() => updateListing(l.id, { is_premium: !l.is_premium })}
                       >
                         <Crown className={`h-4 w-4 ${l.is_premium ? "text-amber-500" : "text-muted-foreground"}`} />
                       </Button>
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
+                        variant="ghost" size="icon" className="h-8 w-8"
                         onClick={() => updateListing(l.id, { is_urgent: !l.is_urgent })}
                       >
                         <Zap className={`h-4 w-4 ${l.is_urgent ? "text-destructive" : "text-muted-foreground"}`} />
