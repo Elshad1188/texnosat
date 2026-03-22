@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -6,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -16,19 +15,28 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { to, to_user_id, subject, body, template, template_vars } = await req.json();
+    const bodyJson = await req.json().catch(() => ({}));
+    const { to, to_user_id, subject, body, template, template_vars } = bodyJson;
 
     // Resolve email from user_id if needed
     let recipientEmail = to;
     if (!recipientEmail && to_user_id) {
-      const { data: userData } = await supabase.auth.admin.getUserById(to_user_id);
-      recipientEmail = userData?.user?.email;
-      if (!recipientEmail) {
+      const { data: userResponse, error: userError } = await supabase.auth.admin.getUserById(to_user_id);
+      if (userError || !userResponse?.user?.email) {
+        console.error("User email not found or error:", userError);
         return new Response(JSON.stringify({ error: "İstifadəçi e-mail tapılmadı" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      recipientEmail = userResponse.user.email;
+    }
+
+    if (!recipientEmail) {
+      return new Response(JSON.stringify({ error: "Resipient e-mail təyin edilməyib" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Get SMTP settings
@@ -39,6 +47,7 @@ serve(async (req) => {
       .maybeSingle();
 
     if (!smtpData?.value) {
+      console.error("SMTP settings not found in site_settings");
       return new Response(JSON.stringify({ error: "SMTP tənzimləmələri qurulmayıb" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -48,8 +57,8 @@ serve(async (req) => {
     const smtp = smtpData.value as any;
 
     // If template is specified, get template and apply vars
-    let finalSubject = subject;
-    let finalBody = body;
+    let finalSubject = subject || "Yeni bildiriş";
+    let finalBody = body || "";
 
     if (template) {
       const { data: tplData } = await supabase
@@ -62,8 +71,8 @@ serve(async (req) => {
         const templates = tplData.value as any;
         const tpl = templates[template];
         if (tpl) {
-          finalSubject = tpl.subject;
-          finalBody = tpl.body;
+          finalSubject = tpl.subject || finalSubject;
+          finalBody = tpl.body || finalBody;
           // Replace template variables
           if (template_vars) {
             for (const [key, val] of Object.entries(template_vars)) {
@@ -76,16 +85,14 @@ serve(async (req) => {
       }
     }
 
-    // Send via SMTP using Deno's smtp client
-    // We use a fetch-based approach to a simple SMTP relay
-    // For Deno edge functions, we use the built-in TCP for SMTP
+    // Use denomailer for SMTP
     const { SMTPClient } = await import("https://deno.land/x/denomailer@1.6.0/mod.ts");
 
     const client = new SMTPClient({
       connection: {
         hostname: smtp.host,
         port: Number(smtp.port),
-        tls: smtp.secure,
+        tls: smtp.secure !== false, // default to true if not explicitly false
         auth: {
           username: smtp.username,
           password: smtp.password,
@@ -94,10 +101,11 @@ serve(async (req) => {
     });
 
     await client.send({
-      from: `${smtp.from_name} <${smtp.from_email}>`,
+      from: `${smtp.from_name || "Texnosat"} <${smtp.from_email || smtp.username}>`,
       to: recipientEmail,
       subject: finalSubject,
       content: finalBody,
+      html: finalBody.includes("<") ? finalBody : undefined, // simple HTML detection
     });
 
     await client.close();
@@ -106,8 +114,8 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
-    console.error("Email send error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("Email send fatal error:", error);
+    return new Response(JSON.stringify({ error: error.message, stack: error.stack }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

@@ -284,7 +284,8 @@ const Messages = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <main className="container mx-auto flex-1 px-4 py-4">
+      <TooltipProvider>
+        <main className="container mx-auto flex-1 px-4 py-4">
         <div className="flex h-[calc(100vh-180px)] overflow-hidden rounded-2xl border border-border bg-card shadow-card">
           {/* Sidebar - conversation list */}
           <div className={`w-full border-r border-border md:w-80 flex-shrink-0 flex flex-col ${activeConvoId ? "hidden md:flex" : "flex"}`}>
@@ -456,27 +457,25 @@ const Messages = () => {
                                 {new Date(m.created_at).toLocaleTimeString("az", { hour: "2-digit", minute: "2-digit" })}
                               </span>
                               {isMine && (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div className="flex items-center gap-0.5 ml-1">
-                                        {m.is_read ? (
-                                          <CheckCheck className="h-3.5 w-3.5 text-sky-300 fill-sky-300/20" />
-                                        ) : (
-                                          <Check className="h-3.5 w-3.5 opacity-70" />
-                                        )}
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top">
-                                      <p className="text-[10px]">
-                                        {m.is_read 
-                                          ? `Oxundu: ${m.read_at ? new Date(m.read_at).toLocaleTimeString("az", { hour: "2-digit", minute: "2-digit" }) : "Bilinmir"}`
-                                          : "Göndərildi"
-                                        }
-                                      </p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-0.5 ml-1 cursor-help">
+                                      {m.is_read ? (
+                                        <CheckCheck className="h-3.5 w-3.5 text-sky-300 fill-sky-300/20" />
+                                      ) : (
+                                        <Check className="h-3.5 w-3.5 opacity-70" />
+                                      )}
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top">
+                                    <p className="text-[10px]">
+                                      {m.is_read 
+                                        ? `Oxundu: ${m.read_at ? new Date(m.read_at).toLocaleTimeString("az", { hour: "2-digit", minute: "2-digit" }) : "Bilinmir"}`
+                                        : "Göndərildi"
+                                      }
+                                    </p>
+                                  </TooltipContent>
+                                </Tooltip>
                               )}
                             </div>
                             
@@ -546,6 +545,7 @@ const Messages = () => {
           </div>
         </div>
       </main>
+      </TooltipProvider>
       <Footer />
     </div>
   );
