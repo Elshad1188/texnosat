@@ -80,6 +80,7 @@ interface Listing {
   image_urls: string[] | null;
   condition: string;
   description: string | null;
+  status?: string;
 }
 
 interface StoreItem {
@@ -90,6 +91,7 @@ interface StoreItem {
   user_id: string;
   created_at: string;
   logo_url: string | null;
+  status?: string;
 }
 
 interface Profile {
@@ -129,6 +131,7 @@ const AdminPanel = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [pendingReports, setPendingReports] = useState(0);
   const tabsScrollRef = useRef<HTMLDivElement>(null);
 
   const scrollTabs = (direction: 'left' | 'right') => {
@@ -146,18 +149,20 @@ const AdminPanel = () => {
 
   const fetchAll = async () => {
     setLoading(true);
-    const [l, s, p, r, rev] = await Promise.all([
+    const [l, s, p, r, rev, rep] = await Promise.all([
       supabase.from("listings").select("*").order("created_at", { ascending: false }),
       supabase.from("stores").select("*").order("created_at", { ascending: false }),
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("*"),
       supabase.from("reviews").select("*").order("created_at", { ascending: false }),
+      supabase.from("reports").select("*", { count: "exact", head: true }).eq("status", "pending"),
     ]);
-    if (l.data) setListings(l.data);
-    if (s.data) setStores(s.data);
+    if (l.data) setListings(l.data as Listing[]);
+    if (s.data) setStores(s.data as StoreItem[]);
     if (p.data) setProfiles(p.data);
     if (r.data) setUserRoles(r.data as UserRole[]);
     if (rev.data) setReviews(rev.data as Review[]);
+    if (rep.count !== null) setPendingReports(rep.count);
     setLoading(false);
   };
 
@@ -251,6 +256,14 @@ const AdminPanel = () => {
     );
   }
 
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yStr = yesterday.toISOString();
+  const pendingListings = listings.filter((l) => l.status === "pending").length;
+  const pendingStores = stores.filter((s) => s.status === "pending").length;
+  const newUsers = profiles.filter((p) => p.created_at > yStr).length;
+  const newReviews = reviews.filter((r) => r.created_at > yStr).length;
+
   const q = searchQuery.toLowerCase();
   const fListings = listings.filter((l) => l.title.toLowerCase().includes(q));
   const fStores = stores.filter((s) => s.name.toLowerCase().includes(q));
@@ -282,8 +295,9 @@ const AdminPanel = () => {
                 <TabsTrigger value="stats" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <BarChart3 className="h-3.5 w-3.5" /> Statistika
                 </TabsTrigger>
-                <TabsTrigger value="moderation" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                <TabsTrigger value="moderation" className="relative gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <CheckSquare className="h-3.5 w-3.5" /> Moderasiya
+                  {pendingListings > 0 && <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />}
                 </TabsTrigger>
                 <TabsTrigger value="notifications" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <Bell className="h-3.5 w-3.5" /> Bildirişlər
@@ -297,17 +311,21 @@ const AdminPanel = () => {
                 <TabsTrigger value="regions" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <Map className="h-3.5 w-3.5" /> Bölgələr
                 </TabsTrigger>
-                <TabsTrigger value="stores" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                <TabsTrigger value="stores" className="relative gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <Store className="h-3.5 w-3.5" /> Mağazalar
+                  {pendingStores > 0 && <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />}
                 </TabsTrigger>
-                <TabsTrigger value="users" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                <TabsTrigger value="users" className="relative gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <Users className="h-3.5 w-3.5" /> İstifadəçilər
+                  {newUsers > 0 && <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />}
                 </TabsTrigger>
-                <TabsTrigger value="reviews" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                <TabsTrigger value="reviews" className="relative gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <MessageSquare className="h-3.5 w-3.5" /> Rəylər
+                  {newReviews > 0 && <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />}
                 </TabsTrigger>
-                <TabsTrigger value="reports" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                <TabsTrigger value="reports" className="relative gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <Flag className="h-3.5 w-3.5" /> Şikayətlər
+                  {pendingReports > 0 && <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />}
                 </TabsTrigger>
                 <TabsTrigger value="banners" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <Image className="h-3.5 w-3.5" /> Bannerlər
