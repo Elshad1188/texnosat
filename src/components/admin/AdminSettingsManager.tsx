@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Loader2, Globe, Mail, Phone, MapPin, Image, Upload } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface SiteSettings {
   site_name: string;
@@ -60,14 +61,29 @@ const watermarkPositions = [
   { value: "center", label: "Mərkəz" },
 ];
 
+const DEFAULT_THEME = {
+  primary_h: 24, primary_s: 95, primary_l: 53,
+  secondary_h: 220, secondary_s: 60, secondary_l: 18,
+  accent_h: 24, accent_s: 80, accent_l: 95,
+  background_h: 30, background_s: 25, background_l: 97,
+  card_h: 0, card_s: 0, card_l: 100,
+  radius: 0.75,
+  logo_text_main: "Texno",
+  logo_text_accent: "sat",
+  logo_icon: "T",
+  logo_color: "",
+};
+
 const AdminSettingsManager = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { refreshTheme } = useTheme();
   const [settings, setSettings] = useState<SiteSettings>(defaults);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingWm, setUploadingWm] = useState(false);
   const [siteLogo, setSiteLogo] = useState<string | null>(null);
+  const [themeSettings, setThemeSettings] = useState<any>(DEFAULT_THEME);
   const wmFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -79,8 +95,11 @@ const AdminSettingsManager = () => {
       
       const { data: themeData } = await supabase.from("site_settings").select("value").eq("key", "theme").maybeSingle();
       const themeVal = themeData?.value as any;
-      if (themeVal?.logo_url) {
-        setSiteLogo(themeVal.logo_url);
+      if (themeVal) {
+        setThemeSettings({ ...DEFAULT_THEME, ...themeVal });
+        if (themeVal.logo_url) {
+          setSiteLogo(themeVal.logo_url);
+        }
       }
       
       setLoading(false);
@@ -97,7 +116,17 @@ const AdminSettingsManager = () => {
     } else {
       await supabase.from("site_settings").insert({ key: "general", value: settings as any, updated_by: user?.id });
     }
+
+    if (themeSettings) {
+      const { data: existingTheme } = await supabase.from("site_settings").select("id").eq("key", "theme").maybeSingle();
+      if (existingTheme) {
+        await supabase.from("site_settings").update({ value: themeSettings, updated_by: user?.id }).eq("key", "theme");
+      } else {
+        await supabase.from("site_settings").insert({ key: "theme", value: themeSettings, updated_by: user?.id });
+      }
+    }
     
+    await refreshTheme();
     toast({ title: "Tənzimləmələr saxlanıldı" });
     setSaving(false);
   };
@@ -122,6 +151,42 @@ const AdminSettingsManager = () => {
         <div className="space-y-1.5">
           <Label className="text-xs">Sayt açıqlaması</Label>
           <Textarea value={settings.site_description} onChange={(e) => setSettings({ ...settings, site_description: e.target.value })} rows={2} />
+        </div>
+      </div>
+
+      {/* Brand/Logo Text */}
+      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2"><Image className="h-4 w-4" /> Loqo Mətni</h3>
+        <p className="text-xs text-muted-foreground">Saytın yuxarı sol küncündə görünən mətni tənzimləyin. (Məsələn: Texno + sat)</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Loqo mətni (Əsas)</Label>
+            <Input 
+              value={themeSettings?.logo_text_main || ""} 
+              onChange={(e) => setThemeSettings({ ...themeSettings, logo_text_main: e.target.value })} 
+              className="h-9" 
+              placeholder="Texno"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Loqo mətni (Vurğu)</Label>
+            <Input 
+              value={themeSettings?.logo_text_accent || ""} 
+              onChange={(e) => setThemeSettings({ ...themeSettings, logo_text_accent: e.target.value })} 
+              className="h-9" 
+              placeholder="sat"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Loqo İkonu (Tək hərf)</Label>
+            <Input 
+              value={themeSettings?.logo_icon || ""} 
+              onChange={(e) => setThemeSettings({ ...themeSettings, logo_icon: e.target.value.substring(0, 1) })} 
+              className="h-9 w-16 uppercase" 
+              placeholder="T"
+              maxLength={1}
+            />
+          </div>
         </div>
       </div>
 
