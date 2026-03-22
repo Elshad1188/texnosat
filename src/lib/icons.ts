@@ -5,42 +5,43 @@ import {
   Battery, Usb, HardDrive, Mouse, Keyboard, Tv, Radio,
 
   // Home & Living
-  Home, Sofa, Lamp, Bed, Bath, UtensilsCrossed, CookingPot,
-  Refrigerator, WashingMachine, Armchair, DoorOpen,
+  Home, Sofa, Lamp, Bed,
 
   // Clothing & Fashion
-  Shirt, ShoppingBag, Crown, Gem, Glasses, Scissors,
+  Shirt, ShoppingBag, Crown, Gem, Scissors,
 
   // Vehicles & Transport
-  Car, Truck, Bike, BusFront, Plane, Ship, Fuel,
-  CarFront, Wrench, Cog,
+  Car, Truck, Bike, Plane, Ship, Fuel, Wrench, Cog,
 
   // Sports & Outdoors
-  Trophy, Dumbbell, Bike as Bicycle, Mountain, Tent, Sailboat,
-  Football, Target,
+  Trophy, Mountain, Tent, Target,
 
   // Food & Drink
-  Apple, Coffee, Pizza, ChefHat, Wine, Sandwich, Cookie,
+  Apple, Coffee, Pizza, Wine,
 
   // Health & Beauty
-  Heart, Stethoscope, Pill, Baby, FlaskConical,
+  Heart, Pill, Baby,
 
   // Education & Work
-  BookOpen, GraduationCap, Briefcase, PenTool, Calculator,
-  Globe, Languages,
+  BookOpen, GraduationCap, Briefcase, Calculator, Globe,
 
   // Real Estate
-  Building, Building2, MapPin, Trees, Warehouse,
+  Building, Building2, MapPin, Warehouse,
 
-  // Animals & Nature
-  Bird, Cat, Dog, Fish, Leaf, Flower2, TreePine,
+  // Nature
+  Leaf, TreePine,
 
   // Entertainment
-  Music, MusicNote, Music2, Film, VideoIcon, Mic, Clapperboard,
-  Gamepad, Joystick, Ticket,
+  Music, Film, Mic, Gamepad, Ticket, Video, Play,
 
   // Tools & Services
-  Hammer, Paintbrush, Zap, Sparkles, Package, Gift, Star,
+  Hammer, Zap, Package, Gift, Star,
+
+  // Common UI icons used in project (verified working)
+  Search, User, Store, Flag, Eye, Clock, Image, Send,
+  Phone, Mail, Share2, MessageCircle, Shield, Edit2, Trash2,
+  Plus, Settings, Wallet, Download, ExternalLink, Check,
+
   type LucideIcon,
 } from "lucide-react";
 
@@ -51,42 +52,40 @@ export const iconMap: Record<string, LucideIcon> = {
   Battery, Usb, HardDrive, Mouse, Keyboard, Tv, Radio,
 
   // Home & Living
-  Home, Sofa, Lamp, Bed, Bath, UtensilsCrossed, CookingPot,
-  Refrigerator, WashingMachine, Armchair, DoorOpen,
+  Home, Sofa, Lamp, Bed,
 
   // Clothing & Fashion
-  Shirt, ShoppingBag, Crown, Gem, Glasses, Scissors,
+  Shirt, ShoppingBag, Crown, Gem, Scissors,
 
   // Vehicles & Transport
-  Car, Truck, Bike, BusFront, Plane, Ship, Fuel,
-  CarFront, Wrench, Cog,
+  Car, Truck, Bike, Plane, Ship, Fuel, Wrench, Cog,
 
   // Sports & Outdoors
-  Trophy, Dumbbell, Bicycle, Mountain, Tent, Sailboat,
-  Football, Target,
+  Trophy, Mountain, Tent, Target,
 
   // Food & Drink
-  Apple, Coffee, Pizza, ChefHat, Wine, Sandwich, Cookie,
+  Apple, Coffee, Pizza, Wine,
 
   // Health & Beauty
-  Heart, Stethoscope, Pill, Baby, FlaskConical,
+  Heart, Pill, Baby,
 
   // Education & Work
-  BookOpen, GraduationCap, Briefcase, PenTool, Calculator,
-  Globe, Languages,
+  BookOpen, GraduationCap, Briefcase, Calculator, Globe,
 
   // Real Estate
-  Building, Building2, MapPin, Trees, Warehouse,
+  Building, Building2, MapPin, Warehouse,
 
-  // Animals
-  Bird, Cat, Dog, Fish, Leaf, Flower2, TreePine,
+  // Nature
+  Leaf, TreePine,
 
   // Entertainment
-  Music, Music2, Film, Mic, Clapperboard,
-  Gamepad, Joystick, Ticket,
+  Music, Film, Mic, Gamepad, Ticket, Video, Play,
 
   // Tools & Services
-  Hammer, Paintbrush, Zap, Sparkles, Package, Gift, Star,
+  Hammer, Zap, Package, Gift, Star,
+
+  // Other
+  Store, User, Phone, Mail, Settings, Wallet,
 };
 
 export const availableIconNames = Object.keys(iconMap);
