@@ -29,7 +29,7 @@ const AdminAntispamManager = () => {
     setSaving(true);
     // Parse words from comma-separated string
     const wordsArray = wordsText.split(",")
-      .map(w => w.trim())
+      .map(w => w.trim().toLowerCase())
       .filter(w => w.length > 0);
 
     const { data: existing } = await supabase.from("site_settings").select("id").eq("key", "antispam").maybeSingle();

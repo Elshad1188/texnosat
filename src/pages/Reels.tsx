@@ -302,7 +302,7 @@ const Reels = () => {
           if (word.trim() && lowerText.includes(word.toLowerCase().trim())) {
             await supabase.rpc('notify_admins', {
               _event_type: 'antispam',
-              _message: `İstifadəçi şərhdə uyğunsuz sözə cəhd etdi: "${commentText}"`,
+              _message: `İstifadəçi (${user?.email || user?.id}) şərhdə uyğunsuz sözə cəhd etdi: "${commentText}"`,
               _title: 'Söyüş / Təhqir cəhdi'
             });
             throw new Error("Şərhinizdə icazə verilməyən (uyğunsuz) sözlər var.");
