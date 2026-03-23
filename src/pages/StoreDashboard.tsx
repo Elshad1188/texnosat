@@ -22,6 +22,8 @@ import {
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import BulkListingUpload from "@/components/BulkListingUpload";
+import SellerOrdersTab from "@/components/seller/SellerOrdersTab";
+import ShippingMethodsTab from "@/components/seller/ShippingMethodsTab";
 
 const StoreDashboard = () => {
   const { user } = useAuth();
