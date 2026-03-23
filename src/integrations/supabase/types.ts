@@ -423,6 +423,7 @@ export type Database = {
           email_notifications: boolean
           full_name: string | null
           id: string
+          last_spin_at: string | null
           phone: string | null
           referral_code: string | null
           referred_by: string | null
@@ -437,6 +438,7 @@ export type Database = {
           email_notifications?: boolean
           full_name?: string | null
           id?: string
+          last_spin_at?: string | null
           phone?: string | null
           referral_code?: string | null
           referred_by?: string | null
@@ -451,6 +453,7 @@ export type Database = {
           email_notifications?: boolean
           full_name?: string | null
           id?: string
+          last_spin_at?: string | null
           phone?: string | null
           referral_code?: string | null
           referred_by?: string | null
@@ -490,6 +493,13 @@ export type Database = {
             columns: ["listing_id"]
             isOneToOne: false
             referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reel_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "reel_comments"
             referencedColumns: ["id"]
           },
         ]
@@ -775,6 +785,75 @@ export type Database = {
         }
         Relationships: []
       }
+      spin_history: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          prize_id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          prize_id: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          prize_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spin_history_prize_id_fkey"
+            columns: ["prize_id"]
+            isOneToOne: false
+            referencedRelation: "spin_prizes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spin_history_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      spin_prizes: {
+        Row: {
+          amount: number
+          chance: number
+          color: string
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+        }
+        Insert: {
+          amount?: number
+          chance?: number
+          color?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+        }
+        Update: {
+          amount?: number
+          chance?: number
+          color?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+        }
+        Relationships: []
+      }
       store_followers: {
         Row: {
           created_at: string
@@ -925,6 +1004,8 @@ export type Database = {
         Args: { _new_user_id: string; _referral_code: string }
         Returns: boolean
       }
+      process_spin_win: { Args: { _prize_id: string }; Returns: Json }
+      reset_user_spin_cooldown: { Args: { _user_id: string }; Returns: Json }
       spend_balance: {
         Args: {
           _amount: number
