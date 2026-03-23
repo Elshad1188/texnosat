@@ -36,6 +36,7 @@ import AdminVideoSettings from "@/components/admin/AdminVideoSettings";
 import AdminStoreModerationManager from "@/components/admin/AdminStoreModerationManager";
 import AdminScraperManager from "@/components/admin/AdminScraperManager";
 import AdminAntispamManager from "@/components/admin/AdminAntispamManager";
+import AdminOrderManager from "@/components/admin/AdminOrderManager";
 import {
   ShieldCheck,
   ShieldAlert,

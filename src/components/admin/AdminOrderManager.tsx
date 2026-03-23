@@ -52,7 +52,7 @@ const AdminOrderManager = () => {
     queryKey: ["admin-orders", statusFilter],
     queryFn: async () => {
       let query = supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(100);
-      if (statusFilter !== "all") query = query.eq("status", statusFilter);
+      if (statusFilter !== "all") query = query.eq("status", statusFilter as any);
       const { data } = await query;
       return data || [];
     },
