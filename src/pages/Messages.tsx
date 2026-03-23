@@ -244,11 +244,10 @@ const Messages = () => {
       if (!convo) return;
       
       const isBuyer = convo.buyer_id === user.id;
-      const updateData = isBuyer ? { buyer_deleted_at: new Date().toISOString() } : { seller_deleted_at: new Date().toISOString() };
-      
+      // Since conversations table doesn't have delete columns, just delete the conversation
       const { error } = await supabase
         .from("conversations")
-        .update(updateData)
+        .delete()
         .eq("id", convoId);
       if (error) throw error;
     },
