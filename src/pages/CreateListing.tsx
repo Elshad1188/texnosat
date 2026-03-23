@@ -91,6 +91,7 @@ const CreateListing = () => {
       setCustomFields((editListing as any).custom_fields || {});
       setIsBuyable((editListing as any).is_buyable || false);
       setStock(String((editListing as any).stock || 1));
+      if (editListing.store_id) setSelectedStoreId(editListing.store_id);
     }
   }, [editListing]);
 
