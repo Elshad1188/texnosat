@@ -442,6 +442,28 @@ const CreateListing = () => {
               </div>
             )}
 
+            {/* Buyable toggle - only for stores with e-commerce enabled */}
+            {ecomSettings?.enabled && userStore && userStore.status === "approved" && (
+              <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <ShoppingBag className="h-4 w-4 text-primary" /> Birbaşa satış
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">Müştərilər bu məhsulu birbaşa ala bilsin</p>
+                  </div>
+                  <Switch checked={isBuyable} onCheckedChange={setIsBuyable} />
+                </div>
+                {isBuyable && (
+                  <div className="space-y-1">
+                    <Label className="text-xs">Stok sayı</Label>
+                    <Input type="number" min="1" value={stock} onChange={(e) => setStock(e.target.value)}
+                      className="h-9 w-32" />
+                  </div>
+                )}
+              </div>
+            )}
+
             <Button type="submit" disabled={loading} className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90">
               {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {editId ? "Yenilənir..." : "Yerləşdirilir..."}</> : (editId ? "Elanı yenilə" : "Elanı yerləşdir")}
             </Button>
