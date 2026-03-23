@@ -95,11 +95,13 @@ const SpinWin = () => {
       random -= prize.chance;
     }
 
-    // Calculate rotation
+    // Calculate rotation — land clearly inside the segment (avoid edges)
     const prizeIndex = prizes.indexOf(selectedPrize);
     const segmentAngle = 360 / prizes.length;
-    const extraSpins = 5 + Math.floor(Math.random() * 5); // 5 to 10 extra full rotations
-    const targetRotation = rotation + (extraSpins * 360) + (360 - (prizeIndex * segmentAngle)) - (segmentAngle / 2);
+    const extraSpins = 5 + Math.floor(Math.random() * 5);
+    // Offset within 25%-75% of segment to never land on a border
+    const safeOffset = segmentAngle * 0.25 + Math.random() * segmentAngle * 0.5;
+    const targetRotation = rotation + (extraSpins * 360) + (360 - (prizeIndex * segmentAngle) - safeOffset);
     
     setRotation(targetRotation);
 
