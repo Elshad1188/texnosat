@@ -56,6 +56,16 @@ const ProductDetail = () => {
   const [viewerIndex, setViewerIndex] = useState(0);
   const [commentText, setCommentText] = useState("");
   const [replyingTo, setReplyingTo] = useState<{ id: string, name: string } | null>(null);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+
+  // Check if e-commerce is enabled
+  const { data: ecomSettings } = useQuery({
+    queryKey: ["ecommerce-settings"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "ecommerce").maybeSingle();
+      return (data?.value as any) || { enabled: false };
+    },
+  });
 
   // Check if listing is favorited
   const { data: favoriteData } = useQuery({
