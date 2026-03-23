@@ -133,7 +133,7 @@ const Messages = () => {
     if (!activeConvoId || !user || messages.length === 0) return;
     const unreadIds = messages.filter((m: any) => !m.is_read && m.sender_id !== user.id).map((m: any) => m.id);
     if (unreadIds.length > 0) {
-      supabase.rpc("mark_messages_as_read", { msg_ids: unreadIds }).then(() => {
+      supabase.from("messages").update({ is_read: true }).in("id", unreadIds).then(() => {
         queryClient.invalidateQueries({ queryKey: ["conversations", user.id] });
       });
     }
