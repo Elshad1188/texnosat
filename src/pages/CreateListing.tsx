@@ -37,6 +37,7 @@ const CreateListing = () => {
   const [showCustomFields, setShowCustomFields] = useState(false);
   const [isBuyable, setIsBuyable] = useState(false);
   const [stock, setStock] = useState("1");
+  const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const [form, setForm] = useState({
     title: "", description: "", price: "", category: "", condition: "Yeni", location: "",
   });
