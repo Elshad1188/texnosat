@@ -35,6 +35,8 @@ const CreateListing = () => {
   const [existingVideo, setExistingVideo] = useState<string>("");
   const [customFields, setCustomFields] = useState<Record<string, string>>({});
   const [showCustomFields, setShowCustomFields] = useState(false);
+  const [isBuyable, setIsBuyable] = useState(false);
+  const [stock, setStock] = useState("1");
   const [form, setForm] = useState({
     title: "", description: "", price: "", category: "", condition: "Yeni", location: "",
   });
@@ -52,6 +54,14 @@ const CreateListing = () => {
     queryFn: async () => {
       const { data } = await supabase.from("site_settings").select("value").eq("key", "general").maybeSingle();
       return (data?.value as any) || { max_images_per_listing: 10 };
+    },
+  });
+
+  const { data: ecomSettings } = useQuery({
+    queryKey: ["ecommerce-settings"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "ecommerce").maybeSingle();
+      return (data?.value as any) || { enabled: false };
     },
   });
 
@@ -78,6 +88,8 @@ const CreateListing = () => {
         location: editListing.location,
       });
       setCustomFields((editListing as any).custom_fields || {});
+      setIsBuyable((editListing as any).is_buyable || false);
+      setStock(String((editListing as any).stock || 1));
     }
   }, [editListing]);
 
@@ -220,6 +232,8 @@ const CreateListing = () => {
         video_url: finalVideoUrl,
         store_id: userStore ? userStore.id : null,
         custom_fields: Object.keys(resolvedCustomFields).length > 0 ? resolvedCustomFields : null,
+        is_buyable: isBuyable,
+        stock: parseInt(stock) || 0,
       };
 
       if (editId) {
@@ -423,6 +437,28 @@ const CreateListing = () => {
                         )}
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Buyable toggle - only for stores with e-commerce enabled */}
+            {ecomSettings?.enabled && userStore && userStore.status === "approved" && (
+              <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <ShoppingBag className="h-4 w-4 text-primary" /> Birbaşa satış
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">Müştərilər bu məhsulu birbaşa ala bilsin</p>
+                  </div>
+                  <Switch checked={isBuyable} onCheckedChange={setIsBuyable} />
+                </div>
+                {isBuyable && (
+                  <div className="space-y-1">
+                    <Label className="text-xs">Stok sayı</Label>
+                    <Input type="number" min="1" value={stock} onChange={(e) => setStock(e.target.value)}
+                      className="h-9 w-32" />
                   </div>
                 )}
               </div>

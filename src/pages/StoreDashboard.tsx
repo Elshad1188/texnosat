@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
 import {
   Store, Package, Users, Eye, Crown, Edit2, Plus, Trash2,
-  MapPin, Phone, Clock, TrendingUp, Loader2, BarChart3, Rocket, Upload
+  MapPin, Phone, Clock, TrendingUp, Loader2, BarChart3, Rocket, Upload, ShoppingCart, Truck
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -22,6 +22,8 @@ import {
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import BulkListingUpload from "@/components/BulkListingUpload";
+import SellerOrdersTab from "@/components/seller/SellerOrdersTab";
+import ShippingMethodsTab from "@/components/seller/ShippingMethodsTab";
 
 const StoreDashboard = () => {
   const { user } = useAuth();
@@ -195,6 +197,8 @@ const StoreDashboard = () => {
         <Tabs defaultValue="listings" className="space-y-4">
           <TabsList className="w-full justify-start overflow-x-auto">
             <TabsTrigger value="listings" className="gap-1 text-xs sm:text-sm"><Package className="h-3.5 w-3.5" />Elanlar</TabsTrigger>
+            <TabsTrigger value="orders" className="gap-1 text-xs sm:text-sm"><ShoppingCart className="h-3.5 w-3.5" />Sifarişlər</TabsTrigger>
+            <TabsTrigger value="shipping" className="gap-1 text-xs sm:text-sm"><Truck className="h-3.5 w-3.5" />Çatdırılma</TabsTrigger>
             <TabsTrigger value="bulk" className="gap-1 text-xs sm:text-sm"><Upload className="h-3.5 w-3.5" />Toplu yükləmə</TabsTrigger>
             <TabsTrigger value="followers" className="gap-1 text-xs sm:text-sm"><Users className="h-3.5 w-3.5" />Abunəçilər</TabsTrigger>
           </TabsList>
@@ -276,6 +280,14 @@ const StoreDashboard = () => {
             )}
           </TabsContent>
 
+
+          <TabsContent value="orders">
+            <SellerOrdersTab storeId={store.id} />
+          </TabsContent>
+
+          <TabsContent value="shipping">
+            <ShippingMethodsTab storeId={store.id} />
+          </TabsContent>
 
           <TabsContent value="bulk">
             <BulkListingUpload storeId={store.id} />

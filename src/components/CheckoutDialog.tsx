@@ -1,0 +1,344 @@
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Wallet, CreditCard, Truck, MapPin, ShoppingCart, CheckCircle } from "lucide-react";
+
+interface CheckoutDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  listing: {
+    id: string;
+    title: string;
+    price: number;
+    currency: string;
+    user_id: string;
+    store_id: string | null;
+    image_urls: string[] | null;
+  };
+}
+
+const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [step, setStep] = useState<"shipping" | "payment" | "confirm" | "success">("shipping");
+  const [selectedShipping, setSelectedShipping] = useState<string>("");
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [buyerNote, setBuyerNote] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"balance" | "card">("balance");
+  const [quantity, setQuantity] = useState(1);
+  const [processing, setProcessing] = useState(false);
+
+  // Fetch user balance
+  const { data: profile } = useQuery({
+    queryKey: ["profile-balance", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("balance").eq("user_id", user!.id).single();
+      return data;
+    },
+    enabled: !!user && open,
+  });
+
+  // Fetch shipping methods for this store
+  const { data: shippingMethods = [] } = useQuery({
+    queryKey: ["shipping-methods", listing.store_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("shipping_methods")
+        .select("*")
+        .eq("store_id", listing.store_id!)
+        .eq("is_active", true);
+      return data || [];
+    },
+    enabled: !!listing.store_id && open,
+  });
+
+  // Fetch commission rate
+  const { data: commissionSetting } = useQuery({
+    queryKey: ["commission-rate"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "ecommerce").maybeSingle();
+      return (data?.value as any) || { commission_rate: 5 };
+    },
+    enabled: open,
+  });
+
+  const commissionRate = commissionSetting?.commission_rate || 5;
+  const selectedShippingMethod = shippingMethods.find((s: any) => s.id === selectedShipping);
+  const shippingPrice = selectedShippingMethod?.price || 0;
+  const unitPrice = listing.price;
+  const subtotal = unitPrice * quantity;
+  const commissionAmount = (subtotal * commissionRate) / 100;
+  const totalAmount = subtotal + shippingPrice;
+  const userBalance = profile?.balance || 0;
+  const canAfford = userBalance >= totalAmount;
+
+  const handleOrder = async () => {
+    if (!user) return;
+    setProcessing(true);
+
+    try {
+      if (paymentMethod === "balance") {
+        if (!canAfford) {
+          toast({ title: "Balansınız kifayət deyil", variant: "destructive" });
+          setProcessing(false);
+          return;
+        }
+
+        // Deduct balance using spend_balance
+        const { data: spent } = await supabase.rpc("spend_balance", {
+          _user_id: user.id,
+          _amount: totalAmount,
+          _description: `Sifariş: ${listing.title}`,
+          _reference_id: listing.id,
+        });
+
+        if (!spent) {
+          toast({ title: "Balans əməliyyatı uğursuz oldu", variant: "destructive" });
+          setProcessing(false);
+          return;
+        }
+      }
+
+      // Create order
+      const { error } = await supabase.from("orders").insert({
+        buyer_id: user.id,
+        seller_id: listing.user_id,
+        store_id: listing.store_id,
+        listing_id: listing.id,
+        quantity,
+        unit_price: unitPrice,
+        shipping_price: shippingPrice,
+        commission_rate: commissionRate,
+        commission_amount: commissionAmount,
+        total_amount: totalAmount,
+        payment_method: paymentMethod,
+        shipping_method_id: selectedShipping || null,
+        shipping_address: shippingAddress,
+        buyer_note: buyerNote || null,
+        paid_at: paymentMethod === "balance" ? new Date().toISOString() : null,
+        status: paymentMethod === "balance" ? "confirmed" : "pending",
+      } as any);
+
+      if (error) throw error;
+
+      setStep("success");
+      toast({ title: "Sifariş uğurla yaradıldı! 🎉" });
+    } catch (err: any) {
+      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const resetDialog = () => {
+    setStep("shipping");
+    setSelectedShipping("");
+    setShippingAddress("");
+    setBuyerNote("");
+    setPaymentMethod("balance");
+    setQuantity(1);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) resetDialog(); onOpenChange(o); }}>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ShoppingCart className="h-5 w-5 text-primary" />
+            {step === "success" ? "Sifariş tamamlandı" : "Sifariş ver"}
+          </DialogTitle>
+          <DialogDescription>
+            {step === "shipping" && "Çatdırılma üsulunu seçin"}
+            {step === "payment" && "Ödəniş üsulunu seçin"}
+            {step === "confirm" && "Sifarişi təsdiqləyin"}
+            {step === "success" && "Sifarişiniz uğurla yaradıldı"}
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Product summary */}
+        {step !== "success" && (
+          <div className="flex items-center gap-3 rounded-lg border border-border p-3">
+            {listing.image_urls?.[0] && (
+              <img src={listing.image_urls[0]} alt="" className="h-14 w-14 rounded-lg object-cover" />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground truncate">{listing.title}</p>
+              <p className="text-lg font-bold text-primary">{unitPrice} {listing.currency}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Step 1: Shipping */}
+        {step === "shipping" && (
+          <div className="space-y-4">
+            {shippingMethods.length > 0 ? (
+              <RadioGroup value={selectedShipping} onValueChange={setSelectedShipping}>
+                {shippingMethods.map((sm: any) => (
+                  <div key={sm.id} className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/50">
+                    <RadioGroupItem value={sm.id} id={sm.id} />
+                    <Label htmlFor={sm.id} className="flex-1 cursor-pointer">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">{sm.name}</p>
+                          {sm.description && <p className="text-xs text-muted-foreground">{sm.description}</p>}
+                          {sm.estimated_days && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                              <Truck className="h-3 w-3" /> {sm.estimated_days}
+                            </p>
+                          )}
+                        </div>
+                        <Badge variant="secondary" className="font-bold">
+                          {sm.price > 0 ? `${sm.price} ₼` : "Pulsuz"}
+                        </Badge>
+                      </div>
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Bu mağaza üçün çatdırılma üsulu mövcud deyil.
+              </p>
+            )}
+
+            <div className="space-y-1.5">
+              <Label className="text-xs flex items-center gap-1"><MapPin className="h-3 w-3" /> Çatdırılma ünvanı</Label>
+              <Textarea
+                value={shippingAddress}
+                onChange={(e) => setShippingAddress(e.target.value)}
+                placeholder="Tam ünvanınızı daxil edin..."
+                rows={2}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Qeyd (ixtiyari)</Label>
+              <Input
+                value={buyerNote}
+                onChange={(e) => setBuyerNote(e.target.value)}
+                placeholder="Satıcıya qeyd..."
+              />
+            </div>
+
+            <Button
+              className="w-full"
+              disabled={shippingMethods.length > 0 && !selectedShipping || !shippingAddress.trim()}
+              onClick={() => setStep("payment")}
+            >
+              Davam et
+            </Button>
+          </div>
+        )}
+
+        {/* Step 2: Payment */}
+        {step === "payment" && (
+          <div className="space-y-4">
+            <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as "balance" | "card")}>
+              <div className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/50">
+                <RadioGroupItem value="balance" id="balance" />
+                <Label htmlFor="balance" className="flex-1 cursor-pointer">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Wallet className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">Balans ilə ödə</span>
+                    </div>
+                    <Badge variant={canAfford ? "default" : "destructive"} className="text-xs">
+                      {userBalance.toFixed(2)} ₼
+                    </Badge>
+                  </div>
+                  {!canAfford && (
+                    <p className="text-xs text-destructive mt-1">Balansınız kifayət deyil</p>
+                  )}
+                </Label>
+              </div>
+              <div className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/50 opacity-50">
+                <RadioGroupItem value="card" id="card" disabled />
+                <Label htmlFor="card" className="flex-1 cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Kart ilə ödə</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">Tezliklə əlavə olunacaq</p>
+                </Label>
+              </div>
+            </RadioGroup>
+
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setStep("shipping")}>Geri</Button>
+              <Button
+                className="flex-1"
+                disabled={paymentMethod === "balance" && !canAfford}
+                onClick={() => setStep("confirm")}
+              >
+                Davam et
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Confirm */}
+        {step === "confirm" && (
+          <div className="space-y-4">
+            <div className="rounded-lg border border-border p-3 space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">Məhsul</span><span className="font-medium">{subtotal.toFixed(2)} ₼</span></div>
+              {shippingPrice > 0 && (
+                <div className="flex justify-between"><span className="text-muted-foreground">Çatdırılma</span><span className="font-medium">{shippingPrice.toFixed(2)} ₼</span></div>
+              )}
+              <div className="border-t border-border pt-2 flex justify-between font-bold text-base">
+                <span>Cəmi</span><span className="text-primary">{totalAmount.toFixed(2)} ₼</span>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-muted/50 p-3 space-y-1.5 text-xs text-muted-foreground">
+              <p><strong>Ödəniş:</strong> {paymentMethod === "balance" ? "Balans" : "Kart"}</p>
+              {selectedShippingMethod && <p><strong>Çatdırılma:</strong> {selectedShippingMethod.name}</p>}
+              <p><strong>Ünvan:</strong> {shippingAddress}</p>
+              {buyerNote && <p><strong>Qeyd:</strong> {buyerNote}</p>}
+            </div>
+
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setStep("payment")}>Geri</Button>
+              <Button
+                className="flex-1 gap-2 bg-green-600 hover:bg-green-700 text-white"
+                disabled={processing}
+                onClick={handleOrder}
+              >
+                {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <><ShoppingCart className="h-4 w-4" /> Sifarişi təsdiqlə</>}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Success */}
+        {step === "success" && (
+          <div className="text-center space-y-4 py-4">
+            <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
+            <div>
+              <h3 className="text-lg font-bold text-foreground">Sifarişiniz qəbul edildi!</h3>
+              <p className="text-sm text-muted-foreground mt-1">Satıcı sifarişinizi təsdiqləyəcək və sizə bildiriş göndərəcək.</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => { resetDialog(); onOpenChange(false); }}>Bağla</Button>
+              <Button className="flex-1" onClick={() => { resetDialog(); onOpenChange(false); navigate("/orders"); }}>
+                Sifarişlərim
+              </Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default CheckoutDialog;

@@ -241,6 +241,7 @@ export type Database = {
           id: string
           image_urls: string[] | null
           is_active: boolean
+          is_buyable: boolean
           is_premium: boolean
           is_urgent: boolean
           location: string
@@ -248,6 +249,7 @@ export type Database = {
           price: number
           rejection_reason: string | null
           status: string
+          stock: number
           store_id: string | null
           title: string
           updated_at: string
@@ -265,6 +267,7 @@ export type Database = {
           id?: string
           image_urls?: string[] | null
           is_active?: boolean
+          is_buyable?: boolean
           is_premium?: boolean
           is_urgent?: boolean
           location?: string
@@ -272,6 +275,7 @@ export type Database = {
           price: number
           rejection_reason?: string | null
           status?: string
+          stock?: number
           store_id?: string | null
           title: string
           updated_at?: string
@@ -289,6 +293,7 @@ export type Database = {
           id?: string
           image_urls?: string[] | null
           is_active?: boolean
+          is_buyable?: boolean
           is_premium?: boolean
           is_urgent?: boolean
           location?: string
@@ -296,6 +301,7 @@ export type Database = {
           price?: number
           rejection_reason?: string | null
           status?: string
+          stock?: number
           store_id?: string | null
           title?: string
           updated_at?: string
@@ -381,6 +387,115 @@ export type Database = {
         }
         Relationships: []
       }
+      orders: {
+        Row: {
+          buyer_id: string
+          buyer_note: string | null
+          cancelled_at: string | null
+          commission_amount: number
+          commission_rate: number
+          created_at: string
+          delivered_at: string | null
+          id: string
+          listing_id: string | null
+          order_number: string
+          paid_at: string | null
+          payment_method: string
+          quantity: number
+          seller_id: string
+          seller_note: string | null
+          shipped_at: string | null
+          shipping_address: string | null
+          shipping_method_id: string | null
+          shipping_price: number
+          status: Database["public"]["Enums"]["order_status"]
+          store_id: string | null
+          total_amount: number
+          tracking_number: string | null
+          tracking_url: string | null
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          buyer_id: string
+          buyer_note?: string | null
+          cancelled_at?: string | null
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          listing_id?: string | null
+          order_number?: string
+          paid_at?: string | null
+          payment_method?: string
+          quantity?: number
+          seller_id: string
+          seller_note?: string | null
+          shipped_at?: string | null
+          shipping_address?: string | null
+          shipping_method_id?: string | null
+          shipping_price?: number
+          status?: Database["public"]["Enums"]["order_status"]
+          store_id?: string | null
+          total_amount: number
+          tracking_number?: string | null
+          tracking_url?: string | null
+          unit_price: number
+          updated_at?: string
+        }
+        Update: {
+          buyer_id?: string
+          buyer_note?: string | null
+          cancelled_at?: string | null
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          listing_id?: string | null
+          order_number?: string
+          paid_at?: string | null
+          payment_method?: string
+          quantity?: number
+          seller_id?: string
+          seller_note?: string | null
+          shipped_at?: string | null
+          shipping_address?: string | null
+          shipping_method_id?: string | null
+          shipping_price?: number
+          status?: Database["public"]["Enums"]["order_status"]
+          store_id?: string | null
+          total_amount?: number
+          tracking_number?: string | null
+          tracking_url?: string | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_shipping_method_id_fkey"
+            columns: ["shipping_method_id"]
+            isOneToOne: false
+            referencedRelation: "shipping_methods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pages: {
         Row: {
           content: string
@@ -413,6 +528,59 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      payout_requests: {
+        Row: {
+          admin_note: string | null
+          amount: number
+          bank_account: string | null
+          bank_name: string | null
+          card_number: string | null
+          created_at: string
+          id: string
+          processed_at: string | null
+          processed_by: string | null
+          seller_id: string
+          status: Database["public"]["Enums"]["payout_status"]
+          store_id: string | null
+        }
+        Insert: {
+          admin_note?: string | null
+          amount: number
+          bank_account?: string | null
+          bank_name?: string | null
+          card_number?: string | null
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          seller_id: string
+          status?: Database["public"]["Enums"]["payout_status"]
+          store_id?: string | null
+        }
+        Update: {
+          admin_note?: string | null
+          amount?: number
+          bank_account?: string | null
+          bank_name?: string | null
+          card_number?: string | null
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          seller_id?: string
+          status?: Database["public"]["Enums"]["payout_status"]
+          store_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payout_requests_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -761,6 +929,47 @@ export type Database = {
         }
         Relationships: []
       }
+      shipping_methods: {
+        Row: {
+          created_at: string
+          description: string | null
+          estimated_days: string | null
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          store_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          estimated_days?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          price?: number
+          store_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          estimated_days?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipping_methods_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_settings: {
         Row: {
           id: string
@@ -1023,6 +1232,14 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      order_status:
+        | "pending"
+        | "confirmed"
+        | "shipped"
+        | "delivered"
+        | "cancelled"
+        | "refunded"
+      payout_status: "pending" | "approved" | "rejected" | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1151,6 +1368,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      order_status: [
+        "pending",
+        "confirmed",
+        "shipped",
+        "delivered",
+        "cancelled",
+        "refunded",
+      ],
+      payout_status: ["pending", "approved", "rejected", "completed"],
     },
   },
 } as const
