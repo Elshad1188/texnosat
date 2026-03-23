@@ -121,7 +121,6 @@ const Messages = () => {
         .from("messages")
         .select("*")
         .eq("conversation_id", activeConvoId)
-        .eq("is_deleted", false)
         .order("created_at", { ascending: true });
       return data || [];
     },

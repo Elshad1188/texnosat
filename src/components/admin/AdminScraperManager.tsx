@@ -22,6 +22,8 @@ interface ScrapedListing {
   category: string;
   condition: string;
   custom_fields: Record<string, string>;
+  seller_name?: string;
+  seller_phone?: string;
   selected?: boolean;
 }
 
