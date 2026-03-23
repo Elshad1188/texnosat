@@ -618,17 +618,28 @@ const Reels = () => {
           {/* Owner row with follow button */}
           <div className="flex items-center gap-2 mb-2">
             <button
-              onClick={(e) => { e.stopPropagation(); navigate(`/seller/${currentReel.user_id}`); }}
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                if (reelStore) {
+                  navigate(`/store/${reelStore.id}`);
+                } else {
+                  navigate(`/seller/${currentReel.user_id}`);
+                }
+              }}
               className="flex items-center gap-2 min-w-0"
             >
               <div className="h-9 w-9 shrink-0 rounded-full bg-primary/30 flex items-center justify-center text-white font-bold text-sm overflow-hidden ring-2 ring-white/30">
-                {reelProfile?.avatar_url ? (
+                {reelStore?.logo_url ? (
+                  <img src={reelStore.logo_url} alt="" className="h-full w-full object-cover" />
+                ) : reelProfile?.avatar_url ? (
                   <img src={reelProfile.avatar_url} alt="" className="h-full w-full object-cover" />
                 ) : (
-                  (reelProfile?.full_name || "?")[0].toUpperCase()
+                  (reelStore?.name || reelProfile?.full_name || "?")[0].toUpperCase()
                 )}
               </div>
-              <span className="text-white text-sm font-semibold truncate">{reelProfile?.full_name || "İstifadəçi"}</span>
+              <span className="text-white text-sm font-semibold truncate">
+                {reelStore?.name || reelProfile?.full_name || "İstifadəçi"}
+              </span>
             </button>
 
             {showFollowBtn && (
