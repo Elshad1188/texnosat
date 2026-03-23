@@ -25,6 +25,7 @@ import StaticPage from "./pages/StaticPage";
 import Balance from "./pages/Balance";
 import SpinWin from "./pages/SpinWin";
 import NotFound from "./pages/NotFound";
+import Orders from "./pages/Orders";
 import MobileBottomNav from "./components/MobileBottomNav";
 import AppDownloadBanner from "./components/AppDownloadBanner";
 import FirebaseInit from "./components/FirebaseInit";
