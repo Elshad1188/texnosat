@@ -33,6 +33,24 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+type ConversationRecord = {
+  id: string;
+  buyer_id: string;
+  seller_id: string;
+  listing_id: string | null;
+  last_message_at: string | null;
+  created_at: string | null;
+};
+
+type MessageRecord = {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  is_read: boolean | null;
+  created_at: string | null;
+};
+
 function formatTime(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const hours = Math.floor(diff / 3600000);
@@ -57,22 +75,23 @@ const Messages = () => {
     queryKey: ["conversations", user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data: convos } = await supabase
+      const { data: convos } = await (supabase.from("conversations") as any)
         .from("conversations")
         .select("*")
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
         .order("last_message_at", { ascending: false });
-      if (!convos || convos.length === 0) return [];
+      const conversationRows = (convos ?? []) as ConversationRecord[];
+      if (conversationRows.length === 0) return [];
 
       // Get other user IDs
-      const otherUserIds = convos.map(c => c.buyer_id === user.id ? c.seller_id : c.buyer_id);
+      const otherUserIds = conversationRows.map(c => c.buyer_id === user.id ? c.seller_id : c.buyer_id);
       const { data: profiles } = await supabase.from("profiles").select("*").in("user_id", otherUserIds);
 
       // Fetch stores for all other users (to check if they are store owners)
       const { data: stores } = await supabase.from("stores").select("*").in("user_id", otherUserIds);
 
       // Get listing titles
-      const listingIds = convos.filter(c => c.listing_id).map(c => c.listing_id!);
+      const listingIds = conversationRows.filter(c => c.listing_id).map(c => c.listing_id!);
       const { data: listings } = listingIds.length > 0
         ? await supabase.from("listings").select("id, title, image_urls").in("id", listingIds)
         : { data: [] };
@@ -81,18 +100,18 @@ const Messages = () => {
       const { data: lastMessages } = await supabase
         .from("messages")
         .select("*")
-        .in("conversation_id", convos.map(c => c.id))
+        .in("conversation_id", conversationRows.map(c => c.id))
         .order("created_at", { ascending: false });
 
       // Get unread counts
       const { data: unreadCounts } = await supabase
         .from("messages")
         .select("conversation_id")
-        .in("conversation_id", convos.map(c => c.id))
+        .in("conversation_id", conversationRows.map(c => c.id))
         .eq("is_read", false)
         .neq("sender_id", user.id);
 
-      return convos.map(c => {
+      return conversationRows.map(c => {
         const otherUserId = c.buyer_id === user.id ? c.seller_id : c.buyer_id;
         const profile = (profiles || []).find((p: any) => p.user_id === otherUserId);
         const store = (stores || []).find((s: any) => s.user_id === otherUserId);
@@ -117,12 +136,11 @@ const Messages = () => {
     queryKey: ["messages", activeConvoId],
     queryFn: async () => {
       if (!activeConvoId) return [];
-      const { data } = await supabase
-        .from("messages")
+      const { data } = await ((supabase.from("messages") as any)
         .select("*")
         .eq("conversation_id", activeConvoId)
-        .order("created_at", { ascending: true });
-      return data || [];
+        .order("created_at", { ascending: true }));
+      return (data || []) as MessageRecord[];
     },
     enabled: !!activeConvoId,
     refetchInterval: 3000,
@@ -219,15 +237,15 @@ const Messages = () => {
   // Delete message
   const deleteMessage = useMutation({
     mutationFn: async (messageId: string) => {
-      const { error } = await supabase
-        .from("messages")
-        .delete()
-        .eq("id", messageId)
-        .eq("sender_id", user!.id);
+      const { data, error } = await (supabase as any).rpc("delete_own_message", {
+        _message_id: messageId,
+      });
       if (error) throw error;
+      if (!data) throw new Error("Mesaj silinə bilmədi");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["messages", activeConvoId] });
+      queryClient.invalidateQueries({ queryKey: ["conversations", user?.id] });
       toast({ title: "Mesaj silindi" });
     },
     onError: (error: any) => {
@@ -239,20 +257,15 @@ const Messages = () => {
   // Delete conversation (for me)
   const deleteConversation = useMutation({
     mutationFn: async (convoId: string) => {
-      if (!user) return;
-      const convo = conversations.find((c: any) => c.id === convoId);
-      if (!convo) return;
-      
-      const isBuyer = convo.buyer_id === user.id;
-      // Since conversations table doesn't have delete columns, just delete the conversation
-      const { error } = await supabase
-        .from("conversations")
-        .delete()
-        .eq("id", convoId);
+      const { data, error } = await (supabase as any).rpc("delete_conversation_for_user", {
+        _conversation_id: convoId,
+      });
       if (error) throw error;
+      if (!data) throw new Error("Söhbət silinə bilmədi");
     },
     onSuccess: () => {
       navigate("/messages");
+      queryClient.invalidateQueries({ queryKey: ["messages", activeConvoId] });
       queryClient.invalidateQueries({ queryKey: ["conversations", user?.id] });
       toast({ title: "Söhbət silindi" });
     },
@@ -316,15 +329,7 @@ const Messages = () => {
                   <p className="text-sm text-muted-foreground">Hələ mesajınız yoxdur</p>
                 </div>
               ) : (
-                conversations
-                  .filter((c: any) => {
-                    const isBuyer = c.buyer_id === user.id;
-                    const deletedAt = isBuyer ? c.buyer_deleted_at : c.seller_deleted_at;
-                    if (!deletedAt) return true;
-                    // Only hide if deleted_at is after last_message_at
-                    return new Date(deletedAt) < new Date(c.last_message_at);
-                  })
-                  .map((c: any) => (
+                conversations.map((c: any) => (
                   <button
                     key={c.id}
                     onClick={() => navigate(`/messages?c=${c.id}`)}
@@ -476,17 +481,14 @@ const Messages = () => {
                                   </TooltipTrigger>
                                   <TooltipContent side="top">
                                     <p className="text-[10px]">
-                                      {m.is_read 
-                                        ? `Oxundu: ${m.read_at ? new Date(m.read_at).toLocaleTimeString("az", { hour: "2-digit", minute: "2-digit" }) : "Bilinmir"}`
-                                        : "Göndərildi"
-                                      }
+                                      {m.is_read ? "Oxundu" : "Göndərildi"}
                                     </p>
                                   </TooltipContent>
                                 </Tooltip>
                               )}
                             </div>
                             
-                            {isMine && !m.is_deleted && (
+                            {isMine && (
                               <div className="absolute -right-2 -top-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
