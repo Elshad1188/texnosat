@@ -208,6 +208,16 @@ const Reels = () => {
     enabled: !!currentReel,
   });
 
+  // Fetch store for current reel (if it belongs to a store)
+  const { data: reelStore } = useQuery({
+    queryKey: ["reel-store", currentReel?.store_id],
+    queryFn: async () => {
+      const { data } = await supabase.from("stores").select("id, name, logo_url").eq("id", currentReel!.store_id!).maybeSingle();
+      return data;
+    },
+    enabled: !!currentReel?.store_id,
+  });
+
   // Check if current user follows the reel owner (user-level follow)
   const { data: isFollowing } = useQuery({
     queryKey: ["reel-user-follow", currentReel?.user_id, user?.id],
