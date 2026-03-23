@@ -80,6 +80,8 @@ const CreateListing = () => {
         location: editListing.location,
       });
       setCustomFields((editListing as any).custom_fields || {});
+      setIsBuyable((editListing as any).is_buyable || false);
+      setStock(String((editListing as any).stock || 1));
     }
   }, [editListing]);
 
