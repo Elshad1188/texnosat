@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { MessageCircle, Send, ArrowLeft, Loader2, Check, CheckCheck, Store, Trash2, MoreVertical, XCircle, Info } from "lucide-react";
+import { MessageCircle, Send, ArrowLeft, Loader2, Check, CheckCheck, Store, Trash2, MoreVertical } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -70,12 +70,25 @@ const Messages = () => {
   const [messageText, setMessageText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const removeMessageFromCache = (messageId: string) => {
+    queryClient.setQueryData(["messages", activeConvoId], (current: MessageRecord[] | undefined) =>
+      (current ?? []).filter((message) => message.id !== messageId)
+    );
+  };
+
+  const removeConversationFromCache = (conversationId: string) => {
+    queryClient.setQueryData(["conversations", user?.id], (current: any[] | undefined) =>
+      (current ?? []).filter((conversation) => conversation.id !== conversationId)
+    );
+    queryClient.removeQueries({ queryKey: ["messages", conversationId] });
+  };
+
   // Fetch conversations with last message, other user profile, and store info
   const { data: conversations = [], isLoading: convosLoading } = useQuery({
     queryKey: ["conversations", user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data: convos } = await (supabase.from("conversations") as any)
+      const { data: convos } = await supabase
         .from("conversations")
         .select("*")
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
@@ -149,13 +162,31 @@ const Messages = () => {
   // Mark messages as read
   useEffect(() => {
     if (!activeConvoId || !user || messages.length === 0) return;
-    const unreadIds = messages.filter((m: any) => !m.is_read && m.sender_id !== user.id).map((m: any) => m.id);
+    const unreadIds = messages.filter((m) => !m.is_read && m.sender_id !== user.id).map((m) => m.id);
     if (unreadIds.length > 0) {
-      supabase.from("messages").update({ is_read: true }).in("id", unreadIds).then(() => {
-        queryClient.invalidateQueries({ queryKey: ["conversations", user.id] });
-      });
+      queryClient.setQueryData(["messages", activeConvoId], (current: MessageRecord[] | undefined) =>
+        (current ?? []).map((message) =>
+          unreadIds.includes(message.id) ? { ...message, is_read: true } : message
+        )
+      );
+      queryClient.setQueryData(["conversations", user.id], (current: any[] | undefined) =>
+        (current ?? []).map((conversation) =>
+          conversation.id === activeConvoId ? { ...conversation, unread: 0 } : conversation
+        )
+      );
+
+      supabase
+        .from("messages")
+        .update({ is_read: true })
+        .in("id", unreadIds)
+        .then(({ error }) => {
+          if (error) {
+            queryClient.invalidateQueries({ queryKey: ["messages", activeConvoId] });
+          }
+          queryClient.invalidateQueries({ queryKey: ["conversations", user.id] });
+        });
     }
-  }, [messages, activeConvoId, user]);
+  }, [messages, activeConvoId, user, queryClient]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -237,13 +268,20 @@ const Messages = () => {
   // Delete message
   const deleteMessage = useMutation({
     mutationFn: async (messageId: string) => {
-      const { data, error } = await (supabase as any).rpc("delete_own_message", {
-        _message_id: messageId,
-      });
+      if (!user) throw new Error("İstifadəçi tapılmadı");
+      const { data, error } = await supabase
+        .from("messages")
+        .delete()
+        .eq("id", messageId)
+        .eq("sender_id", user.id)
+        .select("id")
+        .maybeSingle();
       if (error) throw error;
       if (!data) throw new Error("Mesaj silinə bilmədi");
+      return data.id;
     },
-    onSuccess: () => {
+    onSuccess: (deletedMessageId) => {
+      removeMessageFromCache(deletedMessageId);
       queryClient.invalidateQueries({ queryKey: ["messages", activeConvoId] });
       queryClient.invalidateQueries({ queryKey: ["conversations", user?.id] });
       toast({ title: "Mesaj silindi" });
@@ -257,15 +295,22 @@ const Messages = () => {
   // Delete conversation (for me)
   const deleteConversation = useMutation({
     mutationFn: async (convoId: string) => {
-      const { data, error } = await (supabase as any).rpc("delete_conversation_for_user", {
-        _conversation_id: convoId,
-      });
+      if (!user) throw new Error("İstifadəçi tapılmadı");
+      const { data, error } = await supabase
+        .from("conversations")
+        .delete()
+        .eq("id", convoId)
+        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+        .select("id")
+        .maybeSingle();
       if (error) throw error;
       if (!data) throw new Error("Söhbət silinə bilmədi");
+      return data.id;
     },
-    onSuccess: () => {
+    onSuccess: (deletedConversationId) => {
+      removeConversationFromCache(deletedConversationId);
       navigate("/messages");
-      queryClient.invalidateQueries({ queryKey: ["messages", activeConvoId] });
+      queryClient.invalidateQueries({ queryKey: ["messages", deletedConversationId] });
       queryClient.invalidateQueries({ queryKey: ["conversations", user?.id] });
       toast({ title: "Söhbət silindi" });
     },
