@@ -241,7 +241,7 @@ const CreateListing = () => {
         condition: form.condition, location: form.location || "Bakı",
         image_urls: allImages,
         video_url: finalVideoUrl,
-        store_id: userStore ? userStore.id : null,
+        store_id: selectedStoreId || null,
         custom_fields: Object.keys(resolvedCustomFields).length > 0 ? resolvedCustomFields : null,
         is_buyable: isBuyable,
         stock: parseInt(stock) || 0,
