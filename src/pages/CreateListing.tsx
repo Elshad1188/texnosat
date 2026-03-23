@@ -224,6 +224,8 @@ const CreateListing = () => {
         video_url: finalVideoUrl,
         store_id: userStore ? userStore.id : null,
         custom_fields: Object.keys(resolvedCustomFields).length > 0 ? resolvedCustomFields : null,
+        is_buyable: isBuyable,
+        stock: parseInt(stock) || 0,
       };
 
       if (editId) {
