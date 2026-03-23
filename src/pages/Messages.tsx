@@ -221,7 +221,7 @@ const Messages = () => {
     mutationFn: async (messageId: string) => {
       const { error } = await supabase
         .from("messages")
-        .update({ is_deleted: true })
+        .delete()
         .eq("id", messageId)
         .eq("sender_id", user!.id);
       if (error) throw error;
