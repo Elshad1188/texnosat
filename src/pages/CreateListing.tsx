@@ -37,6 +37,7 @@ const CreateListing = () => {
   const [showCustomFields, setShowCustomFields] = useState(false);
   const [isBuyable, setIsBuyable] = useState(false);
   const [stock, setStock] = useState("1");
+  const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const [form, setForm] = useState({
     title: "", description: "", price: "", category: "", condition: "Yeni", location: "",
   });
@@ -90,6 +91,7 @@ const CreateListing = () => {
       setCustomFields((editListing as any).custom_fields || {});
       setIsBuyable((editListing as any).is_buyable || false);
       setStock(String((editListing as any).stock || 1));
+      if (editListing.store_id) setSelectedStoreId(editListing.store_id);
     }
   }, [editListing]);
 
@@ -102,7 +104,16 @@ const CreateListing = () => {
     enabled: !!user,
   });
 
-  const userStore = userStores.length > 0 ? userStores[0] : null;
+  const approvedStores = userStores.filter((s: any) => s.status === "approved");
+  const userStore = selectedStoreId 
+    ? approvedStores.find((s: any) => s.id === selectedStoreId) || null
+    : approvedStores.length > 0 ? approvedStores[0] : null;
+
+  useEffect(() => {
+    if (approvedStores.length > 0 && !selectedStoreId) {
+      setSelectedStoreId(approvedStores[0].id);
+    }
+  }, [approvedStores.length]);
 
 
   const { data: categories = [] } = useQuery({
@@ -230,7 +241,7 @@ const CreateListing = () => {
         condition: form.condition, location: form.location || "Bakı",
         image_urls: allImages,
         video_url: finalVideoUrl,
-        store_id: userStore ? userStore.id : null,
+        store_id: selectedStoreId || null,
         custom_fields: Object.keys(resolvedCustomFields).length > 0 ? resolvedCustomFields : null,
         is_buyable: isBuyable,
         stock: parseInt(stock) || 0,
@@ -379,6 +390,41 @@ const CreateListing = () => {
                 </Select>
               </div>
             </div>
+
+            {/* Store selector */}
+            {approvedStores.length > 0 && (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2"><Store className="h-4 w-4 text-primary" /> Mağaza seçin</Label>
+                {approvedStores.length === 1 ? (
+                  <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 p-3">
+                    {approvedStores[0].logo_url ? (
+                      <img src={approvedStores[0].logo_url} alt="" className="h-8 w-8 rounded-lg object-cover" />
+                    ) : (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10"><Store className="h-4 w-4 text-primary" /></div>
+                    )}
+                    <span className="text-sm font-medium text-foreground">{approvedStores[0].name}</span>
+                  </div>
+                ) : (
+                  <Select value={selectedStoreId || ""} onValueChange={(v) => setSelectedStoreId(v)}>
+                    <SelectTrigger><SelectValue placeholder="Mağaza seçin" /></SelectTrigger>
+                    <SelectContent>
+                      {approvedStores.map((s: any) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          <div className="flex items-center gap-2">
+                            {s.logo_url ? (
+                              <img src={s.logo_url} alt="" className="h-5 w-5 rounded object-cover" />
+                            ) : (
+                              <Store className="h-4 w-4 text-muted-foreground" />
+                            )}
+                            {s.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            )}
 
             {/* Category custom fields */}
             {categoryFields.length > 0 && (
