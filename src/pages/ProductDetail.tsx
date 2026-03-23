@@ -515,9 +515,14 @@ const ProductDetail = () => {
         {/* Seller Card - above reviews */}
         <div className="mt-8 rounded-xl border border-border bg-card p-4 shadow-card max-w-2xl">
           <div className="flex items-center justify-between">
-            <Link to={`/seller/${listing.user_id}`} className="group flex-1">
+            <Link to={store ? `/store/${store.id}` : `/seller/${listing.user_id}`} className="group flex-1">
               <div className="flex items-center gap-2">
-                <p className="font-medium text-foreground group-hover:text-primary transition-colors">{seller?.full_name || "Adsız"}</p>
+                {store?.logo_url && (
+                  <img src={store.logo_url} alt="" className="h-8 w-8 rounded-lg object-cover" />
+                )}
+                <p className="font-medium text-foreground group-hover:text-primary transition-colors">
+                  {store ? store.name : (seller?.full_name || "Adsız")}
+                </p>
                 <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>
               </div>
               <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -525,7 +530,7 @@ const ProductDetail = () => {
                 <span>{avgRating.toFixed(1)}</span>
                 <span>·</span>
                 <span>{sellerReviews.length} rəy</span>
-                {seller?.city && <><span>·</span><span>{seller.city}</span></>}
+                {store?.city ? <><span>·</span><span>{store.city}</span></> : seller?.city ? <><span>·</span><span>{seller.city}</span></> : null}
               </div>
             </Link>
             <div className="flex items-center gap-2">
