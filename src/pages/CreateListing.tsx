@@ -57,6 +57,14 @@ const CreateListing = () => {
     },
   });
 
+  const { data: ecomSettings } = useQuery({
+    queryKey: ["ecommerce-settings"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "ecommerce").maybeSingle();
+      return (data?.value as any) || { enabled: false };
+    },
+  });
+
   const maxImages = generalSettings?.max_images_per_listing || 10;
 
   // Fetch existing listing for editing
