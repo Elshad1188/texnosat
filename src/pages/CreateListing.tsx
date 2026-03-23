@@ -103,7 +103,16 @@ const CreateListing = () => {
     enabled: !!user,
   });
 
-  const userStore = userStores.length > 0 ? userStores[0] : null;
+  const approvedStores = userStores.filter((s: any) => s.status === "approved");
+  const userStore = selectedStoreId 
+    ? approvedStores.find((s: any) => s.id === selectedStoreId) || null
+    : approvedStores.length > 0 ? approvedStores[0] : null;
+
+  useEffect(() => {
+    if (approvedStores.length > 0 && !selectedStoreId) {
+      setSelectedStoreId(approvedStores[0].id);
+    }
+  }, [approvedStores.length]);
 
 
   const { data: categories = [] } = useQuery({
