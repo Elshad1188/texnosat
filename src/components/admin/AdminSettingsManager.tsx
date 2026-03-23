@@ -339,16 +339,6 @@ const AdminSettingsManager = () => {
                   className="h-9 flex-1"
                   placeholder="https://... və ya /logo.png"
                 />
-                {themeSettings?.logo_color && themeSettings.logo_color !== settings.watermark_url && (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="h-9 px-2"
-                    onClick={() => setSettings({ ...settings, watermark_url: themeSettings.logo_color })}
-                  >
-                    Sayt loqosunu istifadə et
-                  </Button>
                 )}
                 <Button
                   type="button"
