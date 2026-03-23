@@ -514,137 +514,168 @@ const ProductDetail = () => {
 
         {/* Seller Card - above reviews */}
         <div className="mt-8 rounded-xl border border-border bg-card p-4 shadow-card max-w-2xl">
-          <div className="flex items-center justify-between">
-            <Link to={store ? `/store/${store.id}` : `/seller/${listing.user_id}`} className="group flex-1">
-              <div className="flex items-center gap-2">
-                {store?.logo_url && (
-                  <img src={store.logo_url} alt="" className="h-8 w-8 rounded-lg object-cover" />
-                )}
-                <p className="font-medium text-foreground group-hover:text-primary transition-colors">
-                  {store ? store.name : (seller?.full_name || "Adsız")}
-                </p>
-                <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>
-              </div>
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Star className="h-3.5 w-3.5 fill-primary text-primary" />
-                <span>{avgRating.toFixed(1)}</span>
-                <span>·</span>
-                <span>{sellerReviews.length} rəy</span>
-                {store?.city ? <><span>·</span><span>{store.city}</span></> : seller?.city ? <><span>·</span><span>{seller.city}</span></> : null}
-              </div>
-            </Link>
-            <div className="flex items-center gap-2">
-              {user && user.id !== listing.user_id && (
-                <Button
-                  variant={isFollowingSeller ? "outline" : "default"}
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => {
-                    if (!user) { navigate("/auth"); return; }
-                    toggleFollowSeller.mutate();
-                  }}
-                  disabled={toggleFollowSeller.isPending}
-                >
-                  {isFollowingSeller ? <UserCheck className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
-                  {isFollowingSeller ? "İzləyirsən" : "İzlə"}
-                </Button>
-              )}
-              <Link to={`/seller/${listing.user_id}`} className="text-muted-foreground hover:text-primary transition-colors">
-                <ExternalLink className="h-5 w-5" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Store Link */}
-          {store && (
-            <Link
-              to={`/store/${store.id}`}
-              className="mt-3 flex items-center gap-3 rounded-lg border border-border bg-muted/50 p-3 transition-colors hover:bg-muted"
-            >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-card border border-border">
-                {store.logo_url ? (
-                  <img src={store.logo_url} alt={store.name} className="h-full w-full object-cover" />
-                ) : (
-                  <Store className="h-5 w-5 text-muted-foreground" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <p className="truncate text-sm font-semibold text-foreground">{store.name}</p>
-                  {store.is_premium && (
-                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/90">
-                      <Crown className="h-3 w-3 text-white" />
-                    </div>
+          {store ? (
+            /* Store-based listing: show only store info once */
+            <>
+              <Link
+                to={`/store/${store.id}`}
+                className="group flex items-center gap-3 rounded-lg border border-border bg-muted/50 p-3 transition-colors hover:bg-muted"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-card border border-border">
+                  {store.logo_url ? (
+                    <img src={store.logo_url} alt={store.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <Store className="h-5 w-5 text-muted-foreground" />
                   )}
                 </div>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Star className="h-3 w-3 fill-primary text-primary" />
-                  <span>{storeAvgRating.toFixed(1)}</span>
-                  <span>·</span>
-                  <span>{storeOwnerReviews.length} rəy</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary transition-colors">{store.name}</p>
+                    {store.is_premium && (
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/90">
+                        <Crown className="h-3 w-3 text-white" />
+                      </div>
+                    )}
+                    <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Star className="h-3 w-3 fill-primary text-primary" />
+                    <span>{storeAvgRating.toFixed(1)}</span>
+                    <span>·</span>
+                    <span>{storeOwnerReviews.length} rəy</span>
+                    {store.city && <><span>·</span><span>{store.city}</span></>}
+                  </div>
+                </div>
+                <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
+              </Link>
+
+              <div className="mt-4 flex flex-col gap-2">
+                {ecomSettings?.enabled && (listing as any).is_buyable && user?.id !== listing.user_id && (
+                  <Button 
+                    className="w-full gap-2 h-12 text-lg font-bold shadow-lg bg-green-600 hover:bg-green-700 text-white shadow-green-600/20"
+                    onClick={() => {
+                      if (!user) { navigate("/auth"); return; }
+                      setCheckoutOpen(true);
+                    }}
+                  >
+                    <ShoppingCart className="h-5 w-5" /> İndi al
+                  </Button>
+                )}
+                {user?.id !== listing.user_id && (
+                  <Button 
+                    variant={ecomSettings?.enabled && (listing as any).is_buyable ? "outline" : "default"}
+                    className={`w-full gap-2 h-12 text-lg font-bold ${!(ecomSettings?.enabled && (listing as any).is_buyable) ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-600/20' : ''}`}
+                    onClick={() => {
+                      if (!user) { navigate("/auth"); return; }
+                    }}
+                  >
+                    <MessageSquare className="h-5 w-5" /> Mağaza ilə əlaqə
+                  </Button>
+                )}
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2" onClick={() => setShowPhone(!showPhone)}>
+                    <Phone className="h-4 w-4" />
+                    {showPhone ? (store.phone || seller?.phone || "Nömrə yoxdur") : "Nömrəni göstər"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1 gap-2"
+                    onClick={async () => {
+                      if (!user) { navigate("/auth"); return; }
+                      const { data: existing } = await supabase
+                        .from("conversations")
+                        .select("id")
+                        .eq("listing_id", listing.id)
+                        .eq("buyer_id", user.id)
+                        .eq("seller_id", listing.user_id)
+                        .maybeSingle();
+                      if (existing) {
+                        navigate(`/messages?c=${existing.id}`);
+                      } else {
+                        const { data: newConvo } = await supabase
+                          .from("conversations")
+                          .insert({ listing_id: listing.id, buyer_id: user.id, seller_id: listing.user_id })
+                          .select("id")
+                          .single();
+                        if (newConvo) navigate(`/messages?c=${newConvo.id}`);
+                      }
+                    }}
+                  >
+                    <MessageCircle className="h-4 w-4" /> Mesaj yaz
+                  </Button>
                 </div>
               </div>
-              <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
-            </Link>
-          )}
+            </>
+          ) : (
+            /* Individual seller listing */
+            <>
+              <div className="flex items-center justify-between">
+                <Link to={`/seller/${listing.user_id}`} className="group flex-1">
+                  <p className="font-medium text-foreground group-hover:text-primary transition-colors">
+                    {seller?.full_name || "Adsız"}
+                  </p>
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Star className="h-3.5 w-3.5 fill-primary text-primary" />
+                    <span>{avgRating.toFixed(1)}</span>
+                    <span>·</span>
+                    <span>{sellerReviews.length} rəy</span>
+                    {seller?.city && <><span>·</span><span>{seller.city}</span></>}
+                  </div>
+                </Link>
+                <div className="flex items-center gap-2">
+                  <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>
+                  {user && user.id !== listing.user_id && (
+                    <Button
+                      variant={isFollowingSeller ? "outline" : "default"}
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => {
+                        if (!user) { navigate("/auth"); return; }
+                        toggleFollowSeller.mutate();
+                      }}
+                      disabled={toggleFollowSeller.isPending}
+                    >
+                      {isFollowingSeller ? <UserCheck className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
+                      {isFollowingSeller ? "İzləyirsən" : "İzlə"}
+                    </Button>
+                  )}
+                </div>
+              </div>
 
-          <div className="mt-4 flex flex-col gap-2">
-            {/* Buy button - only show if e-commerce enabled and listing is buyable */}
-            {ecomSettings?.enabled && (listing as any).is_buyable && store && user?.id !== listing.user_id && (
-              <Button 
-                className="w-full gap-2 h-12 text-lg font-bold shadow-lg bg-green-600 hover:bg-green-700 text-white shadow-green-600/20"
-                onClick={() => {
-                  if (!user) { navigate("/auth"); return; }
-                  setCheckoutOpen(true);
-                }}
-              >
-                <ShoppingCart className="h-5 w-5" /> İndi al
-              </Button>
-            )}
-            {store && user?.id !== listing.user_id && (
-              <Button 
-                variant={ecomSettings?.enabled && (listing as any).is_buyable ? "outline" : "default"}
-                className={`w-full gap-2 h-12 text-lg font-bold ${!(ecomSettings?.enabled && (listing as any).is_buyable) ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-600/20' : ''}`}
-                onClick={() => {
-                  if (!user) { navigate("/auth"); return; }
-                }}
-              >
-                <MessageSquare className="h-5 w-5" /> Mağaza ilə əlaqə
-              </Button>
-            )}
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2" onClick={() => setShowPhone(!showPhone)}>
-                <Phone className="h-4 w-4" />
-                {showPhone ? (seller?.phone || "Nömrə yoxdur") : "Nömrəni göstər"}
-              </Button>
-              <Button
-                variant="outline"
-                className="flex-1 gap-2"
-                onClick={async () => {
-                  if (!user) { navigate("/auth"); return; }
-                  const { data: existing } = await supabase
-                    .from("conversations")
-                    .select("id")
-                    .eq("listing_id", listing.id)
-                    .eq("buyer_id", user.id)
-                    .eq("seller_id", listing.user_id)
-                    .maybeSingle();
-                  if (existing) {
-                    navigate(`/messages?c=${existing.id}`);
-                  } else {
-                    const { data: newConvo } = await supabase
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <Button className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2" onClick={() => setShowPhone(!showPhone)}>
+                  <Phone className="h-4 w-4" />
+                  {showPhone ? (seller?.phone || "Nömrə yoxdur") : "Nömrəni göstər"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 gap-2"
+                  onClick={async () => {
+                    if (!user) { navigate("/auth"); return; }
+                    const { data: existing } = await supabase
                       .from("conversations")
-                      .insert({ listing_id: listing.id, buyer_id: user.id, seller_id: listing.user_id })
                       .select("id")
-                      .single();
-                    if (newConvo) navigate(`/messages?c=${newConvo.id}`);
-                  }
-                }}
-              >
-                <MessageCircle className="h-4 w-4" /> Mesaj yaz
-              </Button>
-            </div>
-          </div>
+                      .eq("listing_id", listing.id)
+                      .eq("buyer_id", user.id)
+                      .eq("seller_id", listing.user_id)
+                      .maybeSingle();
+                    if (existing) {
+                      navigate(`/messages?c=${existing.id}`);
+                    } else {
+                      const { data: newConvo } = await supabase
+                        .from("conversations")
+                        .insert({ listing_id: listing.id, buyer_id: user.id, seller_id: listing.user_id })
+                        .select("id")
+                        .single();
+                      if (newConvo) navigate(`/messages?c=${newConvo.id}`);
+                    }
+                  }}
+                >
+                  <MessageCircle className="h-4 w-4" /> Mesaj yaz
+                </Button>
+              </div>
+            </>
+          )}
         </div>
 
 
