@@ -984,6 +984,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_conversation_for_user: {
+        Args: { _conversation_id: string }
+        Returns: boolean
+      }
+      delete_own_message: { Args: { _message_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
