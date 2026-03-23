@@ -339,7 +339,6 @@ const AdminSettingsManager = () => {
                   className="h-9 flex-1"
                   placeholder="https://... və ya /logo.png"
                 />
-                )}
                 <Button
                   type="button"
                   variant="outline"
