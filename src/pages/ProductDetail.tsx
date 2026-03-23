@@ -824,6 +824,13 @@ const ProductDetail = () => {
         )}
       </main>
       <Footer />
+      {listing && (
+        <CheckoutDialog
+          open={checkoutOpen}
+          onOpenChange={setCheckoutOpen}
+          listing={listing}
+        />
+      )}
     </div>
   );
 };
