@@ -121,7 +121,6 @@ const Messages = () => {
         .from("messages")
         .select("*")
         .eq("conversation_id", activeConvoId)
-        .eq("is_deleted", false)
         .order("created_at", { ascending: true });
       return data || [];
     },
@@ -134,7 +133,7 @@ const Messages = () => {
     if (!activeConvoId || !user || messages.length === 0) return;
     const unreadIds = messages.filter((m: any) => !m.is_read && m.sender_id !== user.id).map((m: any) => m.id);
     if (unreadIds.length > 0) {
-      supabase.rpc("mark_messages_as_read", { msg_ids: unreadIds }).then(() => {
+      supabase.from("messages").update({ is_read: true }).in("id", unreadIds).then(() => {
         queryClient.invalidateQueries({ queryKey: ["conversations", user.id] });
       });
     }
@@ -222,7 +221,7 @@ const Messages = () => {
     mutationFn: async (messageId: string) => {
       const { error } = await supabase
         .from("messages")
-        .update({ is_deleted: true })
+        .delete()
         .eq("id", messageId)
         .eq("sender_id", user!.id);
       if (error) throw error;
@@ -245,11 +244,10 @@ const Messages = () => {
       if (!convo) return;
       
       const isBuyer = convo.buyer_id === user.id;
-      const updateData = isBuyer ? { buyer_deleted_at: new Date().toISOString() } : { seller_deleted_at: new Date().toISOString() };
-      
+      // Since conversations table doesn't have delete columns, just delete the conversation
       const { error } = await supabase
         .from("conversations")
-        .update(updateData)
+        .delete()
         .eq("id", convoId);
       if (error) throw error;
     },
