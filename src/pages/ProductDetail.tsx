@@ -584,12 +584,24 @@ const ProductDetail = () => {
           )}
 
           <div className="mt-4 flex flex-col gap-2">
-            {store && user?.id !== listing.user_id && (
+            {/* Buy button - only show if e-commerce enabled and listing is buyable */}
+            {ecomSettings?.enabled && (listing as any).is_buyable && store && user?.id !== listing.user_id && (
               <Button 
-                className="w-full bg-green-600 text-white hover:bg-green-700 gap-2 h-12 text-lg font-bold shadow-lg shadow-green-600/20"
+                className="w-full gap-2 h-12 text-lg font-bold shadow-lg bg-green-600 hover:bg-green-700 text-white shadow-green-600/20"
                 onClick={() => {
                   if (!user) { navigate("/auth"); return; }
-                  // Open chat as default action for store items or just show phone
+                  setCheckoutOpen(true);
+                }}
+              >
+                <ShoppingCart className="h-5 w-5" /> İndi al
+              </Button>
+            )}
+            {store && user?.id !== listing.user_id && (
+              <Button 
+                variant={ecomSettings?.enabled && (listing as any).is_buyable ? "outline" : "default"}
+                className={`w-full gap-2 h-12 text-lg font-bold ${!(ecomSettings?.enabled && (listing as any).is_buyable) ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-600/20' : ''}`}
+                onClick={() => {
+                  if (!user) { navigate("/auth"); return; }
                 }}
               >
                 <MessageSquare className="h-5 w-5" /> Mağaza ilə əlaqə
