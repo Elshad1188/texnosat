@@ -361,6 +361,23 @@ const CreateListing = () => {
                 )}
                 <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageAdd} />
               </div>
+              {/* AI Autofill button - only for admins/mods */}
+              {isPrivileged && (images.length > 0 || existingImages.length > 0) && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAiAutofill}
+                  disabled={aiLoading}
+                  className="mt-2 gap-2 border-primary/30 text-primary hover:bg-primary/5"
+                >
+                  {aiLoading ? (
+                    <><Loader2 className="h-3.5 w-3.5 animate-spin" /> AI analiz edir...</>
+                  ) : (
+                    <><Sparkles className="h-3.5 w-3.5" /> AI ilə avtomatik doldur</>
+                  )}
+                </Button>
+              )}
             </div>
 
             {/* Video */}
