@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsAdminOrMod } from "@/hooks/useIsAdmin";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ImagePlus, X, Loader2, Store, Video, ChevronDown, ChevronUp, ShoppingBag, MessageSquareText } from "lucide-react";
+import { ImagePlus, X, Loader2, Store, Video, ChevronDown, ChevronUp, ShoppingBag, MessageSquareText, Sparkles } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
@@ -19,6 +20,7 @@ const conditions = ["Yeni", "Yeni kimi", "İşlənmiş"];
 
 const CreateListing = () => {
   const { user } = useAuth();
+  const { isPrivileged } = useIsAdminOrMod();
   const navigate = useNavigate();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -38,6 +40,7 @@ const CreateListing = () => {
   const [isBuyable, setIsBuyable] = useState(false);
   const [stock, setStock] = useState("1");
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
   const [form, setForm] = useState({
     title: "", description: "", price: "", category: "", condition: "Yeni", location: "",
   });
@@ -145,6 +148,48 @@ const CreateListing = () => {
   });
 
   if (!user) { navigate("/auth"); return null; }
+
+  const handleAiAutofill = async () => {
+    if (images.length === 0 && existingImages.length === 0) {
+      toast({ title: "Əvvəlcə şəkil yükləyin", variant: "destructive" });
+      return;
+    }
+    setAiLoading(true);
+    try {
+      let imageUrl = "";
+      if (existingImages.length > 0) {
+        imageUrl = existingImages[0];
+      } else if (images.length > 0) {
+        // Upload first image temporarily to get URL
+        const file = images[0];
+        const tmpPath = `${user.id}/ai-tmp-${Date.now()}-${file.name}`;
+        const { error: upErr } = await supabase.storage.from("listing-images").upload(tmpPath, file);
+        if (upErr) throw upErr;
+        const { data: urlData } = supabase.storage.from("listing-images").getPublicUrl(tmpPath);
+        imageUrl = urlData.publicUrl;
+      }
+
+      const { data, error } = await supabase.functions.invoke("ai-listing-autofill", {
+        body: { image_url: imageUrl },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setForm(prev => ({
+        ...prev,
+        title: data.title || prev.title,
+        description: data.description || prev.description,
+        price: data.price || prev.price,
+        category: data.category || prev.category,
+        condition: data.condition || prev.condition,
+      }));
+      toast({ title: "AI məlumatları uğurla doldurdu! ✨" });
+    } catch (err: any) {
+      toast({ title: "AI xətası", description: err.message, variant: "destructive" });
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const handleImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -316,6 +361,23 @@ const CreateListing = () => {
                 )}
                 <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageAdd} />
               </div>
+              {/* AI Autofill button - only for admins/mods */}
+              {isPrivileged && (images.length > 0 || existingImages.length > 0) && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAiAutofill}
+                  disabled={aiLoading}
+                  className="mt-2 gap-2 border-primary/30 text-primary hover:bg-primary/5"
+                >
+                  {aiLoading ? (
+                    <><Loader2 className="h-3.5 w-3.5 animate-spin" /> AI analiz edir...</>
+                  ) : (
+                    <><Sparkles className="h-3.5 w-3.5" /> AI ilə avtomatik doldur</>
+                  )}
+                </Button>
+              )}
             </div>
 
             {/* Video */}
