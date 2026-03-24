@@ -40,6 +40,7 @@ const CreateListing = () => {
   const [isBuyable, setIsBuyable] = useState(false);
   const [stock, setStock] = useState("1");
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
   const [form, setForm] = useState({
     title: "", description: "", price: "", category: "", condition: "Yeni", location: "",
   });
