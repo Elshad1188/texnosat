@@ -20,6 +20,7 @@ const conditions = ["Yeni", "Yeni kimi", "İşlənmiş"];
 
 const CreateListing = () => {
   const { user } = useAuth();
+  const { isPrivileged } = useIsAdminOrMod();
   const navigate = useNavigate();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
