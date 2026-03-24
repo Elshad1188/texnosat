@@ -149,6 +149,48 @@ const CreateListing = () => {
 
   if (!user) { navigate("/auth"); return null; }
 
+  const handleAiAutofill = async () => {
+    if (images.length === 0 && existingImages.length === 0) {
+      toast({ title: "Əvvəlcə şəkil yükləyin", variant: "destructive" });
+      return;
+    }
+    setAiLoading(true);
+    try {
+      let imageUrl = "";
+      if (existingImages.length > 0) {
+        imageUrl = existingImages[0];
+      } else if (images.length > 0) {
+        // Upload first image temporarily to get URL
+        const file = images[0];
+        const tmpPath = `${user.id}/ai-tmp-${Date.now()}-${file.name}`;
+        const { error: upErr } = await supabase.storage.from("listing-images").upload(tmpPath, file);
+        if (upErr) throw upErr;
+        const { data: urlData } = supabase.storage.from("listing-images").getPublicUrl(tmpPath);
+        imageUrl = urlData.publicUrl;
+      }
+
+      const { data, error } = await supabase.functions.invoke("ai-listing-autofill", {
+        body: { image_url: imageUrl },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setForm(prev => ({
+        ...prev,
+        title: data.title || prev.title,
+        description: data.description || prev.description,
+        price: data.price || prev.price,
+        category: data.category || prev.category,
+        condition: data.condition || prev.condition,
+      }));
+      toast({ title: "AI məlumatları uğurla doldurdu! ✨" });
+    } catch (err: any) {
+      toast({ title: "AI xətası", description: err.message, variant: "destructive" });
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const handleImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const totalImages = existingImages.length + images.length + files.length;
