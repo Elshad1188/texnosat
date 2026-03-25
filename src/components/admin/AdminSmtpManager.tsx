@@ -38,7 +38,7 @@ const defaultSmtp: SmtpConfig = {
   username: "",
   password: "",
   from_email: "",
-  from_name: "Texnosat",
+  from_name: "Elan24",
   secure: true,
 };
 
