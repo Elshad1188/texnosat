@@ -213,9 +213,9 @@ const Header = () => {
 
           <Link to="/" className="flex items-center gap-2">
             <span className="font-display text-2xl font-bold text-foreground transition-colors hover:text-primary">
-              {theme.logo_text_main ?? "Texno"}
+              {theme.logo_text_main ?? "Elan"}
               <span className="text-primary" style={{ color: theme.logo_color ? theme.logo_color : undefined }}>
-                {theme.logo_text_accent ?? "sat"}
+                {theme.logo_text_accent ?? "24"}
               </span>
             </span>
           </Link>

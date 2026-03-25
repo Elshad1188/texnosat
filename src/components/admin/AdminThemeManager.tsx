@@ -206,11 +206,11 @@ const AdminThemeManager = () => {
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Əsas Mətn (Qara/Ağ)</Label>
-            <Input value={colors.logo_text_main ?? "Texno"} onChange={(e) => setColors({ ...colors, logo_text_main: e.target.value })} className="h-9" />
+            <Input value={colors.logo_text_main ?? "Elan"} onChange={(e) => setColors({ ...colors, logo_text_main: e.target.value })} className="h-9" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Rəngli Mətn</Label>
-            <Input value={colors.logo_text_accent ?? "sat"} onChange={(e) => setColors({ ...colors, logo_text_accent: e.target.value })} className="h-9" />
+            <Input value={colors.logo_text_accent ?? "24"} onChange={(e) => setColors({ ...colors, logo_text_accent: e.target.value })} className="h-9" />
           </div>
           <div className="space-y-1.5 sm:col-span-2 border-t border-border pt-3 mt-1">
             <Label className="text-xs">Şəkil Loqo (Mətn loqosunu əvəz edir)</Label>
