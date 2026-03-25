@@ -169,11 +169,11 @@ const AdminSmtpManager = () => {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Göndərən e-mail</Label>
-              <Input value={smtp.from_email} onChange={e => setSmtp({ ...smtp, from_email: e.target.value })} placeholder="noreply@texnosat.az" className="h-9 font-mono text-xs" />
+              <Input value={smtp.from_email} onChange={e => setSmtp({ ...smtp, from_email: e.target.value })} placeholder="noreply@elan24.az" className="h-9 font-mono text-xs" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Göndərən adı</Label>
-              <Input value={smtp.from_name} onChange={e => setSmtp({ ...smtp, from_name: e.target.value })} placeholder="Texnosat" className="h-9 text-xs" />
+              <Input value={smtp.from_name} onChange={e => setSmtp({ ...smtp, from_name: e.target.value })} placeholder="Elan24" className="h-9 text-xs" />
             </div>
           </div>
           <div className="flex items-center gap-2">
