@@ -97,9 +97,9 @@ const Header = () => {
               <div className="p-4">
                 <Link to="/" className="flex items-center gap-2" onClick={() => setSheetOpen(false)}>
                   <span className="font-display text-xl font-bold text-foreground">
-                    {theme.logo_text_main ?? "Texno"}
+                    {theme.logo_text_main ?? "Elan"}
                     <span className="text-primary" style={{ color: theme.logo_color ? theme.logo_color : undefined }}>
-                      {theme.logo_text_accent ?? "sat"}
+                      {theme.logo_text_accent ?? "24"}
                     </span>
                   </span>
                 </Link>
