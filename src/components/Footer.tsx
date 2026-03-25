@@ -34,7 +34,7 @@ const Footer = () => {
           <div>
             <Link to="/" className="flex items-center gap-2">
               <span className="font-display text-xl font-bold">
-                {theme.logo_text_main ?? "Texno"}<span className="text-primary" style={{ color: theme.logo_color ? theme.logo_color : undefined }}>{theme.logo_text_accent ?? "sat"}</span>
+                {theme.logo_text_main ?? "Elan"}<span className="text-primary" style={{ color: theme.logo_color ? theme.logo_color : undefined }}>{theme.logo_text_accent ?? "24"}</span>
               </span>
             </Link>
             <p className="mt-3 text-sm text-secondary-foreground/60">
