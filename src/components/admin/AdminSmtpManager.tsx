@@ -121,7 +121,7 @@ const AdminSmtpManager = () => {
       const res = await supabase.functions.invoke("send-email", {
         body: {
           to: testEmail,
-          subject: "Texnosat - Test e-mail",
+          subject: "Elan24 - Test e-mail",
           body: "Bu test e-mailidir. SMTP tənzimləmələriniz düzgün işləyir!",
         },
       });
