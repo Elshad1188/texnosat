@@ -38,7 +38,7 @@ const Footer = () => {
               </span>
             </Link>
             <p className="mt-3 text-sm text-secondary-foreground/60">
-              {settings?.site_description || "Azərbaycanın ən etibarlı elektronika al-sat platforması."}
+              {settings?.site_description || "Azərbaycanın pulsuz elan saytı."}
             </p>
           </div>
 

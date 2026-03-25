@@ -33,9 +33,9 @@ const SplashScreen = () => {
         <div className="flex flex-col items-center gap-4">
           <div className="text-center">
             <span className="font-display text-4xl font-bold text-[#1a1a1b] tracking-tight">
-              {theme.logo_text_main ?? "Texno"}
+              {theme.logo_text_main ?? "Elan"}
               <span className="text-primary">
-                {theme.logo_text_accent ?? "sat"}
+                {theme.logo_text_accent ?? "24"}
               </span>
             </span>
           </div>
