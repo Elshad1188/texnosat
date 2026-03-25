@@ -23,9 +23,9 @@ const Footer = () => {
   });
 
   const phone = settings?.contact_phone || "+994 50 123 45 67";
-  const email = settings?.contact_email || "info@texnosat.az";
+  const email = settings?.contact_email || "info@elan24.az";
   const address = settings?.contact_address || "Bakı, Azərbaycan";
-  const footerText = settings?.footer_text || "© 2026 Texnosat. Bütün hüquqlar qorunur.";
+  const footerText = settings?.footer_text || "© 2026 Elan24. Bütün hüquqlar qorunur.";
 
   return (
     <footer className="border-t border-border bg-secondary text-secondary-foreground">
