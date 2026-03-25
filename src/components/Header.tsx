@@ -79,7 +79,7 @@ const Header = () => {
   }, [user?.id]);
 
   const phone = siteSettings?.contact_phone || "+994 50 123 45 67";
-  const email = siteSettings?.contact_email || "info@texnosat.az";
+  const email = siteSettings?.contact_email || "info@elan24.az";
   const address = siteSettings?.contact_address || "Bakı, Azərbaycan";
 
   return (
