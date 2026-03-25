@@ -45,15 +45,15 @@ const defaultSmtp: SmtpConfig = {
 const defaultTemplates: EmailTemplates = {
   new_message: {
     subject: "Yeni mesajınız var - {{sender_name}}",
-    body: "Salam {{recipient_name}},\n\n{{sender_name}} sizə yeni mesaj göndərdi:\n\n\"{{message_preview}}\"\n\nMesajı oxumaq üçün daxil olun:\n{{site_url}}/messages\n\nHörmətlə,\nTexnosat komandası",
+    body: "Salam {{recipient_name}},\n\n{{sender_name}} sizə yeni mesaj göndərdi:\n\n\"{{message_preview}}\"\n\nMesajı oxumaq üçün daxil olun:\n{{site_url}}/messages\n\nHörmətlə,\nElan24 komandası",
   },
   welcome: {
-    subject: "Texnosat-a xoş gəldiniz!",
-    body: "Salam {{user_name}},\n\nTexnosat platformasına qeydiyyatdan keçdiyiniz üçün təşəkkür edirik!\n\nElanlara baxın və öz elanınızı yerləşdirin:\n{{site_url}}\n\nHörmətlə,\nTexnosat komandası",
+    subject: "Elan24-ə xoş gəldiniz!",
+    body: "Salam {{user_name}},\n\nElan24 platformasına qeydiyyatdan keçdiyiniz üçün təşəkkür edirik!\n\nElanlara baxın və öz elanınızı yerləşdirin:\n{{site_url}}\n\nHörmətlə,\nElan24 komandası",
   },
   password_reset: {
     subject: "Şifrə sıfırlama tələbi",
-    body: "Salam,\n\nŞifrənizi sıfırlamaq üçün aşağıdakı linkə keçin:\n\n{{reset_link}}\n\nBu sorğunu siz etməmisinizsə, bu mesajı nəzərə almayın.\n\nHörmətlə,\nTexnosat komandası",
+    body: "Salam,\n\nŞifrənizi sıfırlamaq üçün aşağıdakı linkə keçin:\n\n{{reset_link}}\n\nBu sorğunu siz etməmisinizsə, bu mesajı nəzərə almayın.\n\nHörmətlə,\nElan24 komandası",
   },
 };
 
