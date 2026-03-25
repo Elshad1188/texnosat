@@ -38,22 +38,22 @@ const defaultSmtp: SmtpConfig = {
   username: "",
   password: "",
   from_email: "",
-  from_name: "Texnosat",
+  from_name: "Elan24",
   secure: true,
 };
 
 const defaultTemplates: EmailTemplates = {
   new_message: {
     subject: "Yeni mesajınız var - {{sender_name}}",
-    body: "Salam {{recipient_name}},\n\n{{sender_name}} sizə yeni mesaj göndərdi:\n\n\"{{message_preview}}\"\n\nMesajı oxumaq üçün daxil olun:\n{{site_url}}/messages\n\nHörmətlə,\nTexnosat komandası",
+    body: "Salam {{recipient_name}},\n\n{{sender_name}} sizə yeni mesaj göndərdi:\n\n\"{{message_preview}}\"\n\nMesajı oxumaq üçün daxil olun:\n{{site_url}}/messages\n\nHörmətlə,\nElan24 komandası",
   },
   welcome: {
-    subject: "Texnosat-a xoş gəldiniz!",
-    body: "Salam {{user_name}},\n\nTexnosat platformasına qeydiyyatdan keçdiyiniz üçün təşəkkür edirik!\n\nElanlara baxın və öz elanınızı yerləşdirin:\n{{site_url}}\n\nHörmətlə,\nTexnosat komandası",
+    subject: "Elan24-ə xoş gəldiniz!",
+    body: "Salam {{user_name}},\n\nElan24 platformasına qeydiyyatdan keçdiyiniz üçün təşəkkür edirik!\n\nElanlara baxın və öz elanınızı yerləşdirin:\n{{site_url}}\n\nHörmətlə,\nElan24 komandası",
   },
   password_reset: {
     subject: "Şifrə sıfırlama tələbi",
-    body: "Salam,\n\nŞifrənizi sıfırlamaq üçün aşağıdakı linkə keçin:\n\n{{reset_link}}\n\nBu sorğunu siz etməmisinizsə, bu mesajı nəzərə almayın.\n\nHörmətlə,\nTexnosat komandası",
+    body: "Salam,\n\nŞifrənizi sıfırlamaq üçün aşağıdakı linkə keçin:\n\n{{reset_link}}\n\nBu sorğunu siz etməmisinizsə, bu mesajı nəzərə almayın.\n\nHörmətlə,\nElan24 komandası",
   },
 };
 
@@ -121,7 +121,7 @@ const AdminSmtpManager = () => {
       const res = await supabase.functions.invoke("send-email", {
         body: {
           to: testEmail,
-          subject: "Texnosat - Test e-mail",
+          subject: "Elan24 - Test e-mail",
           body: "Bu test e-mailidir. SMTP tənzimləmələriniz düzgün işləyir!",
         },
       });
@@ -169,11 +169,11 @@ const AdminSmtpManager = () => {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Göndərən e-mail</Label>
-              <Input value={smtp.from_email} onChange={e => setSmtp({ ...smtp, from_email: e.target.value })} placeholder="noreply@texnosat.az" className="h-9 font-mono text-xs" />
+              <Input value={smtp.from_email} onChange={e => setSmtp({ ...smtp, from_email: e.target.value })} placeholder="noreply@elan24.az" className="h-9 font-mono text-xs" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Göndərən adı</Label>
-              <Input value={smtp.from_name} onChange={e => setSmtp({ ...smtp, from_name: e.target.value })} placeholder="Texnosat" className="h-9 text-xs" />
+              <Input value={smtp.from_name} onChange={e => setSmtp({ ...smtp, from_name: e.target.value })} placeholder="Elan24" className="h-9 text-xs" />
             </div>
           </div>
           <div className="flex items-center gap-2">

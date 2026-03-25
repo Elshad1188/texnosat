@@ -30,7 +30,7 @@ const StaticPage = () => {
     enabled: !!slug,
   });
 
-  const siteName = settings?.site_name || "Texnosat";
+  const siteName = settings?.site_name || "Elan24";
 
   // Replace {{site_name}} placeholder in content with actual site name
   const processedContent = page?.content?.replace(/\{\{site_name\}\}/g, siteName) || "";

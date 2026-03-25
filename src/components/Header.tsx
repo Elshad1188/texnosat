@@ -79,7 +79,7 @@ const Header = () => {
   }, [user?.id]);
 
   const phone = siteSettings?.contact_phone || "+994 50 123 45 67";
-  const email = siteSettings?.contact_email || "info@texnosat.az";
+  const email = siteSettings?.contact_email || "info@elan24.az";
   const address = siteSettings?.contact_address || "Bakı, Azərbaycan";
 
   return (
@@ -97,9 +97,9 @@ const Header = () => {
               <div className="p-4">
                 <Link to="/" className="flex items-center gap-2" onClick={() => setSheetOpen(false)}>
                   <span className="font-display text-xl font-bold text-foreground">
-                    {theme.logo_text_main ?? "Texno"}
+                    {theme.logo_text_main ?? "Elan"}
                     <span className="text-primary" style={{ color: theme.logo_color ? theme.logo_color : undefined }}>
-                      {theme.logo_text_accent ?? "sat"}
+                      {theme.logo_text_accent ?? "24"}
                     </span>
                   </span>
                 </Link>
@@ -205,7 +205,7 @@ const Header = () => {
               {/* Footer text */}
               <div className="p-4 pt-0">
                 <p className="text-[10px] text-muted-foreground/50">
-                  {siteSettings?.footer_text || "© 2026 Texnosat. Bütün hüquqlar qorunur."}
+                  {siteSettings?.footer_text || "© 2026 Elan24. Bütün hüquqlar qorunur."}
                 </p>
               </div>
             </SheetContent>
@@ -213,9 +213,9 @@ const Header = () => {
 
           <Link to="/" className="flex items-center gap-2">
             <span className="font-display text-2xl font-bold text-foreground transition-colors hover:text-primary">
-              {theme.logo_text_main ?? "Texno"}
+              {theme.logo_text_main ?? "Elan"}
               <span className="text-primary" style={{ color: theme.logo_color ? theme.logo_color : undefined }}>
-                {theme.logo_text_accent ?? "sat"}
+                {theme.logo_text_accent ?? "24"}
               </span>
             </span>
           </Link>

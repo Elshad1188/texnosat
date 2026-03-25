@@ -23,9 +23,9 @@ const Footer = () => {
   });
 
   const phone = settings?.contact_phone || "+994 50 123 45 67";
-  const email = settings?.contact_email || "info@texnosat.az";
+  const email = settings?.contact_email || "info@elan24.az";
   const address = settings?.contact_address || "Bakı, Azərbaycan";
-  const footerText = settings?.footer_text || "© 2026 Texnosat. Bütün hüquqlar qorunur.";
+  const footerText = settings?.footer_text || "© 2026 Elan24. Bütün hüquqlar qorunur.";
 
   return (
     <footer className="border-t border-border bg-secondary text-secondary-foreground">
@@ -34,11 +34,11 @@ const Footer = () => {
           <div>
             <Link to="/" className="flex items-center gap-2">
               <span className="font-display text-xl font-bold">
-                {theme.logo_text_main ?? "Texno"}<span className="text-primary" style={{ color: theme.logo_color ? theme.logo_color : undefined }}>{theme.logo_text_accent ?? "sat"}</span>
+                {theme.logo_text_main ?? "Elan"}<span className="text-primary" style={{ color: theme.logo_color ? theme.logo_color : undefined }}>{theme.logo_text_accent ?? "24"}</span>
               </span>
             </Link>
             <p className="mt-3 text-sm text-secondary-foreground/60">
-              {settings?.site_description || "Azərbaycanın ən etibarlı elektronika al-sat platforması."}
+              {settings?.site_description || "Azərbaycanın pulsuz elan saytı."}
             </p>
           </div>
 

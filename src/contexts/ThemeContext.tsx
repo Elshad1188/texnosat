@@ -31,9 +31,9 @@ const defaultTheme: ThemeColors = {
   background_h: 30, background_s: 25, background_l: 97,
   card_h: 0, card_s: 0, card_l: 100,
   radius: 0.75,
-  logo_text_main: "Texno",
-  logo_text_accent: "sat",
-  logo_icon: "T",
+  logo_text_main: "Elan",
+  logo_text_accent: "24",
+  logo_icon: "E",
   logo_color: "",
 };
 

@@ -24,9 +24,9 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,webp}"],
       },
       manifest: {
-        name: "Texnosat - Elektronika Al-Sat",
-        short_name: "Texnosat",
-        description: "Azərbaycanın ən etibarlı elektronika al-sat platforması",
+        name: "Elan24 - Pulsuz Elan Saytı",
+        short_name: "Elan24",
+        description: "Azərbaycanın pulsuz elan saytı",
         theme_color: "#f97316",
         background_color: "#ffffff",
         display: "standalone",
