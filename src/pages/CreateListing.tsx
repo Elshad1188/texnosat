@@ -88,6 +88,7 @@ const CreateListing = () => {
         description: editListing.description || "",
         price: String(editListing.price),
         category: editListing.category,
+        subcategory: "",
         condition: editListing.condition,
         location: editListing.location,
       });
