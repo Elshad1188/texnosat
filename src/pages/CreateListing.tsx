@@ -42,7 +42,7 @@ const CreateListing = () => {
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [form, setForm] = useState({
-    title: "", description: "", price: "", category: "", condition: "Yeni", location: "",
+    title: "", description: "", price: "", category: "", subcategory: "", condition: "Yeni", location: "",
   });
 
   const { data: videoSettings } = useQuery({
@@ -88,6 +88,7 @@ const CreateListing = () => {
         description: editListing.description || "",
         price: String(editListing.price),
         category: editListing.category,
+        subcategory: "",
         condition: editListing.condition,
         location: editListing.location,
       });
@@ -136,15 +137,21 @@ const CreateListing = () => {
   });
 
   const parentCategories = categories.filter((c: any) => !c.parent_id);
+  const subCategories = categories.filter((c: any) => {
+    if (!form.category) return false;
+    const parent = parentCategories.find((p: any) => p.slug === form.category);
+    return parent && c.parent_id === parent.id;
+  });
 
   // Fetch custom fields for selected category
+  const activeCategorySlug = form.subcategory || form.category;
   const { data: categoryFields = [] } = useQuery({
-    queryKey: ["category-fields", form.category],
+    queryKey: ["category-fields", activeCategorySlug],
     queryFn: async () => {
-      const { data } = await supabase.from("category_fields").select("*").eq("category_slug", form.category).eq("is_active", true).order("sort_order");
+      const { data } = await supabase.from("category_fields").select("*").eq("category_slug", activeCategorySlug).eq("is_active", true).order("sort_order");
       return data || [];
     },
-    enabled: !!form.category,
+    enabled: !!activeCategorySlug,
   });
 
   if (!user) { navigate("/auth"); return null; }
@@ -280,9 +287,11 @@ const CreateListing = () => {
         }
       }
 
+      const finalCategory = form.subcategory || form.category;
+
       const listingData: any = {
         title: form.title, description: form.description,
-        price: parseFloat(form.price), category: form.category,
+        price: parseFloat(form.price), category: finalCategory,
         condition: form.condition, location: form.location || "Bakı",
         image_urls: allImages,
         video_url: finalVideoUrl,
@@ -290,6 +299,8 @@ const CreateListing = () => {
         custom_fields: Object.keys(resolvedCustomFields).length > 0 ? resolvedCustomFields : null,
         is_buyable: isBuyable,
         stock: parseInt(stock) || 0,
+        status: "pending",
+        is_active: false,
       };
 
       if (editId) {
@@ -300,8 +311,8 @@ const CreateListing = () => {
       } else {
         const { error } = await supabase.from("listings").insert({ ...listingData, user_id: user.id });
         if (error) throw error;
-        toast({ title: "Elan uğurla yerləşdirildi!" });
-        navigate("/products");
+        toast({ title: "Elan göndərildi!", description: "Admin təsdiqindən sonra yayımlanacaq." });
+        navigate("/profile");
       }
     } catch (err: any) {
       toast({ title: "Xəta baş verdi", description: err.message, variant: "destructive" });
@@ -423,7 +434,7 @@ const CreateListing = () => {
               </div>
               <div className="space-y-2">
                 <Label>Kateqoriya *</Label>
-                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v, subcategory: "" })}>
                   <SelectTrigger><SelectValue placeholder="Seçin" /></SelectTrigger>
                   <SelectContent>
                     {parentCategories.map((c: any) => <SelectItem key={c.id} value={c.slug}>{c.name}</SelectItem>)}
@@ -431,6 +442,19 @@ const CreateListing = () => {
                 </Select>
               </div>
             </div>
+
+            {/* Subcategory */}
+            {subCategories.length > 0 && (
+              <div className="space-y-2">
+                <Label>Alt kateqoriya</Label>
+                <Select value={form.subcategory} onValueChange={(v) => setForm({ ...form, subcategory: v })}>
+                  <SelectTrigger><SelectValue placeholder="Alt kateqoriya seçin" /></SelectTrigger>
+                  <SelectContent>
+                    {subCategories.map((c: any) => <SelectItem key={c.id} value={c.slug}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
