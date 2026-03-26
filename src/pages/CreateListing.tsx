@@ -310,8 +310,8 @@ const CreateListing = () => {
       } else {
         const { error } = await supabase.from("listings").insert({ ...listingData, user_id: user.id });
         if (error) throw error;
-        toast({ title: "Elan uğurla yerləşdirildi!" });
-        navigate("/products");
+        toast({ title: "Elan göndərildi!", description: "Admin təsdiqindən sonra yayımlanacaq." });
+        navigate("/profile");
       }
     } catch (err: any) {
       toast({ title: "Xəta baş verdi", description: err.message, variant: "destructive" });
