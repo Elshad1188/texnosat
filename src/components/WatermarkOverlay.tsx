@@ -19,6 +19,9 @@ export const useWatermarkSettings = () => {
         const theme = themeData?.value as any;
         if (theme?.logo_url) {
           watermarkUrl = theme.logo_url;
+        } else {
+          // Fallback to PWA icon if no custom logo
+          watermarkUrl = "/pwa-192.png";
         }
       }
       
