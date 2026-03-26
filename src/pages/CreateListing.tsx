@@ -136,6 +136,11 @@ const CreateListing = () => {
   });
 
   const parentCategories = categories.filter((c: any) => !c.parent_id);
+  const subCategories = categories.filter((c: any) => {
+    if (!form.category) return false;
+    const parent = parentCategories.find((p: any) => p.slug === form.category);
+    return parent && c.parent_id === parent.id;
+  });
 
   // Fetch custom fields for selected category
   const { data: categoryFields = [] } = useQuery({
