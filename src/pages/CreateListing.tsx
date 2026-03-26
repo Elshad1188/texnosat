@@ -42,7 +42,7 @@ const CreateListing = () => {
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [form, setForm] = useState({
-    title: "", description: "", price: "", category: "", condition: "Yeni", location: "",
+    title: "", description: "", price: "", category: "", subcategory: "", condition: "Yeni", location: "",
   });
 
   const { data: videoSettings } = useQuery({
