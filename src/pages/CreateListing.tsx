@@ -429,7 +429,7 @@ const CreateListing = () => {
               </div>
               <div className="space-y-2">
                 <Label>Kateqoriya *</Label>
-                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v, subcategory: "" })}>
                   <SelectTrigger><SelectValue placeholder="Seçin" /></SelectTrigger>
                   <SelectContent>
                     {parentCategories.map((c: any) => <SelectItem key={c.id} value={c.slug}>{c.name}</SelectItem>)}
@@ -437,6 +437,19 @@ const CreateListing = () => {
                 </Select>
               </div>
             </div>
+
+            {/* Subcategory */}
+            {subCategories.length > 0 && (
+              <div className="space-y-2">
+                <Label>Alt kateqoriya</Label>
+                <Select value={form.subcategory} onValueChange={(v) => setForm({ ...form, subcategory: v })}>
+                  <SelectTrigger><SelectValue placeholder="Alt kateqoriya seçin" /></SelectTrigger>
+                  <SelectContent>
+                    {subCategories.map((c: any) => <SelectItem key={c.id} value={c.slug}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
