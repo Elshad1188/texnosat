@@ -286,9 +286,11 @@ const CreateListing = () => {
         }
       }
 
+      const finalCategory = form.subcategory || form.category;
+
       const listingData: any = {
         title: form.title, description: form.description,
-        price: parseFloat(form.price), category: form.category,
+        price: parseFloat(form.price), category: finalCategory,
         condition: form.condition, location: form.location || "Bakı",
         image_urls: allImages,
         video_url: finalVideoUrl,
@@ -296,6 +298,8 @@ const CreateListing = () => {
         custom_fields: Object.keys(resolvedCustomFields).length > 0 ? resolvedCustomFields : null,
         is_buyable: isBuyable,
         stock: parseInt(stock) || 0,
+        status: "pending",
+        is_active: false,
       };
 
       if (editId) {
