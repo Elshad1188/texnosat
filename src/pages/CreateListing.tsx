@@ -144,13 +144,14 @@ const CreateListing = () => {
   });
 
   // Fetch custom fields for selected category
+  const activeCategorySlug = form.subcategory || form.category;
   const { data: categoryFields = [] } = useQuery({
-    queryKey: ["category-fields", form.category],
+    queryKey: ["category-fields", activeCategorySlug],
     queryFn: async () => {
-      const { data } = await supabase.from("category_fields").select("*").eq("category_slug", form.category).eq("is_active", true).order("sort_order");
+      const { data } = await supabase.from("category_fields").select("*").eq("category_slug", activeCategorySlug).eq("is_active", true).order("sort_order");
       return data || [];
     },
-    enabled: !!form.category,
+    enabled: !!activeCategorySlug,
   });
 
   if (!user) { navigate("/auth"); return null; }
