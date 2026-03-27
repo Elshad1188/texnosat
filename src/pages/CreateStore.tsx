@@ -226,16 +226,21 @@ const CreateStore = () => {
           </div>
         </div>
 
-        <div className="mt-6 rounded-xl border border-border bg-card p-4">
-          <h3 className="font-display text-sm font-semibold text-foreground">Mağaza imkanları</h3>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div className="flex items-start gap-2">
-              <CheckCircle className="mt-0.5 h-4 w-4 text-primary" />
-              <div><p className="text-sm font-medium text-foreground">Pulsuz</p><p className="text-xs text-muted-foreground">Mağaza profili, elan yerləşdirmə</p></div>
+        <div className="mt-6 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5">
+          <h3 className="font-display text-base font-bold text-foreground">🚀 Mağaza açın, satışa başlayın!</h3>
+          <p className="mt-1 text-xs text-muted-foreground">Elan24-də mağaza açmaq pulsuzdur. Elanlarınızı bir yerdə idarə edin və müştərilərinizə peşəkar görüntü təqdim edin.</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="flex items-start gap-2 rounded-xl bg-card/80 p-3 border border-border/50">
+              <CheckCircle className="mt-0.5 h-4 w-4 text-emerald-500 shrink-0" />
+              <div><p className="text-xs font-semibold text-foreground">Pulsuz</p><p className="text-[10px] text-muted-foreground">Mağaza profili və limitsiz elan</p></div>
             </div>
-            <div className="flex items-start gap-2">
-              <Crown className="mt-0.5 h-4 w-4 text-primary" />
-              <div><p className="text-sm font-medium text-foreground">Premium</p><p className="text-xs text-muted-foreground">Üst sıralarda göstərilmə, toplu elan, badge</p></div>
+            <div className="flex items-start gap-2 rounded-xl bg-card/80 p-3 border border-border/50">
+              <Crown className="mt-0.5 h-4 w-4 text-amber-500 shrink-0" />
+              <div><p className="text-xs font-semibold text-foreground">Premium</p><p className="text-[10px] text-muted-foreground">Üst sıralarda göstərilmə</p></div>
+            </div>
+            <div className="flex items-start gap-2 rounded-xl bg-card/80 p-3 border border-border/50">
+              <Store className="mt-0.5 h-4 w-4 text-primary shrink-0" />
+              <div><p className="text-xs font-semibold text-foreground">Birbaşa satış</p><p className="text-[10px] text-muted-foreground">Sifariş və çatdırılma idarəsi</p></div>
             </div>
           </div>
         </div>

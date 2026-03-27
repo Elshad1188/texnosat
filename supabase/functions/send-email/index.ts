@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
     });
 
     await client.send({
-      from: `${smtp.from_name || "Texnosat"} <${smtp.from_email || smtp.username}>`,
+      from: `${smtp.from_name || "Elan24"} <${smtp.from_email || smtp.username}>`,
       to: recipientEmail,
       subject: finalSubject,
       content: finalBody,

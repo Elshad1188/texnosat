@@ -35,16 +35,16 @@ interface SiteSettings {
 }
 
 const defaults: SiteSettings = {
-  site_name: "Texnosat",
-  site_description: "Azərbaycanın ən etibarlı elektronika al-sat platforması.",
-  contact_email: "info@texnosat.az",
+  site_name: "Elan24",
+  site_description: "Azərbaycanın ən böyük pulsuz elan platforması.",
+  contact_email: "info@elan24.az",
   contact_phone: "+994 50 123 45 67",
   contact_address: "Bakı, Azərbaycan",
-  meta_title: "Texnosat - Elektronika Al-Sat",
-  meta_description: "Azərbaycanın ən etibarlı elektronika al-sat platforması. Telefon, noutbuk və digər texnika.",
+  meta_title: "Elan24 - Pulsuz Elan Platforması",
+  meta_description: "Azərbaycanın ən böyük pulsuz elan platforması. Avtomobil, daşınmaz əmlak, elektronika və daha çox.",
   listing_requires_approval: false,
   max_images_per_listing: 10,
-  footer_text: "© 2026 Texnosat. Bütün hüquqlar qorunur.",
+  footer_text: "© 2026 Elan24. Bütün hüquqlar qorunur.",
   watermark_enabled: false,
   watermark_url: "",
   watermark_position: "bottom-right",
