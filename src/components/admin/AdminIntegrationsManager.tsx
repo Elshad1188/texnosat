@@ -154,7 +154,7 @@ const AdminIntegrationsManager = () => {
             <Input
               value={config.app_store_url}
               onChange={(e) => setConfig({ ...config, app_store_url: e.target.value })}
-              placeholder="https://apps.apple.com/app/texnosat/id..."
+              placeholder="https://apps.apple.com/app/elan24/id..."
               className="h-9"
             />
           </div>

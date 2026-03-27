@@ -74,7 +74,7 @@ export async function initFirebaseMessaging(): Promise<string | null> {
         console.log("[Firebase] Foreground message:", payload);
         const { title, body, icon } = payload.notification || {};
         if (Notification.permission === "granted") {
-          new Notification(title || "Texnosat", {
+          new Notification(title || "Elan24", {
             body: body || "",
             icon: icon || "/pwa-192.png",
           });
