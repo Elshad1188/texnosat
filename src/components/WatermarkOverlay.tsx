@@ -13,8 +13,8 @@ export const useWatermarkSettings = () => {
       
       let watermarkUrl = gen.watermark_url;
       
-      // If "use site logo" is enabled, fetch the theme logo
-      if (gen.use_site_logo_as_watermark) {
+      // If "use site logo" is enabled OR no custom watermark URL, fetch the theme logo
+      if (gen.use_site_logo_as_watermark || !watermarkUrl) {
         const { data: themeData } = await supabase.from("site_settings").select("value").eq("key", "theme").maybeSingle();
         const theme = themeData?.value as any;
         if (theme?.logo_url) {
