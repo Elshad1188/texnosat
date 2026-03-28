@@ -317,6 +317,11 @@ const CreateStore = () => {
             <Input id="address" placeholder="Küçə, bina" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="instagram">Instagram hesabı</Label>
+            <Input id="instagram" placeholder="@magazaadi və ya https://instagram.com/magazaadi" value={form.instagram_url} onChange={(e) => setForm({ ...form, instagram_url: e.target.value })} />
+          </div>
+
           <div className="space-y-4 rounded-xl border border-border p-4 bg-muted/30">
             <Label>İş günləri və saatları</Label>
             

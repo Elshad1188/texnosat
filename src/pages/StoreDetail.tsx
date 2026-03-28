@@ -277,8 +277,22 @@ const StoreDetail = () => {
 
               <div className="mt-3 flex flex-wrap gap-4 text-sm text-muted-foreground">
                 {store.city && <span className="flex items-center gap-1"><MapPin className="h-4 w-4" /> {store.city}{store.address && `, ${store.address}`}</span>}
-                {store.phone && <span className="flex items-center gap-1"><Phone className="h-4 w-4" /> {store.phone}</span>}
+                {store.phone && (
+                  <a href={`tel:${store.phone}`} className="flex items-center gap-1 hover:text-primary transition-colors">
+                    <Phone className="h-4 w-4" /> {store.phone}
+                  </a>
+                )}
                 {store.working_hours && <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {store.working_hours}</span>}
+                {(store as any).instagram_url && (
+                  <a
+                    href={(store as any).instagram_url.startsWith('http') ? (store as any).instagram_url : `https://instagram.com/${(store as any).instagram_url.replace('@', '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 hover:text-pink-500 transition-colors"
+                  >
+                    <Instagram className="h-4 w-4" /> {(store as any).instagram_url.replace('https://instagram.com/', '@').replace('https://www.instagram.com/', '@')}
+                  </a>
+                )}
                 <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {followersCount} abunəçi</span>
                 <span className="flex items-center gap-1"><Star className="h-4 w-4 fill-amber-400 text-amber-400" /> {avgRating.toFixed(1)} ({reviews.length} rəy)</span>
               </div>
