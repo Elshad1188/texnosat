@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Share2, MapPin, Grid, Phone, MessageSquare, MessageCircle, ChevronLeft, Flag, Send, Heart, X, Trash2, Clock, Star, Shield, Eye, Loader2, Store, ExternalLink, Edit2, Crown, Zap, Gem, Play, UserPlus, UserCheck, ShoppingCart, Facebook, Twitter } from "lucide-react";
+import { ArrowLeft, Share2, MapPin, Grid, Phone, MessageSquare, MessageCircle, ChevronLeft, Flag, Send, Heart, X, Trash2, Clock, Star, Shield, Eye, Loader2, Store, ExternalLink, Edit2, Crown, Zap, Gem, Play, UserPlus, UserCheck, ShoppingCart, Facebook, Twitter, Link as LinkIcon, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -929,60 +929,85 @@ const ProductDetail = () => {
               Bu elanı dostlarınızla paylaşın
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-3 gap-4 py-4">
-            <a
-              href={shareLinks.whatsapp}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center gap-2 rounded-lg p-3 hover:bg-muted transition-colors text-green-600 font-medium"
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10">
-                <MessageCircle className="h-6 w-6" />
+          <div className="flex flex-col items-center gap-6 py-4">
+            {/* QR Code Section */}
+            <div className="flex flex-col items-center gap-2">
+              <div className="rounded-xl border-4 border-white bg-white p-2 shadow-sm">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.href)}`}
+                  alt="QR Code"
+                  className="h-32 w-32"
+                />
               </div>
-              <span className="text-[10px]">WhatsApp</span>
-            </a>
-            <a
-              href={shareLinks.telegram}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center gap-2 rounded-lg p-3 hover:bg-muted transition-colors text-blue-500 font-medium"
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/10">
-                <Send className="h-6 w-6" />
-              </div>
-              <span className="text-[10px]">Telegram</span>
-            </a>
-            <a
-              href={shareLinks.facebook}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center gap-2 rounded-lg p-3 hover:bg-muted transition-colors text-blue-700 font-medium"
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-700/10">
-                <Facebook className="h-6 w-6" />
-              </div>
-              <span className="text-[10px]">Facebook</span>
-            </a>
-            <a
-              href={shareLinks.twitter}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center gap-2 rounded-lg p-3 hover:bg-muted transition-colors text-foreground font-medium"
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground/10">
-                <Twitter className="h-6 w-6" />
-              </div>
-              <span className="text-[10px]">X (Twitter)</span>
-            </a>
-            <button
-              onClick={shareLinks.copy}
-              className="flex flex-col items-center gap-2 rounded-lg p-3 hover:bg-muted transition-colors text-foreground font-medium"
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                <ExternalLink className="h-6 w-6" />
-              </div>
-              <span className="text-[10px]">Kopyala</span>
-            </button>
+              <span className="text-[10px] text-muted-foreground italic">Skan et və paylaş</span>
+            </div>
+
+            {/* Social Icons Grid */}
+            <div className="grid w-full grid-cols-4 gap-2">
+              <a
+                href={shareLinks.whatsapp}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center gap-1.5 rounded-lg p-2 hover:bg-muted transition-colors text-green-600 font-medium"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500/10">
+                  <MessageCircle className="h-5 w-5" />
+                </div>
+                <span className="text-[10px]">WhatsApp</span>
+              </a>
+              <a
+                href={shareLinks.telegram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center gap-1.5 rounded-lg p-2 hover:bg-muted transition-colors text-blue-500 font-medium"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/10">
+                  <Send className="h-5 w-5" />
+                </div>
+                <span className="text-[10px]">Telegram</span>
+              </a>
+              <a
+                href={shareLinks.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center gap-1.5 rounded-lg p-2 hover:bg-muted transition-colors text-blue-700 font-medium"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-700/10">
+                  <Facebook className="h-5 w-5" />
+                </div>
+                <span className="text-[10px]">Facebook</span>
+              </a>
+              <a
+                href={shareLinks.twitter}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center gap-1.5 rounded-lg p-2 hover:bg-muted transition-colors text-foreground font-medium"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground/10">
+                  <Twitter className="h-5 w-5" />
+                </div>
+                <span className="text-[10px]">X (Twitter)</span>
+              </a>
+            </div>
+
+            {/* Link Copy Section */}
+            <div className="flex w-full items-center gap-2 rounded-lg border border-border bg-muted/30 p-2">
+              <LinkIcon className="h-4 w-4 shrink-0 text-muted-foreground ml-1" />
+              <input
+                readOnly
+                value={window.location.href}
+                className="flex-1 bg-transparent text-xs text-foreground outline-none truncate"
+              />
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 gap-1.5 hover:bg-primary/10 hover:text-primary"
+                onClick={shareLinks.copy}
+              >
+                <Copy className="h-3.5 w-3.5" />
+                <span className="text-[10px]">Kopyala</span>
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
