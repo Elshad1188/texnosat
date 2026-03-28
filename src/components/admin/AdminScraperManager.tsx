@@ -441,7 +441,39 @@ const AdminScraperManager = () => {
         </p>
       </Card>
 
-      {/* Manual Scraper */}
+      {/* Bulk Link Importer */}
+      <Card className="p-4 space-y-4 border-2 border-amber-500/20 bg-amber-500/5">
+        <h3 className="text-sm font-semibold text-amber-600 flex items-center gap-2">
+          <Download className="h-4 w-4" /> Toplu linkdən idxal
+        </h3>
+        <div className="flex flex-col gap-2">
+          <div className="w-full sm:w-48">
+            <Select value={bulkSource} onValueChange={setBulkSource}>
+              <SelectTrigger className="h-9 bg-background"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {SOURCES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <Textarea
+            value={bulkUrlsText}
+            onChange={e => setBulkUrlsText(e.target.value)}
+            placeholder={"Hər sətirə bir link daxil edin:\nhttps://tap.az/elanlar/...\nhttps://tap.az/elanlar/..."}
+            rows={5}
+            className="font-mono text-xs bg-background"
+          />
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] text-muted-foreground">
+              {bulkUrlsText.split('\n').filter(u => u.trim().startsWith('http')).length} link daxil edilib
+            </p>
+            <Button onClick={handleBulkImport} disabled={bulkLoading} className="gap-2">
+              {bulkLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {bulkLoading ? "Çəkilir..." : "Toplu idxal et"}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
       <Card className="p-4 space-y-4">
         <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
           <Globe className="h-4 w-4" /> Elan Scraper
