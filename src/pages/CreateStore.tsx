@@ -141,6 +141,7 @@ const CreateStore = () => {
       name: editStore.name || "", description: editStore.description || "",
       address: editStore.address || "", city: editStore.city || "",
       phone: editStore.phone || "", working_hours: editStore.working_hours || "",
+      instagram_url: (editStore as any).instagram_url || "",
     });
     if (editStore.logo_url) setLogoPreview(editStore.logo_url);
     if (editStore.cover_url) setCoverPreview(editStore.cover_url);
