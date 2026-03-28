@@ -92,6 +92,8 @@ const CreateListing = () => {
         condition: editListing.condition,
         location: editListing.location,
       });
+      setExistingImages(editListing.image_urls || []);
+      setExistingVideo(editListing.video_url || "");
       setCustomFields((editListing as any).custom_fields || {});
       setIsBuyable((editListing as any).is_buyable || false);
       setStock(String((editListing as any).stock || 1));
