@@ -1100,6 +1100,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          instagram_url: string | null
           is_premium: boolean
           logo_url: string | null
           name: string
@@ -1117,6 +1118,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          instagram_url?: string | null
           is_premium?: boolean
           logo_url?: string | null
           name: string
@@ -1134,6 +1136,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          instagram_url?: string | null
           is_premium?: boolean
           logo_url?: string | null
           name?: string
