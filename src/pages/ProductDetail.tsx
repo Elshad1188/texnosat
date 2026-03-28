@@ -57,6 +57,7 @@ const ProductDetail = () => {
   const [commentText, setCommentText] = useState("");
   const [replyingTo, setReplyingTo] = useState<{ id: string, name: string } | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   // Check if e-commerce is enabled
   const { data: ecomSettings } = useQuery({
@@ -332,15 +333,27 @@ const ProductDetail = () => {
       url: window.location.href,
     };
 
-    try {
-      if (navigator.share) {
+    if (navigator.share) {
+      try {
         await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        toast({ title: "Link kopyalandı!" });
+      } catch (err) {
+        if ((err as Error).name !== "AbortError") {
+          console.error("Share error:", err);
+          setShareOpen(true);
+        }
       }
-    } catch (err) {
-      console.error("Share error:", err);
+    } else {
+      setShareOpen(true);
+    }
+  };
+
+  const shareLinks = {
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(`${listing.title} - ${window.location.href}`)}`,
+    telegram: `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(listing.title)}`,
+    copy: async () => {
+      await navigator.clipboard.writeText(window.location.href);
+      toast({ title: "Link kopyalandı!" });
+      setShareOpen(false);
     }
   };
 
@@ -906,6 +919,49 @@ const ProductDetail = () => {
           listing={listing}
         />
       )}
+      <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Paylaş</DialogTitle>
+            <DialogDescription>
+              Bu elanı dostlarınızla paylaşın
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-3 gap-4 py-4">
+            <a
+              href={shareLinks.whatsapp}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center gap-2 rounded-lg p-3 hover:bg-muted transition-colors text-green-600"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10">
+                <MessageCircle className="h-6 w-6" />
+              </div>
+              <span className="text-xs font-medium">WhatsApp</span>
+            </a>
+            <a
+              href={shareLinks.telegram}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center gap-2 rounded-lg p-3 hover:bg-muted transition-colors text-blue-500"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/10">
+                <Send className="h-6 w-6" />
+              </div>
+              <span className="text-xs font-medium">Telegram</span>
+            </a>
+            <button
+              onClick={shareLinks.copy}
+              className="flex flex-col items-center gap-2 rounded-lg p-3 hover:bg-muted transition-colors text-foreground"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                <ExternalLink className="h-6 w-6" />
+              </div>
+              <span className="text-xs font-medium">Kopyala</span>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
