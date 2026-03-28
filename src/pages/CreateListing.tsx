@@ -71,6 +71,22 @@ const CreateListing = () => {
 
   const maxImages = generalSettings?.max_images_per_listing || 10;
 
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories-all"],
+    queryFn: async () => {
+      const { data } = await supabase.from("categories").select("*").eq("is_active", true).order("sort_order");
+      return data || [];
+    },
+  });
+
+  const { data: regions = [] } = useQuery({
+    queryKey: ["regions-parent"],
+    queryFn: async () => {
+      const { data } = await supabase.from("regions").select("*").is("parent_id", null).eq("is_active", true).order("sort_order");
+      return data || [];
+    },
+  });
+
   // Fetch existing listing for editing
   const { data: editListing, isLoading: editLoading } = useQuery({
     queryKey: ["edit-listing", editId],
@@ -82,24 +98,43 @@ const CreateListing = () => {
   });
 
   useEffect(() => {
-    if (editListing) {
+    if (editListing && categories.length > 0) {
+      // Find if the current category is a subcategory and identify its parent
+      const currentCat = categories.find((c: any) => c.slug === editListing.category);
+      let parentSlug = editListing.category;
+      let subSlug = "";
+
+      if (currentCat && currentCat.parent_id) {
+        const parent = categories.find((c: any) => c.id === currentCat.parent_id);
+        if (parent) {
+          parentSlug = parent.slug;
+          subSlug = currentCat.slug;
+        }
+      }
+
       setForm({
         title: editListing.title,
         description: editListing.description || "",
         price: String(editListing.price),
-        category: editListing.category,
-        subcategory: "",
+        category: parentSlug,
+        subcategory: subSlug,
         condition: editListing.condition,
         location: editListing.location,
       });
       setExistingImages(editListing.image_urls || []);
       setExistingVideo(editListing.video_url || "");
-      setCustomFields((editListing as any).custom_fields || {});
+      
+      const cf = (editListing as any).custom_fields || {};
+      setCustomFields(cf);
+      if (Object.keys(cf).length > 0) {
+        setShowCustomFields(true);
+      }
+      
       setIsBuyable((editListing as any).is_buyable || false);
       setStock(String((editListing as any).stock || 1));
       if (editListing.store_id) setSelectedStoreId(editListing.store_id);
     }
-  }, [editListing]);
+  }, [editListing, categories]);
 
   const { data: userStores = [] } = useQuery({
     queryKey: ["user-stores", user?.id],
@@ -122,21 +157,7 @@ const CreateListing = () => {
   }, [approvedStores.length]);
 
 
-  const { data: categories = [] } = useQuery({
-    queryKey: ["categories-all"],
-    queryFn: async () => {
-      const { data } = await supabase.from("categories").select("*").eq("is_active", true).order("sort_order");
-      return data || [];
-    },
-  });
 
-  const { data: regions = [] } = useQuery({
-    queryKey: ["regions-parent"],
-    queryFn: async () => {
-      const { data } = await supabase.from("regions").select("*").is("parent_id", null).eq("is_active", true).order("sort_order");
-      return data || [];
-    },
-  });
 
   const parentCategories = categories.filter((c: any) => !c.parent_id);
   const subCategories = categories.filter((c: any) => {
