@@ -323,6 +323,27 @@ const ProductDetail = () => {
   const avgRating = sellerReviews.length > 0 ? sellerReviews.reduce((s: number, r: any) => s + r.rating, 0) / sellerReviews.length : 0;
   const level = getUserLevel(sellerReviews.length, avgRating);
 
+  // Share handler
+  const handleShare = async () => {
+    if (!listing) return;
+    const shareData = {
+      title: listing.title,
+      text: listing.description || `Azərbaycanın pulsuz elan saytı Elan24-də buna bax: ${listing.title}`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({ title: "Link kopyalandı!" });
+      }
+    } catch (err) {
+      console.error("Share error:", err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -451,7 +472,7 @@ const ProductDetail = () => {
                 <Heart className={`h-4 w-4 ${isFavorited ? "fill-primary text-primary" : ""}`} />
                 {isFavorited ? "Seçilmişlərdə" : "Seçilmişlərə əlavə et"}
               </Button>
-              <Button variant="outline" size="icon"><Share2 className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={handleShare}><Share2 className="h-4 w-4" /></Button>
               <ReportButton targetType="listing" targetId={listing.id} />
               {user && user.id === listing.user_id && (
                 <>
