@@ -29,7 +29,7 @@ const CreateStore = () => {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState("");
   const [form, setForm] = useState({
-    name: "", description: "", address: "", city: "", phone: "", working_hours: "",
+    name: "", description: "", address: "", city: "", phone: "", working_hours: "", instagram_url: "",
   });
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [startTime, setStartTime] = useState("09:00");
