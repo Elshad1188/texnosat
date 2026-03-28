@@ -321,26 +321,35 @@ export type Database = {
       }
       messages: {
         Row: {
+          audio_url: string | null
           content: string
           conversation_id: string
           created_at: string | null
           id: string
+          image_url: string | null
+          is_delivered: boolean | null
           is_read: boolean | null
           sender_id: string
         }
         Insert: {
+          audio_url?: string | null
           content: string
           conversation_id: string
           created_at?: string | null
           id?: string
+          image_url?: string | null
+          is_delivered?: boolean | null
           is_read?: boolean | null
           sender_id: string
         }
         Update: {
+          audio_url?: string | null
           content?: string
           conversation_id?: string
           created_at?: string | null
           id?: string
+          image_url?: string | null
+          is_delivered?: boolean | null
           is_read?: boolean | null
           sender_id?: string
         }
@@ -591,6 +600,7 @@ export type Database = {
           email_notifications: boolean
           full_name: string | null
           id: string
+          last_seen: string | null
           last_spin_at: string | null
           phone: string | null
           referral_code: string | null
@@ -606,6 +616,7 @@ export type Database = {
           email_notifications?: boolean
           full_name?: string | null
           id?: string
+          last_seen?: string | null
           last_spin_at?: string | null
           phone?: string | null
           referral_code?: string | null
@@ -621,6 +632,7 @@ export type Database = {
           email_notifications?: boolean
           full_name?: string | null
           id?: string
+          last_seen?: string | null
           last_spin_at?: string | null
           phone?: string | null
           referral_code?: string | null

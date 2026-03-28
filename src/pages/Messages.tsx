@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { MessageCircle, Send, ArrowLeft, Loader2, Check, CheckCheck, Store, Trash2, MoreVertical } from "lucide-react";
+import { MessageCircle, Send, ArrowLeft, Loader2, Check, CheckCheck, Store, Trash2, MoreVertical, Paperclip, Mic } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -48,6 +48,9 @@ type MessageRecord = {
   sender_id: string;
   content: string;
   is_read: boolean | null;
+  is_delivered: boolean | null;
+  image_url: string | null;
+  audio_url: string | null;
   created_at: string | null;
 };
 
@@ -69,6 +72,88 @@ const Messages = () => {
   const queryClient = useQueryClient();
   const [messageText, setMessageText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !activeConvoId) return;
+    try {
+      setUploadingMedia(true);
+      const ext = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${ext}`;
+      const filePath = `${user.id}/${fileName}`;
+      const { error: uploadError } = await supabase.storage.from("chat_media").upload(filePath, file);
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from("chat_media").getPublicUrl(filePath);
+      
+      const { error: msgErr } = await supabase.from("messages").insert({
+        conversation_id: activeConvoId,
+        sender_id: user.id,
+        content: "Fotoşəkil",
+        image_url: publicUrl,
+      });
+      if (msgErr) throw msgErr;
+    } catch (err: any) {
+      toast({ title: "Şəkil göndərilmədi", description: err.message, variant: "destructive" });
+    } finally {
+      setUploadingMedia(false);
+      e.target.value = "";
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+      audioChunksRef.current = [];
+      recorder.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      recorder.onstop = uploadAudio;
+      recorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      toast({ title: "Mikrofona icazə lazımdır", variant: "destructive" });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop());
+      setIsRecording(false);
+    }
+  };
+
+  const uploadAudio = async () => {
+    if (!user || !activeConvoId) return;
+    try {
+      setUploadingMedia(true);
+      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+      const fileName = `${Math.random()}.webm`;
+      const filePath = `${user.id}/${fileName}`;
+      const { error: uploadError } = await supabase.storage.from("chat_media").upload(filePath, audioBlob);
+      if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage.from("chat_media").getPublicUrl(filePath);
+      
+      const { error: msgErr } = await supabase.from("messages").insert({
+        conversation_id: activeConvoId,
+        sender_id: user.id,
+        content: "Səsli mesaj",
+        audio_url: publicUrl,
+      });
+      if (msgErr) throw msgErr;
+    } catch (err: any) {
+      toast({ title: "Səs göndərilmədi", variant: "destructive" });
+    } finally {
+      setUploadingMedia(false);
+    }
+  };
 
   const removeMessageFromCache = (messageId: string) => {
     queryClient.setQueryData(["messages", activeConvoId], (current: MessageRecord[] | undefined) =>
@@ -204,6 +289,13 @@ const Messages = () => {
     if (!activeConvoId) return;
     const channel = supabase
       .channel(`messages-${activeConvoId}`)
+      .on("broadcast", { event: "typing" }, (payload) => {
+        if (payload.payload?.user_id !== user?.id) {
+          setIsTyping(true);
+          clearTimeout((window as any).typingTimer);
+          (window as any).typingTimer = setTimeout(() => setIsTyping(false), 3000);
+        }
+      })
       .on("postgres_changes", {
         event: "*",
         schema: "public",
@@ -327,6 +419,7 @@ const Messages = () => {
   });
 
   const activeConvo = conversations.find((c: any) => c.id === activeConvoId);
+  const isOnline = activeConvo?.profile?.last_seen && (Date.now() - new Date(activeConvo.profile.last_seen).getTime() < 120000);
 
   // Check if current user is a store owner (for showing "sent as store")
   const { data: myStores = [] } = useQuery({
