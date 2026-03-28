@@ -932,14 +932,14 @@ const ProductDetail = () => {
           <div className="flex flex-col items-center gap-6 py-4">
             {/* QR Code Section */}
             <div className="flex flex-col items-center gap-2">
-              <div className="rounded-xl border-4 border-white bg-white p-2 shadow-sm">
+              <div className="rounded-2xl border-8 border-white bg-white p-3 shadow-md">
                 <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.href)}`}
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(window.location.href)}&margin=1`}
                   alt="QR Code"
-                  className="h-32 w-32"
+                  className="h-40 w-40"
                 />
               </div>
-              <span className="text-[10px] text-muted-foreground italic">Skan et və paylaş</span>
+              <span className="text-[12px] font-semibold text-foreground mt-1">Skan et və paylaş</span>
             </div>
 
             {/* Social Icons Grid */}
