@@ -194,7 +194,7 @@ const AdminScraperManager = () => {
     } finally {
       setBulkLoading(false);
     }
-  
+  };
 
   const toggleSelect = (index: number) => {
     setResults(prev => prev.map((r, i) => i === index ? { ...r, selected: !r.selected } : r));
