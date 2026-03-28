@@ -106,7 +106,7 @@ const Messages = () => {
       // Get listing titles
       const listingIds = conversationRows.filter(c => c.listing_id).map(c => c.listing_id!);
       const { data: listings } = listingIds.length > 0
-        ? await supabase.from("listings").select("id, title, image_urls").in("id", listingIds)
+        ? await supabase.from("listings").select("id, title, image_urls, store_id").in("id", listingIds)
         : { data: [] };
 
       // Get last message for each conversation
@@ -127,10 +127,16 @@ const Messages = () => {
       return conversationRows.map(c => {
         const otherUserId = c.buyer_id === user.id ? c.seller_id : c.buyer_id;
         const profile = (profiles || []).find((p: any) => p.user_id === otherUserId);
-        const store = (stores || []).find((s: any) => s.user_id === otherUserId);
         const listing = (listings || []).find((l: any) => l.id === c.listing_id);
         const lastMsg = (lastMessages || []).find((m: any) => m.conversation_id === c.id);
         const unread = (unreadCounts || []).filter((u: any) => u.conversation_id === c.id).length;
+
+        let store = undefined;
+        if (listing && listing.store_id) {
+          store = (stores || []).find((s: any) => s.id === listing.store_id);
+        } else if (!listing) {
+          store = (stores || []).find((s: any) => s.user_id === otherUserId);
+        }
 
         // Display name: use store name if the other user has a store, otherwise profile name
         const displayName = store ? store.name : (profile?.full_name || "Adsız");
@@ -323,14 +329,25 @@ const Messages = () => {
   const activeConvo = conversations.find((c: any) => c.id === activeConvoId);
 
   // Check if current user is a store owner (for showing "sent as store")
-  const { data: myStore } = useQuery({
-    queryKey: ["my-store", user?.id],
+  const { data: myStores = [] } = useQuery({
+    queryKey: ["my-stores", user?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("stores").select("*").eq("user_id", user!.id).maybeSingle();
-      return data;
+      const { data } = await supabase.from("stores").select("*").eq("user_id", user!.id);
+      return data || [];
     },
     enabled: !!user,
   });
+
+  let myStore = null;
+  if (activeConvoId && activeConvo) {
+    if (activeConvo.listing && activeConvo.listing.store_id) {
+      myStore = myStores.find((s: any) => s.id === activeConvo.listing.store_id);
+    } else if (!activeConvo.listing) {
+      myStore = myStores.length > 0 ? myStores[0] : null;
+    }
+  } else {
+    myStore = myStores.length === 1 ? myStores[0] : null;
+  }
 
   if (!user) {
     return (
