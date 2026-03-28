@@ -75,6 +75,9 @@ const AdminScraperManager = () => {
   const [singleUrl, setSingleUrl] = useState("");
   const [singleSource, setSingleSource] = useState("tap.az");
   const [singleLoading, setSingleLoading] = useState(false);
+  const [bulkUrlsText, setBulkUrlsText] = useState("");
+  const [bulkSource, setBulkSource] = useState("tap.az");
+  const [bulkLoading, setBulkLoading] = useState(false);
   const [results, setResults] = useState<ScrapedListing[]>([]);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const [categories, setCategories] = useState<{ slug: string; name: string }[]>([]);
