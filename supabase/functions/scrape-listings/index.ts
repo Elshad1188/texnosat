@@ -605,8 +605,8 @@ async function scrapeTemu(url: string, limit: number): Promise<ScrapedListing[]>
     if (listings.length === 0) {
       console.log('Temu: Trying HTML card parsing...');
       
-      // Look for product cards by various patterns
       const cardSplitPatterns = [
+        /role="group"/,
         /class="[^"]*_2rn4tSF[^"]*"/,
         /class="[^"]*product-card[^"]*"/,
         /class="[^"]*goods-card[^"]*"/,
@@ -626,9 +626,11 @@ async function scrapeTemu(url: string, limit: number): Promise<ScrapedListing[]>
           
           const titleMatch = chunk.match(/title="([^"]{5,})"/) || 
                             chunk.match(/aria-label="([^"]{5,})"/) ||
-                            chunk.match(/alt="([^"]{5,})"/);
-          const priceMatch = chunk.match(/[\$€](\d+[.,]\d{2})/) || 
-                            chunk.match(/(\d+[.,]\d{2})\s*[\$€₼]/);
+                            chunk.match(/alt="([^"]{5,})"/) ||
+                            chunk.match(/class="[^"]*(?:_2Tl9qLr1|_1ak1dai3)[^"]*"[^>]*>([^<]+)/);
+          const priceMatch = chunk.match(/[\$€₼]\s*([\d.,\s]+)/) || 
+                            chunk.match(/([\d.,\s]+)\s*[\$€₼₼]/) ||
+                            chunk.match(/([\d.,\s]+)\s*AZN/);
           const imgMatch = chunk.match(/(?:src|data-src)="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/i);
           const linkMatch = chunk.match(/href="(\/[^"]*(?:goods|product)[^"]*)"/);
 
@@ -712,12 +714,15 @@ async function scrapeTemuSingle(url: string): Promise<ScrapedListing[]> {
     // Fallback: HTML parsing
     if (!title) {
       const titleMatch = html.match(/<h1[^>]*>([^<]+)<\/h1>/) || 
-                         html.match(/<title>([^<]+)<\/title>/);
+                         html.match(/<title>([^<]+)<\/title>/) ||
+                         html.match(/class="[^"]*(?:_2Tl9qLr1|_1ak1dai3)[^"]*"[^>]*>([^<]+)/);
       title = titleMatch ? decode(titleMatch[1]).replace(/ \| Temu.*$/, '') : '';
     }
 
     if (!price) {
-      const priceMatch = html.match(/[\$€](\d+[.,]\d{2})/) || html.match(/(\d+[.,]\d{2})\s*[\$€]/);
+      const priceMatch = html.match(/[\$€₼]\s*([\d.,\s]+)/) || 
+                         html.match(/([\d.,\s]+)\s*[\$€₼₼]/) ||
+                         html.match(/([\d.,\s]+)\s*AZN/);
       price = priceMatch ? parseFloat(priceMatch[1].replace(',', '.')) : 0;
     }
 
