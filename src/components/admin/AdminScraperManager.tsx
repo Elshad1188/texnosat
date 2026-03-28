@@ -170,6 +170,32 @@ const AdminScraperManager = () => {
     }
   };
 
+  const handleBulkImport = async () => {
+    const urls = bulkUrlsText.split('\n').map(u => u.trim()).filter(u => u.startsWith('http'));
+    if (urls.length === 0) {
+      toast({ title: "Xəta", description: "Ən azı 1 düzgün URL daxil edin", variant: "destructive" });
+      return;
+    }
+    setBulkLoading(true);
+    setResults([]);
+    try {
+      const { data, error } = await supabase.functions.invoke("scrape-listings", {
+        body: { source: bulkSource, categoryUrl: urls[0], bulkUrls: urls, customProxyUrl: proxyUrl },
+      });
+      if (error) throw error;
+      if (data?.listings?.length > 0) {
+        setResults(data.listings.map((l: ScrapedListing) => ({ ...l, selected: true })));
+        toast({ title: "Uğurlu", description: `${data.listings.length} elan tapıldı (${urls.length} linkdən)` });
+      } else {
+        toast({ title: "Nəticə yoxdur", description: "Heç bir elan tapılmadı", variant: "destructive" });
+      }
+    } catch (error: any) {
+      toast({ title: "Xəta", description: error.message, variant: "destructive" });
+    } finally {
+      setBulkLoading(false);
+    }
+  
+
   const toggleSelect = (index: number) => {
     setResults(prev => prev.map((r, i) => i === index ? { ...r, selected: !r.selected } : r));
   };
