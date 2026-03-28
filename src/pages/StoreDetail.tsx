@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   Store, MapPin, Phone, Clock, Crown, MessageCircle, Loader2, ArrowLeft,
-  Users, UserPlus, UserMinus, Settings, Star, Send, Trash2
+  Users, UserPlus, UserMinus, Settings, Star, Send, Trash2, Instagram
 } from "lucide-react";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
