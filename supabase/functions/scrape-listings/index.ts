@@ -64,7 +64,7 @@ try {
 
 let activeProxyUrl: string | undefined = undefined;
 
-async function fetchWithRetry(url: string, retries = 3, customHeaders?: Record<string, string>): Promise<Response> {
+async function fetchWithRetry(url: string, retries = 3, customHeaders?: Record<string, string>, extraOpts?: RequestInit): Promise<Response> {
   let currentClient = proxyClient;
   const overrideProxyUrl = activeProxyUrl || Deno.env.get('PROXY_URL');
   if (overrideProxyUrl && overrideProxyUrl !== Deno.env.get('PROXY_URL')) {
@@ -77,7 +77,7 @@ async function fetchWithRetry(url: string, retries = 3, customHeaders?: Record<s
 
   for (let i = 0; i <= retries; i++) {
     try {
-      const fetchOptions: any = { headers, redirect: 'follow' };
+      const fetchOptions: any = { headers, redirect: 'follow', ...extraOpts };
       if (currentClient) {
         fetchOptions.client = currentClient;
       }
@@ -303,88 +303,47 @@ Deno.serve(async (req) => {
 // ========== TAP.AZ ==========
 async function scrapeTapAz(url: string, limit: number, fetchDetails: boolean): Promise<ScrapedListing[]> {
   const listings: ScrapedListing[] = [];
-  let pageUrl = url;
-  let page = 1;
+  
+  let sourceLink = url;
+  try {
+    const urlObj = new URL(url);
+    sourceLink = urlObj.pathname + urlObj.search;
+  } catch(e) {}
 
-  while (listings.length < limit && page <= 10) {
-    console.log(`Fetching tap.az page ${page}: ${pageUrl}`);
-    let html: string;
-    try {
-      const resp = await fetchWithRetry(pageUrl);
-      html = await resp.text();
-    } catch (e) {
-      console.error(`Page fetch failed: ${e}`);
-      break;
+  const query = `query($link: String!, $limit: Int!) {
+    ads(first: $limit, source: MOBILE, sourceLink: $link) {
+      edges { node { legacyResourceId title price path photo { url } region } }
     }
+  }`;
 
-    const productBlocks = html.split(/class="products-i\b/).slice(1);
-    console.log(`Found ${productBlocks.length} product blocks`);
-
-    for (const block of productBlocks) {
+  console.log(`Fetching tap.az API for: ${sourceLink} (limit: ${limit})`);
+  
+  try {
+    const headers = { ...BROWSER_HEADERS, 'Content-Type': 'application/json' };
+    const body = JSON.stringify({ query, variables: { link: sourceLink, limit } });
+    const resp = await fetchWithRetry('https://tap.az/graphql', 3, headers, { method: 'POST', body });
+    const json = await resp.json();
+    const edges = json.data?.ads?.edges || [];
+    
+    for (const edge of edges) {
       if (listings.length >= limit) break;
-      const chunk = block.substring(0, 3000);
-
-      const linkMatch = chunk.match(/href="(\/elanlar\/[^"]+)"/);
-      const sourceUrl = linkMatch ? `https://tap.az${linkMatch[1]}` : '';
-
-      const nameMatch = chunk.match(/class="products-name[^"]*"[^>]*>([^<]+)/);
-      const title = nameMatch ? decode(nameMatch[1]) : '';
-
-      const priceMatch = chunk.match(/class="[^"]*price[^"]*"[^>]*>([\s\S]*?)<\/(?:span|div)>/) ||
-                         chunk.match(/([\d\s.,]+)\s*(?:₼|AZN|man)/);
-      let price = 0;
-      if (priceMatch) {
-        const cleaned = priceMatch[1].replace(/<[^>]+>/g, '').replace(/\s/g, '').replace(',', '.');
-        price = parseFloat(cleaned) || 0;
-      }
-
-      const imgMatch = chunk.match(/(?:src|data-src)="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/i);
-      const thumbUrl = imgMatch ? imgMatch[1] : null;
-
-      const locMatch = chunk.match(/class="products-created[^"]*"[^>]*>([^<]+)/);
-      const location = locMatch ? decode(locMatch[1]).split(',')[0].trim() : 'Bakı';
-
-      if (title && title.length > 2) {
-        listings.push({
-          title, price, currency: '₼',
-          image_urls: thumbUrl ? [thumbUrl] : [],
-          location, description: '', source_url: sourceUrl,
-          category: '', condition: 'İşlənmiş', custom_fields: {},
-        });
-      }
+      const node = edge.node;
+      
+      listings.push({
+        title: node.title,
+        price: node.price || 0,
+        currency: '₼',
+        image_urls: node.photo?.url ? [node.photo.url] : [],
+        location: node.region || 'Bakı',
+        description: '',
+        source_url: `https://tap.az${node.path}`,
+        category: '',
+        condition: 'İşlənmiş',
+        custom_fields: {},
+      });
     }
-
-    if (listings.length === 0 && page === 1) {
-      console.log('Trying fallback parsing...');
-      const linkRegex = /href="(\/elanlar\/[^"]+)"[^>]*>[\s\S]*?<\/a>/g;
-      let m;
-      const seenUrls = new Set<string>();
-      while ((m = linkRegex.exec(html)) !== null && listings.length < limit) {
-        const href = m[1];
-        if (seenUrls.has(href) || href.split('/').length < 4) continue;
-        seenUrls.add(href);
-        const context = html.substring(Math.max(0, m.index - 200), m.index + m[0].length + 500);
-        const titleMatch = context.match(/class="[^"]*(?:name|title)[^"]*"[^>]*>([^<]+)/);
-        const priceMatch = context.match(/([\d.,]+)\s*(?:₼|AZN)/);
-        if (titleMatch) {
-          listings.push({
-            title: decode(titleMatch[1]),
-            price: priceMatch ? parseFloat(priceMatch[1].replace(',', '.')) : 0,
-            currency: '₼', image_urls: [], location: 'Bakı', description: '',
-            source_url: `https://tap.az${href}`, category: '', condition: 'İşlənmiş', custom_fields: {},
-          });
-        }
-      }
-    }
-
-    const nextMatch = html.match(/class="[^"]*pagination[^"]*"[\s\S]*?class="[^"]*next[^"]*"[^>]*href="([^"]+)"/);
-    if (nextMatch && listings.length < limit) {
-      pageUrl = nextMatch[1].startsWith('http') ? nextMatch[1] : `https://tap.az${nextMatch[1]}`;
-      page++;
-      await new Promise(r => setTimeout(r, 500 + Math.random() * 1000));
-    } else {
-      break;
-    }
+  } catch (e) {
+    console.error(`Tap.az GraphQL fetch failed: ${e}`);
   }
 
   if (fetchDetails && listings.length > 0) {
@@ -411,62 +370,48 @@ async function scrapeTapAz(url: string, limit: number, fetchDetails: boolean): P
 
 async function fetchTapAzDetail(url: string): Promise<Partial<ScrapedListing> | null> {
   try {
-    const resp = await fetchWithRetry(url);
-    const html = await resp.text();
+    let legacyId = '';
+    const m = url.match(/\/(\d+)$/);
+    if (m) legacyId = m[1];
+    else return null;
 
-    const titleMatch = html.match(/<h1[^>]*class="[^"]*(?:product-title|product-header__title|title)[^"]*"[^>]*>([^<]+)<\/h1>/) ||
-                       html.match(/<h1[^>]*>([^<]+)<\/h1>/);
-    const title = titleMatch ? decode(titleMatch[1]) : undefined;
-
-    const descMatch = html.match(/class="[^"]*(?:product-description__content|product-description|description)[^"]*"[^>]*>([\s\S]*?)<\/div>/);
-    let description = '';
-    if (descMatch) {
-      description = descMatch[1].replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').trim();
-      description = decode(description);
-    }
-
-    const imageUrls: string[] = [];
-    const imgMatches = html.matchAll(/<(?:img|a)[^>]+(?:src|data-src|href)="(https?:\/\/tap\.az\/uploads\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi);
-    for (const im of imgMatches) {
-      if (!imageUrls.includes(im[1])) imageUrls.push(im[1]);
-    }
-
-    const custom_fields: Record<string, string> = {};
-    const propItemRegex = /<div class="product-properties__i">[\s\S]*?<label class="product-properties__i-name">([^<]+)<\/label>[\s\S]*?<span class="product-properties__i-value">([\s\S]*?)<\/span>/g;
-    let pMatch;
-    while ((pMatch = propItemRegex.exec(html)) !== null) {
-      const key = decode(pMatch[1]).trim();
-      const val = decode(pMatch[2].replace(/<[^>]+>/g, '')).trim();
-      if (key && val) custom_fields[key] = val;
-    }
-
-    const priceValMatch = html.match(/class="price-val">([^<]+)/);
-    let price: number | undefined;
-    if (priceValMatch) {
-      price = parseFloat(priceValMatch[1].replace(/\s/g, '').replace(',', '.')) || undefined;
-    }
-
-    const locMatch = html.match(/class="product-location">([^<]+)/);
-    let location = locMatch ? decode(locMatch[1]).trim() : undefined;
-    if (!location && html.includes('>Bakı</span>')) location = 'Bakı';
-
-    const sellerNameMatch = html.match(/class="product-owner__name">([^<]+)/) ||
-                            html.match(/class="product-owner">([^<]+)/);
-    const sellerPhoneMatch = html.match(/class="[^"]*phone[^"]*"[^>]*>([^<]+)/) ||
-                             html.match(/data-phone="([^"]+)"/) ||
-                             html.match(/tel:([^"]+)/);
+    const query = `query($id: ID!) {
+      adDetails(legacyId: $id, source: MOBILE) {
+        body
+        contact { name phones { number } }
+        photos { url }
+        properties { name value }
+        region
+      }
+    }`;
+    
+    const headers = { ...BROWSER_HEADERS, 'Content-Type': 'application/json' };
+    const body = JSON.stringify({ query, variables: { id: legacyId } });
+    const resp = await fetchWithRetry('https://tap.az/graphql', 3, headers, { method: 'POST', body });
+    const json = await resp.json();
+    
+    const ad = json.data?.adDetails;
+    if (!ad) return null;
 
     const result: Partial<ScrapedListing> = {};
-    if (title) result.title = title;
-    if (description) result.description = description;
-    if (imageUrls.length > 0) result.image_urls = imageUrls;
-    if (price) result.price = price;
-    if (location) result.location = location || 'Bakı';
-    if (custom_fields['Vəziyyəti']) result.condition = custom_fields['Vəziyyəti'];
-    if (Object.keys(custom_fields).length > 0) result.custom_fields = custom_fields;
-    if (sellerNameMatch) result.seller_name = decode(sellerNameMatch[1]).trim();
-    if (sellerPhoneMatch) result.seller_phone = sellerPhoneMatch[1].replace(/\D/g, '').trim();
-
+    if (ad.body) result.description = ad.body.replace(/<[^>]+>/g, '').trim();
+    if (ad.photos) result.image_urls = ad.photos.map((p: any) => p.url).filter(Boolean);
+    if (ad.region) result.location = ad.region;
+    
+    if (ad.properties) {
+      const custom_fields: Record<string, string> = {};
+      ad.properties.forEach((p: any) => { if (p.name && p.value) custom_fields[p.name] = p.value; });
+      result.custom_fields = custom_fields;
+      if (custom_fields['Vəziyyəti']) result.condition = custom_fields['Vəziyyəti'];
+    }
+    
+    if (ad.contact) {
+      if (ad.contact.name) result.seller_name = ad.contact.name;
+      if (ad.contact.phones && ad.contact.phones.length > 0) {
+        result.seller_phone = ad.contact.phones[0].number.replace(/<[^>]+>/g, '').trim();
+      }
+    }
+    
     return result;
   } catch (e) {
     console.error(`Detail error: ${e}`);
