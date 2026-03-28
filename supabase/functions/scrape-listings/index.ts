@@ -711,6 +711,26 @@ async function scrapeTemuSingle(url: string): Promise<ScrapedListing[]> {
       }
     }
 
+    // Try application/ld+json SEO data
+    const ldJsonMatches = html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi);
+    for (const match of ldJsonMatches) {
+      try {
+        const data = JSON.parse(match[1]);
+        const product = Array.isArray(data) ? data.find((item: any) => item['@type'] === 'Product') : (data['@type'] === 'Product' ? data : null);
+        if (product) {
+          if (!title) title = product.name || '';
+          if (!price && product.offers && product.offers.price) price = parseFloat(product.offers.price);
+          if (product.image) {
+            const imgs = Array.isArray(product.image) ? product.image : [product.image];
+            for (const img of imgs) {
+              if (typeof img === 'string' && !imageUrls.includes(img)) imageUrls.push(img);
+            }
+          }
+          if (!description && product.description) description = product.description;
+        }
+      } catch(e) {}
+    }
+
     // Fallback: HTML parsing
     if (!title) {
       const titleMatch = html.match(/<h1[^>]*>([^<]+)<\/h1>/) || 
@@ -720,14 +740,15 @@ async function scrapeTemuSingle(url: string): Promise<ScrapedListing[]> {
     }
 
     if (!price) {
-      const priceMatch = html.match(/[\$€₼]\s*([\d.,\s]+)/) || 
-                         html.match(/([\d.,\s]+)\s*[\$€₼₼]/) ||
-                         html.match(/([\d.,\s]+)\s*AZN/);
-      price = priceMatch ? parseFloat(priceMatch[1].replace(',', '.')) : 0;
+      const textOnly = html.replace(/<[^>]+>/g, '');
+      const priceMatch = textOnly.match(/[\$€₼]\s*([\d.,\s]{2,10})/) || 
+                         textOnly.match(/([\d.,\s]{2,10})\s*[\$€₼]/) ||
+                         textOnly.match(/([\d.,\s]{2,10})\s*AZN/);
+      price = priceMatch ? parseFloat(priceMatch[1].replace(/\s/g, '').replace(',', '.')) : 0;
     }
 
     if (imageUrls.length === 0) {
-      const imgMatches = html.matchAll(/(?:src|data-src)="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi);
+      const imgMatches = html.matchAll(/(?:src|data-src)="(https?:\/\/(?:img\.kwcdn\.com|[^"]+kwcdn[^"]+)[^"]*)"/gi);
       for (const im of imgMatches) {
         if (!im[1].includes('icon') && !im[1].includes('logo') && !imageUrls.includes(im[1])) {
           imageUrls.push(im[1]);
