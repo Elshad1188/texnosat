@@ -88,14 +88,24 @@ Deno.serve(async (req) => {
     // Use denomailer for SMTP
     const { SMTPClient } = await import("https://deno.land/x/denomailer@1.6.0/mod.ts");
 
+    if (!smtp || !smtp.host) {
+      console.warn("SMTP host is not configured in site_settings. Skipping email send.");
+      return new Response(JSON.stringify({ success: true, bypassed: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Clean up host string (remove trailing spaces, protocols)
+    const rawHost = String(smtp.host).trim().replace(/^https?:\/\//, '');
+
     const client = new SMTPClient({
       connection: {
-        hostname: smtp.host,
-        port: Number(smtp.port),
+        hostname: rawHost,
+        port: Number(smtp.port) || 465,
         tls: smtp.secure !== false, // default to true if not explicitly false
         auth: {
-          username: smtp.username,
-          password: smtp.password,
+          username: smtp.username || "",
+          password: smtp.password || "",
         },
       },
     });
