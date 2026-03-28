@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -75,6 +76,9 @@ const AdminScraperManager = () => {
   const [singleUrl, setSingleUrl] = useState("");
   const [singleSource, setSingleSource] = useState("tap.az");
   const [singleLoading, setSingleLoading] = useState(false);
+  const [bulkUrlsText, setBulkUrlsText] = useState("");
+  const [bulkSource, setBulkSource] = useState("tap.az");
+  const [bulkLoading, setBulkLoading] = useState(false);
   const [results, setResults] = useState<ScrapedListing[]>([]);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const [categories, setCategories] = useState<{ slug: string; name: string }[]>([]);
@@ -164,6 +168,32 @@ const AdminScraperManager = () => {
       toast({ title: "Xəta", description: error.message, variant: "destructive" });
     } finally {
       setSingleLoading(false);
+    }
+  };
+
+  const handleBulkImport = async () => {
+    const urls = bulkUrlsText.split('\n').map(u => u.trim()).filter(u => u.startsWith('http'));
+    if (urls.length === 0) {
+      toast({ title: "Xəta", description: "Ən azı 1 düzgün URL daxil edin", variant: "destructive" });
+      return;
+    }
+    setBulkLoading(true);
+    setResults([]);
+    try {
+      const { data, error } = await supabase.functions.invoke("scrape-listings", {
+        body: { source: bulkSource, categoryUrl: urls[0], bulkUrls: urls, customProxyUrl: proxyUrl },
+      });
+      if (error) throw error;
+      if (data?.listings?.length > 0) {
+        setResults(data.listings.map((l: ScrapedListing) => ({ ...l, selected: true })));
+        toast({ title: "Uğurlu", description: `${data.listings.length} elan tapıldı (${urls.length} linkdən)` });
+      } else {
+        toast({ title: "Nəticə yoxdur", description: "Heç bir elan tapılmadı", variant: "destructive" });
+      }
+    } catch (error: any) {
+      toast({ title: "Xəta", description: error.message, variant: "destructive" });
+    } finally {
+      setBulkLoading(false);
     }
   };
 
@@ -412,7 +442,39 @@ const AdminScraperManager = () => {
         </p>
       </Card>
 
-      {/* Manual Scraper */}
+      {/* Bulk Link Importer */}
+      <Card className="p-4 space-y-4 border-2 border-amber-500/20 bg-amber-500/5">
+        <h3 className="text-sm font-semibold text-amber-600 flex items-center gap-2">
+          <Download className="h-4 w-4" /> Toplu linkdən idxal
+        </h3>
+        <div className="flex flex-col gap-2">
+          <div className="w-full sm:w-48">
+            <Select value={bulkSource} onValueChange={setBulkSource}>
+              <SelectTrigger className="h-9 bg-background"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {SOURCES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <Textarea
+            value={bulkUrlsText}
+            onChange={e => setBulkUrlsText(e.target.value)}
+            placeholder={"Hər sətirə bir link daxil edin:\nhttps://tap.az/elanlar/...\nhttps://tap.az/elanlar/..."}
+            rows={5}
+            className="font-mono text-xs bg-background"
+          />
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] text-muted-foreground">
+              {bulkUrlsText.split('\n').filter(u => u.trim().startsWith('http')).length} link daxil edilib
+            </p>
+            <Button onClick={handleBulkImport} disabled={bulkLoading} className="gap-2">
+              {bulkLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {bulkLoading ? "Çəkilir..." : "Toplu idxal et"}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
       <Card className="p-4 space-y-4">
         <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
           <Globe className="h-4 w-4" /> Elan Scraper

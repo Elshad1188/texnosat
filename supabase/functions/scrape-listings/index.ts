@@ -1,6 +1,6 @@
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -20,10 +20,10 @@ interface ScrapedListing {
   seller_phone?: string;
 }
 
-const BROWSER_HEADERS = {
+const BROWSER_HEADERS: Record<string, string> = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-  'Accept-Language': 'az-AZ,az;q=0.9,en-US;q=0.8,en;q=0.7',
+  'Accept-Language': 'en-US,en;q=0.9',
   'Accept-Encoding': 'gzip, deflate, br',
   'Cache-Control': 'no-cache',
   'Pragma': 'no-cache',
@@ -37,6 +37,20 @@ const BROWSER_HEADERS = {
   'Upgrade-Insecure-Requests': '1',
 };
 
+const TEMU_API_HEADERS: Record<string, string> = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+  'Accept': 'application/json, text/plain, */*',
+  'Accept-Language': 'en-US,en;q=0.9',
+  'Referer': 'https://www.temu.com/',
+  'Origin': 'https://www.temu.com',
+  'Sec-Ch-Ua': '"Chromium";v="131", "Not_A Brand";v="24"',
+  'Sec-Ch-Ua-Mobile': '?0',
+  'Sec-Ch-Ua-Platform': '"Windows"',
+  'Sec-Fetch-Dest': 'empty',
+  'Sec-Fetch-Mode': 'cors',
+  'Sec-Fetch-Site': 'same-origin',
+};
+
 let proxyClient: any;
 try {
   const proxyUrl = Deno.env.get('PROXY_URL');
@@ -48,7 +62,9 @@ try {
   console.log('Failed to initialize proxy client:', e);
 }
 
-async function fetchWithRetry(url: string, retries = 2): Promise<Response> {
+let activeProxyUrl: string | undefined = undefined;
+
+async function fetchWithRetry(url: string, retries = 3, customHeaders?: Record<string, string>): Promise<Response> {
   let currentClient = proxyClient;
   const overrideProxyUrl = activeProxyUrl || Deno.env.get('PROXY_URL');
   if (overrideProxyUrl && overrideProxyUrl !== Deno.env.get('PROXY_URL')) {
@@ -57,27 +73,36 @@ async function fetchWithRetry(url: string, retries = 2): Promise<Response> {
     currentClient = undefined;
   }
 
+  const headers = customHeaders || BROWSER_HEADERS;
+
   for (let i = 0; i <= retries; i++) {
-    const fetchOptions: any = { headers: BROWSER_HEADERS, redirect: 'follow' };
-    if (currentClient) {
-      fetchOptions.client = currentClient;
-    }
-    
-    const resp = await fetch(url, fetchOptions);
-    if (resp.ok) return resp;
-    if (resp.status === 403 && i < retries) {
-      console.log(`Got 403, retrying (${i + 1})...`);
-      await new Promise(r => setTimeout(r, 1000 + Math.random() * 2000));
-      continue;
-    }
-    if (!resp.ok) {
-      throw new Error(`HTTP ${resp.status} for ${url}`);
+    try {
+      const fetchOptions: any = { headers, redirect: 'follow' };
+      if (currentClient) {
+        fetchOptions.client = currentClient;
+      }
+      
+      const resp = await fetch(url, fetchOptions);
+      if (resp.ok) return resp;
+      if ((resp.status === 403 || resp.status === 429) && i < retries) {
+        console.log(`Got ${resp.status}, retrying (${i + 1}/${retries})...`);
+        await new Promise(r => setTimeout(r, 2000 + Math.random() * 3000));
+        continue;
+      }
+      if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status} for ${url}`);
+      }
+    } catch (e) {
+      if (i < retries) {
+        console.log(`Fetch error, retrying (${i + 1}/${retries}): ${e}`);
+        await new Promise(r => setTimeout(r, 2000 + Math.random() * 2000));
+        continue;
+      }
+      throw e;
     }
   }
   throw new Error(`Failed after ${retries} retries for ${url}`);
 }
-
-let activeProxyUrl: string | undefined = undefined;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -90,7 +115,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body = await req.json();
-    const { source, categoryUrl, limit = 20, fetchDetails = false, cronMode = false, targetCategory, targetLocation, userId, customProxyUrl, singleUrlMode = false } = body;
+    const { source, categoryUrl, limit = 20, fetchDetails = false, cronMode = false, targetCategory, targetLocation, userId, customProxyUrl, singleUrlMode = false, bulkUrls } = body;
     activeProxyUrl = customProxyUrl;
 
     // If not cron mode, verify admin auth
@@ -115,7 +140,6 @@ Deno.serve(async (req) => {
         });
       }
     } else {
-      // Cron mode: verify request comes from pg_net (check for anon key in Authorization)
       const authHeader = req.headers.get('Authorization');
       const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
       if (!authHeader || !anonKey || !authHeader.includes(anonKey)) {
@@ -123,9 +147,73 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (!source || !categoryUrl) {
-      return new Response(JSON.stringify({ error: 'source and categoryUrl required' }), {
+    if (!source || (!categoryUrl && !bulkUrls)) {
+      return new Response(JSON.stringify({ error: 'source and categoryUrl (or bulkUrls) required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Handle bulk URLs mode
+    if (bulkUrls && Array.isArray(bulkUrls) && bulkUrls.length > 0) {
+      console.log(`Bulk scraping ${bulkUrls.length} URLs from ${source}`);
+      const allListings: ScrapedListing[] = [];
+      
+      for (let i = 0; i < bulkUrls.length; i++) {
+        const url = bulkUrls[i];
+        try {
+          console.log(`Bulk [${i + 1}/${bulkUrls.length}]: ${url}`);
+          let items: ScrapedListing[] = [];
+          
+          if (source === 'tap.az') {
+            const detail = await fetchTapAzDetail(url);
+            if (detail) {
+              items = [{
+                title: detail.title || '',
+                price: detail.price || 0,
+                currency: '₼',
+                image_urls: detail.image_urls || [],
+                location: detail.location || 'Bakı',
+                description: detail.description || '',
+                source_url: url,
+                category: '',
+                condition: detail.condition || 'İşlənmiş',
+                custom_fields: detail.custom_fields || {},
+                seller_name: detail.seller_name,
+                seller_phone: detail.seller_phone,
+              }];
+            }
+          } else if (source === 'temu') {
+            items = await scrapeTemuSingle(url);
+          } else {
+            const detail = await fetchGenericDetail(url);
+            if (detail) {
+              items = [{
+                title: detail.title || url,
+                price: detail.price || 0,
+                currency: '₼',
+                image_urls: detail.image_urls || [],
+                location: 'Bakı',
+                description: detail.description || '',
+                source_url: url,
+                category: '',
+                condition: 'İşlənmiş',
+                custom_fields: {},
+              }];
+            }
+          }
+          
+          allListings.push(...items);
+          // Delay between requests
+          if (i < bulkUrls.length - 1) {
+            await new Promise(r => setTimeout(r, 1000 + Math.random() * 2000));
+          }
+        } catch (e) {
+          console.error(`Bulk error for ${url}: ${e}`);
+        }
+      }
+      
+      return new Response(JSON.stringify({ success: true, listings: allListings, count: allListings.length }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -133,7 +221,6 @@ Deno.serve(async (req) => {
 
     let listings: ScrapedListing[] = [];
 
-    // Check if it is a single detail page instead of a category URL
     if (singleUrlMode && source === 'tap.az' && categoryUrl.includes('/elanlar/')) {
       console.log('Single detail page detected for tap.az');
       const detail = await fetchTapAzDetail(categoryUrl);
@@ -153,6 +240,8 @@ Deno.serve(async (req) => {
           seller_phone: detail.seller_phone,
         }];
       }
+    } else if (singleUrlMode && source === 'temu') {
+      listings = await scrapeTemuSingle(categoryUrl);
     } else if (source === 'tap.az') {
       listings = await scrapeTapAz(categoryUrl, limit, fetchDetails);
     } else if (source === 'telefon.az') {
@@ -163,15 +252,8 @@ Deno.serve(async (req) => {
       listings = await scrapeGeneric(categoryUrl, limit);
     }
 
-    // Handle single URL mode (auto-import or return single result)
-    if (singleUrlMode && listings.length > 0) {
-      console.log('Single URL mode triggered');
-      // Already fetched in scrapeFunctions
-    }
-
     // In cron mode, auto-save to database
     if (cronMode && listings.length > 0 && targetCategory && userId) {
-      // Duplicate check
       const titles = listings.map(l => l.title);
       const { data: existing } = await supabase
         .from('listings')
@@ -196,9 +278,9 @@ Deno.serve(async (req) => {
         }));
         const { error: insertErr } = await supabase.from('listings').insert(insertData);
         if (insertErr) console.error('Cron insert error:', insertErr);
-        else console.log(`Cron: inserted ${unique.length} new listings (${listings.length - unique.length} duplicates skipped)`);
+        else console.log(`Cron: inserted ${unique.length} new listings`);
       } else {
-        console.log('Cron: all listings are duplicates, nothing to insert');
+        console.log('Cron: all duplicates');
       }
 
       return new Response(JSON.stringify({ success: true, total: listings.length, inserted: listings.length - (existing?.length || 0) }), {
@@ -235,19 +317,11 @@ async function scrapeTapAz(url: string, limit: number, fetchDetails: boolean): P
       break;
     }
 
-    console.log(`Got HTML: ${html.length} chars`);
-
-    // tap.az listing structure: each product is inside .products-i
-    // Try multiple parsing strategies
-
-    // Strategy 1: Find all product links with data
     const productBlocks = html.split(/class="products-i\b/).slice(1);
     console.log(`Found ${productBlocks.length} product blocks`);
 
     for (const block of productBlocks) {
       if (listings.length >= limit) break;
-
-      // Get the relevant chunk (until next product or end)
       const chunk = block.substring(0, 3000);
 
       const linkMatch = chunk.match(/href="(\/elanlar\/[^"]+)"/);
@@ -256,7 +330,6 @@ async function scrapeTapAz(url: string, limit: number, fetchDetails: boolean): P
       const nameMatch = chunk.match(/class="products-name[^"]*"[^>]*>([^<]+)/);
       const title = nameMatch ? decode(nameMatch[1]) : '';
 
-      // Price: try multiple patterns
       const priceMatch = chunk.match(/class="[^"]*price[^"]*"[^>]*>([\s\S]*?)<\/(?:span|div)>/) ||
                          chunk.match(/([\d\s.,]+)\s*(?:₼|AZN|man)/);
       let price = 0;
@@ -265,31 +338,22 @@ async function scrapeTapAz(url: string, limit: number, fetchDetails: boolean): P
         price = parseFloat(cleaned) || 0;
       }
 
-      // Image
       const imgMatch = chunk.match(/(?:src|data-src)="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/i);
       const thumbUrl = imgMatch ? imgMatch[1] : null;
 
-      // Location
       const locMatch = chunk.match(/class="products-created[^"]*"[^>]*>([^<]+)/);
       const location = locMatch ? decode(locMatch[1]).split(',')[0].trim() : 'Bakı';
 
       if (title && title.length > 2) {
         listings.push({
-          title,
-          price,
-          currency: '₼',
+          title, price, currency: '₼',
           image_urls: thumbUrl ? [thumbUrl] : [],
-          location,
-          description: '',
-          source_url: sourceUrl,
-          category: '',
-          condition: 'İşlənmiş',
-          custom_fields: {},
+          location, description: '', source_url: sourceUrl,
+          category: '', condition: 'İşlənmiş', custom_fields: {},
         });
       }
     }
 
-    // If no products found, try fallback: look for any link to /elanlar/ with surrounding content
     if (listings.length === 0 && page === 1) {
       console.log('Trying fallback parsing...');
       const linkRegex = /href="(\/elanlar\/[^"]+)"[^>]*>[\s\S]*?<\/a>/g;
@@ -299,30 +363,20 @@ async function scrapeTapAz(url: string, limit: number, fetchDetails: boolean): P
         const href = m[1];
         if (seenUrls.has(href) || href.split('/').length < 4) continue;
         seenUrls.add(href);
-
-        // Try to find title nearby
         const context = html.substring(Math.max(0, m.index - 200), m.index + m[0].length + 500);
         const titleMatch = context.match(/class="[^"]*(?:name|title)[^"]*"[^>]*>([^<]+)/);
         const priceMatch = context.match(/([\d.,]+)\s*(?:₼|AZN)/);
-
         if (titleMatch) {
           listings.push({
             title: decode(titleMatch[1]),
             price: priceMatch ? parseFloat(priceMatch[1].replace(',', '.')) : 0,
-            currency: '₼',
-            image_urls: [],
-            location: 'Bakı',
-            description: '',
-            source_url: `https://tap.az${href}`,
-            category: '',
-            condition: 'İşlənmiş',
-            custom_fields: {},
+            currency: '₼', image_urls: [], location: 'Bakı', description: '',
+            source_url: `https://tap.az${href}`, category: '', condition: 'İşlənmiş', custom_fields: {},
           });
         }
       }
     }
 
-    // Pagination
     const nextMatch = html.match(/class="[^"]*pagination[^"]*"[\s\S]*?class="[^"]*next[^"]*"[^>]*href="([^"]+)"/);
     if (nextMatch && listings.length < limit) {
       pageUrl = nextMatch[1].startsWith('http') ? nextMatch[1] : `https://tap.az${nextMatch[1]}`;
@@ -333,10 +387,8 @@ async function scrapeTapAz(url: string, limit: number, fetchDetails: boolean): P
     }
   }
 
-  // Fetch detail pages for each listing
   if (fetchDetails && listings.length > 0) {
     console.log(`Fetching details for ${listings.length} listings...`);
-    // Process in batches of 3 to avoid rate limiting
     for (let i = 0; i < listings.length; i += 3) {
       const batch = listings.slice(i, i + 3);
       const promises = batch.map(async (listing, batchIdx) => {
@@ -345,9 +397,7 @@ async function scrapeTapAz(url: string, limit: number, fetchDetails: boolean): P
         try {
           await new Promise(r => setTimeout(r, batchIdx * 800));
           const detail = await fetchTapAzDetail(listing.source_url);
-          if (detail) {
-            listings[idx] = { ...listings[idx], ...detail };
-          }
+          if (detail) listings[idx] = { ...listings[idx], ...detail };
         } catch (e) {
           console.error(`Detail fetch failed for ${listing.source_url}: ${e}`);
         }
@@ -364,33 +414,23 @@ async function fetchTapAzDetail(url: string): Promise<Partial<ScrapedListing> | 
     const resp = await fetchWithRetry(url);
     const html = await resp.text();
 
-    console.log(`Analyzing detail page: ${url} (${html.length} chars)`);
-
-    // Title
     const titleMatch = html.match(/<h1[^>]*class="[^"]*(?:product-title|product-header__title|title)[^"]*"[^>]*>([^<]+)<\/h1>/) ||
                        html.match(/<h1[^>]*>([^<]+)<\/h1>/);
     const title = titleMatch ? decode(titleMatch[1]) : undefined;
 
-    // Description
     const descMatch = html.match(/class="[^"]*(?:product-description__content|product-description|description)[^"]*"[^>]*>([\s\S]*?)<\/div>/);
     let description = '';
     if (descMatch) {
-      description = descMatch[1]
-        .replace(/<br\s*\/?>/gi, '\n')
-        .replace(/<[^>]+>/g, '')
-        .trim();
+      description = descMatch[1].replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').trim();
       description = decode(description);
     }
 
-    // Images
     const imageUrls: string[] = [];
-    // Try to find large images in slider
     const imgMatches = html.matchAll(/<(?:img|a)[^>]+(?:src|data-src|href)="(https?:\/\/tap\.az\/uploads\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi);
     for (const im of imgMatches) {
       if (!imageUrls.includes(im[1])) imageUrls.push(im[1]);
     }
 
-    // Properties/Specs
     const custom_fields: Record<string, string> = {};
     const propItemRegex = /<div class="product-properties__i">[\s\S]*?<label class="product-properties__i-name">([^<]+)<\/label>[\s\S]*?<span class="product-properties__i-value">([\s\S]*?)<\/span>/g;
     let pMatch;
@@ -400,21 +440,16 @@ async function fetchTapAzDetail(url: string): Promise<Partial<ScrapedListing> | 
       if (key && val) custom_fields[key] = val;
     }
 
-    // Price
     const priceValMatch = html.match(/class="price-val">([^<]+)/);
-    const priceCurMatch = html.match(/class="price-cur">([^<]+)/);
     let price: number | undefined;
     if (priceValMatch) {
       price = parseFloat(priceValMatch[1].replace(/\s/g, '').replace(',', '.')) || undefined;
     }
 
-    // Location
-    const locMatch = html.match(/class="product-location">([^<]+)/) || 
-                     html.match(/class="product-properties__i-value">Bakı<\/span>/);
+    const locMatch = html.match(/class="product-location">([^<]+)/);
     let location = locMatch ? decode(locMatch[1]).trim() : undefined;
     if (!location && html.includes('>Bakı</span>')) location = 'Bakı';
 
-    // Seller Info
     const sellerNameMatch = html.match(/class="product-owner__name">([^<]+)/) ||
                             html.match(/class="product-owner">([^<]+)/);
     const sellerPhoneMatch = html.match(/class="[^"]*phone[^"]*"[^>]*>([^<]+)/) ||
@@ -452,7 +487,6 @@ async function scrapeTelefonAz(url: string, limit: number, fetchDetails: boolean
     return listings;
   }
 
-  // Try multiple patterns for telefon.az
   const cardBlocks = html.split(/class="[^"]*(?:product-card|item-card|announce-card|card-item)\b/).slice(1);
   console.log(`Telefon.az: ${cardBlocks.length} cards found`);
 
@@ -471,21 +505,14 @@ async function scrapeTelefonAz(url: string, limit: number, fetchDetails: boolean
     if (title && title.length > 2) {
       const sourceUrl = linkMatch ? (linkMatch[1].startsWith('http') ? linkMatch[1] : `https://telefon.az${linkMatch[1]}`) : '';
       listings.push({
-        title,
-        price,
-        currency: '₼',
+        title, price, currency: '₼',
         image_urls: imgMatch ? [imgMatch[1]] : [],
-        location: 'Bakı',
-        description: '',
-        source_url: sourceUrl,
-        category: '',
-        condition: 'İşlənmiş',
-        custom_fields: {},
+        location: 'Bakı', description: '', source_url: sourceUrl,
+        category: '', condition: 'İşlənmiş', custom_fields: {},
       });
     }
   }
 
-  // Fetch details
   if (fetchDetails && listings.length > 0) {
     for (let i = 0; i < listings.length; i += 3) {
       const batch = listings.slice(i, i + 3);
@@ -495,9 +522,7 @@ async function scrapeTelefonAz(url: string, limit: number, fetchDetails: boolean
         try {
           await new Promise(r => setTimeout(r, batchIdx * 800));
           const detail = await fetchGenericDetail(listing.source_url);
-          if (detail) {
-            listings[idx] = { ...listings[idx], ...detail };
-          }
+          if (detail) listings[idx] = { ...listings[idx], ...detail };
         } catch (e) {
           console.error(`Detail error: ${e}`);
         }
@@ -510,125 +535,222 @@ async function scrapeTelefonAz(url: string, limit: number, fetchDetails: boolean
 }
 
 // ========== TEMU ==========
+// Temu heavily uses JavaScript rendering, so we use multiple strategies
 async function scrapeTemu(url: string, limit: number): Promise<ScrapedListing[]> {
   const listings: ScrapedListing[] = [];
 
-  let html: string;
+  // Strategy 1: Try fetching the page with mobile user agent (lighter HTML)
+  const mobileHeaders: Record<string, string> = {
+    ...TEMU_API_HEADERS,
+    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
+  };
+
+  let html = '';
   try {
-    const resp = await fetchWithRetry(url);
+    const resp = await fetchWithRetry(url, 3, mobileHeaders);
     html = await resp.text();
+    console.log(`Temu HTML: ${html.length} chars`);
   } catch (e) {
     console.error(`Temu fetch failed: ${e}`);
-    return listings;
   }
 
-  console.log(`Temu HTML: ${html.length} chars`);
-
-  // Temu uses JSON-LD or embedded JSON data for products
-  // Try to find __NEXT_DATA__ or similar JSON payload
-  const jsonDataMatch = html.match(/window\.__rawData__\s*=\s*(\{[\s\S]*?\});/) ||
-                         html.match(/"goods_list"\s*:\s*(\[[\s\S]*?\])\s*[,}]/) ||
-                         html.match(/"items"\s*:\s*(\[[\s\S]*?\])\s*[,}]/);
-
-  if (jsonDataMatch) {
-    try {
-      const data = JSON.parse(jsonDataMatch[1]);
-      const items = Array.isArray(data) ? data : (data?.goods_list || data?.items || []);
-      for (const item of items) {
-        if (listings.length >= limit) break;
-        const title = item.goods_name || item.title || item.name || '';
-        const price = parseFloat(item.price || item.sale_price || item.min_price || '0');
-        const imgUrl = item.image_url || item.thumb_url || item.goods_img || '';
-        
-        if (title) {
-          listings.push({
-            title: decode(title),
-            price: price || 0,
-            currency: '$',
-            image_urls: imgUrl ? [imgUrl.startsWith('//') ? `https:${imgUrl}` : imgUrl] : [],
-            location: 'Temu',
-            description: item.goods_desc || item.description || '',
-            source_url: item.link_url ? (item.link_url.startsWith('http') ? item.link_url : `https://www.temu.com${item.link_url}`) : url,
-            category: '',
-            condition: 'Yeni',
-            custom_fields: {},
-          });
-        }
-      }
-    } catch (e) {
-      console.error('Temu JSON parse error:', e);
-    }
-  }
-
-  // Fallback: parse HTML product cards
-  if (listings.length === 0) {
-    console.log('Temu: Trying HTML parsing fallback...');
-    
-    // Look for product cards with various class patterns
-    const cardPatterns = [
-      /class="[^"]*_2rn4tSF[^"]*"([\s\S]*?)(?=class="[^"]*_2rn4tSF)/g,
-      /class="[^"]*product-card[^"]*"([\s\S]*?)(?=class="[^"]*product-card)/g,
-      /class="[^"]*goods-card[^"]*"([\s\S]*?)(?=class="[^"]*goods-card)/g,
+  if (html.length > 0) {
+    // Try to find embedded JSON data (Temu often embeds product data in script tags)
+    const jsonPatterns = [
+      /window\.__rawData__\s*=\s*(\{[\s\S]*?\});\s*(?:window\.|<\/script>)/,
+      /"goods_list"\s*:\s*(\[[\s\S]*?\])\s*[,}]/,
+      /"items"\s*:\s*(\[[\s\S]*?\])\s*[,}]/,
+      /"goodsList"\s*:\s*(\[[\s\S]*?\])\s*[,}]/,
+      /"searchResult"\s*:\s*(\{[\s\S]*?\})\s*[,}]/,
+      /window\.rawData\s*=\s*(\{[\s\S]*?\});\s*(?:window\.|<\/script>)/,
+      /"data"\s*:\s*\{[^}]*"goodsList"\s*:\s*(\[[\s\S]*?\])/,
     ];
 
-    for (const pattern of cardPatterns) {
+    for (const pattern of jsonPatterns) {
       if (listings.length > 0) break;
-      let match;
-      while ((match = pattern.exec(html)) !== null && listings.length < limit) {
-        const block = match[1]?.substring(0, 3000) || '';
-        
-        const titleMatch = block.match(/title="([^"]+)"/) || block.match(/aria-label="([^"]+)"/) || block.match(/>([^<]{10,80})</);
-        const priceMatch = block.match(/(\d+[.,]\d{2})\s*(?:\$|€|₼)/) || block.match(/\$\s*(\d+[.,]\d{2})/);
-        const imgMatch = block.match(/(?:src|data-src)="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/i);
-        const linkMatch = block.match(/href="([^"]*goods[^"]*)"/);
+      const match = html.match(pattern);
+      if (match) {
+        try {
+          const data = JSON.parse(match[1]);
+          const items = Array.isArray(data) ? data : (data?.goods_list || data?.goodsList || data?.items || data?.searchResult?.goods_list || []);
+          for (const item of items) {
+            if (listings.length >= limit) break;
+            const title = item.goods_name || item.title || item.name || item.goodsName || '';
+            const price = parseFloat(item.price || item.sale_price || item.salePrice || item.min_price || item.minPrice || '0');
+            const imgUrl = item.image_url || item.thumb_url || item.goods_img || item.thumbUrl || item.imageUrl || '';
+            
+            if (title) {
+              listings.push({
+                title: decode(title),
+                price: price || 0,
+                currency: '$',
+                image_urls: imgUrl ? [imgUrl.startsWith('//') ? `https:${imgUrl}` : imgUrl] : [],
+                location: 'Temu',
+                description: item.goods_desc || item.description || '',
+                source_url: item.link_url ? (item.link_url.startsWith('http') ? item.link_url : `https://www.temu.com${item.link_url}`) : url,
+                category: '',
+                condition: 'Yeni',
+                custom_fields: {},
+              });
+            }
+          }
+          console.log(`Temu JSON strategy found ${listings.length} items`);
+        } catch (e) {
+          console.error('Temu JSON parse error:', e);
+        }
+      }
+    }
 
-        const title = titleMatch ? decode(titleMatch[1]) : '';
+    // Strategy 2: Parse HTML product cards  
+    if (listings.length === 0) {
+      console.log('Temu: Trying HTML card parsing...');
+      
+      // Look for product cards by various patterns
+      const cardSplitPatterns = [
+        /class="[^"]*_2rn4tSF[^"]*"/,
+        /class="[^"]*product-card[^"]*"/,
+        /class="[^"]*goods-card[^"]*"/,
+        /class="[^"]*_1MOSpMz[^"]*"/,
+        /data-goods-id="/,
+      ];
+
+      for (const splitPattern of cardSplitPatterns) {
+        if (listings.length > 0) break;
+        const blocks = html.split(splitPattern).slice(1);
+        if (blocks.length === 0) continue;
+        console.log(`Temu: Found ${blocks.length} blocks with pattern`);
+        
+        for (const block of blocks) {
+          if (listings.length >= limit) break;
+          const chunk = block.substring(0, 5000);
+          
+          const titleMatch = chunk.match(/title="([^"]{5,})"/) || 
+                            chunk.match(/aria-label="([^"]{5,})"/) ||
+                            chunk.match(/alt="([^"]{5,})"/);
+          const priceMatch = chunk.match(/[\$€](\d+[.,]\d{2})/) || 
+                            chunk.match(/(\d+[.,]\d{2})\s*[\$€₼]/);
+          const imgMatch = chunk.match(/(?:src|data-src)="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/i);
+          const linkMatch = chunk.match(/href="(\/[^"]*(?:goods|product)[^"]*)"/);
+
+          const title = titleMatch ? decode(titleMatch[1]) : '';
+          if (title && title.length > 3) {
+            listings.push({
+              title,
+              price: priceMatch ? parseFloat(priceMatch[1].replace(',', '.')) : 0,
+              currency: '$',
+              image_urls: imgMatch ? [imgMatch[1].startsWith('//') ? `https:${imgMatch[1]}` : imgMatch[1]] : [],
+              location: 'Temu',
+              description: '',
+              source_url: linkMatch ? `https://www.temu.com${linkMatch[1]}` : url,
+              category: '',
+              condition: 'Yeni',
+              custom_fields: {},
+            });
+          }
+        }
+      }
+    }
+
+    // Strategy 3: Find product links with images
+    if (listings.length === 0) {
+      console.log('Temu: Last resort - finding product links with images...');
+      const allImgs = [...html.matchAll(/<a[^>]+href="([^"]*(?:goods|product)[^"]*)"[^>]*>[\s\S]*?<img[^>]+(?:src|data-src)="([^"]+)"[^>]*(?:alt|title)="([^"]*)"[\s\S]*?<\/a>/gi)];
+      for (const m of allImgs) {
+        if (listings.length >= limit) break;
+        const link = m[1].startsWith('http') ? m[1] : `https://www.temu.com${m[1]}`;
+        const img = m[2].startsWith('//') ? `https:${m[2]}` : m[2];
+        const title = decode(m[3]);
         if (title && title.length > 3) {
           listings.push({
-            title,
-            price: priceMatch ? parseFloat(priceMatch[1].replace(',', '.')) : 0,
-            currency: '$',
-            image_urls: imgMatch ? [imgMatch[1]] : [],
-            location: 'Temu',
-            description: '',
-            source_url: linkMatch ? (linkMatch[1].startsWith('http') ? linkMatch[1] : `https://www.temu.com${linkMatch[1]}`) : url,
-            category: '',
-            condition: 'Yeni',
-            custom_fields: {},
+            title, price: 0, currency: '$',
+            image_urls: [img], location: 'Temu', description: '',
+            source_url: link, category: '', condition: 'Yeni', custom_fields: {},
           });
         }
       }
     }
   }
 
-  // Last fallback: find all product-like links with images
-  if (listings.length === 0) {
-    console.log('Temu: Last resort parsing...');
-    const allImgs = [...html.matchAll(/<a[^>]+href="([^"]*(?:goods|product)[^"]*)"[^>]*>[\s\S]*?<img[^>]+(?:src|data-src)="([^"]+)"[^>]*(?:alt|title)="([^"]*)"[\s\S]*?<\/a>/gi)];
-    for (const m of allImgs) {
-      if (listings.length >= limit) break;
-      const link = m[1].startsWith('http') ? m[1] : `https://www.temu.com${m[1]}`;
-      const img = m[2].startsWith('//') ? `https:${m[2]}` : m[2];
-      const title = decode(m[3]);
-      if (title && title.length > 3) {
-        listings.push({
-          title,
-          price: 0,
-          currency: '$',
-          image_urls: [img],
-          location: 'Temu',
-          description: '',
-          source_url: link,
-          category: '',
-          condition: 'Yeni',
-          custom_fields: {},
-        });
+  console.log(`Temu: Found ${listings.length} listings total`);
+  return listings;
+}
+
+// Scrape a single Temu product page
+async function scrapeTemuSingle(url: string): Promise<ScrapedListing[]> {
+  try {
+    const resp = await fetchWithRetry(url, 3, TEMU_API_HEADERS);
+    const html = await resp.text();
+    console.log(`Temu single page: ${html.length} chars`);
+
+    // Try to extract product data from embedded JSON
+    const jsonMatch = html.match(/window\.__rawData__\s*=\s*(\{[\s\S]*?\});\s*(?:window\.|<\/script>)/) ||
+                      html.match(/window\.rawData\s*=\s*(\{[\s\S]*?\});\s*(?:window\.|<\/script>)/);
+    
+    let title = '';
+    let price = 0;
+    let description = '';
+    const imageUrls: string[] = [];
+
+    if (jsonMatch) {
+      try {
+        const data = JSON.parse(jsonMatch[1]);
+        const goods = data?.store?.goods || data?.goods || data;
+        title = goods?.goods_name || goods?.goodsName || '';
+        price = parseFloat(goods?.min_price || goods?.minPrice || goods?.price || '0');
+        description = goods?.goods_desc || goods?.description || '';
+        
+        const imgs = goods?.topGalleryList || goods?.gallery || goods?.images || [];
+        for (const img of imgs) {
+          const imgUrl = typeof img === 'string' ? img : (img?.url || img?.src || '');
+          if (imgUrl) imageUrls.push(imgUrl.startsWith('//') ? `https:${imgUrl}` : imgUrl);
+        }
+      } catch (e) {
+        console.error('Temu single JSON parse error:', e);
       }
     }
-  }
 
-  console.log(`Temu: Found ${listings.length} listings`);
-  return listings;
+    // Fallback: HTML parsing
+    if (!title) {
+      const titleMatch = html.match(/<h1[^>]*>([^<]+)<\/h1>/) || 
+                         html.match(/<title>([^<]+)<\/title>/);
+      title = titleMatch ? decode(titleMatch[1]).replace(/ \| Temu.*$/, '') : '';
+    }
+
+    if (!price) {
+      const priceMatch = html.match(/[\$€](\d+[.,]\d{2})/) || html.match(/(\d+[.,]\d{2})\s*[\$€]/);
+      price = priceMatch ? parseFloat(priceMatch[1].replace(',', '.')) : 0;
+    }
+
+    if (imageUrls.length === 0) {
+      const imgMatches = html.matchAll(/(?:src|data-src)="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi);
+      for (const im of imgMatches) {
+        if (!im[1].includes('icon') && !im[1].includes('logo') && !imageUrls.includes(im[1])) {
+          imageUrls.push(im[1]);
+          if (imageUrls.length >= 10) break;
+        }
+      }
+    }
+
+    if (title) {
+      return [{
+        title: decode(title),
+        price,
+        currency: '$',
+        image_urls: imageUrls,
+        location: 'Temu',
+        description: description ? decode(description.replace(/<[^>]+>/g, '')) : '',
+        source_url: url,
+        category: '',
+        condition: 'Yeni',
+        custom_fields: {},
+      }];
+    }
+
+    return [];
+  } catch (e) {
+    console.error(`Temu single scrape error: ${e}`);
+    return [];
+  }
 }
 
 // ========== GENERIC ==========
@@ -659,16 +781,10 @@ async function scrapeGeneric(url: string, limit: number): Promise<ScrapedListing
 
     if (title && title.length > 3) {
       listings.push({
-        title,
-        price,
-        currency: '₼',
+        title, price, currency: '₼',
         image_urls: imgMatch ? [imgMatch[1]] : [],
-        location: 'Bakı',
-        description: title,
-        source_url: linkMatch ? linkMatch[1] : '',
-        category: '',
-        condition: 'İşlənmiş',
-        custom_fields: {},
+        location: 'Bakı', description: title, source_url: linkMatch ? linkMatch[1] : '',
+        category: '', condition: 'İşlənmiş', custom_fields: {},
       });
     }
   }

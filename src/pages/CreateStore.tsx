@@ -29,7 +29,7 @@ const CreateStore = () => {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState("");
   const [form, setForm] = useState({
-    name: "", description: "", address: "", city: "", phone: "", working_hours: "",
+    name: "", description: "", address: "", city: "", phone: "", working_hours: "", instagram_url: "",
   });
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [startTime, setStartTime] = useState("09:00");
@@ -100,6 +100,7 @@ const CreateStore = () => {
         name: editStore.name || "", description: editStore.description || "",
         address: editStore.address || "", city: editStore.city || "",
         phone: editStore.phone || "", working_hours: editStore.working_hours || "",
+        instagram_url: (editStore as any).instagram_url || "",
       });
       if (editStore.logo_url) setLogoPreview(editStore.logo_url);
       if (editStore.cover_url) setCoverPreview(editStore.cover_url);
@@ -140,6 +141,7 @@ const CreateStore = () => {
       name: editStore.name || "", description: editStore.description || "",
       address: editStore.address || "", city: editStore.city || "",
       phone: editStore.phone || "", working_hours: editStore.working_hours || "",
+      instagram_url: (editStore as any).instagram_url || "",
     });
     if (editStore.logo_url) setLogoPreview(editStore.logo_url);
     if (editStore.cover_url) setCoverPreview(editStore.cover_url);
@@ -313,6 +315,11 @@ const CreateStore = () => {
           <div className="space-y-2">
             <Label htmlFor="address">Ünvan</Label>
             <Input id="address" placeholder="Küçə, bina" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="instagram">Instagram hesabı</Label>
+            <Input id="instagram" placeholder="@magazaadi və ya https://instagram.com/magazaadi" value={form.instagram_url} onChange={(e) => setForm({ ...form, instagram_url: e.target.value })} />
           </div>
 
           <div className="space-y-4 rounded-xl border border-border p-4 bg-muted/30">
