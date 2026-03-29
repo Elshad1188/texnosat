@@ -32,6 +32,10 @@ interface SiteSettings {
   urgent_price: number;
   store_premium_price: number;
   use_site_logo_as_watermark: boolean;
+  homepage_premium_count: number;
+  homepage_urgent_count: number;
+  homepage_new_count: number;
+  homepage_auto_load: boolean;
 }
 
 const defaults: SiteSettings = {
