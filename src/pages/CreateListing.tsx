@@ -139,7 +139,7 @@ const CreateListing = () => {
   const { data: userStores = [] } = useQuery({
     queryKey: ["user-stores", user?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("stores").select("id, name, logo_url, status").eq("user_id", user!.id);
+      const { data } = await supabase.from("stores").select("id, name, logo_url, status, is_premium, premium_until").eq("user_id", user!.id);
       return data || [];
     },
     enabled: !!user,
@@ -278,6 +278,20 @@ const CreateListing = () => {
     }
     setLoading(true);
     try {
+      // Check store listing limit for non-premium stores (skip for edits and admins)
+      if (!editId && selectedStoreId && !isPrivileged) {
+        const selectedStore = approvedStores.find((s: any) => s.id === selectedStoreId);
+        const isPremium = selectedStore?.is_premium && (!selectedStore?.premium_until || new Date(selectedStore.premium_until) > new Date());
+        if (!isPremium) {
+          const storeLimit = generalSettings?.store_listing_limit || 20;
+          const { count } = await supabase.from("listings").select("id", { count: "exact", head: true }).eq("store_id", selectedStoreId);
+          if ((count || 0) >= storeLimit) {
+            toast({ title: `Mağazanızda maksimum ${storeLimit} elan limiti dolub`, description: "Premium mağaza alın limitsiz elan yerləşdirin.", variant: "destructive" });
+            setLoading(false);
+            return;
+          }
+        }
+      }
       const newImageUrls: string[] = [];
       for (const file of images) {
         const fileName = `${user.id}/${Date.now()}-${file.name}`;
@@ -395,8 +409,8 @@ const CreateListing = () => {
                 )}
                 <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageAdd} />
               </div>
-              {/* AI Autofill button - only for admins/mods */}
-              {isPrivileged && (images.length > 0 || existingImages.length > 0) && (
+              {/* AI Autofill button - for admins/mods and store owners */}
+              {(isPrivileged || approvedStores.length > 0) && (images.length > 0 || existingImages.length > 0) && (
                 <Button
                   type="button"
                   variant="outline"

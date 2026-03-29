@@ -36,6 +36,9 @@ interface SiteSettings {
   homepage_urgent_count: number;
   homepage_new_count: number;
   homepage_auto_load: boolean;
+  store_listing_limit: number;
+  telegram_bot_daily_limit: number;
+  ai_autofill_daily_limit: number;
 }
 
 const defaults: SiteSettings = {
@@ -62,6 +65,9 @@ const defaults: SiteSettings = {
   homepage_urgent_count: 4,
   homepage_new_count: 8,
   homepage_auto_load: false,
+  store_listing_limit: 20,
+  telegram_bot_daily_limit: 5,
+  ai_autofill_daily_limit: 3,
 };
 
 const watermarkPositions = [
@@ -453,6 +459,47 @@ const AdminSettingsManager = () => {
             )}
           </>
         )}
+      </div>
+
+      {/* Store Limits */}
+      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-foreground">🏪 Mağaza Limitləri (Premium olmayanlar üçün)</h3>
+        <p className="text-xs text-muted-foreground">Premium mağazalar limitsiz istifadə edir. Adi mağazalar üçün aşağıdakı limitlər tətbiq olunur.</p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Mağazadakı maks. elan sayı</Label>
+            <Input
+              type="number"
+              value={settings.store_listing_limit}
+              onChange={(e) => setSettings({ ...settings, store_listing_limit: Number(e.target.value) })}
+              className="h-9"
+              min={1}
+              max={1000}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Telegram bot gündəlik limit</Label>
+            <Input
+              type="number"
+              value={settings.telegram_bot_daily_limit}
+              onChange={(e) => setSettings({ ...settings, telegram_bot_daily_limit: Number(e.target.value) })}
+              className="h-9"
+              min={1}
+              max={100}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">AI doldurma gündəlik limit</Label>
+            <Input
+              type="number"
+              value={settings.ai_autofill_daily_limit}
+              onChange={(e) => setSettings({ ...settings, ai_autofill_daily_limit: Number(e.target.value) })}
+              className="h-9"
+              min={1}
+              max={50}
+            />
+          </div>
+        </div>
       </div>
 
       <Button onClick={save} disabled={saving} className="gap-2 bg-gradient-primary text-primary-foreground">
