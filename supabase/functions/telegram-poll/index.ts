@@ -55,8 +55,7 @@ Deno.serve(async (req) => {
       if (!msg) continue;
       if (msg.media_group_id) {
         const gid = msg.media_group_id;
-        if (!mediaGroupMap.has(gid))
-          mediaGroupMap.set(gid, { messages: [], chatId: msg.chat.id, lastSeen: now });
+        if (!mediaGroupMap.has(gid)) mediaGroupMap.set(gid, { messages: [], chatId: msg.chat.id, lastSeen: now });
         mediaGroupMap.get(gid)!.messages.push(msg);
         mediaGroupMap.get(gid)!.lastSeen = now; // hər yeni şəkildə vaxtı yenilə
       } else {
@@ -151,23 +150,21 @@ async function createListing(
         ? Math.round(costPrice * (1 + settings.markup_value / 100))
         : costPrice + settings.markup_value
       : 0;
-  const { error } = await supabase
-    .from("listings")
-    .insert({
-      user_id: settings.user_id,
-      store_id: settings.store_id,
-      title: ai.title || "Məhsul",
-      description: ai.description || caption,
-      price: sellingPrice,
-      cost_price: costPrice,
-      condition: ai.condition || "Yeni",
-      category: ai.category || settings.target_category,
-      location: settings.target_location,
-      image_urls: imageUrls,
-      telegram_media_group_id: groupId || null,
-      is_active: false,
-      status: "pending",
-    });
+  const { error } = await supabase.from("listings").insert({
+    user_id: settings.user_id,
+    store_id: settings.store_id,
+    title: ai.title || "Məhsul",
+    description: ai.description || caption,
+    price: sellingPrice,
+    cost_price: costPrice,
+    condition: ai.condition || "Yeni",
+    category: ai.category || settings.target_category,
+    location: settings.target_location,
+    image_urls: imageUrls,
+    telegram_media_group_id: groupId || null,
+    is_active: false,
+    status: "pending",
+  });
   if (!error)
     await sendMessage(
       chatId,
