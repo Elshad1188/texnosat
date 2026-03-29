@@ -39,7 +39,6 @@ Deno.serve(async (req) => {
       headers,
       body: JSON.stringify({ offset: currentOffset, timeout: 10, allowed_updates: ["message"] }),
     });
-    console.log("Response status:", resp.status);
     const data = await resp.json();
     if (!resp.ok || !data.ok) {
       if (data.error_code === 409) {
