@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Search, Store, MapPin, Crown, Package } from "lucide-react";
+import { Search, Store } from "lucide-react";
+import StoreCard from "@/components/StoreCard";
 
 const Stores = () => {
   const [search, setSearch] = useState("");
@@ -50,14 +49,14 @@ const Stores = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="font-display text-2xl font-bold text-foreground">Mağazalar</h1>
-            <p className="text-sm text-muted-foreground">Bütün rəsmi mağazalar</p>
+            <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">Mağazalar</h1>
+            <p className="text-sm text-muted-foreground">Texnosat platformasındakı rəsmi satıcılar</p>
           </div>
           <div className="relative w-full max-w-xs">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Mağaza axtar..."
-              className="pl-9"
+              className="pl-9 h-11 rounded-xl bg-card border-border transition-all focus:ring-primary/20"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -65,66 +64,32 @@ const Stores = () => {
         </div>
 
         {isLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-48 animate-pulse rounded-xl bg-muted" />
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="h-64 animate-pulse rounded-2xl bg-muted" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Store className="h-16 w-16 text-muted-foreground/50" />
-            <p className="mt-4 text-lg font-medium text-muted-foreground">Mağaza tapılmadı</p>
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-muted mb-4">
+              <Store className="h-10 w-10 text-muted-foreground/40" />
+            </div>
+            <p className="text-lg font-medium text-foreground">Mağaza tapılmadı</p>
+            <p className="text-sm text-muted-foreground mt-1">Başqa bir axtarış sözü yoxlayın</p>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filtered.map((store) => (
-              <Link
+              <StoreCard
                 key={store.id}
-                to={`/store/${store.id}`}
-                className="group overflow-hidden rounded-xl border border-border bg-card transition-all hover:shadow-lg hover:shadow-primary/5"
-              >
-                {/* Cover / Çardağ */}
-                <div className="relative h-28 bg-gradient-to-br from-primary/20 to-primary/5">
-                  {store.cover_url && (
-                    <img
-                      src={store.cover_url}
-                      alt="Cover"
-                      className="h-full w-full object-cover"
-                    />
-                  )}
-                  {store.is_premium && (
-                    <Badge className="absolute right-2 top-2 gap-1 bg-gradient-primary text-primary-foreground">
-                      <Crown className="h-3 w-3" /> Premium
-                    </Badge>
-                  )}
-                </div>
-
-                {/* Logo & Info */}
-                <div className="relative px-4 pb-4">
-                  <div className="-mt-8 mb-3 flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border-4 border-card bg-muted shadow-md">
-                    {store.logo_url ? (
-                      <img src={store.logo_url} alt={store.name} className="h-full w-full object-cover" />
-                    ) : (
-                      <Store className="h-6 w-6 text-muted-foreground" />
-                    )}
-                  </div>
-
-                  <h3 className="font-display text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-                    {store.name}
-                  </h3>
-
-                  {store.city && (
-                    <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5" /> {store.city}
-                    </p>
-                  )}
-
-                  <div className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
-                    <Package className="h-3.5 w-3.5" />
-                    <span>{listingCounts[store.id] || 0} elan</span>
-                  </div>
-                </div>
-              </Link>
+                id={store.id}
+                name={store.name}
+                logo_url={store.logo_url}
+                cover_url={store.cover_url}
+                city={store.city}
+                is_premium={store.is_premium}
+                listingCount={listingCounts[store.id] || 0}
+              />
             ))}
           </div>
         )}
