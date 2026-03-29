@@ -41,6 +41,10 @@ Deno.serve(async (req) => {
     });
     const data = await resp.json();
     if (!resp.ok || !data.ok) {
+      // 409 = another instance running, just exit gracefully
+      if (data.error_code === 409) {
+        return new Response(JSON.stringify({ ok: true, skipped: "another instance running" }), { headers: corsHeaders });
+      }
       console.error("Telegram API error:", JSON.stringify(data));
       await new Promise(r => setTimeout(r, 2000));
       continue;
