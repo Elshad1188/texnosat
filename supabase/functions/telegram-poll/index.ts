@@ -34,14 +34,16 @@ Deno.serve(async (req) => {
   const headers = gatewayHeaders(LOVABLE_API_KEY, TELEGRAM_API_KEY);
 
   while (Date.now() - startTime < MAX_RUNTIME_MS - MIN_REMAINING_MS) {
-    const resp = await fetch(`${GATEWAY_URL}/getUpdates`, {
+    const url = `${GATEWAY_URL}/getUpdates`;
+    console.log("Polling URL:", url, "offset:", currentOffset);
+    const resp = await fetch(url, {
       method: "POST",
       headers,
       body: JSON.stringify({ offset: currentOffset, timeout: 10, allowed_updates: ["message"] }),
     });
+    console.log("Response status:", resp.status);
     const data = await resp.json();
     if (!resp.ok || !data.ok) {
-      // 409 = another instance running, just exit gracefully
       if (data.error_code === 409) {
         return new Response(JSON.stringify({ ok: true, skipped: "another instance running" }), { headers: corsHeaders });
       }
