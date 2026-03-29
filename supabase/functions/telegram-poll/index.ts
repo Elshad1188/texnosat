@@ -10,78 +10,38 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const startTime = Date.now();
-
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), { status: 500, headers: corsHeaders });
-
   const TELEGRAM_API_KEY = Deno.env.get("TELEGRAM_API_KEY");
-  if (!TELEGRAM_API_KEY) return new Response(JSON.stringify({ error: "TELEGRAM_API_KEY not configured" }), { status: 500, headers: corsHeaders });
+  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const { data: state } = await supabase.from("telegram_bot_state").select("update_offset").eq("id", 1).single();
+  let currentOffset = state?.update_offset || 0;
 
-  let totalProcessed = 0;
-  let currentOffset: number;
-
-  const { data: state, error: stateErr } = await supabase
-    .from("telegram_bot_state")
-    .select("update_offset")
-    .eq("id", 1)
-    .single();
-
-  if (stateErr) {
-    return new Response(JSON.stringify({ error: stateErr.message }), { status: 500, headers: corsHeaders });
-  }
-
-  currentOffset = state.update_offset;
-
-  while (true) {
-    const elapsed = Date.now() - startTime;
-    const remainingMs = MAX_RUNTIME_MS - elapsed;
-    if (remainingMs < MIN_REMAINING_MS) break;
-
-    const timeout = Math.min(50, Math.floor(remainingMs / 1000) - 5);
-    if (timeout < 1) break;
-
+  while (Date.now() - startTime < MAX_RUNTIME_MS - MIN_REMAINING_MS) {
     const response = await fetch(`${GATEWAY_URL}/getUpdates`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": TELEGRAM_API_KEY,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ offset: currentOffset, timeout, allowed_updates: ["message"] }),
+      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "X-Connection-Api-Key": TELEGRAM_API_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ offset: currentOffset, timeout: 15, allowed_updates: ["message"] }),
     });
 
     const data = await response.json();
     if (!response.ok) break;
 
     const updates = data.result ?? [];
-
     if (updates.length > 0) {
       for (const update of updates) {
-        try {
-          await processUpdate(update, supabase, LOVABLE_API_KEY, TELEGRAM_API_KEY);
-          totalProcessed++;
-        } catch (err) {
-          console.error("Error processing update:", err);
-        }
+        await processUpdate(update, supabase, LOVABLE_API_KEY!, TELEGRAM_API_KEY!);
       }
-      const newOffset = Math.max(...updates.map((u: any) => u.update_id)) + 1;
-      await supabase.from("telegram_bot_state").update({ update_offset: newOffset }).eq("id", 1);
-      currentOffset = newOffset;
+      currentOffset = Math.max(...updates.map((u: any) => u.update_id)) + 1;
+      await supabase.from("telegram_bot_state").update({ update_offset: currentOffset }).eq("id", 1);
     } else {
-      await new Promise(r => setTimeout(r, 200));
+      await new Promise(r => setTimeout(r, 400));
     }
   }
-
-  return new Response(JSON.stringify({ ok: true, processed: totalProcessed }), { headers: corsHeaders });
+  return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
 });
 
 async function processUpdate(update: any, supabase: any, lovableKey: string, telegramKey: string) {
@@ -99,211 +59,133 @@ async function processUpdate(update: any, supabase: any, lovableKey: string, tel
   const groupId = message.media_group_id;
 
   if (groupId) {
-    await handleMediaGroupUpdate(message, groupId, chatId, supabase, lovableKey, telegramKey);
-  } else if (message.photo || message.video || message.document) {
-    await processProductMessage(message, chatId, supabase, lovableKey, telegramKey);
-  }
-}
-
-async function handleMediaGroupUpdate(message: any, groupId: string, chatId: number, supabase: any, lovableKey: string, telegramKey: string) {
-  try {
-    const { data: settings } = await supabase.from("telegram_bot_settings").select("*").eq("telegram_chat_id", chatId).maybeSingle();
-    if (!settings?.store_id) return;
-
-    let imageUrl: string | null = null;
-    if (message.photo) {
-      imageUrl = await downloadAndUploadFile(message.photo[message.photo.length - 1].file_id, "listing-images", supabase, lovableKey, telegramKey);
-    } else if (message.document && message.document.mime_type?.startsWith("image/")) {
-      imageUrl = await downloadAndUploadFile(message.document.file_id, "listing-images", supabase, lovableKey, telegramKey);
-    }
-
+    let imageUrl = null;
+    if (message.photo) imageUrl = await downloadAndUploadFile(message.photo[message.photo.length - 1].file_id, "listing-images", supabase, lovableKey, telegramKey);
+    else if (message.document && message.document.mime_type?.startsWith("image/")) imageUrl = await downloadAndUploadFile(message.document.file_id, "listing-images", supabase, lovableKey, telegramKey);
+    
     if (imageUrl) {
-      await supabase.from("telegram_media_buffer").insert({
-        media_group_id: groupId,
-        image_url: imageUrl,
-        chat_id: chatId,
-        caption: message.caption || null
-      });
+      await supabase.from("telegram_media_buffer").insert({ media_group_id: groupId, image_url: imageUrl, chat_id: chatId, caption: message.caption || null });
     }
 
-    // Wait 3 seconds for colleagues
-    await new Promise(r => setTimeout(r, 3000));
+    // Parallel gələn şəkilləri gözlə (Database buffer)
+    await new Promise(r => setTimeout(r, 4000)); 
 
-    // Check if listing already exists (idempotency)
-    const { data: existing } = await supabase.from("listings").select("id").eq("description", `MG_ID_${groupId}`).maybeSingle();
+    // Unikal ID yoxlaması (Dublikat yaratmamaq üçün)
+    const { data: existing } = await supabase.from("listings").select("id").eq("telegram_media_group_id", groupId).maybeSingle();
     if (existing) return;
 
-    const { data: bufferRows } = await supabase.from("telegram_media_buffer").select("*").eq("media_group_id", groupId).order("created_at", { ascending: true });
-    if (!bufferRows || bufferRows.length === 0) return;
+    const { data: buffer } = await supabase.from("telegram_media_buffer").select("*").eq("media_group_id", groupId).order("created_at", { ascending: true });
+    if (!buffer || buffer.length === 0) return;
 
-    // We only let the first invocation (the one that sees the first row) handle it, or just a race condition check.
-    // To be safe, we perform the creation and immediately delete the buffer.
-    const imageUrls = bufferRows.map(r => r.image_url);
-    const mainCaption = bufferRows.find(r => r.caption)?.caption || "";
+    const imageUrls = buffer.map(r => r.image_url);
+    const caption = buffer.find(r => r.caption)?.caption || "";
 
-    const { title, description, price, condition } = await analyzeWithAI(imageUrls[0], mainCaption, lovableKey);
-
-    const costPrice = price;
-    let sellingPrice = price;
-
-    if (costPrice > 0) {
-      sellingPrice = settings.markup_type === "percent"
-        ? Math.round(costPrice * (1 + settings.markup_value / 100))
-        : costPrice + settings.markup_value;
-    }
-
-    // Use a special description tag to prevent duplicates for the same media group
-    const finalDescription = `[TG_ID:${groupId}]\n${description}`;
-
-    await supabase.from("listings").insert({
-      user_id: settings.user_id,
-      store_id: settings.store_id,
-      title,
-      description: finalDescription,
-      price: sellingPrice,
-      cost_price: costPrice,
-      condition,
-      category: settings.target_category,
-      location: settings.target_location,
-      image_urls: imageUrls,
-      is_active: false
-    });
-
-    await sendMessage(chatId, `✅ <b>Qrup Elanı (Albom) yaradıldı!</b>\n\n📝 Ad: ${title}\n💰 Satış Qiyməti: ${sellingPrice}₼ (Maya: ${costPrice}₼)\n📸 Şəkillər: ${imageUrls.length}\n\n⏳ Elan admin təsdiqi gözləyir.`, lovableKey, telegramKey);
+    await createAutoListing(chatId, imageUrls, caption, supabase, lovableKey, telegramKey, groupId);
     await supabase.from("telegram_media_buffer").delete().eq("media_group_id", groupId);
-  } catch (err) {
-    console.error("Group error:", err);
+  } else if (message.photo || message.video) {
+    await sendMessage(chatId, "⏳ Ağıllı emal olunur...", lovableKey, telegramKey);
+    const imageUrl = message.photo ? await downloadAndUploadFile(message.photo[message.photo.length - 1].file_id, "listing-images", supabase, lovableKey, telegramKey) : null;
+    await createAutoListing(chatId, imageUrl ? [imageUrl] : [], message.caption || "", supabase, lovableKey, telegramKey);
   }
 }
 
-async function processProductMessage(message: any, chatId: number, supabase: any, lovableKey: string, telegramKey: string) {
+async function createAutoListing(chatId: number, imageUrls: string[], caption: string, supabase: any, lovableKey: string, telegramKey: string, groupId?: string) {
   const { data: settings } = await supabase.from("telegram_bot_settings").select("*").eq("telegram_chat_id", chatId).maybeSingle();
-  if (!settings?.store_id) {
-    await sendMessage(chatId, "⚠️ Mağaza seçilməyib. /store istifadə edin.", lovableKey, telegramKey);
+  if (!settings?.store_id) return;
+
+  // Ağıllı AI Analizi (ai-listing-autofill məntiqi)
+  const productInfo = await analyzeWithAIFull(imageUrls.length > 0 ? imageUrls[0] : null, caption, lovableKey, supabase);
+  
+  if (!productInfo) {
+    await sendMessage(chatId, "❌ AI analizi alınmadı.", lovableKey, telegramKey);
     return;
   }
 
-  await sendMessage(chatId, "⏳ Məhsul emal olunur...", lovableKey, telegramKey);
+  const costPrice = parseFloat(productInfo.price) || 0;
+  let sellingPrice = costPrice;
+  if (costPrice > 0) {
+    sellingPrice = settings.markup_type === "percent" ? Math.round(costPrice * (1 + settings.markup_value / 100)) : costPrice + settings.markup_value;
+  }
 
+  // Kateqoriya: Əgər bot parametri "Avto" kimidirsə və ya AI tapıbsa
+  const finalCategory = settings.target_category !== "Other" ? settings.target_category : productInfo.category;
+
+  const { error: insertError } = await supabase.from("listings").insert({
+    user_id: settings.user_id,
+    store_id: settings.store_id,
+    title: productInfo.title,
+    description: productInfo.description,
+    price: sellingPrice,
+    cost_price: costPrice,
+    condition: productInfo.condition || "Yeni",
+    category: finalCategory,
+    location: settings.target_location,
+    image_urls: imageUrls,
+    telegram_media_group_id: groupId,
+    is_active: false // Admin təsdiqi üçün
+  });
+
+  if (!insertError) {
+    await sendMessage(chatId, `✅ <b>Ağıllı Elan yaradıldı!</b>\n\n📝 Ad: ${productInfo.title}\n💰 Satış Qiyməti: ${sellingPrice}₼ (Maya: ${costPrice}₼)\n📂 Kateqoriya: ${finalCategory}\n📸 Şəkillər: ${imageUrls.length}\n\n⏳ Elan admin təsdiqi gözləyir.`, lovableKey, telegramKey);
+  } else {
+    console.error("Insert error:", insertError);
+  }
+}
+
+// MODERN AI İNTEQRASİYASI (ai-listing-autofill sistemindən köçürülmüşdür)
+async function analyzeWithAIFull(imageUrl: string | null, caption: string, lovableKey: string, supabase: any) {
   try {
-    let imageUrl: string | null = null;
-    if (message.photo) {
-      imageUrl = await downloadAndUploadFile(message.photo[message.photo.length - 1].file_id, "listing-images", supabase, lovableKey, telegramKey);
-    }
+    // Mövcud kateqoriyaları bazadan çəkirik (AI-nin düzgün seçməsi üçün)
+    const { data: categories } = await supabase.from("categories").select("slug, name").eq("is_active", true).is("parent_id", null);
+    const categoryNames = (categories || []).map((c: any) => `${c.slug} (${c.name})`).join(", ");
 
-    const caption = message.caption || "";
-    const { title, description, price, condition } = await analyzeWithAI(imageUrl || "", caption, lovableKey);
+    const inputMsg = imageUrl 
+      ? [{ type: "image_url", image_url: { url: imageUrl } }, { type: "text", text: caption || "Analiz et" }]
+      : [{ type: "text", text: caption }];
 
-    const costPrice = price;
-    let sellingPrice = price;
-
-    if (costPrice > 0) {
-      sellingPrice = settings.markup_type === "percent"
-        ? Math.round(costPrice * (1 + settings.markup_value / 100))
-        : costPrice + settings.markup_value;
-    }
-
-    await supabase.from("listings").insert({
-      user_id: settings.user_id,
-      store_id: settings.store_id,
-      title,
-      description,
-      price: sellingPrice,
-      cost_price: costPrice,
-      condition,
-      category: settings.target_category,
-      location: settings.target_location,
-      image_urls: imageUrl ? [imageUrl] : [],
-      is_active: false
-    });
-
-    await sendMessage(chatId, `✅ <b>Elan yaradıldı!</b>\n\n📝 Ad: ${title}\n💰 Satış Qiyməti: ${sellingPrice}₼ (Maya: ${costPrice}₼)\n\n⏳ Elan admin təsdiqi gözləyir.`, lovableKey, telegramKey);
-  } catch (err) {
-    await sendMessage(chatId, "❌ Xəta baş verdi.", lovableKey, telegramKey);
-  }
-}
-
-async function handleStart(chatId: number, text: string, supabase: any, lovableKey: string, telegramKey: string) {
-  const parts = text.split(" ");
-  const token = parts[1];
-
-  if (token) {
-    await supabase.from("telegram_bot_settings").upsert({ telegram_chat_id: chatId, user_id: token }, { onConflict: "telegram_chat_id" });
-    const { data: stores } = await supabase.from("stores").select("id, name").eq("user_id", token).eq("status", "approved");
-
-    let storeMsg = stores && stores.length > 0
-      ? "\n\n🏪 Mağazalarınız:\n" + stores.map((s: any, i: number) => `${i + 1}. ${s.name}`).join("\n") + "\n\nSeçmək üçün: /store [nömrə]"
-      : "\n\n⚠️ Heç bir təsdiqlənmiş mağazanız yoxdur.";
-
-    await sendMessage(chatId, `✅ Hesab bağlandı!\n\n🤖 <b>Texnosat Bot</b>-a xoş gəlmisiniz!${storeMsg}`, lovableKey, telegramKey);
-    return;
-  }
-  await sendMessage(chatId, "🤖 <b>Texnosat Bot</b>\n\nSaytdan mağaza panelindən 'Telegram Bot Bağla' düyməsinə basın.", lovableKey, telegramKey);
-}
-
-async function handleStoreSelect(chatId: number, text: string, supabase: any, lovableKey: string, telegramKey: string) {
-  const { data: settings } = await supabase.from("telegram_bot_settings").select("*").eq("telegram_chat_id", chatId).maybeSingle();
-  if (!settings) return sendMessage(chatId, "⚠️ Hesabı bağlayın.", lovableKey, telegramKey);
-
-  const { data: stores } = await supabase.from("stores").select("id, name").eq("user_id", settings.user_id).eq("status", "approved");
-  if (!stores || stores.length === 0) return sendMessage(chatId, "⚠️ Mağaza yoxdur.", lovableKey, telegramKey);
-
-  const idx = parseInt(text.split(" ")[1]) - 1;
-  if (isNaN(idx) || idx < 0 || idx >= stores.length) {
-    let msg = "🏪 Mağaza seçin:\n\n" + stores.map((s: any, i: number) => `${i + 1}. ${s.name}`).join("\n") + "\n\nMisal: /store 1";
-    return sendMessage(chatId, msg, lovableKey, telegramKey);
-  }
-
-  await supabase.from("telegram_bot_settings").update({ store_id: stores[idx].id }).eq("telegram_chat_id", chatId);
-  await sendMessage(chatId, `✅ Mağaza seçildi: <b>${stores[idx].name}</b>`, lovableKey, telegramKey);
-}
-
-async function handleMarkup(chatId: number, text: string, supabase: any, lovableKey: string, telegramKey: string) {
-  const { data: settings } = await supabase.from("telegram_bot_settings").select("*").eq("telegram_chat_id", chatId).maybeSingle();
-  if (!settings) return;
-  const parts = text.split(" ");
-  if (parts.length < 3) return sendMessage(chatId, `📊 Cari əlavə: ${settings.markup_type === "percent" ? settings.markup_value + "%" : settings.markup_value + "₼"}`, lovableKey, telegramKey);
-  const type = parts[1] === "faiz" ? "percent" : "fixed";
-  const val = parseFloat(parts[2]);
-  await supabase.from("telegram_bot_settings").update({ markup_type: type, markup_value: val }).eq("telegram_chat_id", chatId);
-  await sendMessage(chatId, `✅ Yeniləndi: ${type === "percent" ? val + "%" : val + "₼"}`, lovableKey, telegramKey);
-}
-
-async function handleCategory(chatId: number, text: string, supabase: any, lovableKey: string, telegramKey: string) {
-  const { data: settings } = await supabase.from("telegram_bot_settings").select("*").eq("telegram_chat_id", chatId).maybeSingle();
-  if (!settings) return;
-  const parts = text.split(" ");
-  if (parts.length < 2) return sendMessage(chatId, `📂 Cari: ${settings.target_category}`, lovableKey, telegramKey);
-  await supabase.from("telegram_bot_settings").update({ target_category: parts.slice(1).join(" ") }).eq("telegram_chat_id", chatId);
-  await sendMessage(chatId, "✅ Yeniləndi", lovableKey, telegramKey);
-}
-
-async function handleSettings(chatId: number, supabase: any, lovableKey: string, telegramKey: string) {
-  const { data: s } = await supabase.from("telegram_bot_settings").select("*").eq("telegram_chat_id", chatId).maybeSingle();
-  if (!s) return;
-  await sendMessage(chatId, `⚙️ <b>Ayarlar:</b>\nMarkup: ${s.markup_value}\nKateqoriya: ${s.target_category}`, lovableKey, telegramKey);
-}
-
-async function analyzeWithAI(imageUrl: string, caption: string, lovableKey: string) {
-  try {
-    const input = imageUrl ? [{ type: "image_url", image_url: { url: imageUrl } }, { type: "text", text: caption || "Analiz et" }] : [{ type: "text", text: caption }];
-    const res = await fetch("https://ai-gateway.lovable.dev/chat/completions", {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "google/gemini-2.0-flash",
-        messages: [{ role: "system", content: 'Azərbaycan dilində JSON: {"title": "ad", "description": "təsvir (qiymətsiz)", "price": rəqəm, "condition": "Yeni"}. Təsviri şəklə görə yaz.' }, { role: "user", content: input }],
-        response_format: { type: "json_object" }
+        messages: [
+          {
+            role: "system",
+            content: `Sən məhsul tanıyan AI köməkçisisən. Şəkil və/və ya mətni analiz et. Mövcud kateqoriyalar: ${categoryNames}. Qiyməti AZN-lə ver (mətn daxilində tapılsa). Təsvirdə qətiyyən qiymət və rəqəm yazma, yalnız şəkilə əsaslanan bədii mətn yaz.`,
+          },
+          { role: "user", content: inputMsg }
+        ],
+        tools: [{
+          type: "function",
+          function: {
+            name: "extract_product_info",
+            parameters: {
+              type: "object",
+              properties: {
+                title: { type: "string" },
+                description: { type: "string" },
+                price: { type: "string" },
+                category: { type: "string" },
+                condition: { type: "string", enum: ["Yeni", "Yeni kimi", "İşlənmiş"] },
+              },
+              required: ["title", "description", "price", "category", "condition"],
+            },
+          },
+        }],
+        tool_choice: { type: "function", function: { name: "extract_product_info" } },
       })
     });
+
     const data = await res.json();
-    const r = JSON.parse(data.choices[0].message.content);
-    if ((!r.price || r.price === 0) && caption) {
-      const m = caption.match(/(\d+[\.,]?\d*)/);
-      if (m) r.price = parseFloat(m[1].replace(",", "."));
+    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+    if (toolCall?.function?.arguments) {
+      return JSON.parse(toolCall.function.arguments);
     }
-    return { title: r.title || caption.split("\n")[0], description: r.description || caption, price: r.price || 0, condition: r.condition || "Yeni" };
-  } catch { return { title: "Telegram məhsulu", description: caption, price: 0, condition: "Yeni" }; }
+    return null;
+  } catch (err) {
+    console.error("AI Full Error:", err);
+    return null;
+  }
 }
 
 async function downloadAndUploadFile(fileId: string, bucket: string, supabase: any, lovableKey: string, telegramKey: string) {
@@ -320,4 +202,42 @@ async function downloadAndUploadFile(fileId: string, bucket: string, supabase: a
 
 async function sendMessage(chatId: number, text: string, lovableKey: string, telegramKey: string) {
   await fetch(`${GATEWAY_URL}/sendMessage`, { method: "POST", headers: { Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": telegramKey, "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }) });
+}
+
+// Yardımsı handlers (handleStart, handleStoreSelect və s.) eyni qaydada qalır, ID-ləri bazadan idarə edir.
+async function handleStart(chatId: number, text: string, supabase: any, lovableKey: string, telegramKey: string) {
+  const parts = text.split(" ");
+  const token = parts[1];
+  if (token) {
+    await supabase.from("telegram_bot_settings").upsert({ telegram_chat_id: chatId, user_id: token }, { onConflict: "telegram_chat_id" });
+    const { data: stores } = await supabase.from("stores").select("id, name").eq("user_id", token).eq("status", "approved");
+    let storeMsg = stores?.length ? "\n\nSeçmək üçün: /store [nömrə]\n" + stores.map((s, i) => `${i+1}. ${s.name}`).join("\n") : "";
+    await sendMessage(chatId, `✅ Bağlandı!${storeMsg}`, lovableKey, telegramKey);
+  }
+}
+
+async function handleStoreSelect(chatId: number, text: string, supabase: any, lovableKey: string, telegramKey: string) {
+  const { data: settings } = await supabase.from("telegram_bot_settings").select("user_id").eq("telegram_chat_id", chatId).single();
+  const { data: stores } = await supabase.from("stores").select("id, name").eq("user_id", settings.user_id).eq("status", "approved");
+  const idx = parseInt(text.split(" ")[1]) - 1;
+  if (stores?.[idx]) {
+    await supabase.from("telegram_bot_settings").update({ store_id: stores[idx].id }).eq("telegram_chat_id", chatId);
+    await sendMessage(chatId, `✅ Seçildi: ${stores[idx].name}`, lovableKey, telegramKey);
+  }
+}
+
+async function handleMarkup(chatId: number, text: string, supabase: any, lovableKey: string, telegramKey: string) {
+  const p = text.split(" ");
+  await supabase.from("telegram_bot_settings").update({ markup_type: p[1] === "faiz" ? "percent" : "fixed", markup_value: parseFloat(p[2]) }).eq("telegram_chat_id", chatId);
+  await sendMessage(chatId, "✅ Yeniləndi", lovableKey, telegramKey);
+}
+
+async function handleCategory(chatId: number, text: string, supabase: any, lovableKey: string, telegramKey: string) {
+  await supabase.from("telegram_bot_settings").update({ target_category: text.split(" ").slice(1).join(" ") }).eq("telegram_chat_id", chatId);
+  await sendMessage(chatId, "✅ Yeniləndi", lovableKey, telegramKey);
+}
+
+async function handleSettings(chatId: number, supabase: any, lovableKey: string, telegramKey: string) {
+  const { data: s } = await supabase.from("telegram_bot_settings").select("*").eq("telegram_chat_id", chatId).single();
+  await sendMessage(chatId, `⚙️ Kateqoriya: ${s.target_category}\nMarkup: ${s.markup_value}`, lovableKey, telegramKey);
 }
