@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Share2, MapPin, Grid, Phone, MessageSquare, MessageCircle, ChevronLeft, Flag, Send, Heart, X, Trash2, Clock, Star, Shield, Eye, Loader2, Store, ExternalLink, Edit2, Crown, Zap, Gem, Play, UserPlus, UserCheck, ShoppingCart, Facebook, Twitter, Link as LinkIcon, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,18 +8,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from "@/components/ui/carousel";
 import ImageViewer from "@/components/ImageViewer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CheckoutDialog from "@/components/CheckoutDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useIsAdminOrMod } from "@/hooks/useIsAdmin";
+import { useIsAdminOrMod, useIsAdmin } from "@/hooks/useIsAdmin";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ListingCard from "@/components/ListingCard";
 import WatermarkOverlay from "@/components/WatermarkOverlay";
 import ReportButton from "@/components/ReportButton";
+import ModerationToolbar from "@/components/admin/ModerationToolbar";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -50,6 +51,11 @@ const ProductDetail = () => {
   const { isPrivileged } = useIsAdminOrMod();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const isModerationMode = searchParams.get("mode") === "moderation";
+  const { isAdmin } = useIsAdmin();
+  const showModerationBar = isModerationMode && isAdmin;
+
   const [showPhone, setShowPhone] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -360,7 +366,16 @@ const ProductDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={`min-h-screen bg-background ${showModerationBar ? "pt-14" : ""}`}>
+      {showModerationBar && (
+        <ModerationToolbar 
+          id={listing.id} 
+          type="listing" 
+          currentStatus={listing.status}
+          userId={listing.user_id}
+          title={listing.title}
+        />
+      )}
       <Header />
       <main className="container mx-auto px-4 py-6">
         <button onClick={() => navigate(-1)} className="mb-4 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">

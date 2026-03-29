@@ -116,7 +116,7 @@ const AdminStoreModerationManager = () => {
                       size="sm" 
                       variant="outline" 
                       className="flex-1 sm:flex-none h-9 gap-1.5 px-3 border-primary/20 hover:bg-primary/5 text-primary text-xs font-semibold shadow-sm"
-                      onClick={() => window.open(`/store/${s.id}`, "_blank")}
+                      onClick={() => window.open(`/store/${s.id}?mode=moderation`, "_blank")}
                     >
                       <Eye className="h-3.5 w-3.5" /> Bax
                     </Button>

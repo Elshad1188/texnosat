@@ -1,4 +1,4 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,9 +14,10 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
-import { useIsAdminOrMod } from "@/hooks/useIsAdmin";
+import { useIsAdminOrMod, useIsAdmin } from "@/hooks/useIsAdmin";
 import { useLocation } from "react-router-dom";
 import StoreBoostDialog from "@/components/StoreBoostDialog";
+import ModerationToolbar from "@/components/admin/ModerationToolbar";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -45,6 +46,10 @@ const StoreDetail = () => {
   const { isPrivileged } = useIsAdminOrMod();
   const location = useLocation();
   const [showBoostDialog, setShowBoostDialog] = useState(false);
+  const [searchParams] = useSearchParams();
+  const isModerationMode = searchParams.get("mode") === "moderation";
+  const { isAdmin } = useIsAdmin();
+  const showModerationBar = isModerationMode && isAdmin;
   const fromProfile = location.state?.fromProfile === true;
 
   const { data: store, isLoading } = useQuery({
@@ -240,7 +245,16 @@ const StoreDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={`min-h-screen bg-background ${showModerationBar ? "pt-14" : ""}`}>
+      {showModerationBar && (
+        <ModerationToolbar 
+          id={store.id} 
+          type="store" 
+          currentStatus={store.status}
+          userId={store.user_id}
+          title={store.name}
+        />
+      )}
       <Header />
 
       <div className="relative h-48 w-full bg-gradient-to-br from-primary/30 via-primary/10 to-background sm:h-64">
