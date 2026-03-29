@@ -278,6 +278,20 @@ const CreateListing = () => {
     }
     setLoading(true);
     try {
+      // Check store listing limit for non-premium stores (skip for edits and admins)
+      if (!editId && selectedStoreId && !isPrivileged) {
+        const selectedStore = approvedStores.find((s: any) => s.id === selectedStoreId);
+        const isPremium = selectedStore?.is_premium && (!selectedStore?.premium_until || new Date(selectedStore.premium_until) > new Date());
+        if (!isPremium) {
+          const storeLimit = generalSettings?.store_listing_limit || 20;
+          const { count } = await supabase.from("listings").select("id", { count: "exact", head: true }).eq("store_id", selectedStoreId);
+          if ((count || 0) >= storeLimit) {
+            toast({ title: `Mağazanızda maksimum ${storeLimit} elan limiti dolub`, description: "Premium mağaza alın limitsiz elan yerləşdirin.", variant: "destructive" });
+            setLoading(false);
+            return;
+          }
+        }
+      }
       const newImageUrls: string[] = [];
       for (const file of images) {
         const fileName = `${user.id}/${Date.now()}-${file.name}`;
