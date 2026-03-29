@@ -234,6 +234,7 @@ export type Database = {
         Row: {
           category: string
           condition: string
+          cost_price: number | null
           created_at: string
           currency: string
           custom_fields: Json | null
@@ -251,6 +252,7 @@ export type Database = {
           status: string
           stock: number
           store_id: string | null
+          telegram_media_group_id: string | null
           title: string
           updated_at: string
           user_id: string
@@ -260,6 +262,7 @@ export type Database = {
         Insert: {
           category: string
           condition?: string
+          cost_price?: number | null
           created_at?: string
           currency?: string
           custom_fields?: Json | null
@@ -277,6 +280,7 @@ export type Database = {
           status?: string
           stock?: number
           store_id?: string | null
+          telegram_media_group_id?: string | null
           title: string
           updated_at?: string
           user_id: string
@@ -286,6 +290,7 @@ export type Database = {
         Update: {
           category?: string
           condition?: string
+          cost_price?: number | null
           created_at?: string
           currency?: string
           custom_fields?: Json | null
@@ -303,6 +308,7 @@ export type Database = {
           status?: string
           stock?: number
           store_id?: string | null
+          telegram_media_group_id?: string | null
           title?: string
           updated_at?: string
           user_id?: string
@@ -1226,6 +1232,33 @@ export type Database = {
           id?: number
           update_offset?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      telegram_media_buffer: {
+        Row: {
+          caption: string | null
+          chat_id: number
+          created_at: string | null
+          id: string
+          image_url: string
+          media_group_id: string
+        }
+        Insert: {
+          caption?: string | null
+          chat_id: number
+          created_at?: string | null
+          id?: string
+          image_url: string
+          media_group_id: string
+        }
+        Update: {
+          caption?: string | null
+          chat_id?: number
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          media_group_id?: string
         }
         Relationships: []
       }
