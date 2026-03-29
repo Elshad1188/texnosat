@@ -22,8 +22,6 @@ Deno.serve(async (req) => {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   const TELEGRAM_API_KEY = Deno.env.get("TELEGRAM_API_KEY");
 
-  console.log("ENV CHECK - LOVABLE_API_KEY:", !!LOVABLE_API_KEY, "TELEGRAM_API_KEY:", !!TELEGRAM_API_KEY);
-
   if (!LOVABLE_API_KEY) { console.error("LOVABLE_API_KEY missing"); return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), { status: 500, headers: corsHeaders }); }
   if (!TELEGRAM_API_KEY) { console.error("TELEGRAM_API_KEY missing"); return new Response(JSON.stringify({ error: "TELEGRAM_API_KEY not configured" }), { status: 500, headers: corsHeaders }); }
 
