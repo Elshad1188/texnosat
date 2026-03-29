@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
 import {
   Store, Package, Users, Eye, Crown, Edit2, Plus, Trash2,
-  MapPin, Phone, Clock, TrendingUp, Loader2, BarChart3, Rocket, Upload, ShoppingCart, Truck
+  MapPin, Phone, Clock, TrendingUp, Loader2, BarChart3, Rocket, Upload, ShoppingCart, Truck, Bot
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
