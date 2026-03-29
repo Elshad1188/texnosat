@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, XCircle, Clock, Loader2, AlertTriangle, Store } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Loader2, AlertTriangle, Store, Eye } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const statusMap: Record<string, { label: string; color: string; icon: any }> = {
@@ -105,7 +105,15 @@ const AdminStoreModerationManager = () => {
                       {s.city || "—"} · {profiles[s.user_id] || "Adsız"} · {new Date(s.created_at).toLocaleDateString("az")}
                     </p>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 items-center">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-8 gap-1 px-2 border-primary/20 hover:bg-primary/5 text-primary"
+                      onClick={() => window.open(`/store/${s.id}`, "_blank")}
+                    >
+                      <Eye className="h-3.5 w-3.5" /> Bax
+                    </Button>
                     {s.status === "pending" && (
                       <>
                         <Button size="sm" className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white" onClick={() => updateStatus(s.id, "approved")}>

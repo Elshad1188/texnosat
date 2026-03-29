@@ -139,7 +139,15 @@ const AdminModerationManager = () => {
                       <p className="mt-1 text-xs text-destructive">Səbəb: {l.rejection_reason}</p>
                     )}
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 items-center">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="h-8 gap-1 px-2 border-primary/20 hover:bg-primary/5 text-primary"
+                      onClick={() => window.open(`/product/${l.id}`, "_blank")}
+                    >
+                      <Eye className="h-3.5 w-3.5" /> Bax
+                    </Button>
                     {l.status === "pending" && (
                       <>
                         <Button size="sm" className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white" onClick={() => updateStatus(l.id, "approved")}>
