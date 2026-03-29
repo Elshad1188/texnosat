@@ -244,12 +244,29 @@ async function handleStoreSelect(chatId: number, text: string, supabase: any, lo
   }
 
   const selectedStore = stores[storeIndex];
-  await supabase
+  const { error: updateError } = await supabase
     .from('telegram_bot_settings')
     .update({ store_id: selectedStore.id, updated_at: new Date().toISOString() })
     .eq('telegram_chat_id', chatId);
 
-  await sendMessage(chatId, `✅ Mağaza seçildi: <b>${selectedStore.name}</b>\n\nİndi məhsul şəklini və ya forward mesajını göndərə bilərsiniz.`, lovableKey, telegramKey);
+  if (updateError) {
+    await sendMessage(chatId, `❌ Verilənlər bazası xətası: ${updateError.message}`, lovableKey, telegramKey);
+    return;
+  }
+
+  // Double check if it actually saved
+  const { data: verifyData } = await supabase
+    .from('telegram_bot_settings')
+    .select('store_id')
+    .eq('telegram_chat_id', chatId)
+    .maybeSingle();
+
+  if (!verifyData?.store_id) {
+    await sendMessage(chatId, `❌ Naməlum xəta qeydə alındı, ID yadda saxlanılmadı! (${verifyData ? 'Bos deyil' : 'Bosdur'})`, lovableKey, telegramKey);
+    return;
+  }
+
+  await sendMessage(chatId, `✅ Mağaza uğurla seçildi və yadda saxlanıldı: <b>${selectedStore.name}</b>\n\nİndi məhsul şəklini və ya forward mesajını göndərə bilərsiniz.`, lovableKey, telegramKey);
 }
 
 async function handleMarkup(chatId: number, text: string, supabase: any, lovableKey: string, telegramKey: string) {
