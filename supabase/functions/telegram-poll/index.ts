@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
   const { data: state } = await supabase.from("telegram_bot_state").select("update_offset").eq("id", 1).single();
   let currentOffset = state?.update_offset || 0;
 
-  // mediaGroupMap WHILE-DAN ÇÖLDƏ - bütün iterasiyalarda eyni qrup yaddaşda qalır
+  // KRITIK: MAP WHILE-DAN ÇÖLDƏ - bütün polling turları boyu qalır
   const mediaGroupMap = new Map<string, { messages: any[]; chatId: number; lastSeen: number }>();
 
   while (Date.now() - startTime < MAX_RUNTIME_MS - MIN_REMAINING_MS) {
@@ -28,14 +28,14 @@ Deno.serve(async (req) => {
         "X-Connection-Api-Key": TELEGRAM_API_KEY,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ offset: currentOffset, timeout: 15, allowed_updates: ["message"] }),
+      body: JSON.stringify({ offset: currentOffset, timeout: 10, allowed_updates: ["message"] }),
     });
     const data = await resp.json();
     if (!resp.ok) break;
     const updates = data.result ?? [];
     const now = Date.now();
 
-    // Köhnə qrupları flush et (3 saniyədir yeni şəkil gəlməyibsə)
+    // 3 saniyədir yeni şəkil gəlməyən qrupları elan et (flush)
     for (const [gid, grp] of mediaGroupMap) {
       if (now - grp.lastSeen > 3000) {
         await handleGroup(gid, grp.messages, grp.chatId, supabase, LOVABLE_API_KEY, TELEGRAM_API_KEY);
@@ -48,7 +48,6 @@ Deno.serve(async (req) => {
       continue;
     }
 
-    // MƏRHƏLƏ 1: Update-ləri qrupla
     const singles: any[] = [];
     for (const u of updates) {
       const msg = u.message;
@@ -57,20 +56,18 @@ Deno.serve(async (req) => {
         const gid = msg.media_group_id;
         if (!mediaGroupMap.has(gid)) mediaGroupMap.set(gid, { messages: [], chatId: msg.chat.id, lastSeen: now });
         mediaGroupMap.get(gid)!.messages.push(msg);
-        mediaGroupMap.get(gid)!.lastSeen = now; // hər yeni şəkildə vaxtı yenilə
+        mediaGroupMap.get(gid)!.lastSeen = now;
       } else {
         singles.push(msg);
       }
     }
 
-    // MƏRHƏLƏ 2: Tək mesajları emal et
     for (const msg of singles) await handleSingle(msg, supabase, LOVABLE_API_KEY, TELEGRAM_API_KEY);
-
     currentOffset = Math.max(...updates.map((u: any) => u.update_id)) + 1;
     await supabase.from("telegram_bot_state").update({ update_offset: currentOffset }).eq("id", 1);
   }
 
-  // Funksiya bitməzdən əvvəl qalan bütün qrupları flush et
+  // Funksiya bitməzdən əvvəl qalan bütün qrupları elan et
   for (const [gid, grp] of mediaGroupMap) {
     await handleGroup(gid, grp.messages, grp.chatId, supabase, LOVABLE_API_KEY, TELEGRAM_API_KEY);
   }
@@ -104,6 +101,10 @@ async function handleGroup(
 async function handleSingle(msg: any, supabase: any, lovableKey: string, telegramKey: string) {
   const chatId = msg.chat.id;
   const text = msg.text || msg.caption || "";
+  if (text === "/ping") {
+    await sendMessage(chatId, "🟢 v4.0 - Albom dəstəyi aktivdir", lovableKey, telegramKey);
+    return;
+  }
   if (text.startsWith("/start")) return handleStart(chatId, text, supabase, lovableKey, telegramKey);
   if (text.startsWith("/store")) return handleStoreSelect(chatId, text, supabase, lovableKey, telegramKey);
   if (text.startsWith("/markup")) return handleMarkup(chatId, text, supabase, lovableKey, telegramKey);
@@ -150,21 +151,23 @@ async function createListing(
         ? Math.round(costPrice * (1 + settings.markup_value / 100))
         : costPrice + settings.markup_value
       : 0;
-  const { error } = await supabase.from("listings").insert({
-    user_id: settings.user_id,
-    store_id: settings.store_id,
-    title: ai.title || "Məhsul",
-    description: ai.description || caption,
-    price: sellingPrice,
-    cost_price: costPrice,
-    condition: ai.condition || "Yeni",
-    category: ai.category || settings.target_category,
-    location: settings.target_location,
-    image_urls: imageUrls,
-    telegram_media_group_id: groupId || null,
-    is_active: false,
-    status: "pending",
-  });
+  const { error } = await supabase
+    .from("listings")
+    .insert({
+      user_id: settings.user_id,
+      store_id: settings.store_id,
+      title: ai.title || "Məhsul",
+      description: ai.description || caption,
+      price: sellingPrice,
+      cost_price: costPrice,
+      condition: ai.condition || "Yeni",
+      category: ai.category || settings.target_category,
+      location: settings.target_location,
+      image_urls: imageUrls,
+      telegram_media_group_id: groupId || null,
+      is_active: false,
+      status: "pending",
+    });
   if (!error)
     await sendMessage(
       chatId,
@@ -172,10 +175,7 @@ async function createListing(
       lovableKey,
       telegramKey,
     );
-  else {
-    console.error(error);
-    await sendMessage(chatId, `❌ Xəta: ${error.message}`, lovableKey, telegramKey);
-  }
+  else await sendMessage(chatId, `❌ Xəta: ${error.message}`, lovableKey, telegramKey);
 }
 
 async function analyzeWithAI(imageUrl: string | null, caption: string, lovableKey: string, supabase: any) {
@@ -196,7 +196,7 @@ async function analyzeWithAI(imageUrl: string | null, caption: string, lovableKe
         messages: [
           {
             role: "system",
-            content: `Azərbaycan dilində cavab ver. Kateqoriyalar: ${catStr}. QAYDA: description sahəsində qiymət və rəqəm yazma, yalnız şəkilə baxaraq yaradıcı satış mətni yaz.`,
+            content: `Azərbaycan dilinde cavab ver. Kateqoriyalar: ${catStr}. QAYDA: description sahesinde qiymet ve reqem yazma, yalniz sekile baxaraq yaradici satis metni yaz.`,
           },
           { role: "user", content },
         ],
@@ -228,11 +228,11 @@ async function analyzeWithAI(imageUrl: string | null, caption: string, lovableKe
   } catch (e) {
     console.error("AI:", e);
   }
-  const priceMatch = caption.match(/(\d+[\.,]?\d*)/);
+  const m = caption.match(/(\d+[\.,]?\d*)/);
   return {
     title: caption.split("\n")[0] || "Məhsul",
     description: caption,
-    price: priceMatch ? parseFloat(priceMatch[1].replace(",", ".")) : 0,
+    price: m ? parseFloat(m[1].replace(",", ".")) : 0,
     category: "",
     condition: "Yeni",
   };
