@@ -2,14 +2,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const MAX_RUNTIME_MS = 55_000;
 const MIN_REMAINING_MS = 8_000;
+const GATEWAY_URL = "https://connector-gateway.lovable.dev/telegram";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-function tgUrl(token: string, method: string) {
-  return `https://api.telegram.org/bot${token}/${method}`;
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
