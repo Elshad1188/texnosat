@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -32,12 +32,20 @@ const StoreDashboard = () => {
   const queryClient = useQueryClient();
   const [boostListingId, setBoostListingId] = useState<string | null>(null);
 
+  const [searchParams] = useSearchParams();
+  const storeIdParam = searchParams.get("id");
+
   const { data: store, isLoading } = useQuery({
-    queryKey: ["my-store", user?.id],
+    queryKey: ["my-store", user?.id, storeIdParam],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("stores").select("*").eq("user_id", user!.id).maybeSingle();
-      return data;
+      let query = supabase.from("stores").select("*").eq("user_id", user!.id);
+      
+      if (storeIdParam) {
+        query = query.eq("id", storeIdParam);
+      }
+      
+      const { data } = await query.order("created_at", { ascending: false }).limit(1);
+      return data && data.length > 0 ? data[0] : null;
     },
     enabled: !!user,
   });

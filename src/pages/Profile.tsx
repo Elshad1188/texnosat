@@ -351,7 +351,7 @@ const Profile = () => {
                         <div className="flex gap-1 shrink-0">
                           {storeStatus === "approved" && (
                             <Button size="sm" variant="outline" className="h-8 text-xs gap-1" asChild>
-                              <Link to="/store-dashboard"><Settings className="h-3.5 w-3.5" />İdarə et</Link>
+                              <Link to={`/store-dashboard?id=${s.id}`}><Settings className="h-3.5 w-3.5" />İdarə et</Link>
                             </Button>
                           )}
                           <Button size="sm" variant="outline" className="h-8 text-xs gap-1" asChild>
