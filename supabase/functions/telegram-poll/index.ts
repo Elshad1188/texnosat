@@ -2,38 +2,49 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const MAX_RUNTIME_MS = 55_000;
 const MIN_REMAINING_MS = 8_000;
+const GATEWAY_URL = "https://connector-gateway.lovable.dev/telegram";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-function tgUrl(token: string, method: string) {
-  return `https://api.telegram.org/bot${token}/${method}`;
+function gatewayHeaders(lovableKey: string, telegramKey: string) {
+  return {
+    "Authorization": `Bearer ${lovableKey}`,
+    "X-Connection-Api-Key": telegramKey,
+    "Content-Type": "application/json",
+  };
 }
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   const startTime = Date.now();
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
-  const TELEGRAM_API_KEY = Deno.env.get("TELEGRAM_API_KEY")!;
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  const TELEGRAM_API_KEY = Deno.env.get("TELEGRAM_API_KEY");
+
+  if (!LOVABLE_API_KEY) { console.error("LOVABLE_API_KEY missing"); return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), { status: 500, headers: corsHeaders }); }
+  if (!TELEGRAM_API_KEY) { console.error("TELEGRAM_API_KEY missing"); return new Response(JSON.stringify({ error: "TELEGRAM_API_KEY not configured" }), { status: 500, headers: corsHeaders }); }
+
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const { data: state } = await supabase.from("telegram_bot_state").select("update_offset").eq("id", 1).single();
   let currentOffset = state?.update_offset || 0;
 
-  // Load categories once for AI
   const categoryTree = await loadCategoryTree(supabase);
-
   const mediaGroupMap = new Map<string, { messages: any[]; chatId: number; lastSeen: number }>();
+  const headers = gatewayHeaders(LOVABLE_API_KEY, TELEGRAM_API_KEY);
 
   while (Date.now() - startTime < MAX_RUNTIME_MS - MIN_REMAINING_MS) {
-    const resp = await fetch(tgUrl(TELEGRAM_API_KEY, "getUpdates"), {
+    const resp = await fetch(`${GATEWAY_URL}/getUpdates`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ offset: currentOffset, timeout: 10, allowed_updates: ["message"] }),
     });
     const data = await resp.json();
     if (!resp.ok || !data.ok) {
-      console.error("Telegram API info:", data);
+      if (data.error_code === 409) {
+        return new Response(JSON.stringify({ ok: true, skipped: "another instance running" }), { headers: corsHeaders });
+      }
+      console.error("Telegram API error:", JSON.stringify(data));
       await new Promise(r => setTimeout(r, 2000));
       continue;
     }
@@ -92,23 +103,21 @@ async function handleGroup(groupId: string, messages: any[], chatId: number, sup
   const videoMsgs = messages.filter(m => m.video);
   const caption = messages.find(m => m.caption)?.caption || "";
 
-  // Upload all photos in parallel
   const imageUploads = photoMsgs.map(m =>
-    downloadAndUpload(m.photo[m.photo.length - 1].file_id, "listing-images", "image/jpeg", telegramKey, supabase)
+    downloadAndUpload(m.photo[m.photo.length - 1].file_id, "listing-images", "image/jpeg", lovableKey, telegramKey, supabase)
   );
   const imageUrls = (await Promise.all(imageUploads)).filter(Boolean) as string[];
 
-  // Upload first video if exists
   let videoUrl: string | null = null;
   if (videoMsgs.length > 0) {
     const vid = videoMsgs[0].video;
     const mime = vid.mime_type || "video/mp4";
     const ext = mime.includes("mp4") ? "mp4" : "webm";
-    videoUrl = await downloadAndUpload(vid.file_id, "listing-videos", mime, telegramKey, supabase, ext);
+    videoUrl = await downloadAndUpload(vid.file_id, "listing-videos", mime, lovableKey, telegramKey, supabase, ext);
   }
 
   if (!imageUrls.length && !videoUrl) return;
-  await sendMessage(chatId, `⏳ ${imageUrls.length} şəkil${videoUrl ? " + 1 video" : ""} emal olunur...`, telegramKey);
+  await sendMessage(chatId, `⏳ ${imageUrls.length} şəkil${videoUrl ? " + 1 video" : ""} emal olunur...`, lovableKey, telegramKey);
   await createListing(chatId, imageUrls, videoUrl, caption, groupId, settings, supabase, lovableKey, telegramKey, categoryTree);
 }
 
@@ -117,13 +126,12 @@ async function handleSingle(msg: any, supabase: any, lovableKey: string, telegra
   const chatId = msg.chat.id;
   const text = msg.text || msg.caption || "";
 
-  if (text === "/ping") { await sendMessage(chatId, "🟢 v7.0 - Video + Albom + Alt-kateqoriya + Forward dəstəyi", telegramKey); return; }
-  if (text.startsWith("/start")) return handleStart(chatId, text, supabase, telegramKey);
-  if (text.startsWith("/store")) return handleStoreSelect(chatId, text, supabase, telegramKey);
-  if (text.startsWith("/markup")) return handleMarkup(chatId, text, supabase, telegramKey);
-  if (text === "/settings") return handleSettings(chatId, supabase, telegramKey);
+  if (text === "/ping") { await sendMessage(chatId, "🟢 v8.0 - Gateway + Video + Albom + Alt-kateqoriya", lovableKey, telegramKey); return; }
+  if (text.startsWith("/start")) return handleStart(chatId, text, supabase, lovableKey, telegramKey);
+  if (text.startsWith("/store")) return handleStoreSelect(chatId, text, supabase, lovableKey, telegramKey);
+  if (text.startsWith("/markup")) return handleMarkup(chatId, text, supabase, lovableKey, telegramKey);
+  if (text === "/settings") return handleSettings(chatId, supabase, lovableKey, telegramKey);
 
-  // Check if message has media (photo, video, or document with image/video)
   const hasPhoto = !!msg.photo;
   const hasVideo = !!msg.video;
   const hasVideoDoc = msg.document?.mime_type?.startsWith("video/");
@@ -132,25 +140,25 @@ async function handleSingle(msg: any, supabase: any, lovableKey: string, telegra
   if (!hasPhoto && !hasVideo && !hasVideoDoc && !hasImageDoc) return;
 
   const { data: settings } = await supabase.from("telegram_bot_settings").select("*").eq("telegram_chat_id", chatId).maybeSingle();
-  if (!settings?.store_id) { await sendMessage(chatId, "⚠️ /store ilə mağaza seçin.", telegramKey); return; }
-  await sendMessage(chatId, "⏳ Emal olunur...", telegramKey);
+  if (!settings?.store_id) { await sendMessage(chatId, "⚠️ /store ilə mağaza seçin.", lovableKey, telegramKey); return; }
+  await sendMessage(chatId, "⏳ Emal olunur...", lovableKey, telegramKey);
 
   let imageUrls: string[] = [];
   let videoUrl: string | null = null;
 
   if (hasPhoto) {
-    const url = await downloadAndUpload(msg.photo[msg.photo.length - 1].file_id, "listing-images", "image/jpeg", telegramKey, supabase);
+    const url = await downloadAndUpload(msg.photo[msg.photo.length - 1].file_id, "listing-images", "image/jpeg", lovableKey, telegramKey, supabase);
     if (url) imageUrls.push(url);
   }
   if (hasImageDoc) {
-    const url = await downloadAndUpload(msg.document.file_id, "listing-images", msg.document.mime_type, telegramKey, supabase);
+    const url = await downloadAndUpload(msg.document.file_id, "listing-images", msg.document.mime_type, lovableKey, telegramKey, supabase);
     if (url) imageUrls.push(url);
   }
   if (hasVideo) {
-    videoUrl = await downloadAndUpload(msg.video.file_id, "listing-videos", msg.video.mime_type || "video/mp4", telegramKey, supabase, "mp4");
+    videoUrl = await downloadAndUpload(msg.video.file_id, "listing-videos", msg.video.mime_type || "video/mp4", lovableKey, telegramKey, supabase, "mp4");
   }
   if (hasVideoDoc) {
-    videoUrl = await downloadAndUpload(msg.document.file_id, "listing-videos", msg.document.mime_type, telegramKey, supabase, "mp4");
+    videoUrl = await downloadAndUpload(msg.document.file_id, "listing-videos", msg.document.mime_type, lovableKey, telegramKey, supabase, "mp4");
   }
 
   await createListing(chatId, imageUrls, videoUrl, msg.caption || "", undefined, settings, supabase, lovableKey, telegramKey, categoryTree);
@@ -187,10 +195,10 @@ async function createListing(chatId: number, imageUrls: string[], videoUrl: stri
   const { error } = await supabase.from("listings").insert(insertData);
   if (!error) {
     const videoInfo = videoUrl ? "\n🎬 Video əlavə edildi" : "";
-    await sendMessage(chatId, `✅ <b>Elan yaradıldı!</b>\n📝 ${ai.title}\n📁 ${ai.subcategory || ai.category}\n💰 ${sellingPrice}₼ (Maya: ${costPrice}₼)\n📸 ${imageUrls.length} şəkil${videoInfo}\n⏳ Admin təsdiqi gözləyir.`, telegramKey);
+    await sendMessage(chatId, `✅ <b>Elan yaradıldı!</b>\n📝 ${ai.title}\n📁 ${ai.subcategory || ai.category}\n💰 ${sellingPrice}₼ (Maya: ${costPrice}₼)\n📸 ${imageUrls.length} şəkil${videoInfo}\n⏳ Admin təsdiqi gözləyir.`, lovableKey, telegramKey);
   } else {
     console.error(error.message);
-    await sendMessage(chatId, `❌ Xəta: ${error.message}`, telegramKey);
+    await sendMessage(chatId, `❌ Xəta: ${error.message}`, lovableKey, telegramKey);
   }
 }
 
@@ -248,19 +256,25 @@ QAYDALAR:
   return { title: caption.split("\n")[0] || "Məhsul", description: caption, price: m ? parseFloat(m[1].replace(",", ".")) : 0, category: "", subcategory: "", condition: "Yeni" };
 }
 
-// ─── File download & upload ─────────────────────────────────
-async function downloadAndUpload(fileId: string, bucket: string, contentType: string, telegramKey: string, supabase: any, ext?: string): Promise<string | null> {
+// ─── File download & upload via Gateway ─────────────────────
+async function downloadAndUpload(fileId: string, bucket: string, contentType: string, lovableKey: string, telegramKey: string, supabase: any, ext?: string): Promise<string | null> {
   try {
-    const fr = await fetch(tgUrl(telegramKey, "getFile"), {
+    const headers = gatewayHeaders(lovableKey, telegramKey);
+    const fr = await fetch(`${GATEWAY_URL}/getFile`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ file_id: fileId }),
     });
     const fd = await fr.json();
     const filePath = fd.result?.file_path;
     if (!filePath) return null;
 
-    const dr = await fetch(`https://api.telegram.org/file/bot${telegramKey}/${filePath}`);
+    const dr = await fetch(`${GATEWAY_URL}/file/${filePath}`, {
+      headers: {
+        "Authorization": `Bearer ${lovableKey}`,
+        "X-Connection-Api-Key": telegramKey,
+      },
+    });
     const bytes = await dr.arrayBuffer();
 
     const fileExt = ext || filePath.split(".").pop() || "jpg";
@@ -273,44 +287,44 @@ async function downloadAndUpload(fileId: string, bucket: string, contentType: st
   }
 }
 
-// ─── Telegram helpers ───────────────────────────────────────
-async function sendMessage(chatId: number, text: string, telegramKey: string) {
-  await fetch(tgUrl(telegramKey, "sendMessage"), {
+// ─── Telegram helpers via Gateway ───────────────────────────
+async function sendMessage(chatId: number, text: string, lovableKey: string, telegramKey: string) {
+  await fetch(`${GATEWAY_URL}/sendMessage`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: gatewayHeaders(lovableKey, telegramKey),
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
   });
 }
 
-async function handleStart(chatId: number, text: string, supabase: any, telegramKey: string) {
+async function handleStart(chatId: number, text: string, supabase: any, lovableKey: string, telegramKey: string) {
   const token = text.split(" ")[1];
   if (token) {
     await supabase.from("telegram_bot_settings").upsert({ telegram_chat_id: chatId, user_id: token }, { onConflict: "telegram_chat_id" });
     const { data: stores } = await supabase.from("stores").select("id,name").eq("user_id", token).eq("status", "approved");
-    await sendMessage(chatId, `✅ Hesab bağlandı!\n\n${stores?.map((s: any, i: number) => `${i + 1}. ${s.name}`).join("\n") || "Mağaza yoxdur"}\n\nSeçmək: /store 1`, telegramKey);
+    await sendMessage(chatId, `✅ Hesab bağlandı!\n\n${stores?.map((s: any, i: number) => `${i + 1}. ${s.name}`).join("\n") || "Mağaza yoxdur"}\n\nSeçmək: /store 1`, lovableKey, telegramKey);
   }
 }
 
-async function handleStoreSelect(chatId: number, text: string, supabase: any, telegramKey: string) {
+async function handleStoreSelect(chatId: number, text: string, supabase: any, lovableKey: string, telegramKey: string) {
   const { data: s } = await supabase.from("telegram_bot_settings").select("user_id").eq("telegram_chat_id", chatId).single();
   if (!s) return;
   const { data: stores } = await supabase.from("stores").select("id,name").eq("user_id", s.user_id).eq("status", "approved");
   const idx = parseInt(text.split(" ")[1]) - 1;
   if (stores?.[idx]) {
     await supabase.from("telegram_bot_settings").update({ store_id: stores[idx].id }).eq("telegram_chat_id", chatId);
-    await sendMessage(chatId, `✅ ${stores[idx].name} seçildi`, telegramKey);
+    await sendMessage(chatId, `✅ ${stores[idx].name} seçildi`, lovableKey, telegramKey);
   } else {
-    await sendMessage(chatId, (stores?.map((s: any, i: number) => `${i + 1}. ${s.name}`).join("\n") || "") + "\n\nMisal: /store 1", telegramKey);
+    await sendMessage(chatId, (stores?.map((s: any, i: number) => `${i + 1}. ${s.name}`).join("\n") || "") + "\n\nMisal: /store 1", lovableKey, telegramKey);
   }
 }
 
-async function handleMarkup(chatId: number, text: string, supabase: any, telegramKey: string) {
+async function handleMarkup(chatId: number, text: string, supabase: any, lovableKey: string, telegramKey: string) {
   const p = text.split(" "); if (p.length < 3) return;
   await supabase.from("telegram_bot_settings").update({ markup_type: p[1] === "faiz" ? "percent" : "fixed", markup_value: parseFloat(p[2]) }).eq("telegram_chat_id", chatId);
-  await sendMessage(chatId, `✅ Qiymət əlavəsi: ${p[1] === "faiz" ? p[2] + "%" : p[2] + "₼"}`, telegramKey);
+  await sendMessage(chatId, `✅ Qiymət əlavəsi: ${p[1] === "faiz" ? p[2] + "%" : p[2] + "₼"}`, lovableKey, telegramKey);
 }
 
-async function handleSettings(chatId: number, supabase: any, telegramKey: string) {
+async function handleSettings(chatId: number, supabase: any, lovableKey: string, telegramKey: string) {
   const { data: s } = await supabase.from("telegram_bot_settings").select("*, stores(name)").eq("telegram_chat_id", chatId).single();
-  if (s) await sendMessage(chatId, `⚙️ Mağaza: ${(s as any).stores?.name || "Yox"}\nMarkup: ${s.markup_value}${s.markup_type === "percent" ? "%" : "₼"}`, telegramKey);
+  if (s) await sendMessage(chatId, `⚙️ Mağaza: ${(s as any).stores?.name || "Yox"}\nMarkup: ${s.markup_value}${s.markup_type === "percent" ? "%" : "₼"}`, lovableKey, telegramKey);
 }
