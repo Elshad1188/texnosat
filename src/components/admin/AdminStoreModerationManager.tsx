@@ -91,46 +91,73 @@ const AdminStoreModerationManager = () => {
             const st = statusMap[s.status] || statusMap.pending;
             return (
               <div key={s.id} className="rounded-xl border border-border bg-card p-3 shadow-card">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={s.logo_url || ""} />
-                    <AvatarFallback className="bg-secondary font-bold">{s.name?.[0]}</AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="truncate text-sm font-semibold text-foreground">{s.name}</h3>
-                      <Badge className={`${st.color} border-0 text-[10px]`}>{st.label}</Badge>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <Avatar className="h-14 w-14 border border-border/50">
+                      <AvatarImage src={s.logo_url || ""} />
+                      <AvatarFallback className="bg-secondary font-bold text-lg">{s.name?.[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                        <h3 className="truncate text-sm font-bold text-foreground leading-tight">{s.name}</h3>
+                        <Badge className={`${st.color} border-0 text-[10px] h-4 px-1.5 font-medium`}>{st.label}</Badge>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {s.city || "—"} · {profiles[s.user_id] || "Adsız"}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground/70">{new Date(s.created_at).toLocaleDateString("az")}</p>
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {s.city || "—"} · {profiles[s.user_id] || "Adsız"} · {new Date(s.created_at).toLocaleDateString("az")}
-                    </p>
                   </div>
-                  <div className="flex gap-1 items-center">
+
+                  <div className="flex items-center gap-2 pt-3 border-t border-border/40 sm:pt-0 sm:border-0 sm:flex-shrink-0">
                     <Button 
                       size="sm" 
                       variant="outline" 
-                      className="h-8 gap-1 px-2 border-primary/20 hover:bg-primary/5 text-primary"
+                      className="flex-1 sm:flex-none h-9 gap-1.5 px-3 border-primary/20 hover:bg-primary/5 text-primary text-xs font-semibold shadow-sm"
                       onClick={() => window.open(`/store/${s.id}`, "_blank")}
                     >
                       <Eye className="h-3.5 w-3.5" /> Bax
                     </Button>
+                    
                     {s.status === "pending" && (
-                      <>
-                        <Button size="sm" className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white" onClick={() => updateStatus(s.id, "approved")}>
+                      <div className="flex gap-2 flex-1 sm:flex-none">
+                        <Button 
+                          size="sm" 
+                          className="flex-1 sm:flex-none h-9 gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold shadow-sm" 
+                          onClick={() => updateStatus(s.id, "approved")}
+                        >
                           <CheckCircle className="h-3.5 w-3.5" /> Təsdiq
                         </Button>
-                        <Button size="sm" variant="destructive" className="h-8 gap-1" onClick={() => setRejectId(s.id)}>
+                        <Button 
+                          size="sm" 
+                          variant="destructive" 
+                          className="flex-1 sm:flex-none h-9 gap-1.5 text-xs font-semibold shadow-sm" 
+                          onClick={() => setRejectId(s.id)}
+                        >
                           <XCircle className="h-3.5 w-3.5" /> Rədd
                         </Button>
-                      </>
+                      </div>
                     )}
+                    
                     {s.status === "rejected" && (
-                      <Button size="sm" className="h-8 gap-1" onClick={() => updateStatus(s.id, "approved")}>
+                      <Button 
+                        size="sm" 
+                        className="flex-1 sm:flex-none h-9 gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold shadow-sm" 
+                        onClick={() => updateStatus(s.id, "approved")}
+                      >
                         <CheckCircle className="h-3.5 w-3.5" /> Təsdiq et
                       </Button>
                     )}
+                    
                     {s.status === "approved" && (
-                      <Button size="sm" variant="outline" className="h-8 gap-1" onClick={() => setRejectId(s.id)}>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1 sm:flex-none h-9 gap-1.5 text-xs font-semibold shadow-sm" 
+                        onClick={() => setRejectId(s.id)}
+                      >
                         <XCircle className="h-3.5 w-3.5" /> Rədd et
                       </Button>
                     )}

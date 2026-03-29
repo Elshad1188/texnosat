@@ -118,53 +118,82 @@ const AdminModerationManager = () => {
             const st = statusMap[l.status] || statusMap.pending;
             return (
               <div key={l.id} className="rounded-xl border border-border bg-card p-3 shadow-card">
-                <div className="flex items-center gap-3">
-                  <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
-                    {l.image_urls?.[0] ? (
-                      <img src={l.image_urls[0]} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-muted-foreground">📦</div>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="truncate text-sm font-semibold text-foreground">{l.title}</h3>
-                      <Badge className={`${st.color} border-0 text-[10px]`}>{st.label}</Badge>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-muted border border-border/50">
+                      {l.image_urls?.[0] ? (
+                        <img src={l.image_urls[0]} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-muted-foreground bg-muted/50">📦</div>
+                      )}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {l.price} ₼ · {l.location} · {l.category} · {profiles[l.user_id] || "Adsız"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{new Date(l.created_at).toLocaleDateString("az")}</p>
-                    {l.rejection_reason && (
-                      <p className="mt-1 text-xs text-destructive">Səbəb: {l.rejection_reason}</p>
-                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                        <h3 className="truncate text-sm font-bold text-foreground leading-tight">{l.title}</h3>
+                        <Badge className={`${st.color} border-0 text-[10px] h-4 px-1.5 font-medium`}>{st.label}</Badge>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <p className="text-[11px] font-medium text-primary">
+                          {l.price} ₼
+                        </p>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {l.location} · {l.category} · {profiles[l.user_id] || "Adsız"}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground/70">{new Date(l.created_at).toLocaleDateString("az")}</p>
+                      </div>
+                      {l.rejection_reason && (
+                        <p className="mt-1 text-[10px] text-destructive font-medium line-clamp-1">Səbəb: {l.rejection_reason}</p>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex gap-1 items-center">
+
+                  <div className="flex items-center gap-2 pt-3 border-t border-border/40 sm:pt-0 sm:border-0 sm:flex-shrink-0">
                     <Button 
                       size="sm" 
                       variant="outline" 
-                      className="h-8 gap-1 px-2 border-primary/20 hover:bg-primary/5 text-primary"
+                      className="flex-1 sm:flex-none h-9 gap-1.5 px-3 border-primary/20 hover:bg-primary/5 text-primary text-xs font-semibold shadow-sm"
                       onClick={() => window.open(`/product/${l.id}`, "_blank")}
                     >
                       <Eye className="h-3.5 w-3.5" /> Bax
                     </Button>
+                    
                     {l.status === "pending" && (
-                      <>
-                        <Button size="sm" className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white" onClick={() => updateStatus(l.id, "approved")}>
+                      <div className="flex gap-2 flex-1 sm:flex-none">
+                        <Button 
+                          size="sm" 
+                          className="flex-1 sm:flex-none h-9 gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold shadow-sm" 
+                          onClick={() => updateStatus(l.id, "approved")}
+                        >
                           <CheckCircle className="h-3.5 w-3.5" /> Təsdiq
                         </Button>
-                        <Button size="sm" variant="destructive" className="h-8 gap-1" onClick={() => setRejectId(l.id)}>
+                        <Button 
+                          size="sm" 
+                          variant="destructive" 
+                          className="flex-1 sm:flex-none h-9 gap-1.5 text-xs font-semibold shadow-sm" 
+                          onClick={() => setRejectId(l.id)}
+                        >
                           <XCircle className="h-3.5 w-3.5" /> Rədd
                         </Button>
-                      </>
+                      </div>
                     )}
+                    
                     {l.status === "rejected" && (
-                      <Button size="sm" className="h-8 gap-1" onClick={() => updateStatus(l.id, "approved")}>
+                      <Button 
+                        size="sm" 
+                        className="flex-1 sm:flex-none h-9 gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold shadow-sm" 
+                        onClick={() => updateStatus(l.id, "approved")}
+                      >
                         <CheckCircle className="h-3.5 w-3.5" /> Təsdiq et
                       </Button>
                     )}
+                    
                     {l.status === "approved" && (
-                      <Button size="sm" variant="outline" className="h-8 gap-1" onClick={() => setRejectId(l.id)}>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1 sm:flex-none h-9 gap-1.5 text-xs font-semibold shadow-sm" 
+                        onClick={() => setRejectId(l.id)}
+                      >
                         <XCircle className="h-3.5 w-3.5" /> Rədd et
                       </Button>
                     )}
