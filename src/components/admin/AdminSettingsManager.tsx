@@ -58,6 +58,10 @@ const defaults: SiteSettings = {
   urgent_price: 3,
   store_premium_price: 20,
   use_site_logo_as_watermark: false,
+  homepage_premium_count: 4,
+  homepage_urgent_count: 4,
+  homepage_new_count: 8,
+  homepage_auto_load: false,
 };
 
 const watermarkPositions = [
