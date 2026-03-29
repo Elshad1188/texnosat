@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Bot, Link2, Copy, Settings, Trash2 } from "lucide-react";
+import { Bot, Link2, Copy, Settings, Trash2, Send } from "lucide-react";
 
 interface TelegramBotTabProps {
   storeId: string;
@@ -92,15 +92,28 @@ const TelegramBotTab = ({ storeId }: TelegramBotTabProps) => {
 
           {/* Bot Link */}
           <div>
-            <Label className="text-xs">Bot Linki</Label>
-            <div className="flex gap-2 mt-1">
-              <Input value={botLink} readOnly className="text-xs" />
-              <Button size="sm" variant="outline" onClick={copyLink} className="gap-1 shrink-0">
-                <Copy className="h-3.5 w-3.5" /> Kopyala
+            <div className="flex flex-col sm:flex-row gap-2 mt-1">
+              <div className="relative flex-1">
+                <Input value={botLink} readOnly className="text-xs pr-20" />
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={copyLink} 
+                  className="absolute right-0 top-0 h-full px-3 text-primary hover:bg-transparent"
+                >
+                  <Copy className="h-3.5 w-3.5 mr-1" /> Kopyala
+                </Button>
+              </div>
+              <Button 
+                size="sm" 
+                className="gap-1.5 shrink-0 bg-[#0088cc] hover:bg-[#0077b3] text-white border-none shadow-md shadow-blue-500/10"
+                onClick={() => window.open(botLink, "_blank")}
+              >
+                <Send className="h-3.5 w-3.5" /> Botu aç
               </Button>
             </div>
-            <p className="text-[10px] text-muted-foreground mt-1">
-              Bu linkə basaraq Telegram-da botu açın. Hesabınız avtomatik bağlanacaq.
+            <p className="text-[10px] text-muted-foreground mt-2">
+              Yuxarıdakı düyməyə basaraq Telegram-da botu açın və <b>/start</b> düyməsinə basın.
             </p>
           </div>
 
