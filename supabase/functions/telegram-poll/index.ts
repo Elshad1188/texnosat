@@ -121,6 +121,20 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Force-flush any remaining pending media groups before the script terminates
+  for (const [groupId, group] of Object.entries(pendingMediaGroups)) {
+    try {
+      if (group.updates.length === 1 && !group.updates[0].message?.media_group_id) {
+        await processUpdate(group.updates[0], supabase, LOVABLE_API_KEY, TELEGRAM_API_KEY);
+      } else {
+        await processMediaGroup(group.updates, supabase, LOVABLE_API_KEY, TELEGRAM_API_KEY);
+      }
+      totalProcessed += group.updates.length;
+    } catch (err) {
+      console.error('Error processing pending media group on exit:', err);
+    }
+  }
+
   return new Response(JSON.stringify({ ok: true, processed: totalProcessed }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 });
 
