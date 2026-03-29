@@ -1161,6 +1161,74 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_bot_settings: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          markup_type: string
+          markup_value: number
+          store_id: string | null
+          target_category: string
+          target_location: string
+          telegram_chat_id: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          markup_type?: string
+          markup_value?: number
+          store_id?: string | null
+          target_category?: string
+          target_location?: string
+          telegram_chat_id: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          markup_type?: string
+          markup_value?: number
+          store_id?: string | null
+          target_category?: string
+          target_location?: string
+          telegram_chat_id?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_bot_settings_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_bot_state: {
+        Row: {
+          id: number
+          update_offset: number
+          updated_at: string
+        }
+        Insert: {
+          id: number
+          update_offset?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          update_offset?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_followers: {
         Row: {
           created_at: string
