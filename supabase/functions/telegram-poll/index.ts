@@ -73,12 +73,32 @@ Deno.serve(async (req) => {
     const updates = data.result ?? [];
     if (updates.length === 0) continue;
 
+    const groupedUpdates: any[][] = [];
+    const mediaGroups: Record<string, any[]> = {};
+
     for (const update of updates) {
+      const groupId = update.message?.media_group_id;
+      if (groupId) {
+        if (!mediaGroups[groupId]) {
+          mediaGroups[groupId] = [];
+          groupedUpdates.push(mediaGroups[groupId]);
+        }
+        mediaGroups[groupId].push(update);
+      } else {
+        groupedUpdates.push([update]);
+      }
+    }
+
+    for (const updateGroup of groupedUpdates) {
       try {
-        await processUpdate(update, supabase, LOVABLE_API_KEY, TELEGRAM_API_KEY);
-        totalProcessed++;
+        if (updateGroup.length === 1 && !updateGroup[0].message?.media_group_id) {
+          await processUpdate(updateGroup[0], supabase, LOVABLE_API_KEY, TELEGRAM_API_KEY);
+        } else {
+          await processMediaGroup(updateGroup, supabase, LOVABLE_API_KEY, TELEGRAM_API_KEY);
+        }
+        totalProcessed += updateGroup.length;
       } catch (err) {
-        console.error('Error processing update:', update.update_id, err);
+        console.error('Error processing update group:', err);
       }
     }
 
@@ -476,6 +496,128 @@ async function processProductMessage(message: any, chatId: number, supabase: any
   } catch (err) {
     console.error('Error processing product:', err);
     await sendMessage(chatId, `❌ Xəta baş verdi: ${err instanceof Error ? err.message : 'Naməlum xəta'}`, lovableKey, telegramKey);
+  }
+}
+
+async function processMediaGroup(updates: any[], supabase: any, lovableKey: string, telegramKey: string) {
+  // Try to find the message with a caption
+  const messageWithCaption = updates.find(u => u.message?.caption) || updates[0];
+  const mainMessage = messageWithCaption.message;
+  const chatId = mainMessage.chat.id;
+
+  const { data: settings } = await supabase
+    .from('telegram_bot_settings')
+    .select('*')
+    .eq('telegram_chat_id', chatId)
+    .maybeSingle();
+
+  if (!settings) {
+    await sendMessage(chatId, '⚠️ Hesab bağlı deyil. Saytdan bağlayın.', lovableKey, telegramKey);
+    return;
+  }
+
+  if (!settings.store_id) {
+    await sendMessage(chatId, '⚠️ Mağaza seçilməyib. /store komandasını istifadə edin.', lovableKey, telegramKey);
+    return;
+  }
+
+  await sendMessage(chatId, `⏳ Media qrupu (${updates.length} fayl) emal olunur...`, lovableKey, telegramKey);
+
+  try {
+    const imageUrls: string[] = [];
+    let videoUrl: string | null = null;
+    let caption = mainMessage.caption || mainMessage.text || '';
+
+    // Download all files in the group sequentially
+    for (const update of updates) {
+      const msg = update.message;
+      if (!msg) continue;
+      
+      if (msg.photo && msg.photo.length > 0) {
+        const photo = msg.photo[msg.photo.length - 1]; // highest res
+        const url = await downloadAndUploadFile(photo.file_id, 'listing-images', supabase, lovableKey, telegramKey);
+        if (url) imageUrls.push(url);
+      } else if (msg.video) {
+        const url = await downloadAndUploadFile(msg.video.file_id, 'listing-videos', supabase, lovableKey, telegramKey, true);
+        if (url && !videoUrl) videoUrl = url;
+      } else if (msg.document) {
+        const mime = msg.document.mime_type || '';
+        if (mime.startsWith('image/')) {
+          const url = await downloadAndUploadFile(msg.document.file_id, 'listing-images', supabase, lovableKey, telegramKey);
+          if (url) imageUrls.push(url);
+        } else if (mime.startsWith('video/')) {
+          const url = await downloadAndUploadFile(msg.document.file_id, 'listing-videos', supabase, lovableKey, telegramKey, true);
+          if (url && !videoUrl) videoUrl = url;
+        }
+      }
+      
+      // Merge caption if other messages have small text parts
+      if (msg.caption && msg !== mainMessage) {
+        caption += '\\n' + msg.caption;
+      }
+    }
+
+    let title = '';
+    let description = '';
+    let price = 0;
+    let condition = 'Yeni';
+
+    if (imageUrls.length > 0) {
+      // Use AI to analyze the first image with the merged caption
+      const aiResult = await analyzeWithAI(imageUrls[0], caption, lovableKey);
+      title = aiResult.title || 'Telegram məhsulu (Qrup)';
+      description = aiResult.description || caption;
+      price = aiResult.price || 0;
+      condition = aiResult.condition || 'Yeni';
+    } else {
+      const parsed = parseCaption(caption);
+      title = parsed.title || 'Telegram məhsulu (Qrup)';
+      description = caption;
+      price = parsed.price || 0;
+    }
+
+    if (price > 0) {
+      if (settings.markup_type === 'percent') {
+        price = Math.round(price * (1 + settings.markup_value / 100));
+      } else {
+        price = price + settings.markup_value;
+      }
+    }
+
+    const { data: listing, error } = await supabase
+      .from('listings')
+      .insert({
+        user_id: settings.user_id,
+        store_id: settings.store_id,
+        title,
+        description,
+        price: price || 0,
+        condition,
+        category: settings.target_category,
+        location: settings.target_location,
+        image_urls: imageUrls,
+        video_url: videoUrl,
+        status: 'pending',
+        is_active: true,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating group listing:', error);
+      await sendMessage(chatId, `❌ Qrup elanı yaradılarkən xəta: ${error.message}`, lovableKey, telegramKey);
+      return;
+    }
+
+    const markupInfo = settings.markup_type === 'percent' ? `+${settings.markup_value}%` : `+${settings.markup_value}₼`;
+
+    await sendMessage(chatId,
+      `✅ <b>Qrup Elanı yaradıldı!</b>\n\n📝 Ad: ${title}\n💰 Qiymət: ${price}₼ (${markupInfo})\n📂 Kateqoriya: ${settings.target_category}\n📸 Şəkillər: ${imageUrls.length}\n🎥 Video: ${videoUrl ? 'Bəli' : 'Xeyr'}\n\n⏳ Elan admin təsdiqi gözləyir.`,
+      lovableKey, telegramKey);
+
+  } catch (err) {
+    console.error('Error processing media group:', err);
+    await sendMessage(chatId, `❌ Qrup xətası: ${err instanceof Error ? err.message : 'Naməlum xəta'}`, lovableKey, telegramKey);
   }
 }
 
