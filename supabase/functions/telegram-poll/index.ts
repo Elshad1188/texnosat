@@ -469,12 +469,14 @@ async function processProductMessage(message: any, chatId: number, supabase: any
       price = parsed.price || 0;
     }
 
-    // Apply markup
-    if (price > 0) {
+    const costPrice = price;
+    let sellingPrice = price;
+
+    if (costPrice > 0) {
       if (settings.markup_type === 'percent') {
-        price = Math.round(price * (1 + settings.markup_value / 100));
+        sellingPrice = Math.round(costPrice * (1 + settings.markup_value / 100));
       } else {
-        price = price + settings.markup_value;
+        sellingPrice = costPrice + settings.markup_value;
       }
     }
 
@@ -486,7 +488,8 @@ async function processProductMessage(message: any, chatId: number, supabase: any
         store_id: settings.store_id,
         title,
         description,
-        price: price || 0,
+        price: sellingPrice || 0,
+        cost_price: costPrice || 0,
         condition,
         category: settings.target_category,
         location: settings.target_location,
@@ -507,7 +510,7 @@ async function processProductMessage(message: any, chatId: number, supabase: any
     const markupInfo = settings.markup_type === 'percent' ? `+${settings.markup_value}%` : `+${settings.markup_value}₼`;
 
     await sendMessage(chatId,
-      `✅ <b>Elan yaradıldı!</b>\n\n📝 Ad: ${title}\n💰 Qiymət: ${price}₼ (${markupInfo})\n📂 Kateqoriya: ${settings.target_category}\n🏪 Mağaza: Seçilmiş mağaza\n📸 Şəkillər: ${imageUrls.length}\n🎥 Video: ${videoUrl ? 'Bəli' : 'Xeyr'}\n\n⏳ Elan admin təsdiqi gözləyir.`,
+      `✅ <b>Elan yaradıldı!</b>\n\n📝 Ad: ${title}\n💰 Satış Qiyməti: ${sellingPrice}₼ (Maya: ${costPrice}₼)\n📂 Kateqoriya: ${settings.target_category}\n🏪 Mağaza: Seçilmiş mağaza\n📸 Şəkillər: ${imageUrls.length}\n🎥 Video: ${videoUrl ? 'Bəli' : 'Xeyr'}\n\n⏳ Elan admin təsdiqi gözləyir.`,
       lovableKey, telegramKey);
 
   } catch (err) {
@@ -599,11 +602,14 @@ async function processMediaGroup(updates: any[], supabase: any, lovableKey: stri
       price = parsed.price || 0;
     }
 
-    if (price > 0) {
+    const costPrice = price;
+    let sellingPrice = price;
+
+    if (costPrice > 0) {
       if (settings.markup_type === 'percent') {
-        price = Math.round(price * (1 + settings.markup_value / 100));
+        sellingPrice = Math.round(costPrice * (1 + settings.markup_value / 100));
       } else {
-        price = price + settings.markup_value;
+        sellingPrice = costPrice + settings.markup_value;
       }
     }
 
@@ -614,7 +620,8 @@ async function processMediaGroup(updates: any[], supabase: any, lovableKey: stri
         store_id: settings.store_id,
         title,
         description,
-        price: price || 0,
+        price: sellingPrice || 0,
+        cost_price: costPrice || 0,
         condition,
         category: settings.target_category,
         location: settings.target_location,
@@ -635,7 +642,7 @@ async function processMediaGroup(updates: any[], supabase: any, lovableKey: stri
     const markupInfo = settings.markup_type === 'percent' ? `+${settings.markup_value}%` : `+${settings.markup_value}₼`;
 
     await sendMessage(chatId,
-      `✅ <b>Qrup Elanı yaradıldı!</b>\n\n📝 Ad: ${title}\n💰 Qiymət: ${price}₼ (${markupInfo})\n📂 Kateqoriya: ${settings.target_category}\n📸 Şəkillər: ${imageUrls.length}\n🎥 Video: ${videoUrl ? 'Bəli' : 'Xeyr'}\n\n⏳ Elan admin təsdiqi gözləyir.`,
+      `✅ <b>Qrup Elanı yaradıldı!</b>\n\n📝 Ad: ${title}\n💰 Satış Qiyməti: ${sellingPrice}₼ (Maya: ${costPrice}₼)\n📂 Kateqoriya: ${settings.target_category}\n📸 Şəkillər: ${imageUrls.length}\n🎥 Video: ${videoUrl ? 'Bəli' : 'Xeyr'}\n\n⏳ Elan admin təsdiqi gözləyir.`,
       lovableKey, telegramKey);
 
   } catch (err) {
@@ -715,9 +722,12 @@ async function analyzeWithAI(imageUrl: string, caption: string, lovableKey: stri
         messages: [
           {
             role: 'system',
-            content: `Sən e-ticarət məhsul analitikisisən. Göndərilən şəkil və/və ya mətni analiz edərək Azərbaycan dilində JSON formatında cavab ver:
-{"title": "məhsulun adı", "description": "təsvir", "price": rəqəm_manat, "condition": "Yeni/Yeni kimi/İşlənmiş"}
-Əgər qiymət tapılmırsa price 0 olsun. Mətndə qiymət varsa onu istifadə et. title qısa və aydın olmalıdır.`,
+            content: `Sən e-ticarət məhsul analitikisisən. Göndərilən şəkil və mətni analiz edərək Azərbaycan dilində JSON formatında cavab ver:
+{"title": "məhsulun adı", "description": "məhsul haqqında cəlbedici satış mətni (QİYMƏT BURADA YAZILMAMALIDIR)", "price": rəqəm, "condition": "Yeni/Yeni kimi/İşlənmiş"}
+Çox vacib qaydalar: 
+1. "description" sahəsində qətiyyən orijinal mətnin kopyasını və kommersiya rəqəmlərini (qiymət, məbləğ) yazma! Yalnız şəklə əsaslanan gözəl və yaradıcı təqdimat/təsvir uydur və onu yaz.
+2. Mətndə olan obyekti "title" üçün qısa və aydın saxla.
+3. Mətndə olan rəqəmi (tapılsa) yalnız "price" sahəsinə yaz! Əgər qiymət heç cür təyin edilə bilmirsə 0 yaz.`,
           },
           {
             role: 'user',
