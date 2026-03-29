@@ -42,6 +42,8 @@ Deno.serve(async (req) => {
 
   currentOffset = state.update_offset;
 
+  const pendingMediaGroups: Record<string, { updates: any[], lastSeen: number }> = {};
+
   while (true) {
     const elapsed = Date.now() - startTime;
     const remainingMs = MAX_RUNTIME_MS - elapsed;
@@ -71,44 +73,52 @@ Deno.serve(async (req) => {
     }
 
     const updates = data.result ?? [];
-    if (updates.length === 0) continue;
-
-    const groupedUpdates: any[][] = [];
-    const mediaGroups: Record<string, any[]> = {};
-
-    for (const update of updates) {
-      const groupId = update.message?.media_group_id;
-      if (groupId) {
-        if (!mediaGroups[groupId]) {
-          mediaGroups[groupId] = [];
-          groupedUpdates.push(mediaGroups[groupId]);
+    
+    // Check pending media groups that haven't seen an update in > 2.5 seconds
+    const now = Date.now();
+    for (const [groupId, group] of Object.entries(pendingMediaGroups)) {
+      if (now - group.lastSeen > 2500) {
+        try {
+          if (group.updates.length === 1 && !group.updates[0].message?.media_group_id) {
+            await processUpdate(group.updates[0], supabase, LOVABLE_API_KEY, TELEGRAM_API_KEY);
+          } else {
+            await processMediaGroup(group.updates, supabase, LOVABLE_API_KEY, TELEGRAM_API_KEY);
+          }
+          totalProcessed += group.updates.length;
+        } catch (err) {
+          console.error('Error processing pending media group:', err);
         }
-        mediaGroups[groupId].push(update);
-      } else {
-        groupedUpdates.push([update]);
+        delete pendingMediaGroups[groupId];
       }
     }
 
-    for (const updateGroup of groupedUpdates) {
-      try {
-        if (updateGroup.length === 1 && !updateGroup[0].message?.media_group_id) {
-          await processUpdate(updateGroup[0], supabase, LOVABLE_API_KEY, TELEGRAM_API_KEY);
+    if (updates.length > 0) {
+      for (const update of updates) {
+        const groupId = update.message?.media_group_id;
+        if (groupId) {
+          if (!pendingMediaGroups[groupId]) {
+            pendingMediaGroups[groupId] = { updates: [], lastSeen: now };
+          }
+          pendingMediaGroups[groupId].updates.push(update);
+          pendingMediaGroups[groupId].lastSeen = now;
         } else {
-          await processMediaGroup(updateGroup, supabase, LOVABLE_API_KEY, TELEGRAM_API_KEY);
+          try {
+            await processUpdate(update, supabase, LOVABLE_API_KEY, TELEGRAM_API_KEY);
+            totalProcessed++;
+          } catch (err) {
+            console.error('Error processing update:', err);
+          }
         }
-        totalProcessed += updateGroup.length;
-      } catch (err) {
-        console.error('Error processing update group:', err);
       }
+
+      const newOffset = Math.max(...updates.map((u: any) => u.update_id)) + 1;
+      await supabase
+        .from('telegram_bot_state')
+        .update({ update_offset: newOffset, updated_at: new Date().toISOString() })
+        .eq('id', 1);
+
+      currentOffset = newOffset;
     }
-
-    const newOffset = Math.max(...updates.map((u: any) => u.update_id)) + 1;
-    await supabase
-      .from('telegram_bot_state')
-      .update({ update_offset: newOffset, updated_at: new Date().toISOString() })
-      .eq('id', 1);
-
-    currentOffset = newOffset;
   }
 
   return new Response(JSON.stringify({ ok: true, processed: totalProcessed }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -444,6 +454,13 @@ async function processProductMessage(message: any, chatId: number, supabase: any
       description = aiResult.description || caption;
       price = aiResult.price || 0;
       condition = aiResult.condition || 'Yeni';
+      
+      // Fallback if AI fails parsing name/price
+      if (title === 'Telegram məhsulu' || price === 0) {
+        const parsed = parseCaption(caption);
+        if (title === 'Telegram məhsulu' && parsed.title) title = parsed.title;
+        if (price === 0 && parsed.price) price = parsed.price;
+      }
     } else {
       // Parse from caption
       const parsed = parseCaption(caption);
@@ -566,13 +583,19 @@ async function processMediaGroup(updates: any[], supabase: any, lovableKey: stri
       // Use AI to analyze the first image with the merged caption
       const aiResult = await analyzeWithAI(imageUrls[0], caption, lovableKey);
       title = aiResult.title || 'Telegram məhsulu (Qrup)';
-      description = aiResult.description || caption;
+      description = aiResult.description || caption || 'Əlavə məlumat yoxdur.';
       price = aiResult.price || 0;
       condition = aiResult.condition || 'Yeni';
+
+      if (title === 'Telegram məhsulu (Qrup)' || price === 0) {
+        const parsed = parseCaption(caption);
+        if (title === 'Telegram məhsulu (Qrup)' && parsed.title) title = parsed.title;
+        if (price === 0 && parsed.price) price = parsed.price;
+      }
     } else {
       const parsed = parseCaption(caption);
       title = parsed.title || 'Telegram məhsulu (Qrup)';
-      description = caption;
+      description = caption || 'Əlavə məlumat yoxdur.';
       price = parsed.price || 0;
     }
 
@@ -726,11 +749,12 @@ async function analyzeWithAI(imageUrl: string, caption: string, lovableKey: stri
 }
 
 function parseCaption(caption: string): { title?: string; price?: number } {
-  const lines = caption.split('\n').filter(l => l.trim());
-  const title = lines[0] || undefined;
+  if (!caption) return {};
+  const lines = caption.split('\n').filter((l: string) => l.trim().length > 0);
+  const title = lines.length > 0 ? lines[0] : undefined;
   
-  // Try to find price patterns like "100₼", "100 AZN", "100 manat"
-  const priceMatch = caption.match(/(\d+[\.,]?\d*)\s*(₼|azn|manat|AZN)/i);
+  // Try to find any number in the text for the price
+  const priceMatch = caption.match(/(\d+[\.,]?\d*)/);
   const price = priceMatch ? parseFloat(priceMatch[1].replace(',', '.')) : undefined;
 
   return { title, price };
