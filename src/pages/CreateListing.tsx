@@ -139,7 +139,7 @@ const CreateListing = () => {
   const { data: userStores = [] } = useQuery({
     queryKey: ["user-stores", user?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("stores").select("id, name, logo_url, status").eq("user_id", user!.id);
+      const { data } = await supabase.from("stores").select("id, name, logo_url, status, is_premium, premium_until").eq("user_id", user!.id);
       return data || [];
     },
     enabled: !!user,
