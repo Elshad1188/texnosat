@@ -114,6 +114,11 @@ async function handleGroup(groupId: string, messages: any[], chatId: number, sup
     const mime = vid.mime_type || "video/mp4";
     const ext = mime.includes("mp4") ? "mp4" : "webm";
     videoUrl = await downloadAndUpload(vid.file_id, "listing-videos", mime, lovableKey, telegramKey, supabase, ext);
+    // Extract thumbnail from video if no photos
+    if (!imageUrls.length && vid.thumbnail) {
+      const thumbUrl = await downloadAndUpload(vid.thumbnail.file_id, "listing-images", "image/jpeg", lovableKey, telegramKey, supabase);
+      if (thumbUrl) imageUrls.push(thumbUrl);
+    }
   }
 
   if (!imageUrls.length && !videoUrl) return;
