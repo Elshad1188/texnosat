@@ -32,6 +32,10 @@ interface SiteSettings {
   urgent_price: number;
   store_premium_price: number;
   use_site_logo_as_watermark: boolean;
+  homepage_premium_count: number;
+  homepage_urgent_count: number;
+  homepage_new_count: number;
+  homepage_auto_load: boolean;
 }
 
 const defaults: SiteSettings = {
@@ -54,6 +58,10 @@ const defaults: SiteSettings = {
   urgent_price: 3,
   store_premium_price: 20,
   use_site_logo_as_watermark: false,
+  homepage_premium_count: 4,
+  homepage_urgent_count: 4,
+  homepage_new_count: 8,
+  homepage_auto_load: false,
 };
 
 const watermarkPositions = [
@@ -221,6 +229,33 @@ const AdminSettingsManager = () => {
             <Label className="text-xs">Ünvan</Label>
             <Input value={settings.contact_address} onChange={(e) => setSettings({ ...settings, contact_address: e.target.value })} className="h-9" />
           </div>
+        </div>
+      </div>
+
+      {/* Homepage listing settings */}
+      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-foreground">🏠 Ana Səhifə Elanları</h3>
+        <p className="text-xs text-muted-foreground">Ana səhifədə hər bölmədə neçə elan göstəriləcəyini tənzimləyin</p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Premium elan sayı</Label>
+            <Input type="number" value={settings.homepage_premium_count} onChange={(e) => setSettings({ ...settings, homepage_premium_count: Number(e.target.value) })} className="h-9" min={1} max={20} />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Təcili elan sayı</Label>
+            <Input type="number" value={settings.homepage_urgent_count} onChange={(e) => setSettings({ ...settings, homepage_urgent_count: Number(e.target.value) })} className="h-9" min={1} max={20} />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Son elan sayı</Label>
+            <Input type="number" value={settings.homepage_new_count} onChange={(e) => setSettings({ ...settings, homepage_new_count: Number(e.target.value) })} className="h-9" min={1} max={40} />
+          </div>
+        </div>
+        <div className="flex items-center justify-between pt-2 border-t border-border/50">
+          <div>
+            <p className="text-sm text-foreground">Avtomatik daha çox yüklə</p>
+            <p className="text-xs text-muted-foreground">Aktiv edildikdə istifadəçi aşağı sürüşdükdə əlavə elanlar yüklənəcək</p>
+          </div>
+          <Switch checked={settings.homepage_auto_load} onCheckedChange={(v) => setSettings({ ...settings, homepage_auto_load: v })} />
         </div>
       </div>
 
