@@ -19,7 +19,7 @@ const HeroSection = () => {
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Telefon, noutbuk, planşet axtar..."
+              placeholder="Axtar..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="h-12 w-full rounded-2xl border border-border bg-card pl-12 pr-24 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
