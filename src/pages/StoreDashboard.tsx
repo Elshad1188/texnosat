@@ -332,6 +332,10 @@ const StoreDashboard = () => {
               </div>
             )}
           </TabsContent>
+
+          <TabsContent value="telegram">
+            <TelegramBotTab storeId={store.id} />
+          </TabsContent>
         </Tabs>
       </main>
       <Footer />
