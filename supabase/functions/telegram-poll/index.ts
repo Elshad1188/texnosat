@@ -267,7 +267,7 @@ async function handleStoreSelect(chatId: number, text: string, supabase: any, lo
   const { error: updateError } = await supabase
     .from('telegram_bot_settings')
     .update({ store_id: selectedStore.id, updated_at: new Date().toISOString() })
-    .eq('telegram_chat_id', chatId);
+    .eq('id', settings.id);
 
   if (updateError) {
     await sendMessage(chatId, `❌ Verilənlər bazası xətası: ${updateError.message}`, lovableKey, telegramKey);
@@ -319,7 +319,7 @@ async function handleMarkup(chatId: number, text: string, supabase: any, lovable
   await supabase
     .from('telegram_bot_settings')
     .update({ markup_type: type, markup_value: value, updated_at: new Date().toISOString() })
-    .eq('telegram_chat_id', chatId);
+    .eq('id', settings.id);
 
   await sendMessage(chatId, `✅ Qiymət əlavəsi yeniləndi: ${type === 'percent' ? value + '%' : value + '₼'}`, lovableKey, telegramKey);
 }
@@ -355,7 +355,7 @@ async function handleCategory(chatId: number, text: string, supabase: any, lovab
   await supabase
     .from('telegram_bot_settings')
     .update({ target_category: category, updated_at: new Date().toISOString() })
-    .eq('telegram_chat_id', chatId);
+    .eq('id', settings.id);
 
   await sendMessage(chatId, `✅ Kateqoriya: <b>${category}</b>`, lovableKey, telegramKey);
 }
