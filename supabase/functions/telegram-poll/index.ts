@@ -34,9 +34,7 @@ Deno.serve(async (req) => {
   const headers = gatewayHeaders(LOVABLE_API_KEY, TELEGRAM_API_KEY);
 
   while (Date.now() - startTime < MAX_RUNTIME_MS - MIN_REMAINING_MS) {
-    const url = `${GATEWAY_URL}/getUpdates`;
-    console.log("Polling URL:", url, "offset:", currentOffset);
-    const resp = await fetch(url, {
+    const resp = await fetch(`${GATEWAY_URL}/getUpdates`, {
       method: "POST",
       headers,
       body: JSON.stringify({ offset: currentOffset, timeout: 10, allowed_updates: ["message"] }),
