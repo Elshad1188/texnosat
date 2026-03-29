@@ -25,7 +25,30 @@ serve(async (req) => {
     // Check admin or moderator role
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: user.id, _role: "admin" });
     const { data: isMod } = await supabase.rpc("has_role", { _user_id: user.id, _role: "moderator" });
-    if (!isAdmin && !isMod) throw new Error("Bu funksiya yalnız admin və moderatorlar üçündür");
+    
+    // If not admin/mod, check store premium status and daily limit
+    if (!isAdmin && !isMod) {
+      const { data: stores } = await supabase.from("stores").select("id, is_premium, premium_until").eq("user_id", user.id);
+      const hasPremiumStore = stores?.some((s: any) => s.is_premium && (!s.premium_until || new Date(s.premium_until) > new Date()));
+      
+      if (!hasPremiumStore) {
+        // Check daily AI usage limit
+        const serviceSupabase = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+        const { data: settingsRow } = await serviceSupabase.from("site_settings").select("value").eq("key", "general").maybeSingle();
+        const dailyLimit = (settingsRow?.value as any)?.ai_autofill_daily_limit ?? 3;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const { count } = await serviceSupabase.from("listings").select("id", { count: "exact", head: true })
+          .eq("user_id", user.id).gte("created_at", today.toISOString());
+        
+        if ((count || 0) >= dailyLimit) {
+          return new Response(JSON.stringify({ error: `Gündəlik ${dailyLimit} AI doldurma limiti dolub. Premium mağaza alın limitsiz istifadə edin.` }), {
+            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+    }
 
     const { image_url } = await req.json();
     if (!image_url) throw new Error("image_url is required");

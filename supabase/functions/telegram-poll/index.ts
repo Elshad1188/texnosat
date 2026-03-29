@@ -177,8 +177,47 @@ async function handleSingle(msg: any, supabase: any, lovableKey: string, telegra
   await createListing(chatId, imageUrls, videoUrl, msg.caption || "", undefined, settings, supabase, lovableKey, telegramKey, categoryTree);
 }
 
+// ─── Check store limits ─────────────────────────────────────
+async function checkStoreLimit(storeId: string, supabase: any): Promise<{ allowed: boolean; reason?: string }> {
+  // Check if store is premium
+  const { data: store } = await supabase.from("stores").select("is_premium, premium_until").eq("id", storeId).single();
+  if (store?.is_premium && (!store.premium_until || new Date(store.premium_until) > new Date())) {
+    return { allowed: true };
+  }
+
+  // Get limits from site_settings
+  const { data: settingsRow } = await supabase.from("site_settings").select("value").eq("key", "general").maybeSingle();
+  const limits = settingsRow?.value || {};
+  const dailyLimit = limits.telegram_bot_daily_limit ?? 5;
+  const totalLimit = limits.store_listing_limit ?? 20;
+
+  // Check total listing count
+  const { count: totalCount } = await supabase.from("listings").select("id", { count: "exact", head: true }).eq("store_id", storeId);
+  if ((totalCount || 0) >= totalLimit) {
+    return { allowed: false, reason: `Mağazanızda maksimum ${totalLimit} elan limiti dolub. Premium olun limitsiz istifadə edin.` };
+  }
+
+  // Check daily telegram listing count
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const { count: dailyCount } = await supabase.from("listings").select("id", { count: "exact", head: true })
+    .eq("store_id", storeId).gte("created_at", today.toISOString());
+  if ((dailyCount || 0) >= dailyLimit) {
+    return { allowed: false, reason: `Gündəlik ${dailyLimit} elan limiti dolub. Premium olun limitsiz istifadə edin.` };
+  }
+
+  return { allowed: true };
+}
+
 // ─── Create listing ─────────────────────────────────────────
 async function createListing(chatId: number, imageUrls: string[], videoUrl: string | null, caption: string, groupId: string | undefined, settings: any, supabase: any, lovableKey: string, telegramKey: string, categoryTree: string) {
+  // Check limits before creating
+  const limitCheck = await checkStoreLimit(settings.store_id, supabase);
+  if (!limitCheck.allowed) {
+    await sendMessage(chatId, `⚠️ ${limitCheck.reason}`, lovableKey, telegramKey);
+    return;
+  }
+
   const ai = await analyzeWithAI(imageUrls[0] || null, caption, lovableKey, categoryTree);
   const costPrice = Number(ai.price) || 0;
   const sellingPrice = costPrice > 0

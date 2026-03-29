@@ -395,8 +395,8 @@ const CreateListing = () => {
                 )}
                 <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageAdd} />
               </div>
-              {/* AI Autofill button - only for admins/mods */}
-              {isPrivileged && (images.length > 0 || existingImages.length > 0) && (
+              {/* AI Autofill button - for admins/mods and store owners */}
+              {(isPrivileged || approvedStores.length > 0) && (images.length > 0 || existingImages.length > 0) && (
                 <Button
                   type="button"
                   variant="outline"
