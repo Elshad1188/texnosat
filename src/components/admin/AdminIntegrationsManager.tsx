@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2, Smartphone, Bell, Send, Link2 } from "lucide-react";
+import { Save, Loader2, Smartphone, Bell, Send, Link2, Bot, Eye, EyeOff, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import AdminSmtpManager from "./AdminSmtpManager";
 
 interface FirebaseConfig {
@@ -52,6 +53,14 @@ const AdminIntegrationsManager = () => {
   const [pushBody, setPushBody] = useState("");
   const [sending, setSending] = useState(false);
 
+  // Telegram bot state
+  const [botToken, setBotToken] = useState("");
+  const [botName, setBotName] = useState("");
+  const [botInfo, setBotInfo] = useState<{ bot_name: string; bot_token_masked: string; is_configured: boolean } | null>(null);
+  const [botLoading, setBotLoading] = useState(true);
+  const [botSaving, setBotSaving] = useState(false);
+  const [showToken, setShowToken] = useState(false);
+
   useEffect(() => {
     const fetch = async () => {
       const { data } = await supabase
@@ -70,7 +79,56 @@ const AdminIntegrationsManager = () => {
       setLoading(false);
     };
     fetch();
+    loadBotInfo();
   }, []);
+
+  const loadBotInfo = async () => {
+    setBotLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("update-bot-token", {
+        body: { action: "get" },
+      });
+      if (!error && data) setBotInfo(data);
+    } catch {}
+    setBotLoading(false);
+  };
+
+  const saveBotToken = async () => {
+    if (!botToken.trim()) {
+      toast({ title: "Bot token daxil edin", variant: "destructive" });
+      return;
+    }
+    setBotSaving(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("update-bot-token", {
+        body: { action: "save", bot_token: botToken.trim(), bot_name: botName.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast({ title: "Xəta", description: data.error, variant: "destructive" });
+      } else {
+        toast({ title: "Bot uğurla qoşuldu!", description: `@${data.bot_username}` });
+        setBotToken("");
+        setBotName("");
+        loadBotInfo();
+      }
+    } catch (err: any) {
+      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+    }
+    setBotSaving(false);
+  };
+
+  const deleteBotToken = async () => {
+    setBotSaving(true);
+    try {
+      await supabase.functions.invoke("update-bot-token", {
+        body: { action: "delete" },
+      });
+      toast({ title: "Bot bağlantısı silindi" });
+      setBotInfo(null);
+    } catch {}
+    setBotSaving(false);
+  };
 
   const updateFirebase = (field: keyof FirebaseConfig, value: string) => {
     setConfig({
@@ -138,6 +196,80 @@ const AdminIntegrationsManager = () => {
     <div className="space-y-6">
       {/* SMTP & Email Templates */}
       <AdminSmtpManager />
+
+      {/* Telegram Bot */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Bot className="h-4 w-4" /> Telegram Bot İnteqrasiyası
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {botLoading ? (
+            <div className="flex justify-center py-4">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            </div>
+          ) : botInfo?.is_configured ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30">
+                  Aktiv
+                </Badge>
+                <span className="text-sm font-medium">{botInfo.bot_name}</span>
+                <span className="text-xs text-muted-foreground">Token: {botInfo.bot_token_masked}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Bot qoşulub və işləyir. Yeni bot qoşmaq üçün əvvəlkini silin.
+              </p>
+              <div className="flex gap-2">
+                <Button variant="destructive" size="sm" className="gap-1" onClick={deleteBotToken} disabled={botSaving}>
+                  <Trash2 className="h-3.5 w-3.5" /> Botu sil
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Telegram @BotFather-dən bot yaradın və token-i buraya yapışdırın. Bot avtomatik bağlanacaq.
+              </p>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Bot adı (ixtiyari)</Label>
+                <Input
+                  value={botName}
+                  onChange={(e) => setBotName(e.target.value)}
+                  placeholder="Məsələn: Texnosatbot"
+                  className="h-9"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Bot Token</Label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      type={showToken ? "text" : "password"}
+                      value={botToken}
+                      onChange={(e) => setBotToken(e.target.value)}
+                      placeholder="1234567890:ABCDefGhIJKlmNoPQRsTUVwxyz"
+                      className="h-9 font-mono text-xs pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowToken(!showToken)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showToken ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <Button onClick={saveBotToken} disabled={botSaving} size="sm" className="gap-1 bg-gradient-primary text-primary-foreground">
+                {botSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Bot className="h-3.5 w-3.5" />}
+                {botSaving ? "Yoxlanılır..." : "Botu qoş"}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* App Store Links */}
       <Card>
