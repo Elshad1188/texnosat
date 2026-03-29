@@ -114,6 +114,11 @@ async function handleGroup(groupId: string, messages: any[], chatId: number, sup
     const mime = vid.mime_type || "video/mp4";
     const ext = mime.includes("mp4") ? "mp4" : "webm";
     videoUrl = await downloadAndUpload(vid.file_id, "listing-videos", mime, lovableKey, telegramKey, supabase, ext);
+    // Extract thumbnail from video if no photos
+    if (!imageUrls.length && vid.thumbnail) {
+      const thumbUrl = await downloadAndUpload(vid.thumbnail.file_id, "listing-images", "image/jpeg", lovableKey, telegramKey, supabase);
+      if (thumbUrl) imageUrls.push(thumbUrl);
+    }
   }
 
   if (!imageUrls.length && !videoUrl) return;
@@ -156,9 +161,17 @@ async function handleSingle(msg: any, supabase: any, lovableKey: string, telegra
   }
   if (hasVideo) {
     videoUrl = await downloadAndUpload(msg.video.file_id, "listing-videos", msg.video.mime_type || "video/mp4", lovableKey, telegramKey, supabase, "mp4");
+    if (!imageUrls.length && msg.video.thumbnail) {
+      const thumbUrl = await downloadAndUpload(msg.video.thumbnail.file_id, "listing-images", "image/jpeg", lovableKey, telegramKey, supabase);
+      if (thumbUrl) imageUrls.push(thumbUrl);
+    }
   }
   if (hasVideoDoc) {
     videoUrl = await downloadAndUpload(msg.document.file_id, "listing-videos", msg.document.mime_type, lovableKey, telegramKey, supabase, "mp4");
+    if (!imageUrls.length && msg.document.thumbnail) {
+      const thumbUrl = await downloadAndUpload(msg.document.thumbnail.file_id, "listing-images", "image/jpeg", lovableKey, telegramKey, supabase);
+      if (thumbUrl) imageUrls.push(thumbUrl);
+    }
   }
 
   await createListing(chatId, imageUrls, videoUrl, msg.caption || "", undefined, settings, supabase, lovableKey, telegramKey, categoryTree);
