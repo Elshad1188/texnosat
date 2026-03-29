@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
 import {
   Store, Package, Users, Eye, Crown, Edit2, Plus, Trash2,
-  MapPin, Phone, Clock, TrendingUp, Loader2, BarChart3, Rocket, Upload, ShoppingCart, Truck
+  MapPin, Phone, Clock, TrendingUp, Loader2, BarChart3, Rocket, Upload, ShoppingCart, Truck, Bot
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -24,6 +24,7 @@ import {
 import BulkListingUpload from "@/components/BulkListingUpload";
 import SellerOrdersTab from "@/components/seller/SellerOrdersTab";
 import ShippingMethodsTab from "@/components/seller/ShippingMethodsTab";
+import TelegramBotTab from "@/components/seller/TelegramBotTab";
 
 const StoreDashboard = () => {
   const { user } = useAuth();
@@ -201,6 +202,7 @@ const StoreDashboard = () => {
             <TabsTrigger value="shipping" className="gap-1 text-xs sm:text-sm"><Truck className="h-3.5 w-3.5" />Çatdırılma</TabsTrigger>
             <TabsTrigger value="bulk" className="gap-1 text-xs sm:text-sm"><Upload className="h-3.5 w-3.5" />Toplu yükləmə</TabsTrigger>
             <TabsTrigger value="followers" className="gap-1 text-xs sm:text-sm"><Users className="h-3.5 w-3.5" />Abunəçilər</TabsTrigger>
+            <TabsTrigger value="telegram" className="gap-1 text-xs sm:text-sm"><Bot className="h-3.5 w-3.5" />Telegram Bot</TabsTrigger>
           </TabsList>
 
           <TabsContent value="listings">
@@ -329,6 +331,10 @@ const StoreDashboard = () => {
                 })}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="telegram">
+            <TelegramBotTab storeId={store.id} />
           </TabsContent>
         </Tabs>
       </main>
