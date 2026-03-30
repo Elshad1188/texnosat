@@ -173,11 +173,38 @@ const StoreDashboard = () => {
             </div>
             <div className="flex gap-2">
               <Button size="sm" variant="outline" className="gap-1" asChild>
-                <Link to="/create-store"><Edit2 className="h-3.5 w-3.5" />Redaktə</Link>
+                <Link to={`/create-store?edit=${store.id}`}><Edit2 className="h-3.5 w-3.5" />Redaktə</Link>
               </Button>
               <Button size="sm" variant="outline" className="gap-1" asChild>
                 <Link to={`/store/${store.id}`}><Eye className="h-3.5 w-3.5" />Bax</Link>
               </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="outline" className="gap-1 text-destructive hover:text-destructive">
+                    <Trash2 className="h-3.5 w-3.5" />Sil
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Mağazanı silmək istəyirsiniz?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Silmə sorğusu admin təsdiqi tələb edir. Təsdiqləndikdən sonra mağaza və bütün elanları silinəcək.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Ləğv et</AlertDialogCancel>
+                    <AlertDialogAction onClick={async () => {
+                      await supabase.from("store_change_requests").insert({
+                        store_id: store.id,
+                        user_id: user!.id,
+                        request_type: "delete",
+                        changes: {},
+                      });
+                      toast({ title: "Silmə sorğusu göndərildi. Admin təsdiqi gözlənilir." });
+                    }}>Silmə sorğusu göndər</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </CardContent>
         </Card>
