@@ -186,9 +186,15 @@ const CreateStore = () => {
       };
 
       if (editId && editStore) {
-        const { error } = await supabase.from("stores").update(payload).eq("id", editId);
+        // Submit change request for admin approval
+        const { error } = await supabase.from("store_change_requests").insert({
+          store_id: editId,
+          user_id: user!.id,
+          request_type: "edit",
+          changes: payload,
+        });
         if (error) throw error;
-        toast({ title: "Mağaza yeniləndi!" });
+        toast({ title: "Redaktə sorğusu göndərildi! Admin təsdiqi gözlənilir." });
       } else {
         const { error } = await supabase.from("stores").insert({ user_id: user!.id, ...payload, status: "pending" });
         if (error) throw error;
