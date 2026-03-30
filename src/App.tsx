@@ -78,6 +78,7 @@ const AppWrapper = () => {
         <Route path="/balance" element={<Balance />} />
         <Route path="/spin-win" element={<SpinWin />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path="/support" element={<Support />} />
         <Route path="/page/:slug" element={<StaticPage />} />
         <Route path="/compare" element={<ComparePage />} />
         <Route path="*" element={<NotFound />} />
