@@ -411,6 +411,12 @@ const AdminPanel = () => {
                 <TabsTrigger value="orders" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <ShoppingBag className="h-3.5 w-3.5" /> Sifarişlər
                 </TabsTrigger>
+                <TabsTrigger value="store-requests" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <GitPullRequest className="h-3.5 w-3.5" /> Mağaza sorğuları
+                </TabsTrigger>
+                <TabsTrigger value="tickets" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <LifeBuoy className="h-3.5 w-3.5" /> Dəstək
+                </TabsTrigger>
               </TabsList>
             </div>
 
