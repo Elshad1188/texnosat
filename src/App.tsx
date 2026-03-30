@@ -33,6 +33,7 @@ import FirebaseInit from "./components/FirebaseInit";
 import { CompareProvider } from "@/contexts/CompareContext";
 import CompareBar from "./components/CompareBar";
 import ComparePage from "./pages/ComparePage";
+import ChatBot from "./components/ChatBot";
 
 const queryClient = new QueryClient();
 
