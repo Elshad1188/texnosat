@@ -100,6 +100,7 @@ const App = () => (
               <AppWrapper />
               <CompareBar />
               <MobileBottomNav />
+              <ChatBot />
               <AppDownloadBanner />
               <FirebaseInit />
             </ThemeProvider>
