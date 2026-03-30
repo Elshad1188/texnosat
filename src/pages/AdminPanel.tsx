@@ -74,6 +74,8 @@ import {
   Globe,
   ChevronLeft,
   ChevronRight,
+  LifeBuoy,
+  GitPullRequest,
 } from "lucide-react";
 
 interface Listing {
