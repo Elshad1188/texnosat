@@ -457,6 +457,16 @@ const AdminPanel = () => {
             <AdminOrderManager />
           </TabsContent>
 
+          {/* Store Requests */}
+          <TabsContent value="store-requests" className="mt-3">
+            <AdminStoreRequestsManager />
+          </TabsContent>
+
+          {/* Tickets */}
+          <TabsContent value="tickets" className="mt-3">
+            <AdminTicketManager />
+          </TabsContent>
+
           {/* Search for listings/stores/users */}
           <div className="relative mt-3 mb-3">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
