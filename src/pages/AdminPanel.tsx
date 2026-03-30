@@ -37,6 +37,8 @@ import AdminStoreModerationManager from "@/components/admin/AdminStoreModeration
 import AdminScraperManager from "@/components/admin/AdminScraperManager";
 import AdminAntispamManager from "@/components/admin/AdminAntispamManager";
 import AdminOrderManager from "@/components/admin/AdminOrderManager";
+import AdminStoreRequestsManager from "@/components/admin/AdminStoreRequestsManager";
+import AdminTicketManager from "@/components/admin/AdminTicketManager";
 import {
   ShieldCheck,
   ShieldAlert,
@@ -72,6 +74,8 @@ import {
   Globe,
   ChevronLeft,
   ChevronRight,
+  LifeBuoy,
+  GitPullRequest,
 } from "lucide-react";
 
 interface Listing {
@@ -407,6 +411,12 @@ const AdminPanel = () => {
                 <TabsTrigger value="orders" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <ShoppingBag className="h-3.5 w-3.5" /> Sifarişlər
                 </TabsTrigger>
+                <TabsTrigger value="store-requests" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <GitPullRequest className="h-3.5 w-3.5" /> Mağaza sorğuları
+                </TabsTrigger>
+                <TabsTrigger value="tickets" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <LifeBuoy className="h-3.5 w-3.5" /> Dəstək
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -445,6 +455,16 @@ const AdminPanel = () => {
           {/* Orders */}
           <TabsContent value="orders" className="mt-3">
             <AdminOrderManager />
+          </TabsContent>
+
+          {/* Store Requests */}
+          <TabsContent value="store-requests" className="mt-3">
+            <AdminStoreRequestsManager />
+          </TabsContent>
+
+          {/* Tickets */}
+          <TabsContent value="tickets" className="mt-3">
+            <AdminTicketManager />
           </TabsContent>
 
           {/* Search for listings/stores/users */}

@@ -26,12 +26,14 @@ import Balance from "./pages/Balance";
 import SpinWin from "./pages/SpinWin";
 import NotFound from "./pages/NotFound";
 import Orders from "./pages/Orders";
+import Support from "./pages/Support";
 import MobileBottomNav from "./components/MobileBottomNav";
 import AppDownloadBanner from "./components/AppDownloadBanner";
 import FirebaseInit from "./components/FirebaseInit";
 import { CompareProvider } from "@/contexts/CompareContext";
 import CompareBar from "./components/CompareBar";
 import ComparePage from "./pages/ComparePage";
+import ChatBot from "./components/ChatBot";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +78,7 @@ const AppWrapper = () => {
         <Route path="/balance" element={<Balance />} />
         <Route path="/spin-win" element={<SpinWin />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path="/support" element={<Support />} />
         <Route path="/page/:slug" element={<StaticPage />} />
         <Route path="/compare" element={<ComparePage />} />
         <Route path="*" element={<NotFound />} />
@@ -97,6 +100,7 @@ const App = () => (
               <AppWrapper />
               <CompareBar />
               <MobileBottomNav />
+              <ChatBot />
               <AppDownloadBanner />
               <FirebaseInit />
             </ThemeProvider>
