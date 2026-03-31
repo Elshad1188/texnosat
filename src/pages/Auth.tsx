@@ -24,6 +24,7 @@ const Auth = () => {
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { theme } = useTheme();
 
   useEffect(() => {
     const ref = searchParams.get("ref");
