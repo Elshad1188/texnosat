@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, User, ArrowLeft, Gift } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTheme } from "@/contexts/ThemeContext";
 
 type AuthMode = "login" | "register" | "forgot";
 
@@ -23,6 +24,7 @@ const Auth = () => {
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { theme } = useTheme();
 
   useEffect(() => {
     const ref = searchParams.get("ref");
@@ -98,10 +100,12 @@ const Auth = () => {
         <div className="mb-8 text-center">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-primary">
-              <span className="font-display text-lg font-bold text-primary-foreground">T</span>
+              <span className="font-display text-lg font-bold text-primary-foreground">
+                {theme.logo_icon || "E"}
+              </span>
             </div>
             <span className="font-display text-xl font-bold text-foreground">
-              Texno<span className="text-primary">sat</span>
+              {theme.logo_text_main || "Elan"}<span className="text-primary">{theme.logo_text_accent || "24"}</span>
             </span>
           </Link>
         </div>
