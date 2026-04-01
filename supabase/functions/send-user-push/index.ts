@@ -112,8 +112,17 @@ serve(async (req) => {
             message: {
               token,
               notification: { title, body: body || "" },
+              data: {
+                link: link || "/",
+              },
               webpush: {
-                notification: { icon: "/pwa-192.png" },
+                headers: {
+                  Urgency: "high",
+                },
+                notification: {
+                  icon: "/pwa-192.png",
+                  badge: "/pwa-192.png",
+                },
                 fcm_options: { link: link || "/" },
               },
             },
