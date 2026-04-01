@@ -325,7 +325,7 @@ const Messages = () => {
       const convo = conversations.find((c: any) => c.id === activeConvoId);
       if (convo) {
         const recipientId = convo.buyer_id === user.id ? convo.seller_id : convo.buyer_id;
-        const senderName = convo.profile?.full_name || "İstifadəçi";
+        const senderName = user.user_metadata?.full_name || "İstifadəçi";
         await supabase.from("notifications").insert({
           user_id: recipientId,
           type: "message",
