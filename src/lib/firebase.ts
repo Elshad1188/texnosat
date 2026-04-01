@@ -13,6 +13,17 @@ interface FirebaseClientConfig {
 let messaging: any = null;
 let initialized = false;
 
+function buildFirebaseServiceWorkerUrl(config: FirebaseClientConfig) {
+  const url = new URL("/firebase-messaging-sw.js", window.location.origin);
+  url.searchParams.set("apiKey", config.apiKey);
+  url.searchParams.set("authDomain", config.authDomain);
+  url.searchParams.set("projectId", config.projectId);
+  url.searchParams.set("storageBucket", config.storageBucket);
+  url.searchParams.set("messagingSenderId", config.messagingSenderId);
+  url.searchParams.set("appId", config.appId);
+  return url.toString();
+}
+
 export async function getFirebaseConfig(): Promise<FirebaseClientConfig | null> {
   const { data } = await supabase
     .from("site_settings")
@@ -26,48 +37,28 @@ export async function getFirebaseConfig(): Promise<FirebaseClientConfig | null> 
 }
 
 export async function initFirebaseMessaging(): Promise<string | null> {
-  if (initialized) return null;
-
   try {
     const config = await getFirebaseConfig();
     if (!config) return null;
 
     // Dynamically import Firebase
-    const { initializeApp } = await import("firebase/app");
+    const { initializeApp, getApp, getApps } = await import("firebase/app");
     const { getMessaging, getToken, onMessage } = await import("firebase/messaging");
 
-    const app = initializeApp({
-      apiKey: config.apiKey,
-      authDomain: config.authDomain,
-      projectId: config.projectId,
-      storageBucket: config.storageBucket,
-      messagingSenderId: config.messagingSenderId,
-      appId: config.appId,
-    });
+    if (!initialized) {
+      const app = getApps().length
+        ? getApp()
+        : initializeApp({
+            apiKey: config.apiKey,
+            authDomain: config.authDomain,
+            projectId: config.projectId,
+            storageBucket: config.storageBucket,
+            messagingSenderId: config.messagingSenderId,
+            appId: config.appId,
+          });
 
-    messaging = getMessaging(app);
-    initialized = true;
-
-    // Pass config to service worker
-    if ("serviceWorker" in navigator) {
-      const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
-      registration.active?.postMessage({
-        type: "FIREBASE_CONFIG",
-        config: {
-          apiKey: config.apiKey,
-          authDomain: config.authDomain,
-          projectId: config.projectId,
-          storageBucket: config.storageBucket,
-          messagingSenderId: config.messagingSenderId,
-          appId: config.appId,
-        },
-      });
-
-      // Get FCM token
-      const fcmToken = await getToken(messaging, {
-        vapidKey: config.vapidKey,
-        serviceWorkerRegistration: registration,
-      });
+      messaging = getMessaging(app);
+      initialized = true;
 
       // Listen for foreground messages
       onMessage(messaging, (payload: any) => {
@@ -80,8 +71,22 @@ export async function initFirebaseMessaging(): Promise<string | null> {
           });
         }
       });
+    }
 
-      return fcmToken;
+    if ("serviceWorker" in navigator && messaging) {
+      const registration = await navigator.serviceWorker.register(
+        buildFirebaseServiceWorkerUrl(config),
+        { scope: "/" }
+      );
+      await registration.update().catch(() => undefined);
+      const serviceWorkerRegistration = await navigator.serviceWorker.ready;
+
+      const fcmToken = await getToken(messaging, {
+        vapidKey: config.vapidKey,
+        serviceWorkerRegistration,
+      });
+
+      return fcmToken || null;
     }
   } catch (err) {
     console.error("Firebase messaging init error:", err);
