@@ -320,6 +320,20 @@ const Messages = () => {
         content,
       });
       if (error) throw error;
+
+      // Create notification for recipient
+      const convo = conversations.find((c: any) => c.id === activeConvoId);
+      if (convo) {
+        const recipientId = convo.buyer_id === user.id ? convo.seller_id : convo.buyer_id;
+        const senderName = user.user_metadata?.full_name || "İstifadəçi";
+        await supabase.from("notifications").insert({
+          user_id: recipientId,
+          type: "message",
+          title: `${senderName} yeni mesaj göndərdi`,
+          message: content.length > 100 ? content.substring(0, 100) + "..." : content,
+          link: `/messages?conversation=${activeConvoId}`,
+        }).throwOnError();
+      }
     },
     onSuccess: () => {
       setMessageText("");
