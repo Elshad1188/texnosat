@@ -216,14 +216,18 @@ const Messages = () => {
         const lastMsg = (lastMessages || []).find((m: any) => m.conversation_id === c.id);
         const unread = (unreadCounts || []).filter((u: any) => u.conversation_id === c.id).length;
 
+        // Only show store identity if the OTHER user owns the store
         let store = undefined;
         if (listing && listing.store_id) {
-          store = (stores || []).find((s: any) => s.id === listing.store_id);
+          const storeMatch = (stores || []).find((s: any) => s.id === listing.store_id);
+          if (storeMatch && storeMatch.user_id === otherUserId) {
+            store = storeMatch;
+          }
         } else if (!listing) {
           store = (stores || []).find((s: any) => s.user_id === otherUserId);
         }
 
-        // Display name: use store name if the other user has a store, otherwise profile name
+        // Display name: use store name only if the OTHER user has a store
         const displayName = store ? store.name : (profile?.full_name || "Adsız");
         const displayAvatar = store?.logo_url || null;
         const isStore = !!store;
@@ -321,18 +325,38 @@ const Messages = () => {
       });
       if (error) throw error;
 
-      // Create notification for recipient
+      // The on_new_message_notify_recipient trigger already creates a notification.
+      // Send email directly from client since DB trigger's net.http_post times out.
       const convo = conversations.find((c: any) => c.id === activeConvoId);
       if (convo) {
         const recipientId = convo.buyer_id === user.id ? convo.seller_id : convo.buyer_id;
         const senderName = user.user_metadata?.full_name || "İstifadəçi";
-        await supabase.from("notifications").insert({
-          user_id: recipientId,
-          type: "message",
-          title: `${senderName} yeni mesaj göndərdi`,
-          message: content.length > 100 ? content.substring(0, 100) + "..." : content,
-          link: `/messages?conversation=${activeConvoId}`,
-        }).throwOnError();
+
+        // Check if recipient is offline (last_seen > 2 min ago)
+        const recipientProfile = convo.profile;
+        const isOffline = !recipientProfile?.last_seen || 
+          (Date.now() - new Date(recipientProfile.last_seen).getTime() > 120000);
+
+        // Send email if recipient is offline and has email_notifications enabled
+        if (isOffline && recipientProfile?.email_notifications !== false) {
+          supabase.functions.invoke("send-email", {
+            body: {
+              to_user_id: recipientId,
+              subject: `${senderName} sizə mesaj göndərdi`,
+              body: `Salam,\n\n${senderName} sizə yeni mesaj göndərdi:\n\n"${content.length > 200 ? content.substring(0, 200) + '...' : content}"\n\nMesajı oxumaq üçün daxil olun.`,
+            },
+          }).catch(() => {});
+        }
+
+        // Send push notification directly
+        supabase.functions.invoke("send-user-push", {
+          body: {
+            user_id: recipientId,
+            title: `${senderName} mesaj göndərdi`,
+            body: content.length > 100 ? content.substring(0, 100) + "..." : content,
+            link: "/messages",
+          },
+        }).catch(() => {});
       }
     },
     onSuccess: () => {
