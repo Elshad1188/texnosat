@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Phone, Mail, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -6,6 +7,16 @@ import { useTheme } from "@/contexts/ThemeContext";
 
 const Footer = () => {
   const { theme } = useTheme();
+  const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 1023px)");
+    const onChange = () => setIsMobileOrTablet(mql.matches);
+    mql.addEventListener("change", onChange);
+    setIsMobileOrTablet(mql.matches);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
+
   const { data: settings } = useQuery({
     queryKey: ["site-settings-general"],
     queryFn: async () => {
@@ -26,6 +37,8 @@ const Footer = () => {
   const email = settings?.contact_email || "info@elan24.az";
   const address = settings?.contact_address || "Bakı, Azərbaycan";
   const footerText = settings?.footer_text || "© 2026 Elan24. Bütün hüquqlar qorunur.";
+
+  if (isMobileOrTablet) return null;
 
   return (
     <footer className="border-t border-border bg-secondary text-secondary-foreground">
