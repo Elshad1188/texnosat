@@ -216,14 +216,18 @@ const Messages = () => {
         const lastMsg = (lastMessages || []).find((m: any) => m.conversation_id === c.id);
         const unread = (unreadCounts || []).filter((u: any) => u.conversation_id === c.id).length;
 
+        // Only show store identity if the OTHER user owns the store
         let store = undefined;
         if (listing && listing.store_id) {
-          store = (stores || []).find((s: any) => s.id === listing.store_id);
+          const storeMatch = (stores || []).find((s: any) => s.id === listing.store_id);
+          if (storeMatch && storeMatch.user_id === otherUserId) {
+            store = storeMatch;
+          }
         } else if (!listing) {
           store = (stores || []).find((s: any) => s.user_id === otherUserId);
         }
 
-        // Display name: use store name if the other user has a store, otherwise profile name
+        // Display name: use store name only if the OTHER user has a store
         const displayName = store ? store.name : (profile?.full_name || "Adsız");
         const displayAvatar = store?.logo_url || null;
         const isStore = !!store;
