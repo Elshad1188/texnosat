@@ -38,6 +38,8 @@ const Footer = () => {
   const address = settings?.contact_address || "Bakı, Azərbaycan";
   const footerText = settings?.footer_text || "© 2026 Elan24. Bütün hüquqlar qorunur.";
 
+  if (isMobileOrTablet) return null;
+
   return (
     <footer className="border-t border-border bg-secondary text-secondary-foreground">
       <div className="container mx-auto px-4 py-12">

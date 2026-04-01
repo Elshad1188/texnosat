@@ -104,6 +104,7 @@ const App = () => (
               <CompareBar />
               <MobileBottomNav />
               <ChatBot />
+              <SpinWheelPopup />
               <AppDownloadBanner />
               <FirebaseInit />
             </ThemeProvider>
