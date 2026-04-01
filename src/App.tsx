@@ -18,6 +18,7 @@ import StoreDashboard from "./pages/StoreDashboard";
 import StoreDetail from "./pages/StoreDetail";
 import AdminPanel from "./pages/AdminPanel";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
 import Favorites from "./pages/Favorites";
