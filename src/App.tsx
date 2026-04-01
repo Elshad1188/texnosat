@@ -35,6 +35,7 @@ import { CompareProvider } from "@/contexts/CompareContext";
 import CompareBar from "./components/CompareBar";
 import ComparePage from "./pages/ComparePage";
 import ChatBot from "./components/ChatBot";
+import SpinWheelPopup from "./components/SpinWheelPopup";
 
 const queryClient = new QueryClient();
 
