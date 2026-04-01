@@ -6,6 +6,16 @@ import { useTheme } from "@/contexts/ThemeContext";
 
 const Footer = () => {
   const { theme } = useTheme();
+  const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 1023px)");
+    const onChange = () => setIsMobileOrTablet(mql.matches);
+    mql.addEventListener("change", onChange);
+    setIsMobileOrTablet(mql.matches);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
+
   const { data: settings } = useQuery({
     queryKey: ["site-settings-general"],
     queryFn: async () => {
