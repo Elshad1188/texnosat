@@ -74,19 +74,22 @@ serve(async (req) => {
         model: "google/gemini-2.5-flash",
         messages,
         max_tokens: 1024,
+        stream: true,
       }),
     });
 
     if (!response.ok) {
       const err = await response.text();
       console.error("AI API error:", err);
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: "Rate limit exceeded" }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
       return new Response(JSON.stringify({ error: "AI service error" }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const data = await response.json();
-    const reply = data.choices?.[0]?.message?.content || "Bağışlayın, cavab verə bilmədim.";
-
-    return new Response(JSON.stringify({ reply }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return new Response(response.body, {
+      headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
+    });
   } catch (error) {
     console.error("Chatbot error:", error);
     return new Response(JSON.stringify({ error: "Internal error" }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
