@@ -166,7 +166,7 @@ const Reels = () => {
 
   // Filter by category
   const reels = selectedCategory
-    ? allReels.filter(r => r.category === selectedCategory)
+    ? allReels.filter(r => r.category === selectedCategory || r.category.startsWith(selectedCategory + "-"))
     : allReels;
 
   // Pause ALL videos and reset index when category changes
