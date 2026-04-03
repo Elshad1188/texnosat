@@ -2,6 +2,7 @@ import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import VisualSearchButton from "@/components/VisualSearchButton";
 
 const HeroSection = () => {
   const [query, setQuery] = useState("");
@@ -22,8 +23,9 @@ const HeroSection = () => {
               placeholder="Axtar..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="h-12 w-full rounded-2xl border border-border bg-card pl-12 pr-24 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              className="h-12 w-full rounded-2xl border border-border bg-card pl-12 pr-28 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
             />
+            <VisualSearchButton />
             <Button 
               type="submit" 
               size="sm"
