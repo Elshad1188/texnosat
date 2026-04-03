@@ -71,10 +71,14 @@ const AdminStatsManager = () => {
         avgRating,
         topCategories,
         dailyListings,
+        onlineNow: onlineUsers.count || 0,
+        todayVisitors: todayVisitors.count || 0,
       });
       setLoading(false);
     };
     fetchStats();
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
