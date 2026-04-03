@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, TrendingUp, Users, ShoppingBag, Star, Eye, MessageCircle } from "lucide-react";
+import { Loader2, TrendingUp, Users, ShoppingBag, Star, Eye, MessageCircle, Wifi, CalendarDays } from "lucide-react";
 
 const AdminStatsManager = () => {
   const [stats, setStats] = useState<any>(null);
@@ -14,8 +14,10 @@ const AdminStatsManager = () => {
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
+      const twoMinAgo = new Date(now.getTime() - 2 * 60 * 1000).toISOString();
+
       const [listings, profiles, reviews, stores, messages, reports,
-             newListingsWeek, newUsersWeek, pendingListings] = await Promise.all([
+             newListingsWeek, newUsersWeek, pendingListings, onlineUsers, todayVisitors] = await Promise.all([
         supabase.from("listings").select("id, views_count, created_at, category, is_premium", { count: "exact" }),
         supabase.from("profiles").select("id, created_at", { count: "exact" }),
         supabase.from("reviews").select("id, rating", { count: "exact" }),
@@ -25,6 +27,8 @@ const AdminStatsManager = () => {
         supabase.from("listings").select("id", { count: "exact" }).gte("created_at", weekAgo),
         supabase.from("profiles").select("id", { count: "exact" }).gte("created_at", weekAgo),
         supabase.from("listings").select("id", { count: "exact" }).eq("status", "pending"),
+        supabase.from("profiles").select("id", { count: "exact" }).gte("last_seen", twoMinAgo),
+        supabase.from("profiles").select("id", { count: "exact" }).gte("last_seen", today),
       ]);
 
       const allListings = listings.data || [];
@@ -67,10 +71,14 @@ const AdminStatsManager = () => {
         avgRating,
         topCategories,
         dailyListings,
+        onlineNow: onlineUsers.count || 0,
+        todayVisitors: todayVisitors.count || 0,
       });
       setLoading(false);
     };
     fetchStats();
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
@@ -80,6 +88,20 @@ const AdminStatsManager = () => {
 
   return (
     <div className="space-y-6">
+      {/* Online & Today */}
+      <div className="grid grid-cols-2 gap-3">
+        <Card className="p-3 border-green-500/30 bg-green-500/5">
+          <div className="flex items-center gap-2 text-green-600"><Wifi className="h-5 w-5" /><span className="text-xs font-medium">Hal-hazırda onlayn</span></div>
+          <p className="mt-1 font-display text-2xl font-bold text-green-600">{stats.onlineNow}</p>
+          <p className="text-[10px] text-muted-foreground">Son 2 dəqiqədə aktiv</p>
+        </Card>
+        <Card className="p-3">
+          <div className="flex items-center gap-2 text-muted-foreground"><CalendarDays className="h-5 w-5" /><span className="text-xs font-medium">Bu gün gələn</span></div>
+          <p className="mt-1 font-display text-2xl font-bold text-foreground">{stats.todayVisitors}</p>
+          <p className="text-[10px] text-muted-foreground">Bugünkü unikal ziyarətçi</p>
+        </Card>
+      </div>
+
       {/* Key metrics */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <MetricCard icon={<ShoppingBag className="h-5 w-5" />} label="Ümumi elanlar" value={stats.totalListings} sub={`+${stats.newListingsWeek} bu həftə`} />
