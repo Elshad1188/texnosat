@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, TrendingUp, Users, ShoppingBag, Star, Eye, MessageCircle } from "lucide-react";
+import { Loader2, TrendingUp, Users, ShoppingBag, Star, Eye, MessageCircle, Wifi, CalendarDays } from "lucide-react";
 
 const AdminStatsManager = () => {
   const [stats, setStats] = useState<any>(null);
