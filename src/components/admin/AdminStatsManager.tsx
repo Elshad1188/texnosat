@@ -88,6 +88,20 @@ const AdminStatsManager = () => {
 
   return (
     <div className="space-y-6">
+      {/* Online & Today */}
+      <div className="grid grid-cols-2 gap-3">
+        <Card className="p-3 border-green-500/30 bg-green-500/5">
+          <div className="flex items-center gap-2 text-green-600"><Wifi className="h-5 w-5" /><span className="text-xs font-medium">Hal-hazırda onlayn</span></div>
+          <p className="mt-1 font-display text-2xl font-bold text-green-600">{stats.onlineNow}</p>
+          <p className="text-[10px] text-muted-foreground">Son 2 dəqiqədə aktiv</p>
+        </Card>
+        <Card className="p-3">
+          <div className="flex items-center gap-2 text-muted-foreground"><CalendarDays className="h-5 w-5" /><span className="text-xs font-medium">Bu gün gələn</span></div>
+          <p className="mt-1 font-display text-2xl font-bold text-foreground">{stats.todayVisitors}</p>
+          <p className="text-[10px] text-muted-foreground">Bugünkü unikal ziyarətçi</p>
+        </Card>
+      </div>
+
       {/* Key metrics */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <MetricCard icon={<ShoppingBag className="h-5 w-5" />} label="Ümumi elanlar" value={stats.totalListings} sub={`+${stats.newListingsWeek} bu həftə`} />
