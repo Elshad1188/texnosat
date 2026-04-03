@@ -566,14 +566,17 @@ const Messages = () => {
                   <button onClick={() => navigate("/messages")} className="md:hidden">
                     <ArrowLeft className="h-5 w-5 text-muted-foreground" />
                   </button>
-                  <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                    {activeConvo.displayAvatar ? (
-                      <img src={activeConvo.displayAvatar} alt="" className="h-full w-full object-cover" />
-                    ) : activeConvo.isStore ? (
-                      <Store className="h-4 w-4" />
-                    ) : (
-                      activeConvo.displayName[0]?.toUpperCase() || "?"
-                    )}
+                  <div className="relative">
+                    <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary font-semibold text-sm">
+                      {activeConvo.displayAvatar ? (
+                        <img src={activeConvo.displayAvatar} alt="" className="h-full w-full object-cover" />
+                      ) : activeConvo.isStore ? (
+                        <Store className="h-4 w-4" />
+                      ) : (
+                        activeConvo.displayName[0]?.toUpperCase() || "?"
+                      )}
+                    </div>
+                    <span className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-card ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
@@ -584,11 +587,9 @@ const Messages = () => {
                         <Store className="h-3.5 w-3.5 shrink-0 text-primary" />
                       )}
                     </div>
-                    {activeConvo.listing && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        {activeConvo.listing.title}
-                      </p>
-                    )}
+                    <p className="text-xs text-muted-foreground truncate">
+                      {isOnline ? "Onlayn" : activeConvo.listing ? activeConvo.listing.title : activeConvo.profile?.last_seen ? `Son görülmə: ${formatTime(activeConvo.profile.last_seen)}` : ""}
+                    </p>
                   </div>
                   
                   <AlertDialog>
