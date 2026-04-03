@@ -67,7 +67,7 @@ const VisualSearchButton = () => {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="absolute right-16 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+        className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
         title="Şəkillə axtar"
       >
         <ScanSearch className="h-5 w-5" />
