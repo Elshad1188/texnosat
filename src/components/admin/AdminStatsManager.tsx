@@ -14,8 +14,10 @@ const AdminStatsManager = () => {
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
+      const twoMinAgo = new Date(now.getTime() - 2 * 60 * 1000).toISOString();
+
       const [listings, profiles, reviews, stores, messages, reports,
-             newListingsWeek, newUsersWeek, pendingListings] = await Promise.all([
+             newListingsWeek, newUsersWeek, pendingListings, onlineUsers, todayVisitors] = await Promise.all([
         supabase.from("listings").select("id, views_count, created_at, category, is_premium", { count: "exact" }),
         supabase.from("profiles").select("id, created_at", { count: "exact" }),
         supabase.from("reviews").select("id, rating", { count: "exact" }),
@@ -25,6 +27,8 @@ const AdminStatsManager = () => {
         supabase.from("listings").select("id", { count: "exact" }).gte("created_at", weekAgo),
         supabase.from("profiles").select("id", { count: "exact" }).gte("created_at", weekAgo),
         supabase.from("listings").select("id", { count: "exact" }).eq("status", "pending"),
+        supabase.from("profiles").select("id", { count: "exact" }).gte("last_seen", twoMinAgo),
+        supabase.from("profiles").select("id", { count: "exact" }).gte("last_seen", today),
       ]);
 
       const allListings = listings.data || [];
