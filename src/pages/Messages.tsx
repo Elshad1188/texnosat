@@ -495,15 +495,24 @@ const Messages = () => {
                       activeConvoId === c.id ? "bg-accent" : ""
                     }`}
                   >
-                    {/* Avatar: store logo or person initial */}
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                      {c.displayAvatar ? (
-                        <img src={c.displayAvatar} alt="" className="h-full w-full object-cover" />
-                      ) : c.isStore ? (
-                        <Store className="h-4 w-4" />
-                      ) : (
-                        c.displayName[0]?.toUpperCase() || "?"
-                      )}
+                    {/* Avatar with online indicator */}
+                    <div className="relative flex-shrink-0">
+                      <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary font-semibold text-sm">
+                        {c.displayAvatar ? (
+                          <img src={c.displayAvatar} alt="" className="h-full w-full object-cover" />
+                        ) : c.isStore ? (
+                          <Store className="h-4 w-4" />
+                        ) : (
+                          c.displayName[0]?.toUpperCase() || "?"
+                        )}
+                      </div>
+                      {(() => {
+                        const ls = c.profile?.last_seen;
+                        const online = ls && (Date.now() - new Date(ls).getTime() < 120000);
+                        return (
+                          <span className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card ${online ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+                        );
+                      })()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
