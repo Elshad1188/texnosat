@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { MessageCircle, Send, ArrowLeft, Loader2, Check, CheckCheck, Store, Trash2, MoreVertical, Paperclip, Mic } from "lucide-react";
+import { MessageCircle, Send, ArrowLeft, Loader2, Check, CheckCheck, Store, Trash2, MoreVertical, ImagePlus, Mic, MicOff, X, Image as ImageIcon } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -14,7 +14,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -32,6 +31,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 
 type ConversationRecord = {
   id: string;
@@ -78,32 +81,51 @@ const Messages = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [imagePreviewFile, setImagePreviewFile] = useState<File | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user || !activeConvoId) return;
+    if (!file) return;
+    setImagePreviewFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setPreviewImage(ev.target?.result as string);
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const cancelImagePreview = () => {
+    setPreviewImage(null);
+    setImagePreviewFile(null);
+  };
+
+  const sendImageMessage = async () => {
+    if (!imagePreviewFile || !user || !activeConvoId) return;
     try {
       setUploadingMedia(true);
-      const ext = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${ext}`;
+      const ext = imagePreviewFile.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const filePath = `${user.id}/${fileName}`;
-      const { error: uploadError } = await supabase.storage.from("chat_media").upload(filePath, file);
+      const { error: uploadError } = await supabase.storage.from("chat_media").upload(filePath, imagePreviewFile);
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from("chat_media").getPublicUrl(filePath);
       
       const { error: msgErr } = await supabase.from("messages").insert({
         conversation_id: activeConvoId,
         sender_id: user.id,
-        content: "Fotoşəkil",
+        content: "📷 Şəkil",
         image_url: publicUrl,
       });
       if (msgErr) throw msgErr;
+      cancelImagePreview();
+      queryClient.invalidateQueries({ queryKey: ["messages", activeConvoId] });
+      queryClient.invalidateQueries({ queryKey: ["conversations", user?.id] });
     } catch (err: any) {
       toast({ title: "Şəkil göndərilmədi", description: err.message, variant: "destructive" });
     } finally {
       setUploadingMedia(false);
-      e.target.value = "";
     }
   };
 
@@ -117,7 +139,7 @@ const Messages = () => {
       recorder.onstop = uploadAudio;
       recorder.start();
       setIsRecording(true);
-    } catch (err) {
+    } catch {
       toast({ title: "Mikrofona icazə lazımdır", variant: "destructive" });
     }
   };
@@ -135,7 +157,7 @@ const Messages = () => {
     try {
       setUploadingMedia(true);
       const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-      const fileName = `${Math.random()}.webm`;
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.webm`;
       const filePath = `${user.id}/${fileName}`;
       const { error: uploadError } = await supabase.storage.from("chat_media").upload(filePath, audioBlob);
       if (uploadError) throw uploadError;
@@ -144,11 +166,12 @@ const Messages = () => {
       const { error: msgErr } = await supabase.from("messages").insert({
         conversation_id: activeConvoId,
         sender_id: user.id,
-        content: "Səsli mesaj",
+        content: "🎤 Səsli mesaj",
         audio_url: publicUrl,
       });
       if (msgErr) throw msgErr;
-    } catch (err: any) {
+      queryClient.invalidateQueries({ queryKey: ["messages", activeConvoId] });
+    } catch {
       toast({ title: "Səs göndərilmədi", variant: "destructive" });
     } finally {
       setUploadingMedia(false);
@@ -168,7 +191,7 @@ const Messages = () => {
     queryClient.removeQueries({ queryKey: ["messages", conversationId] });
   };
 
-  // Fetch conversations with last message, other user profile, and store info
+  // Fetch conversations
   const { data: conversations = [], isLoading: convosLoading } = useQuery({
     queryKey: ["conversations", user?.id],
     queryFn: async () => {
@@ -181,27 +204,21 @@ const Messages = () => {
       const conversationRows = (convos ?? []) as ConversationRecord[];
       if (conversationRows.length === 0) return [];
 
-      // Get other user IDs
       const otherUserIds = conversationRows.map(c => c.buyer_id === user.id ? c.seller_id : c.buyer_id);
       const { data: profiles } = await supabase.from("profiles").select("*").in("user_id", otherUserIds);
-
-      // Fetch stores for all other users (to check if they are store owners)
       const { data: stores } = await supabase.from("stores").select("*").in("user_id", otherUserIds);
 
-      // Get listing titles
       const listingIds = conversationRows.filter(c => c.listing_id).map(c => c.listing_id!);
       const { data: listings } = listingIds.length > 0
         ? await supabase.from("listings").select("id, title, image_urls, store_id").in("id", listingIds)
         : { data: [] };
 
-      // Get last message for each conversation
       const { data: lastMessages } = await supabase
         .from("messages")
         .select("*")
         .in("conversation_id", conversationRows.map(c => c.id))
         .order("created_at", { ascending: false });
 
-      // Get unread counts
       const { data: unreadCounts } = await supabase
         .from("messages")
         .select("conversation_id")
@@ -216,18 +233,14 @@ const Messages = () => {
         const lastMsg = (lastMessages || []).find((m: any) => m.conversation_id === c.id);
         const unread = (unreadCounts || []).filter((u: any) => u.conversation_id === c.id).length;
 
-        // Only show store identity if the OTHER user owns the store
         let store = undefined;
         if (listing && listing.store_id) {
           const storeMatch = (stores || []).find((s: any) => s.id === listing.store_id);
-          if (storeMatch && storeMatch.user_id === otherUserId) {
-            store = storeMatch;
-          }
+          if (storeMatch && storeMatch.user_id === otherUserId) store = storeMatch;
         } else if (!listing) {
           store = (stores || []).find((s: any) => s.user_id === otherUserId);
         }
 
-        // Display name: use store name only if the OTHER user has a store
         const displayName = store ? store.name : (profile?.full_name || "Adsız");
         const displayAvatar = store?.logo_url || null;
         const isStore = !!store;
@@ -239,7 +252,7 @@ const Messages = () => {
     refetchInterval: 10000,
   });
 
-  // Fetch messages for active conversation
+  // Fetch messages
   const { data: messages = [], isLoading: msgsLoading } = useQuery({
     queryKey: ["messages", activeConvoId],
     queryFn: async () => {
@@ -254,7 +267,7 @@ const Messages = () => {
     refetchInterval: 3000,
   });
 
-  // Mark messages as read
+  // Mark as read
   useEffect(() => {
     if (!activeConvoId || !user || messages.length === 0) return;
     const unreadIds = messages.filter((m) => !m.is_read && m.sender_id !== user.id).map((m) => m.id);
@@ -269,26 +282,22 @@ const Messages = () => {
           conversation.id === activeConvoId ? { ...conversation, unread: 0 } : conversation
         )
       );
-
       supabase
         .from("messages")
         .update({ is_read: true })
         .in("id", unreadIds)
         .then(({ error }) => {
-          if (error) {
-            queryClient.invalidateQueries({ queryKey: ["messages", activeConvoId] });
-          }
+          if (error) queryClient.invalidateQueries({ queryKey: ["messages", activeConvoId] });
           queryClient.invalidateQueries({ queryKey: ["conversations", user.id] });
         });
     }
   }, [messages, activeConvoId, user, queryClient]);
 
-  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Realtime subscription
+  // Realtime
   useEffect(() => {
     if (!activeConvoId) return;
     const channel = supabase
@@ -325,19 +334,14 @@ const Messages = () => {
       });
       if (error) throw error;
 
-      // The on_new_message_notify_recipient trigger already creates a notification.
-      // Send email directly from client since DB trigger's net.http_post times out.
       const convo = conversations.find((c: any) => c.id === activeConvoId);
       if (convo) {
         const recipientId = convo.buyer_id === user.id ? convo.seller_id : convo.buyer_id;
         const senderName = user.user_metadata?.full_name || "İstifadəçi";
-
-        // Check if recipient is offline (last_seen > 2 min ago)
         const recipientProfile = convo.profile;
         const isOffline = !recipientProfile?.last_seen || 
           (Date.now() - new Date(recipientProfile.last_seen).getTime() > 120000);
 
-        // Send email if recipient is offline and has email_notifications enabled
         if (isOffline && recipientProfile?.email_notifications !== false) {
           supabase.functions.invoke("send-email", {
             body: {
@@ -348,7 +352,6 @@ const Messages = () => {
           }).catch(() => {});
         }
 
-        // Send push notification directly
         supabase.functions.invoke("send-user-push", {
           body: {
             user_id: recipientId,
@@ -388,12 +391,11 @@ const Messages = () => {
       toast({ title: "Mesaj silindi" });
     },
     onError: (error: any) => {
-      console.error("Delete message error:", error);
       toast({ title: "Xəta baş verdi", description: error.message, variant: "destructive" });
     },
   });
 
-  // Delete conversation (for me)
+  // Delete conversation
   const deleteConversation = useMutation({
     mutationFn: async (convoId: string) => {
       if (!user) throw new Error("İstifadəçi tapılmadı");
@@ -416,7 +418,6 @@ const Messages = () => {
       toast({ title: "Söhbət silindi" });
     },
     onError: (error: any) => {
-      console.error("Delete conversation error:", error);
       toast({ title: "Xəta baş verdi", description: error.message, variant: "destructive" });
     },
   });
@@ -424,7 +425,6 @@ const Messages = () => {
   const activeConvo = conversations.find((c: any) => c.id === activeConvoId);
   const isOnline = activeConvo?.profile?.last_seen && (Date.now() - new Date(activeConvo.profile.last_seen).getTime() < 120000);
 
-  // Check if current user is a store owner (for showing "sent as store")
   const { data: myStores = [] } = useQuery({
     queryKey: ["my-stores", user?.id],
     queryFn: async () => {
@@ -445,285 +445,491 @@ const Messages = () => {
     myStore = myStores.length === 1 ? myStores[0] : null;
   }
 
+  // Auto-resize textarea
+  const handleTextareaInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessageText(e.target.value);
+    const el = e.target;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 120) + "px";
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (imagePreviewFile) {
+      sendImageMessage();
+    } else {
+      sendMessage.mutate();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
         <div className="flex flex-col items-center justify-center py-32">
-          <MessageCircle className="h-12 w-12 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground mb-4">Mesajları görmək üçün daxil olun</p>
-          <Button onClick={() => navigate("/auth")}>Daxil ol</Button>
+          <div className="rounded-full bg-primary/10 p-6 mb-6">
+            <MessageCircle className="h-12 w-12 text-primary" />
+          </div>
+          <h2 className="text-lg font-semibold text-foreground mb-2">Mesajlarınızı görün</h2>
+          <p className="text-sm text-muted-foreground mb-6">Daxil olun və söhbətlərinizə qoşulun</p>
+          <Button onClick={() => navigate("/auth")} className="bg-gradient-primary text-primary-foreground px-8">Daxil ol</Button>
         </div>
         <Footer />
       </div>
     );
   }
 
+  // Group messages by date
+  const groupedMessages: { date: string; msgs: MessageRecord[] }[] = [];
+  messages.forEach((m) => {
+    const dateStr = new Date(m.created_at!).toLocaleDateString("az", { day: "numeric", month: "long", year: "numeric" });
+    const last = groupedMessages[groupedMessages.length - 1];
+    if (last && last.date === dateStr) {
+      last.msgs.push(m);
+    } else {
+      groupedMessages.push({ date: dateStr, msgs: [m] });
+    }
+  });
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
       <TooltipProvider>
-        <main className="container mx-auto flex-1 px-4 py-4">
-        <div className="flex h-[calc(100vh-180px)] overflow-hidden rounded-2xl border border-border bg-card shadow-card">
-          {/* Sidebar - conversation list */}
-          <div className={`w-full border-r border-border md:w-80 flex-shrink-0 flex flex-col ${activeConvoId ? "hidden md:flex" : "flex"}`}>
-            <div className="border-b border-border p-4">
-              <h2 className="font-display text-lg font-bold text-foreground">Mesajlar</h2>
-              {myStore && (
-                <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                  <Store className="h-3 w-3" />
-                  {myStore.name} adından yazırsınız
-                </p>
-              )}
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              {convosLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                </div>
-              ) : conversations.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-                  <MessageCircle className="h-10 w-10 text-muted-foreground mb-3" />
-                  <p className="text-sm text-muted-foreground">Hələ mesajınız yoxdur</p>
-                </div>
-              ) : (
-                conversations.map((c: any) => (
-                  <button
-                    key={c.id}
-                    onClick={() => navigate(`/messages?c=${c.id}`)}
-                    className={`w-full flex items-start gap-3 p-4 text-left transition-colors hover:bg-muted/50 ${
-                      activeConvoId === c.id ? "bg-accent" : ""
-                    }`}
-                  >
-                    {/* Avatar with online indicator */}
-                    <div className="relative flex-shrink-0">
-                      <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                        {c.displayAvatar ? (
-                          <img src={c.displayAvatar} alt="" className="h-full w-full object-cover" />
-                        ) : c.isStore ? (
-                          <Store className="h-4 w-4" />
-                        ) : (
-                          c.displayName[0]?.toUpperCase() || "?"
-                        )}
-                      </div>
-                      {(() => {
-                        const ls = c.profile?.last_seen;
-                        const online = ls && (Date.now() - new Date(ls).getTime() < 120000);
-                        return (
-                          <span className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-card ${online ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
-                        );
-                      })()}
+        <main className="container mx-auto flex-1 px-2 sm:px-4 py-2 sm:py-4">
+          <div className="flex h-[calc(100vh-140px)] sm:h-[calc(100vh-180px)] overflow-hidden rounded-2xl border border-border/50 bg-card shadow-lg">
+            {/* Sidebar */}
+            <div className={`w-full md:w-[340px] flex-shrink-0 flex flex-col bg-card ${activeConvoId ? "hidden md:flex" : "flex"}`}>
+              <div className="p-4 pb-3">
+                <h2 className="font-display text-xl font-bold text-foreground">Mesajlar</h2>
+                {myStore && (
+                  <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Store className="h-3 w-3 text-primary" />
+                    <span className="font-medium text-primary">{myStore.name}</span> adından yazırsınız
+                  </p>
+                )}
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                {convosLoading ? (
+                  <div className="flex items-center justify-center py-16">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : conversations.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                    <div className="rounded-full bg-muted p-4 mb-4">
+                      <MessageCircle className="h-8 w-8 text-muted-foreground" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {c.displayName}
-                          </p>
-                          {c.isStore && (
-                            <Store className="h-3 w-3 shrink-0 text-primary" />
-                          )}
+                    <p className="text-sm font-medium text-foreground mb-1">Hələ mesajınız yoxdur</p>
+                    <p className="text-xs text-muted-foreground">Elan sahibinə yazaraq söhbətə başlayın</p>
+                  </div>
+                ) : (
+                  conversations.map((c: any) => {
+                    const ls = c.profile?.last_seen;
+                    const online = ls && (Date.now() - new Date(ls).getTime() < 120000);
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => navigate(`/messages?c=${c.id}`)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-200 border-b border-border/30 ${
+                          activeConvoId === c.id
+                            ? "bg-primary/5 border-l-2 border-l-primary"
+                            : "hover:bg-muted/40"
+                        }`}
+                      >
+                        <div className="relative flex-shrink-0">
+                          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary/20 to-primary/5 text-primary font-bold text-sm ring-2 ring-background">
+                            {c.displayAvatar ? (
+                              <img src={c.displayAvatar} alt="" className="h-full w-full object-cover" />
+                            ) : c.isStore ? (
+                              <Store className="h-5 w-5" />
+                            ) : (
+                              <span className="text-base">{c.displayName[0]?.toUpperCase() || "?"}</span>
+                            )}
+                          </div>
+                          <span className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-[2.5px] border-card ${online ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-gray-300 dark:bg-gray-600'}`} />
                         </div>
-                        <span className="text-[10px] text-muted-foreground flex-shrink-0">
-                          {c.lastMsg ? formatTime(c.lastMsg.created_at) : ""}
-                        </span>
-                      </div>
-                      {c.listing && (
-                        <p className="text-[11px] text-primary truncate">{c.listing.title}</p>
-                      )}
-                      <div className="flex items-center justify-between mt-0.5">
-                        <p className="text-xs text-muted-foreground truncate">
-                          {c.lastMsg?.sender_id === user.id && (
-                            <span className="mr-1">
-                              {c.lastMsg.is_read ? (
-                                <CheckCheck className="inline h-3 w-3 text-sky-500" />
-                              ) : (
-                                <Check className="inline h-3 w-3 text-muted-foreground" />
-                              )}
-                            </span>
-                          )}
-                          {c.lastMsg?.content || "Mesaj yoxdur"}
-                        </p>
-                        {c.unread > 0 && (
-                          <span className="flex-shrink-0 ml-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                            {c.unread}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Chat area */}
-          <div className={`flex-1 flex flex-col ${!activeConvoId ? "hidden md:flex" : "flex"}`}>
-            {activeConvoId && activeConvo ? (
-              <>
-                {/* Chat header */}
-                <div className="flex items-center gap-3 border-b border-border p-4">
-                  <button onClick={() => navigate("/messages")} className="md:hidden">
-                    <ArrowLeft className="h-5 w-5 text-muted-foreground" />
-                  </button>
-                  <div className="relative">
-                    <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                      {activeConvo.displayAvatar ? (
-                        <img src={activeConvo.displayAvatar} alt="" className="h-full w-full object-cover" />
-                      ) : activeConvo.isStore ? (
-                        <Store className="h-4 w-4" />
-                      ) : (
-                        activeConvo.displayName[0]?.toUpperCase() || "?"
-                      )}
-                    </div>
-                    <span className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-card ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {activeConvo.displayName}
-                      </p>
-                      {activeConvo.isStore && (
-                        <Store className="h-3.5 w-3.5 shrink-0 text-primary" />
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {isOnline ? "Onlayn" : activeConvo.listing ? activeConvo.listing.title : activeConvo.profile?.last_seen ? `Son görülmə: ${formatTime(activeConvo.profile.last_seen)}` : ""}
-                    </p>
-                  </div>
-                  
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Söhbəti silmək istəyirsiniz?</AlertDialogTitle>
-                        <AlertDialogDescription>Bu söhbət sizin siyahınızdan silinəcək.</AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Ləğv et</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => deleteConversation.mutate(activeConvo.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Sil</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                  {msgsLoading ? (
-                    <div className="flex items-center justify-center py-12">
-                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                    </div>
-                  ) : messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-center">
-                      <p className="text-sm text-muted-foreground">Söhbətə başlayın</p>
-                    </div>
-                  ) : (
-                    messages.map((m: any) => {
-                      const isMine = m.sender_id === user.id;
-                      return (
-                        <div key={m.id} className={`flex group ${isMine ? "justify-end" : "justify-start"}`}>
-                          <div className={`relative max-w-[75%] rounded-2xl px-4 py-2.5 ${
-                            isMine
-                              ? "bg-gradient-primary text-primary-foreground rounded-br-md"
-                              : "bg-muted text-foreground rounded-bl-md"
-                          }`}>
-                            <p className="text-sm whitespace-pre-wrap break-words">{m.content}</p>
-                            <div className={`flex items-center justify-end gap-1 mt-1 ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
-                              <span className="text-[10px]">
-                                {new Date(m.created_at).toLocaleTimeString("az", { hour: "2-digit", minute: "2-digit" })}
-                              </span>
-                              {isMine && (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div className="flex items-center gap-0.5 ml-1 cursor-help">
-                                      {m.is_read ? (
-                                        <CheckCheck className="h-3.5 w-3.5 text-sky-300 fill-sky-300/20" />
-                                      ) : (
-                                        <Check className="h-3.5 w-3.5 opacity-70" />
-                                      )}
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="top">
-                                    <p className="text-[10px]">
-                                      {m.is_read ? "Oxundu" : "Göndərildi"}
-                                    </p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <p className={`text-sm truncate ${c.unread > 0 ? 'font-bold text-foreground' : 'font-medium text-foreground'}`}>
+                                {c.displayName}
+                              </p>
+                              {c.isStore && <Store className="h-3 w-3 shrink-0 text-primary" />}
                             </div>
-                            
-                            {isMine && (
-                              <div className="absolute -right-2 -top-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button size="icon" variant="secondary" className="h-6 w-6 rounded-full shadow-sm border border-border">
-                                      <MoreVertical className="h-3 w-3" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem 
-                                      className="text-destructive gap-2 font-medium"
-                                      onClick={() => deleteMessage.mutate(m.id)}
-                                    >
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                      Mesajı sil
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
+                            <span className="text-[10px] text-muted-foreground flex-shrink-0 ml-2">
+                              {c.lastMsg ? formatTime(c.lastMsg.created_at) : ""}
+                            </span>
+                          </div>
+                          {c.listing && (
+                            <p className="text-[11px] text-primary/80 truncate mb-0.5">{c.listing.title}</p>
+                          )}
+                          <div className="flex items-center justify-between">
+                            <p className={`text-xs truncate ${c.unread > 0 ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                              {c.lastMsg?.sender_id === user.id && (
+                                <span className="mr-1 inline-flex align-middle">
+                                  {c.lastMsg.is_read ? (
+                                    <CheckCheck className="inline h-3.5 w-3.5 text-sky-500" />
+                                  ) : (
+                                    <Check className="inline h-3.5 w-3.5 text-muted-foreground" />
+                                  )}
+                                </span>
+                              )}
+                              {c.lastMsg?.image_url ? "📷 Şəkil" : c.lastMsg?.audio_url ? "🎤 Səsli mesaj" : c.lastMsg?.content || "Mesaj yoxdur"}
+                            </p>
+                            {c.unread > 0 && (
+                              <span className="flex-shrink-0 ml-2 flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                                {c.unread}
+                              </span>
                             )}
                           </div>
                         </div>
-                      );
-                    })
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
-
-                {/* Input */}
-                <div className="border-t border-border p-4">
-                  {myStore && (
-                    <p className="mb-2 flex items-center gap-1 text-xs text-muted-foreground">
-                      <Store className="h-3 w-3" />
-                      {myStore.name} adından cavab verirsiniz
-                    </p>
-                  )}
-                  <form
-                    onSubmit={(e) => { e.preventDefault(); sendMessage.mutate(); }}
-                    className="flex items-center gap-2"
-                  >
-                    <Input
-                      value={messageText}
-                      onChange={(e) => setMessageText(e.target.value)}
-                      placeholder="Mesaj yazın..."
-                      className="flex-1"
-                    />
-                    <Button
-                      type="submit"
-                      size="icon"
-                      disabled={!messageText.trim() || sendMessage.isPending}
-                      className="bg-gradient-primary text-primary-foreground hover:opacity-90"
-                    >
-                      <Send className="h-4 w-4" />
-                    </Button>
-                  </form>
-                </div>
-              </>
-            ) : (
-              <div className="flex flex-1 flex-col items-center justify-center text-center">
-                <MessageCircle className="h-16 w-16 text-muted-foreground/30 mb-4" />
-                <p className="text-muted-foreground">Söhbət seçin</p>
+                      </button>
+                    );
+                  })
+                )}
               </div>
-            )}
+            </div>
+
+            {/* Chat area */}
+            <div className={`flex-1 flex flex-col border-l border-border/30 ${!activeConvoId ? "hidden md:flex" : "flex"}`}>
+              {activeConvoId && activeConvo ? (
+                <>
+                  {/* Chat header */}
+                  <div className="flex items-center gap-3 border-b border-border/50 px-4 py-3 bg-card/80 backdrop-blur-sm">
+                    <button onClick={() => navigate("/messages")} className="md:hidden p-1 -ml-1 rounded-lg hover:bg-muted transition-colors">
+                      <ArrowLeft className="h-5 w-5 text-foreground" />
+                    </button>
+                    <div className="relative">
+                      <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary/20 to-primary/5 text-primary font-bold text-sm ring-2 ring-border/50">
+                        {activeConvo.displayAvatar ? (
+                          <img src={activeConvo.displayAvatar} alt="" className="h-full w-full object-cover" />
+                        ) : activeConvo.isStore ? (
+                          <Store className="h-4 w-4" />
+                        ) : (
+                          activeConvo.displayName[0]?.toUpperCase() || "?"
+                        )}
+                      </div>
+                      <span className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card ${isOnline ? 'bg-green-500 animate-pulse shadow-[0_0_6px_rgba(34,197,94,0.4)]' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-semibold text-foreground truncate">
+                          {activeConvo.displayName}
+                        </p>
+                        {activeConvo.isStore && <Store className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                        {isOnline ? (
+                          <><span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" /> Onlayn</>
+                        ) : activeConvo.listing ? (
+                          activeConvo.listing.title
+                        ) : activeConvo.profile?.last_seen ? (
+                          `Son görülmə: ${formatTime(activeConvo.profile.last_seen)}`
+                        ) : ""}
+                      </p>
+                    </div>
+                    
+                    {isTyping && (
+                      <div className="flex items-center gap-1 mr-2">
+                        <span className="text-xs text-primary animate-pulse">yazır</span>
+                        <span className="flex gap-0.5">
+                          <span className="h-1 w-1 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms" }} />
+                          <span className="h-1 w-1 rounded-full bg-primary animate-bounce" style={{ animationDelay: "150ms" }} />
+                          <span className="h-1 w-1 rounded-full bg-primary animate-bounce" style={{ animationDelay: "300ms" }} />
+                        </span>
+                      </div>
+                    )}
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive rounded-lg">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Söhbəti silmək istəyirsiniz?</AlertDialogTitle>
+                          <AlertDialogDescription>Bu söhbət bütün mesajlarla birlikdə silinəcək.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Ləğv et</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => deleteConversation.mutate(activeConvo.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Sil</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+
+                  {/* Messages area */}
+                  <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 bg-muted/20">
+                    {msgsLoading ? (
+                      <div className="flex items-center justify-center py-16">
+                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      </div>
+                    ) : messages.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-full text-center">
+                        <div className="rounded-2xl bg-primary/5 p-6 mb-4">
+                          <Send className="h-8 w-8 text-primary/40" />
+                        </div>
+                        <p className="text-sm font-medium text-foreground mb-1">Söhbətə başlayın</p>
+                        <p className="text-xs text-muted-foreground">İlk mesajınızı göndərin</p>
+                      </div>
+                    ) : (
+                      groupedMessages.map((group) => (
+                        <div key={group.date}>
+                          {/* Date separator */}
+                          <div className="flex items-center justify-center my-4">
+                            <span className="text-[10px] text-muted-foreground bg-muted/60 backdrop-blur-sm px-3 py-1 rounded-full">
+                              {group.date}
+                            </span>
+                          </div>
+                          <div className="space-y-1.5">
+                            {group.msgs.map((m, idx) => {
+                              const isMine = m.sender_id === user.id;
+                              const prevMsg = idx > 0 ? group.msgs[idx - 1] : null;
+                              const isConsecutive = prevMsg && prevMsg.sender_id === m.sender_id;
+                              
+                              return (
+                                <div key={m.id} className={`flex group ${isMine ? "justify-end" : "justify-start"} ${isConsecutive ? "" : "mt-3"}`}>
+                                  <div className={`relative max-w-[80%] sm:max-w-[70%] ${
+                                    m.image_url ? "rounded-2xl overflow-hidden" : `rounded-2xl px-3.5 py-2 ${
+                                      isMine
+                                        ? "bg-primary text-primary-foreground rounded-br-sm"
+                                        : "bg-card text-foreground rounded-bl-sm shadow-sm border border-border/50"
+                                    }`
+                                  }`}>
+                                    {/* Image message */}
+                                    {m.image_url && (
+                                      <div className={`${isMine ? "bg-primary" : "bg-card border border-border/50 shadow-sm"} rounded-2xl overflow-hidden ${isMine ? "rounded-br-sm" : "rounded-bl-sm"}`}>
+                                        <button
+                                          onClick={() => setLightboxImage(m.image_url)}
+                                          className="block w-full"
+                                        >
+                                          <img
+                                            src={m.image_url}
+                                            alt="Şəkil"
+                                            className="max-w-[260px] sm:max-w-[320px] max-h-[300px] object-cover w-full"
+                                            loading="lazy"
+                                          />
+                                        </button>
+                                        {m.content && m.content !== "📷 Şəkil" && m.content !== "Fotoşəkil" && (
+                                          <p className={`text-sm px-3 pt-1.5 pb-0.5 ${isMine ? "text-primary-foreground" : "text-foreground"}`}>
+                                            {m.content}
+                                          </p>
+                                        )}
+                                        <div className={`flex items-center justify-end gap-1 px-3 pb-2 pt-0.5 ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                                          <span className="text-[10px]">
+                                            {new Date(m.created_at!).toLocaleTimeString("az", { hour: "2-digit", minute: "2-digit" })}
+                                          </span>
+                                          {isMine && (
+                                            m.is_read ? <CheckCheck className="h-3.5 w-3.5 text-sky-300" /> : <Check className="h-3.5 w-3.5 opacity-70" />
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Audio message */}
+                                    {!m.image_url && m.audio_url && (
+                                      <>
+                                        <audio controls src={m.audio_url} className="max-w-[240px] h-10" />
+                                        <div className={`flex items-center justify-end gap-1 mt-1 ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                                          <span className="text-[10px]">
+                                            {new Date(m.created_at!).toLocaleTimeString("az", { hour: "2-digit", minute: "2-digit" })}
+                                          </span>
+                                          {isMine && (
+                                            m.is_read ? <CheckCheck className="h-3.5 w-3.5 text-sky-300" /> : <Check className="h-3.5 w-3.5 opacity-70" />
+                                          )}
+                                        </div>
+                                      </>
+                                    )}
+
+                                    {/* Text message */}
+                                    {!m.image_url && !m.audio_url && (
+                                      <>
+                                        <p className="text-[13px] sm:text-sm whitespace-pre-wrap break-words leading-relaxed">{m.content}</p>
+                                        <div className={`flex items-center justify-end gap-1 mt-0.5 -mb-0.5 ${isMine ? "text-primary-foreground/50" : "text-muted-foreground"}`}>
+                                          <span className="text-[10px]">
+                                            {new Date(m.created_at!).toLocaleTimeString("az", { hour: "2-digit", minute: "2-digit" })}
+                                          </span>
+                                          {isMine && (
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <div className="cursor-help">
+                                                  {m.is_read ? (
+                                                    <CheckCheck className="h-3.5 w-3.5 text-sky-300" />
+                                                  ) : (
+                                                    <Check className="h-3.5 w-3.5 opacity-60" />
+                                                  )}
+                                                </div>
+                                              </TooltipTrigger>
+                                              <TooltipContent side="top">
+                                                <p className="text-[10px]">{m.is_read ? "Oxundu" : "Göndərildi"}</p>
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          )}
+                                        </div>
+                                      </>
+                                    )}
+                                    
+                                    {/* Delete action */}
+                                    {isMine && (
+                                      <div className="absolute -right-1 -top-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                        <DropdownMenu>
+                                          <DropdownMenuTrigger asChild>
+                                            <Button size="icon" variant="secondary" className="h-6 w-6 rounded-full shadow-md border border-border">
+                                              <MoreVertical className="h-3 w-3" />
+                                            </Button>
+                                          </DropdownMenuTrigger>
+                                          <DropdownMenuContent align="end">
+                                            <DropdownMenuItem 
+                                              className="text-destructive gap-2 font-medium"
+                                              onClick={() => deleteMessage.mutate(m.id)}
+                                            >
+                                              <Trash2 className="h-3.5 w-3.5" />
+                                              Mesajı sil
+                                            </DropdownMenuItem>
+                                          </DropdownMenuContent>
+                                        </DropdownMenu>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                    <div ref={messagesEndRef} />
+                  </div>
+
+                  {/* Image preview */}
+                  {previewImage && (
+                    <div className="border-t border-border/50 px-4 py-3 bg-card flex items-center gap-3">
+                      <div className="relative">
+                        <img src={previewImage} alt="Önizləmə" className="h-16 w-16 rounded-xl object-cover border border-border" />
+                        <button
+                          onClick={cancelImagePreview}
+                          className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-md"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <p className="text-xs text-muted-foreground flex-1">Şəkil göndərilməyə hazırdır</p>
+                      <Button 
+                        size="sm" 
+                        onClick={sendImageMessage} 
+                        disabled={uploadingMedia}
+                        className="bg-gradient-primary text-primary-foreground gap-1.5"
+                      >
+                        {uploadingMedia ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                        Göndər
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Input area */}
+                  <div className="border-t border-border/50 p-3 sm:p-4 bg-card">
+                    {myStore && (
+                      <p className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Store className="h-3 w-3 text-primary" />
+                        <span className="font-medium text-primary">{myStore.name}</span> adından cavab verirsiniz
+                      </p>
+                    )}
+                    <form onSubmit={handleSubmit} className="flex items-end gap-2">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleImageSelect}
+                        accept="image/*"
+                        className="hidden"
+                      />
+                      <div className="flex gap-1">
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-10 w-10 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadingMedia}
+                        >
+                          {uploadingMedia ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className={`h-10 w-10 rounded-xl transition-colors ${
+                            isRecording 
+                              ? "text-destructive bg-destructive/10 hover:bg-destructive/20" 
+                              : "text-muted-foreground hover:text-primary hover:bg-primary/10"
+                          }`}
+                          onClick={isRecording ? stopRecording : startRecording}
+                        >
+                          {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                        </Button>
+                      </div>
+                      <div className="flex-1 relative">
+                        <textarea
+                          ref={inputRef}
+                          value={messageText}
+                          onChange={handleTextareaInput}
+                          onKeyDown={handleKeyDown}
+                          placeholder="Mesaj yazın..."
+                          rows={1}
+                          className="w-full resize-none rounded-xl border border-border/50 bg-muted/30 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+                          style={{ maxHeight: 120 }}
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        size="icon"
+                        disabled={(!messageText.trim() && !imagePreviewFile) || sendMessage.isPending}
+                        className="h-10 w-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-all disabled:opacity-40"
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </form>
+                    {isRecording && (
+                      <div className="mt-2 flex items-center gap-2 text-destructive animate-pulse">
+                        <span className="h-2 w-2 rounded-full bg-destructive" />
+                        <span className="text-xs font-medium">Səs yazılır... dayandırmaq üçün basın</span>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-1 flex-col items-center justify-center text-center px-8">
+                  <div className="rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 p-8 mb-6">
+                    <MessageCircle className="h-16 w-16 text-primary/30" />
+                  </div>
+                  <p className="text-lg font-semibold text-foreground mb-2">Söhbət seçin</p>
+                  <p className="text-sm text-muted-foreground max-w-xs">Soldakı siyahıdan söhbət seçərək mesajlaşmaya başlayın</p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
       </TooltipProvider>
       <Footer />
+
+      {/* Image lightbox */}
+      <Dialog open={!!lightboxImage} onOpenChange={() => setLightboxImage(null)}>
+        <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 bg-black/95 border-0 overflow-hidden">
+          {lightboxImage && (
+            <img
+              src={lightboxImage}
+              alt="Şəkil"
+              className="w-full h-full object-contain max-h-[85vh]"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
