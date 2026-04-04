@@ -24,6 +24,7 @@ interface CheckoutDialogProps {
     user_id: string;
     store_id: string | null;
     image_urls: string[] | null;
+    custom_fields?: any;
   };
 }
 
