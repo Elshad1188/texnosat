@@ -28,24 +28,22 @@ const SplashScreen = () => {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white transition-opacity duration-500">
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center transition-opacity duration-500"
+      style={{ background: 'linear-gradient(180deg, #1a0a3e 0%, #1e3a5f 40%, #00b4d8 100%)' }}>
       <div className="animate-in fade-in zoom-in duration-700">
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-6">
+          <img src="/app-icon.png" alt="elan24" className="w-24 h-24 rounded-2xl shadow-2xl" />
           <div className="text-center">
-            <span className="font-display text-4xl font-bold text-[#1a1a1b] tracking-tight">
-              {theme.logo_text_main ?? "Elan"}
-              <span className="text-primary">
-                {theme.logo_text_accent ?? "24"}
-              </span>
+            <span className="font-display text-4xl font-bold text-white tracking-tight">
+              elan<span className="text-emerald-400">24</span>
             </span>
           </div>
         </div>
       </div>
       
-      {/* Loading bar or spinner could go here */}
       <div className="absolute bottom-12">
-        <div className="h-1 w-32 overflow-hidden rounded-full bg-gray-100">
-          <div className="h-full w-full origin-left animate-progress bg-primary" />
+        <div className="h-1 w-32 overflow-hidden rounded-full bg-white/20">
+          <div className="h-full w-full origin-left animate-progress bg-white/80" />
         </div>
       </div>
       
