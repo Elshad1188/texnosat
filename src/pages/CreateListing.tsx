@@ -12,9 +12,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ImagePlus, X, Loader2, Store, Video, ChevronDown, ChevronUp, ShoppingBag, MessageSquareText, Sparkles } from "lucide-react";
+import { ImagePlus, X, Loader2, Store, Video, ChevronDown, ChevronUp, ShoppingBag, MessageSquareText, Sparkles, Truck, Check } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const conditions = ["Yeni", "Yeni kimi", "İşlənmiş"];
 
@@ -40,6 +41,7 @@ const CreateListing = () => {
   const [isBuyable, setIsBuyable] = useState(false);
   const [stock, setStock] = useState("1");
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
+  const [selectedShippingMethods, setSelectedShippingMethods] = useState<string[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [form, setForm] = useState({
     title: "", description: "", price: "", category: "", subcategory: "", condition: "Yeni", location: "",
@@ -156,9 +158,25 @@ const CreateListing = () => {
     }
   }, [approvedStores.length]);
 
+  // Fetch shipping methods for selected store
+  const { data: storeShippingMethods = [] } = useQuery({
+    queryKey: ["store-shipping-methods", selectedStoreId],
+    queryFn: async () => {
+      const { data } = await supabase.from("shipping_methods").select("*").eq("store_id", selectedStoreId!).eq("is_active", true).order("created_at");
+      return data || [];
+    },
+    enabled: !!selectedStoreId,
+  });
 
-
-
+  // Load selected shipping methods from edit listing
+  useEffect(() => {
+    if (editListing && storeShippingMethods.length > 0) {
+      const cf = (editListing as any).custom_fields || {};
+      if (cf._shipping_methods && Array.isArray(cf._shipping_methods)) {
+        setSelectedShippingMethods(cf._shipping_methods);
+      }
+    }
+  }, [editListing, storeShippingMethods]);
   const parentCategories = categories.filter((c: any) => !c.parent_id);
   const subCategories = categories.filter((c: any) => {
     if (!form.category) return false;
@@ -325,6 +343,11 @@ const CreateListing = () => {
       }
 
       const finalCategory = form.subcategory || form.category;
+
+      // Add shipping methods to custom fields if buyable
+      if (isBuyable && selectedShippingMethods.length > 0) {
+        resolvedCustomFields._shipping_methods = selectedShippingMethods as any;
+      }
 
       const listingData: any = {
         title: form.title, description: form.description,
@@ -624,10 +647,63 @@ const CreateListing = () => {
                   <Switch checked={isBuyable} onCheckedChange={setIsBuyable} />
                 </div>
                 {isBuyable && (
-                  <div className="space-y-1">
-                    <Label className="text-xs">Stok sayı</Label>
-                    <Input type="number" min="1" value={stock} onChange={(e) => setStock(e.target.value)}
-                      className="h-9 w-32" />
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Stok sayı</Label>
+                      <Input type="number" min="1" value={stock} onChange={(e) => setStock(e.target.value)}
+                        className="h-9 w-32" />
+                    </div>
+
+                    {/* Shipping methods */}
+                    {storeShippingMethods.length > 0 ? (
+                      <div className="space-y-2">
+                        <Label className="text-xs flex items-center gap-1.5">
+                          <Truck className="h-3.5 w-3.5 text-primary" /> Çatdırılma üsulları
+                        </Label>
+                        <div className="space-y-2">
+                          {storeShippingMethods.map((method: any) => (
+                            <label
+                              key={method.id}
+                              className={`flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
+                                selectedShippingMethods.includes(method.id)
+                                  ? "border-primary bg-primary/5"
+                                  : "border-border hover:border-primary/40"
+                              }`}
+                            >
+                              <Checkbox
+                                checked={selectedShippingMethods.includes(method.id)}
+                                onCheckedChange={(checked) => {
+                                  setSelectedShippingMethods(prev =>
+                                    checked
+                                      ? [...prev, method.id]
+                                      : prev.filter(id => id !== method.id)
+                                  );
+                                }}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium text-foreground">{method.name}</span>
+                                  <span className="text-sm font-semibold text-primary">{method.price > 0 ? `${method.price} ₼` : "Pulsuz"}</span>
+                                </div>
+                                {(method.description || method.estimated_days) && (
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    {method.description}{method.estimated_days ? ` · ${method.estimated_days}` : ""}
+                                  </p>
+                                )}
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="rounded-lg border border-dashed border-border p-3 text-center">
+                        <Truck className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
+                        <p className="text-xs text-muted-foreground">
+                          Çatdırılma üsulları əlavə edilməyib.{" "}
+                          <a href="/store-dashboard" className="text-primary hover:underline">Mağaza panelindən</a> əlavə edin.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
