@@ -50,8 +50,8 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
     enabled: !!user && open,
   });
 
-  // Fetch shipping methods for this store
-  const { data: shippingMethods = [] } = useQuery({
+  // Fetch shipping methods for this store (filtered by listing's selected methods)
+  const { data: allShippingMethods = [] } = useQuery({
     queryKey: ["shipping-methods", listing.store_id],
     queryFn: async () => {
       const { data } = await supabase
@@ -63,6 +63,12 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
     },
     enabled: !!listing.store_id && open,
   });
+
+  // Filter to only listing's selected shipping methods (if specified)
+  const listingShippingIds = listing.custom_fields?._shipping_methods;
+  const shippingMethods = Array.isArray(listingShippingIds) && listingShippingIds.length > 0
+    ? allShippingMethods.filter((m: any) => listingShippingIds.includes(m.id))
+    : allShippingMethods;
 
   // Fetch commission rate
   const { data: commissionSetting } = useQuery({
