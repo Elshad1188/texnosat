@@ -344,6 +344,11 @@ const CreateListing = () => {
 
       const finalCategory = form.subcategory || form.category;
 
+      // Add shipping methods to custom fields if buyable
+      if (isBuyable && selectedShippingMethods.length > 0) {
+        resolvedCustomFields._shipping_methods = selectedShippingMethods as any;
+      }
+
       const listingData: any = {
         title: form.title, description: form.description,
         price: parseFloat(form.price), category: finalCategory,
