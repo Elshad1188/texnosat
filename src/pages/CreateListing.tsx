@@ -158,9 +158,25 @@ const CreateListing = () => {
     }
   }, [approvedStores.length]);
 
+  // Fetch shipping methods for selected store
+  const { data: storeShippingMethods = [] } = useQuery({
+    queryKey: ["store-shipping-methods", selectedStoreId],
+    queryFn: async () => {
+      const { data } = await supabase.from("shipping_methods").select("*").eq("store_id", selectedStoreId!).eq("is_active", true).order("created_at");
+      return data || [];
+    },
+    enabled: !!selectedStoreId,
+  });
 
-
-
+  // Load selected shipping methods from edit listing
+  useEffect(() => {
+    if (editListing && storeShippingMethods.length > 0) {
+      const cf = (editListing as any).custom_fields || {};
+      if (cf._shipping_methods && Array.isArray(cf._shipping_methods)) {
+        setSelectedShippingMethods(cf._shipping_methods);
+      }
+    }
+  }, [editListing, storeShippingMethods]);
   const parentCategories = categories.filter((c: any) => !c.parent_id);
   const subCategories = categories.filter((c: any) => {
     if (!form.category) return false;
