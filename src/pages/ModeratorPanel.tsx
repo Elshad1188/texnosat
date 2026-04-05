@@ -247,7 +247,7 @@ const ModeratorPanel = () => {
             <TabsTrigger value="comments" className="gap-1.5 rounded-lg text-xs">
               <MessageSquare className="h-3.5 w-3.5" /> Şərhlər
             </TabsTrigger>
-          </Tabs>
+          </TabsList>
 
           {/* LISTINGS TAB */}
           <TabsContent value="listings" className="space-y-4">
