@@ -147,9 +147,20 @@ const AdminSettingsManager = () => {
         await supabase.from("site_settings").insert({ key: "theme", value: themeSettings, updated_by: user?.id });
       }
     }
+
+    // Save platform mode
+    const { data: existingMode } = await supabase.from("site_settings").select("id").eq("key", "platform_mode").maybeSingle();
+    const modePayload = { mode: platformMode } as any;
+    if (existingMode) {
+      await supabase.from("site_settings").update({ value: modePayload, updated_by: user?.id }).eq("key", "platform_mode");
+    } else {
+      await supabase.from("site_settings").insert({ key: "platform_mode", value: modePayload, updated_by: user?.id });
+    }
     
     await refreshTheme();
     queryClient.invalidateQueries({ queryKey: ["watermark-settings"] });
+    queryClient.invalidateQueries({ queryKey: ["platform-mode"] });
+    queryClient.invalidateQueries({ queryKey: ["ecommerce-settings"] });
     toast({ title: "Tənzimləmələr saxlanıldı" });
     setSaving(false);
   };
