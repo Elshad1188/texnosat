@@ -185,8 +185,8 @@ const CreateStore = () => {
         working_hours: selectedDays.length > 0 ? formattedWorkingHours : form.working_hours 
       };
 
-      if (editId && editStore) {
-        // Submit change request for admin approval
+      if (editId) {
+        // Always submit change request for admin approval when editing
         const { error } = await supabase.from("store_change_requests").insert({
           store_id: editId,
           user_id: user!.id,
