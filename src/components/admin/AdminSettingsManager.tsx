@@ -169,6 +169,55 @@ const AdminSettingsManager = () => {
 
   return (
     <div className="space-y-6">
+      {/* Platform Mode */}
+      <div className="rounded-xl border-2 border-primary/30 bg-card p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">🎯 Platforma Rejimi</h3>
+        <p className="text-xs text-muted-foreground">Saytın əsas iş rejimini seçin. Bu seçim satış, elan və mağaza funksiyalarının görünürlüyünü təyin edir.</p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {[
+            { 
+              value: "classifieds" as PlatformMode, 
+              label: "📋 Elan Platforması", 
+              desc: "Yalnız elan yerləşdirmə. Satış, sifariş və çatdırılma deaktiv olur." 
+            },
+            { 
+              value: "marketplace" as PlatformMode, 
+              label: "🛒 Satış Platforması", 
+              desc: "Tam satış platforması. Bütün elanlar alına bilər, stok və sifariş sistemi aktiv olur." 
+            },
+            { 
+              value: "both" as PlatformMode, 
+              label: "🔄 Hər ikisi", 
+              desc: "Həm elan həm satış. Satıcılar elanı satılabilir edə bilər." 
+            },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setPlatformMode(opt.value)}
+              className={`rounded-xl border-2 p-3 text-left transition-all ${
+                platformMode === opt.value
+                  ? "border-primary bg-primary/5 shadow-md"
+                  : "border-border hover:border-primary/30"
+              }`}
+            >
+              <p className="text-sm font-semibold text-foreground">{opt.label}</p>
+              <p className="text-[11px] text-muted-foreground mt-1 leading-tight">{opt.desc}</p>
+            </button>
+          ))}
+        </div>
+        {platformMode === "marketplace" && (
+          <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 text-xs text-amber-700 dark:text-amber-400">
+            ⚠️ Satış rejimində bütün elanlar avtomatik olaraq satılabilir olacaq. E-kommersiya tənzimləmələrini "Sifarişlər" tabından idarə edə bilərsiniz.
+          </div>
+        )}
+        {platformMode === "classifieds" && (
+          <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3 text-xs text-blue-700 dark:text-blue-400">
+            ℹ️ Elan rejimində satış funksiyaları, sifarişlər və çatdırılma bölmələri gizlədiləcək.
+          </div>
+        )}
+      </div>
+
       {/* General */}
       <div className="rounded-xl border border-border bg-card p-4 space-y-3">
         <h3 className="text-sm font-semibold text-foreground flex items-center gap-2"><Globe className="h-4 w-4" /> Ümumi</h3>
