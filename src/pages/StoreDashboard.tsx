@@ -320,13 +320,17 @@ const StoreDashboard = () => {
           </TabsContent>
 
 
-          <TabsContent value="orders">
-            <SellerOrdersTab storeId={store.id} />
-          </TabsContent>
+          {platform.showOrders && (
+            <TabsContent value="orders">
+              <SellerOrdersTab storeId={store.id} />
+            </TabsContent>
+          )}
 
-          <TabsContent value="shipping">
-            <ShippingMethodsTab storeId={store.id} />
-          </TabsContent>
+          {platform.showShipping && (
+            <TabsContent value="shipping">
+              <ShippingMethodsTab storeId={store.id} />
+            </TabsContent>
+          )}
 
           <TabsContent value="bulk">
             <BulkListingUpload storeId={store.id} />
