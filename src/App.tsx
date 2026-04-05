@@ -74,6 +74,7 @@ const AppWrapper = () => {
         <Route path="/store/:id" element={<StoreDetail />} />
         <Route path="/store-dashboard" element={<StoreDashboard />} />
         <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/mod" element={<ModeratorPanel />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/messages" element={<Messages />} />
