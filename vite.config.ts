@@ -18,10 +18,14 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
+      devOptions: {
+        enabled: false,
+      },
       includeAssets: ["favicon.ico", "placeholder.svg"],
       workbox: {
         navigateFallbackDenylist: [/^\/~oauth/],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,webp}"],
+        cleanupOutdatedCaches: true,
       },
       manifest: {
         name: "Elan24 - Pulsuz Elan Saytı",
