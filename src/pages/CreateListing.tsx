@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdminOrMod } from "@/hooks/useIsAdmin";
+import { usePlatformMode } from "@/hooks/usePlatformMode";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ const conditions = ["Yeni", "Yeni kimi", "İşlənmiş"];
 const CreateListing = () => {
   const { user } = useAuth();
   const { isPrivileged } = useIsAdminOrMod();
+  const platform = usePlatformMode();
   const navigate = useNavigate();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -357,8 +359,8 @@ const CreateListing = () => {
         video_url: finalVideoUrl,
         store_id: selectedStoreId || null,
         custom_fields: Object.keys(resolvedCustomFields).length > 0 ? resolvedCustomFields : null,
-        is_buyable: isBuyable,
-        stock: parseInt(stock) || 0,
+        is_buyable: platform.mode === "marketplace" ? true : isBuyable,
+        stock: platform.mode === "marketplace" ? Math.max(parseInt(stock) || 1, 1) : (parseInt(stock) || 0),
         status: "pending",
         is_active: false,
       };
@@ -635,7 +637,7 @@ const CreateListing = () => {
             )}
 
             {/* Buyable toggle - only for stores with e-commerce enabled */}
-            {ecomSettings?.enabled && userStore && userStore.status === "approved" && (
+            {platform.showSales && ecomSettings?.enabled && userStore && userStore.status === "approved" && (
               <div className="rounded-xl border border-border bg-card p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>

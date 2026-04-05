@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { usePlatformMode } from "@/hooks/usePlatformMode";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -29,6 +30,7 @@ import TelegramBotTab from "@/components/seller/TelegramBotTab";
 const StoreDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const platform = usePlatformMode();
   const queryClient = useQueryClient();
   const [boostListingId, setBoostListingId] = useState<string | null>(null);
 
@@ -233,8 +235,8 @@ const StoreDashboard = () => {
         <Tabs defaultValue="listings" className="space-y-4">
           <TabsList className="w-full justify-start overflow-x-auto">
             <TabsTrigger value="listings" className="gap-1 text-xs sm:text-sm"><Package className="h-3.5 w-3.5" />Elanlar</TabsTrigger>
-            <TabsTrigger value="orders" className="gap-1 text-xs sm:text-sm"><ShoppingCart className="h-3.5 w-3.5" />Sifarişlər</TabsTrigger>
-            <TabsTrigger value="shipping" className="gap-1 text-xs sm:text-sm"><Truck className="h-3.5 w-3.5" />Çatdırılma</TabsTrigger>
+            {platform.showOrders && <TabsTrigger value="orders" className="gap-1 text-xs sm:text-sm"><ShoppingCart className="h-3.5 w-3.5" />Sifarişlər</TabsTrigger>}
+            {platform.showShipping && <TabsTrigger value="shipping" className="gap-1 text-xs sm:text-sm"><Truck className="h-3.5 w-3.5" />Çatdırılma</TabsTrigger>}
             <TabsTrigger value="bulk" className="gap-1 text-xs sm:text-sm"><Upload className="h-3.5 w-3.5" />Toplu yükləmə</TabsTrigger>
             <TabsTrigger value="followers" className="gap-1 text-xs sm:text-sm"><Users className="h-3.5 w-3.5" />Abunəçilər</TabsTrigger>
             <TabsTrigger value="telegram" className="gap-1 text-xs sm:text-sm"><Bot className="h-3.5 w-3.5" />Telegram Bot</TabsTrigger>
@@ -318,13 +320,17 @@ const StoreDashboard = () => {
           </TabsContent>
 
 
-          <TabsContent value="orders">
-            <SellerOrdersTab storeId={store.id} />
-          </TabsContent>
+          {platform.showOrders && (
+            <TabsContent value="orders">
+              <SellerOrdersTab storeId={store.id} />
+            </TabsContent>
+          )}
 
-          <TabsContent value="shipping">
-            <ShippingMethodsTab storeId={store.id} />
-          </TabsContent>
+          {platform.showShipping && (
+            <TabsContent value="shipping">
+              <ShippingMethodsTab storeId={store.id} />
+            </TabsContent>
+          )}
 
           <TabsContent value="bulk">
             <BulkListingUpload storeId={store.id} />
