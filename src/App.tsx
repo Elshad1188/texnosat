@@ -26,6 +26,7 @@ import StaticPage from "./pages/StaticPage";
 import Balance from "./pages/Balance";
 import SpinWin from "./pages/SpinWin";
 import NotFound from "./pages/NotFound";
+import ModeratorPanel from "./pages/ModeratorPanel";
 import Orders from "./pages/Orders";
 import Support from "./pages/Support";
 import MobileBottomNav from "./components/MobileBottomNav";
