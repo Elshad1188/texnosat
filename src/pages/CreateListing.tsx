@@ -637,7 +637,7 @@ const CreateListing = () => {
             )}
 
             {/* Buyable toggle - only for stores with e-commerce enabled */}
-            {ecomSettings?.enabled && userStore && userStore.status === "approved" && (
+            {platform.showSales && ecomSettings?.enabled && userStore && userStore.status === "approved" && (
               <div className="rounded-xl border border-border bg-card p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
