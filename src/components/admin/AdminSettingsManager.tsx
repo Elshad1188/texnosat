@@ -118,6 +118,11 @@ const AdminSettingsManager = () => {
       if (themeVal) {
         setThemeSettings({ ...DEFAULT_THEME, ...themeVal });
       }
+
+      const { data: modeData } = await supabase.from("site_settings").select("value").eq("key", "platform_mode").maybeSingle();
+      if (modeData?.value) {
+        setPlatformMode((modeData.value as any).mode || "both");
+      }
       
       setLoading(false);
     };
