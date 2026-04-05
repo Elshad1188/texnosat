@@ -16,6 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdminOrMod, useIsAdmin } from "@/hooks/useIsAdmin";
 import { usePlatformMode } from "@/hooks/usePlatformMode";
 import { useToast } from "@/hooks/use-toast";
+import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ListingCard from "@/components/ListingCard";
 import WatermarkOverlay from "@/components/WatermarkOverlay";
