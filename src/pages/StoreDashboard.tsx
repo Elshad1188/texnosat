@@ -30,6 +30,7 @@ import TelegramBotTab from "@/components/seller/TelegramBotTab";
 const StoreDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const platform = usePlatformMode();
   const queryClient = useQueryClient();
   const [boostListingId, setBoostListingId] = useState<string | null>(null);
 
