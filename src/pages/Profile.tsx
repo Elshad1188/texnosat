@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 const Profile = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { isAdmin } = useIsAdmin();
+  const { isPrivileged: isMod } = useIsAdminOrMod();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [fullName, setFullName] = useState("");
