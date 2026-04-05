@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Save, Loader2, Globe, Mail, Phone, MapPin, Image, Upload } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 
+import type { PlatformMode } from "@/hooks/usePlatformMode";
+
 interface SiteSettings {
   site_name: string;
   site_description: string;
