@@ -26,6 +26,7 @@ import StaticPage from "./pages/StaticPage";
 import Balance from "./pages/Balance";
 import SpinWin from "./pages/SpinWin";
 import NotFound from "./pages/NotFound";
+import ModeratorPanel from "./pages/ModeratorPanel";
 import Orders from "./pages/Orders";
 import Support from "./pages/Support";
 import MobileBottomNav from "./components/MobileBottomNav";
@@ -73,6 +74,7 @@ const AppWrapper = () => {
         <Route path="/store/:id" element={<StoreDetail />} />
         <Route path="/store-dashboard" element={<StoreDashboard />} />
         <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/mod" element={<ModeratorPanel />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/messages" element={<Messages />} />

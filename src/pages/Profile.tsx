@@ -17,7 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { User, Package, Store, Star, Edit2, Save, Eye, MapPin, Phone, Calendar, LogOut, ShieldCheck, Settings, Wallet, Trash2, Mail, Camera, Loader2, Clock, Plus } from "lucide-react";
-import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useIsAdmin, useIsAdminOrMod } from "@/hooks/useIsAdmin";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 const Profile = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { isAdmin } = useIsAdmin();
+  const { isPrivileged: isMod } = useIsAdminOrMod();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -195,22 +196,35 @@ const Profile = () => {
                       <ShieldCheck className="h-3 w-3" /> Admin
                     </Badge>
                   )}
+                  {!isAdmin && isMod && (
+                    <Badge className="bg-blue-500/15 text-blue-600 border border-blue-500/30 text-[10px] flex items-center gap-1">
+                      <ShieldCheck className="h-3 w-3" /> Moderator
+                    </Badge>
+                  )}
                 </div>
                 <div className="mt-1 flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground sm:justify-start">
                   {profile?.city && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{profile.city}</span>}
                   {profile?.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{profile.phone}</span>}
                   <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(profile?.created_at || "").toLocaleDateString("az-AZ")}</span>
                 </div>
-                {isAdmin && (
-                  <div className="mt-3 flex justify-center sm:justify-start">
+                <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
+                  {isAdmin && (
                     <Button size="sm" className="bg-gradient-primary text-primary-foreground gap-1.5 h-8 text-xs" asChild>
                       <Link to="/admin">
                         <ShieldCheck className="h-3.5 w-3.5" />
                         Admin Paneli
                       </Link>
                     </Button>
-                  </div>
-                )}
+                  )}
+                  {isMod && !isAdmin && (
+                    <Button size="sm" className="gap-1.5 h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white" asChild>
+                      <Link to="/mod">
+                        <ShieldCheck className="h-3.5 w-3.5" />
+                        Mod Paneli
+                      </Link>
+                    </Button>
+                  )}
+                </div>
               </div>
               <div className="flex gap-4 text-center">
                 <Link to="/balance" className="text-center hover:opacity-80 transition-opacity">
