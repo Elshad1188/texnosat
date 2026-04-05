@@ -103,6 +103,7 @@ const AdminSettingsManager = () => {
   const [saving, setSaving] = useState(false);
   const [uploadingWm, setUploadingWm] = useState(false);
   const [themeSettings, setThemeSettings] = useState<any>(DEFAULT_THEME);
+  const [platformMode, setPlatformMode] = useState<PlatformMode>("both");
   const wmFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
