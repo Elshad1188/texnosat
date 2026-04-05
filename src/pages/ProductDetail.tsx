@@ -14,7 +14,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdminOrMod, useIsAdmin } from "@/hooks/useIsAdmin";
-import { useToast } from "@/hooks/use-toast";
+import { usePlatformMode } from "@/hooks/usePlatformMode";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ListingCard from "@/components/ListingCard";
