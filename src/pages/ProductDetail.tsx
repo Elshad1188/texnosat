@@ -51,6 +51,7 @@ const ProductDetail = () => {
   const { user } = useAuth();
   const { isPrivileged } = useIsAdminOrMod();
   const { toast } = useToast();
+  const platform = usePlatformMode();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const isModerationMode = searchParams.get("mode") === "moderation";
