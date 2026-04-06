@@ -697,10 +697,24 @@ const Messages = () => {
                             {group.msgs.map((m, idx) => {
                               const isMine = m.sender_id === user.id;
                               const prevMsg = idx > 0 ? group.msgs[idx - 1] : null;
-                              const isConsecutive = prevMsg && prevMsg.sender_id === m.sender_id;
+                              const isConsecutive = prevMsg && prevMsg.sender_id === m.sender_id && prevMsg.sender_store_id === m.sender_store_id;
+                              const senderStore = m.sender_store_id ? allStoresForMessages.find((s: any) => s.id === m.sender_store_id) : null;
                               
                               return (
                                 <div key={m.id} className={`flex group ${isMine ? "justify-end" : "justify-start"} ${isConsecutive ? "" : "mt-3"}`}>
+                                  {/* Store badge for incoming messages */}
+                                  {!isMine && senderStore && !isConsecutive && (
+                                    <div className="flex items-center gap-1.5 mb-1 ml-1">
+                                      <div className="h-4 w-4 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                        {senderStore.logo_url ? (
+                                          <img src={senderStore.logo_url} alt="" className="h-full w-full object-cover" />
+                                        ) : (
+                                          <Store className="h-2.5 w-2.5 text-primary" />
+                                        )}
+                                      </div>
+                                      <span className="text-[10px] font-medium text-primary">{senderStore.name}</span>
+                                    </div>
+                                  )}
                                   <div className={`relative max-w-[80%] sm:max-w-[70%] ${
                                     m.image_url ? "rounded-2xl overflow-hidden" : `rounded-2xl px-3.5 py-2 ${
                                       isMine
