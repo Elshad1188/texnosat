@@ -153,13 +153,7 @@ const CreateListing = () => {
   const approvedStores = userStores.filter((s: any) => s.status === "approved");
   const userStore = selectedStoreId 
     ? approvedStores.find((s: any) => s.id === selectedStoreId) || null
-    : approvedStores.length > 0 ? approvedStores[0] : null;
-
-  useEffect(() => {
-    if (approvedStores.length > 0 && !selectedStoreId) {
-      setSelectedStoreId(approvedStores[0].id);
-    }
-  }, [approvedStores.length]);
+    : null;
 
   // Fetch shipping methods for selected store
   const { data: storeShippingMethods = [] } = useQuery({
