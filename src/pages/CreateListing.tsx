@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import IdentitySwitcher from "@/components/IdentitySwitcher";
+import { getModelsByCategory } from "@/data/brandModels";
 
 const conditions = ["Yeni", "Yeni kimi", "İşlənmiş"];
 
@@ -552,66 +553,108 @@ const CreateListing = () => {
             )}
 
             {/* Category custom fields */}
-            {categoryFields.length > 0 && (
-              <div className="rounded-xl border border-border bg-card">
-                <button
-                  type="button"
-                  onClick={() => setShowCustomFields(!showCustomFields)}
-                  className="flex w-full items-center justify-between p-4"
-                >
-                  <span className="text-sm font-semibold text-foreground">Əlavə məlumatlar ({categoryFields.length})</span>
-                  {showCustomFields ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
-                </button>
-                {showCustomFields && (
-                  <div className="space-y-4 px-4 pb-4">
-                    {categoryFields.map((field: any) => (
-                      <div key={field.id} className="space-y-2">
-                        <Label>
-                          {field.field_label}
-                        </Label>
-                        {field.field_type === "select" && Array.isArray(field.options) ? (
-                          <>
-                            <Select
-                              value={customFields[field.field_name] || ""}
-                              onValueChange={v => setCustomFields(prev => ({ ...prev, [field.field_name]: v, [field.field_name + "_other"]: "" }))}
-                            >
-                              <SelectTrigger><SelectValue placeholder="Seçin" /></SelectTrigger>
-                              <SelectContent>
-                                {field.options.map((opt: string) => (
-                                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                                ))}
-                                <SelectItem value="__other__">Digər</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            {customFields[field.field_name] === "__other__" && (
+            {categoryFields.length > 0 && (() => {
+              const brandModelMap = getModelsByCategory(activeCategorySlug);
+              const selectedBrand = customFields["marka"];
+              const modelOptions = brandModelMap && selectedBrand && selectedBrand !== "__other__"
+                ? brandModelMap[selectedBrand] || []
+                : [];
+
+              return (
+                <div className="rounded-xl border border-border bg-card">
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomFields(!showCustomFields)}
+                    className="flex w-full items-center justify-between p-4"
+                  >
+                    <span className="text-sm font-semibold text-foreground">Əlavə məlumatlar ({categoryFields.length})</span>
+                    {showCustomFields ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                  </button>
+                  {showCustomFields && (
+                    <div className="space-y-4 px-4 pb-4">
+                      {categoryFields.map((field: any) => {
+                        // If this is the "model" field and we have brand-model mappings, show dynamic dropdown
+                        const isDependentModel = field.field_name === "model" && brandModelMap && selectedBrand && selectedBrand !== "__other__" && modelOptions.length > 0;
+
+                        return (
+                          <div key={field.id} className="space-y-2">
+                            <Label>{field.field_label}</Label>
+                            {isDependentModel ? (
+                              <>
+                                <Select
+                                  value={customFields[field.field_name] || ""}
+                                  onValueChange={v => setCustomFields(prev => ({ ...prev, [field.field_name]: v, [field.field_name + "_other"]: "" }))}
+                                >
+                                  <SelectTrigger><SelectValue placeholder="Model seçin" /></SelectTrigger>
+                                  <SelectContent>
+                                    {modelOptions.map((m: string) => (
+                                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                                    ))}
+                                    <SelectItem value="__other__">Digər</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                {customFields[field.field_name] === "__other__" && (
+                                  <Input
+                                    className="mt-2"
+                                    placeholder="Model adını daxil edin..."
+                                    value={customFields[field.field_name + "_other"] || ""}
+                                    onChange={e => setCustomFields(prev => ({ ...prev, [field.field_name + "_other"]: e.target.value }))}
+                                  />
+                                )}
+                              </>
+                            ) : field.field_type === "select" && Array.isArray(field.options) ? (
+                              <>
+                                <Select
+                                  value={customFields[field.field_name] || ""}
+                                  onValueChange={v => {
+                                    const updates: Record<string, string> = { [field.field_name]: v, [field.field_name + "_other"]: "" };
+                                    // Reset model when brand changes
+                                    if (field.field_name === "marka" && brandModelMap) {
+                                      updates["model"] = "";
+                                      updates["model_other"] = "";
+                                    }
+                                    setCustomFields(prev => ({ ...prev, ...updates }));
+                                  }}
+                                >
+                                  <SelectTrigger><SelectValue placeholder="Seçin" /></SelectTrigger>
+                                  <SelectContent>
+                                    {field.options.map((opt: string) => (
+                                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                    ))}
+                                    <SelectItem value="__other__">Digər</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                {customFields[field.field_name] === "__other__" && (
+                                  <Input
+                                    className="mt-2"
+                                    placeholder={`${field.field_label} daxil edin...`}
+                                    value={customFields[field.field_name + "_other"] || ""}
+                                    onChange={e => setCustomFields(prev => ({ ...prev, [field.field_name + "_other"]: e.target.value }))}
+                                  />
+                                )}
+                              </>
+                            ) : field.field_type === "number" ? (
                               <Input
-                                className="mt-2"
-                                placeholder={`${field.field_label} daxil edin...`}
-                                value={customFields[field.field_name + "_other"] || ""}
-                                onChange={e => setCustomFields(prev => ({ ...prev, [field.field_name + "_other"]: e.target.value }))}
+                                type="number"
+                                placeholder={field.field_label}
+                                value={customFields[field.field_name] || ""}
+                                onChange={e => setCustomFields(prev => ({ ...prev, [field.field_name]: e.target.value }))}
+                              />
+                            ) : (
+                              <Input
+                                placeholder={field.field_label}
+                                value={customFields[field.field_name] || ""}
+                                onChange={e => setCustomFields(prev => ({ ...prev, [field.field_name]: e.target.value }))}
                               />
                             )}
-                          </>
-                        ) : field.field_type === "number" ? (
-                          <Input
-                            type="number"
-                            placeholder={field.field_label}
-                            value={customFields[field.field_name] || ""}
-                            onChange={e => setCustomFields(prev => ({ ...prev, [field.field_name]: e.target.value }))}
-                          />
-                        ) : (
-                          <Input
-                            placeholder={field.field_label}
-                            value={customFields[field.field_name] || ""}
-                            onChange={e => setCustomFields(prev => ({ ...prev, [field.field_name]: e.target.value }))}
-                          />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Buyable toggle - only for stores with e-commerce enabled */}
             {platform.showSales && ecomSettings?.enabled && userStore && userStore.status === "approved" && (
