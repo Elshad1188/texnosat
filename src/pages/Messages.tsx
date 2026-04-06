@@ -169,12 +169,15 @@ const Messages = () => {
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from("chat_media").getPublicUrl(filePath);
       
-      const { error: msgErr } = await supabase.from("messages").insert({
+      const msgData: any = {
         conversation_id: activeConvoId,
         sender_id: user.id,
         content: "🎤 Səsli mesaj",
         audio_url: publicUrl,
-      });
+      };
+      if (selectedStoreId) msgData.sender_store_id = selectedStoreId;
+      
+      const { error: msgErr } = await supabase.from("messages").insert(msgData);
       if (msgErr) throw msgErr;
       queryClient.invalidateQueries({ queryKey: ["messages", activeConvoId] });
     } catch {
