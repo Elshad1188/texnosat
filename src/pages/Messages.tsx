@@ -436,25 +436,18 @@ const Messages = () => {
   const activeConvo = conversations.find((c: any) => c.id === activeConvoId);
   const isOnline = activeConvo?.profile?.last_seen && (Date.now() - new Date(activeConvo.profile.last_seen).getTime() < 120000);
 
-  const { data: myStores = [] } = useQuery({
-    queryKey: ["my-stores", user?.id],
+  // Fetch stores for message display (sender_store_id lookups)
+  const { data: allStoresForMessages = [] } = useQuery({
+    queryKey: ["stores-for-messages", activeConvoId],
     queryFn: async () => {
-      const { data } = await supabase.from("stores").select("*").eq("user_id", user!.id);
+      if (!activeConvoId || messages.length === 0) return [];
+      const storeIds = [...new Set(messages.filter(m => m.sender_store_id).map(m => m.sender_store_id!))];
+      if (storeIds.length === 0) return [];
+      const { data } = await supabase.from("stores").select("id, name, logo_url").in("id", storeIds);
       return data || [];
     },
-    enabled: !!user,
+    enabled: !!activeConvoId && messages.length > 0,
   });
-
-  let myStore = null;
-  if (activeConvoId && activeConvo) {
-    if (activeConvo.listing && activeConvo.listing.store_id) {
-      myStore = myStores.find((s: any) => s.id === activeConvo.listing.store_id);
-    } else if (!activeConvo.listing) {
-      myStore = myStores.length > 0 ? myStores[0] : null;
-    }
-  } else {
-    myStore = myStores.length === 1 ? myStores[0] : null;
-  }
 
   // Auto-resize textarea
   const handleTextareaInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
