@@ -18,6 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import IdentitySwitcher from "@/components/IdentitySwitcher";
+import { getModelsByCategory } from "@/data/brandModels";
 
 const conditions = ["Yeni", "Yeni kimi", "İşlənmiş"];
 
