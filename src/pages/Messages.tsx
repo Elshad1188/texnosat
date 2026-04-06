@@ -115,12 +115,15 @@ const Messages = () => {
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from("chat_media").getPublicUrl(filePath);
       
-      const { error: msgErr } = await supabase.from("messages").insert({
+      const msgData: any = {
         conversation_id: activeConvoId,
         sender_id: user.id,
         content: "📷 Şəkil",
         image_url: publicUrl,
-      });
+      };
+      if (selectedStoreId) msgData.sender_store_id = selectedStoreId;
+      
+      const { error: msgErr } = await supabase.from("messages").insert(msgData);
       if (msgErr) throw msgErr;
       cancelImagePreview();
       queryClient.invalidateQueries({ queryKey: ["messages", activeConvoId] });
