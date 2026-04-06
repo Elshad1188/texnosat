@@ -56,6 +56,7 @@ type MessageRecord = {
   image_url: string | null;
   audio_url: string | null;
   created_at: string | null;
+  sender_store_id: string | null;
 };
 
 function formatTime(dateStr: string) {
