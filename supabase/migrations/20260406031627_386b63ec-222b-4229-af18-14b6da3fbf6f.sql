@@ -1,0 +1,1 @@
+ALTER TABLE public.messages ADD COLUMN sender_store_id UUID DEFAULT NULL REFERENCES public.stores(id) ON DELETE SET NULL;
