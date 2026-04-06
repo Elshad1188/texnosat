@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { MessageCircle, Send, ArrowLeft, Loader2, Check, CheckCheck, Store, Trash2, MoreVertical, ImagePlus, Mic, MicOff, X, Image as ImageIcon } from "lucide-react";
+import IdentitySwitcher from "@/components/IdentitySwitcher";
 import {
   Tooltip,
   TooltipContent,
