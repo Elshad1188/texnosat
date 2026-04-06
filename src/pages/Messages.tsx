@@ -840,12 +840,13 @@ const Messages = () => {
 
                   {/* Input area */}
                   <div className="border-t border-border/50 p-3 sm:p-4 bg-card">
-                    {myStore && (
-                      <p className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Store className="h-3 w-3 text-primary" />
-                        <span className="font-medium text-primary">{myStore.name}</span> adından cavab verirsiniz
-                      </p>
-                    )}
+                    <div className="mb-2">
+                      <IdentitySwitcher
+                        selectedStoreId={selectedStoreId}
+                        onSelect={setSelectedStoreId}
+                        compact
+                      />
+                    </div>
                     <form onSubmit={handleSubmit} className="flex items-end gap-2">
                       <input
                         type="file"
