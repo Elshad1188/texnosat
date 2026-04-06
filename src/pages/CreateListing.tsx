@@ -17,6 +17,7 @@ import { ImagePlus, X, Loader2, Store, Video, ChevronDown, ChevronUp, ShoppingBa
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
+import IdentitySwitcher from "@/components/IdentitySwitcher";
 
 const conditions = ["Yeni", "Yeni kimi", "İşlənmiş"];
 
@@ -152,13 +153,7 @@ const CreateListing = () => {
   const approvedStores = userStores.filter((s: any) => s.status === "approved");
   const userStore = selectedStoreId 
     ? approvedStores.find((s: any) => s.id === selectedStoreId) || null
-    : approvedStores.length > 0 ? approvedStores[0] : null;
-
-  useEffect(() => {
-    if (approvedStores.length > 0 && !selectedStoreId) {
-      setSelectedStoreId(approvedStores[0].id);
-    }
-  }, [approvedStores.length]);
+    : null;
 
   // Fetch shipping methods for selected store
   const { data: storeShippingMethods = [] } = useQuery({
@@ -539,37 +534,19 @@ const CreateListing = () => {
               </div>
             </div>
 
-            {/* Store selector */}
+            {/* Identity switcher - personal vs store */}
             {approvedStores.length > 0 && (
               <div className="space-y-2">
-                <Label className="flex items-center gap-2"><Store className="h-4 w-4 text-primary" /> Mağaza seçin</Label>
-                {approvedStores.length === 1 ? (
-                  <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 p-3">
-                    {approvedStores[0].logo_url ? (
-                      <img src={approvedStores[0].logo_url} alt="" className="h-8 w-8 rounded-lg object-cover" />
-                    ) : (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10"><Store className="h-4 w-4 text-primary" /></div>
-                    )}
-                    <span className="text-sm font-medium text-foreground">{approvedStores[0].name}</span>
-                  </div>
-                ) : (
-                  <Select value={selectedStoreId || ""} onValueChange={(v) => setSelectedStoreId(v)}>
-                    <SelectTrigger><SelectValue placeholder="Mağaza seçin" /></SelectTrigger>
-                    <SelectContent>
-                      {approvedStores.map((s: any) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          <div className="flex items-center gap-2">
-                            {s.logo_url ? (
-                              <img src={s.logo_url} alt="" className="h-5 w-5 rounded object-cover" />
-                            ) : (
-                              <Store className="h-4 w-4 text-muted-foreground" />
-                            )}
-                            {s.name}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <Label className="flex items-center gap-2"><Store className="h-4 w-4 text-primary" /> Kim adından yerləşdirirsiniz?</Label>
+                <IdentitySwitcher
+                  selectedStoreId={selectedStoreId}
+                  onSelect={(id) => setSelectedStoreId(id)}
+                />
+                {selectedStoreId && (
+                  <p className="text-xs text-muted-foreground">Elan seçilmiş mağaza adından yerləşdiriləcək</p>
+                )}
+                {!selectedStoreId && (
+                  <p className="text-xs text-muted-foreground">Elan şəxsi hesabınız adından yerləşdiriləcək</p>
                 )}
               </div>
             )}

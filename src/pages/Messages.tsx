@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { MessageCircle, Send, ArrowLeft, Loader2, Check, CheckCheck, Store, Trash2, MoreVertical, ImagePlus, Mic, MicOff, X, Image as ImageIcon } from "lucide-react";
+import IdentitySwitcher from "@/components/IdentitySwitcher";
 import {
   Tooltip,
   TooltipContent,
@@ -55,6 +56,7 @@ type MessageRecord = {
   image_url: string | null;
   audio_url: string | null;
   created_at: string | null;
+  sender_store_id: string | null;
 };
 
 function formatTime(dateStr: string) {
@@ -84,6 +86,7 @@ const Messages = () => {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [imagePreviewFile, setImagePreviewFile] = useState<File | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,12 +115,15 @@ const Messages = () => {
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from("chat_media").getPublicUrl(filePath);
       
-      const { error: msgErr } = await supabase.from("messages").insert({
+      const msgData: any = {
         conversation_id: activeConvoId,
         sender_id: user.id,
         content: "📷 Şəkil",
         image_url: publicUrl,
-      });
+      };
+      if (selectedStoreId) msgData.sender_store_id = selectedStoreId;
+      
+      const { error: msgErr } = await supabase.from("messages").insert(msgData);
       if (msgErr) throw msgErr;
       cancelImagePreview();
       queryClient.invalidateQueries({ queryKey: ["messages", activeConvoId] });
@@ -163,12 +169,15 @@ const Messages = () => {
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from("chat_media").getPublicUrl(filePath);
       
-      const { error: msgErr } = await supabase.from("messages").insert({
+      const msgData: any = {
         conversation_id: activeConvoId,
         sender_id: user.id,
         content: "🎤 Səsli mesaj",
         audio_url: publicUrl,
-      });
+      };
+      if (selectedStoreId) msgData.sender_store_id = selectedStoreId;
+      
+      const { error: msgErr } = await supabase.from("messages").insert(msgData);
       if (msgErr) throw msgErr;
       queryClient.invalidateQueries({ queryKey: ["messages", activeConvoId] });
     } catch {
@@ -327,11 +336,13 @@ const Messages = () => {
     mutationFn: async () => {
       if (!user || !activeConvoId || !messageText.trim()) return;
       const content = messageText.trim();
-      const { error } = await supabase.from("messages").insert({
+      const msgData: any = {
         conversation_id: activeConvoId,
         sender_id: user.id,
         content,
-      });
+      };
+      if (selectedStoreId) msgData.sender_store_id = selectedStoreId;
+      const { error } = await supabase.from("messages").insert(msgData);
       if (error) throw error;
 
       const convo = conversations.find((c: any) => c.id === activeConvoId);
@@ -425,25 +436,18 @@ const Messages = () => {
   const activeConvo = conversations.find((c: any) => c.id === activeConvoId);
   const isOnline = activeConvo?.profile?.last_seen && (Date.now() - new Date(activeConvo.profile.last_seen).getTime() < 120000);
 
-  const { data: myStores = [] } = useQuery({
-    queryKey: ["my-stores", user?.id],
+  // Fetch stores for message display (sender_store_id lookups)
+  const { data: allStoresForMessages = [] } = useQuery({
+    queryKey: ["stores-for-messages", activeConvoId],
     queryFn: async () => {
-      const { data } = await supabase.from("stores").select("*").eq("user_id", user!.id);
+      if (!activeConvoId || messages.length === 0) return [];
+      const storeIds = [...new Set(messages.filter(m => m.sender_store_id).map(m => m.sender_store_id!))];
+      if (storeIds.length === 0) return [];
+      const { data } = await supabase.from("stores").select("id, name, logo_url").in("id", storeIds);
       return data || [];
     },
-    enabled: !!user,
+    enabled: !!activeConvoId && messages.length > 0,
   });
-
-  let myStore = null;
-  if (activeConvoId && activeConvo) {
-    if (activeConvo.listing && activeConvo.listing.store_id) {
-      myStore = myStores.find((s: any) => s.id === activeConvo.listing.store_id);
-    } else if (!activeConvo.listing) {
-      myStore = myStores.length > 0 ? myStores[0] : null;
-    }
-  } else {
-    myStore = myStores.length === 1 ? myStores[0] : null;
-  }
 
   // Auto-resize textarea
   const handleTextareaInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -508,12 +512,13 @@ const Messages = () => {
             <div className={`w-full md:w-[340px] flex-shrink-0 flex flex-col bg-card ${activeConvoId ? "hidden md:flex" : "flex"}`}>
               <div className="p-4 pb-3">
                 <h2 className="font-display text-xl font-bold text-foreground">Mesajlar</h2>
-                {myStore && (
-                  <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Store className="h-3 w-3 text-primary" />
-                    <span className="font-medium text-primary">{myStore.name}</span> adından yazırsınız
-                  </p>
-                )}
+                <div className="mt-2">
+                  <IdentitySwitcher
+                    selectedStoreId={selectedStoreId}
+                    onSelect={setSelectedStoreId}
+                    compact
+                  />
+                </div>
               </div>
               <div className="flex-1 overflow-y-auto">
                 {convosLoading ? (
@@ -692,10 +697,24 @@ const Messages = () => {
                             {group.msgs.map((m, idx) => {
                               const isMine = m.sender_id === user.id;
                               const prevMsg = idx > 0 ? group.msgs[idx - 1] : null;
-                              const isConsecutive = prevMsg && prevMsg.sender_id === m.sender_id;
+                              const isConsecutive = prevMsg && prevMsg.sender_id === m.sender_id && prevMsg.sender_store_id === m.sender_store_id;
+                              const senderStore = m.sender_store_id ? allStoresForMessages.find((s: any) => s.id === m.sender_store_id) : null;
                               
                               return (
                                 <div key={m.id} className={`flex group ${isMine ? "justify-end" : "justify-start"} ${isConsecutive ? "" : "mt-3"}`}>
+                                  {/* Store badge for incoming messages */}
+                                  {!isMine && senderStore && !isConsecutive && (
+                                    <div className="flex items-center gap-1.5 mb-1 ml-1">
+                                      <div className="h-4 w-4 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                        {senderStore.logo_url ? (
+                                          <img src={senderStore.logo_url} alt="" className="h-full w-full object-cover" />
+                                        ) : (
+                                          <Store className="h-2.5 w-2.5 text-primary" />
+                                        )}
+                                      </div>
+                                      <span className="text-[10px] font-medium text-primary">{senderStore.name}</span>
+                                    </div>
+                                  )}
                                   <div className={`relative max-w-[80%] sm:max-w-[70%] ${
                                     m.image_url ? "rounded-2xl overflow-hidden" : `rounded-2xl px-3.5 py-2 ${
                                       isMine
@@ -835,12 +854,13 @@ const Messages = () => {
 
                   {/* Input area */}
                   <div className="border-t border-border/50 p-3 sm:p-4 bg-card">
-                    {myStore && (
-                      <p className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Store className="h-3 w-3 text-primary" />
-                        <span className="font-medium text-primary">{myStore.name}</span> adından cavab verirsiniz
-                      </p>
-                    )}
+                    <div className="mb-2">
+                      <IdentitySwitcher
+                        selectedStoreId={selectedStoreId}
+                        onSelect={setSelectedStoreId}
+                        compact
+                      />
+                    </div>
                     <form onSubmit={handleSubmit} className="flex items-end gap-2">
                       <input
                         type="file"

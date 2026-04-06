@@ -360,6 +360,7 @@ export type Database = {
           is_delivered: boolean | null
           is_read: boolean | null
           sender_id: string
+          sender_store_id: string | null
         }
         Insert: {
           audio_url?: string | null
@@ -371,6 +372,7 @@ export type Database = {
           is_delivered?: boolean | null
           is_read?: boolean | null
           sender_id: string
+          sender_store_id?: string | null
         }
         Update: {
           audio_url?: string | null
@@ -382,6 +384,7 @@ export type Database = {
           is_delivered?: boolean | null
           is_read?: boolean | null
           sender_id?: string
+          sender_store_id?: string | null
         }
         Relationships: [
           {
@@ -389,6 +392,13 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_store_id_fkey"
+            columns: ["sender_store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
