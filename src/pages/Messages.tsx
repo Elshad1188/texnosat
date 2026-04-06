@@ -336,11 +336,13 @@ const Messages = () => {
     mutationFn: async () => {
       if (!user || !activeConvoId || !messageText.trim()) return;
       const content = messageText.trim();
-      const { error } = await supabase.from("messages").insert({
+      const msgData: any = {
         conversation_id: activeConvoId,
         sender_id: user.id,
         content,
-      });
+      };
+      if (selectedStoreId) msgData.sender_store_id = selectedStoreId;
+      const { error } = await supabase.from("messages").insert(msgData);
       if (error) throw error;
 
       const convo = conversations.find((c: any) => c.id === activeConvoId);
