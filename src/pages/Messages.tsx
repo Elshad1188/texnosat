@@ -512,12 +512,13 @@ const Messages = () => {
             <div className={`w-full md:w-[340px] flex-shrink-0 flex flex-col bg-card ${activeConvoId ? "hidden md:flex" : "flex"}`}>
               <div className="p-4 pb-3">
                 <h2 className="font-display text-xl font-bold text-foreground">Mesajlar</h2>
-                {myStore && (
-                  <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Store className="h-3 w-3 text-primary" />
-                    <span className="font-medium text-primary">{myStore.name}</span> adından yazırsınız
-                  </p>
-                )}
+                <div className="mt-2">
+                  <IdentitySwitcher
+                    selectedStoreId={selectedStoreId}
+                    onSelect={setSelectedStoreId}
+                    compact
+                  />
+                </div>
               </div>
               <div className="flex-1 overflow-y-auto">
                 {convosLoading ? (
