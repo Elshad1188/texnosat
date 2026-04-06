@@ -86,6 +86,7 @@ const Messages = () => {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [imagePreviewFile, setImagePreviewFile] = useState<File | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
