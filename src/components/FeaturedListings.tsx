@@ -164,12 +164,14 @@ const FeaturedListings = () => {
                   location={l.location}
                   time={formatTime(l.created_at)}
                   image={l.image_urls?.[0] || "/placeholder.svg"}
+                  images={l.image_urls || []}
                   condition={l.condition}
                   isPremium={l.is_premium}
                   isUrgent={l.is_urgent}
                   storeId={l.store_id}
                   storeName={s?.name}
                   storeLogo={s?.logo_url}
+                  imageSlider={hpSettings.homepage_image_slider}
                 />
               );
             })}
