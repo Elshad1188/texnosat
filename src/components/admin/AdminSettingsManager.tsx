@@ -38,6 +38,7 @@ interface SiteSettings {
   homepage_urgent_count: number;
   homepage_new_count: number;
   homepage_auto_load: boolean;
+  homepage_image_slider: boolean;
   store_listing_limit: number;
   telegram_bot_daily_limit: number;
   ai_autofill_daily_limit: number;
@@ -67,6 +68,7 @@ const defaults: SiteSettings = {
   homepage_urgent_count: 4,
   homepage_new_count: 8,
   homepage_auto_load: false,
+  homepage_image_slider: false,
   store_listing_limit: 20,
   telegram_bot_daily_limit: 5,
   ai_autofill_daily_limit: 3,
@@ -330,6 +332,13 @@ const AdminSettingsManager = () => {
             <p className="text-xs text-muted-foreground">Aktiv edildikdə istifadəçi aşağı sürüşdükdə əlavə elanlar yüklənəcək</p>
           </div>
           <Switch checked={settings.homepage_auto_load} onCheckedChange={(v) => setSettings({ ...settings, homepage_auto_load: v })} />
+        </div>
+        <div className="flex items-center justify-between pt-2 border-t border-border/50">
+          <div>
+            <p className="text-sm text-foreground">Elan şəkillərini slayder kimi göstər</p>
+            <p className="text-xs text-muted-foreground">Aktiv edildikdə elan kartlarında bütün şəkillər avtomatik dövr edəcək</p>
+          </div>
+          <Switch checked={settings.homepage_image_slider} onCheckedChange={(v) => setSettings({ ...settings, homepage_image_slider: v })} />
         </div>
       </div>
 

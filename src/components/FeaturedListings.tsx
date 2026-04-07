@@ -11,6 +11,7 @@ interface HomepageSettings {
   homepage_urgent_count: number;
   homepage_new_count: number;
   homepage_auto_load: boolean;
+  homepage_image_slider: boolean;
 }
 
 const defaultSettings: HomepageSettings = {
@@ -18,6 +19,7 @@ const defaultSettings: HomepageSettings = {
   homepage_urgent_count: 4,
   homepage_new_count: 8,
   homepage_auto_load: false,
+  homepage_image_slider: false,
 };
 
 const FeaturedListings = () => {
@@ -38,6 +40,7 @@ const FeaturedListings = () => {
         homepage_urgent_count: v?.homepage_urgent_count ?? 4,
         homepage_new_count: v?.homepage_new_count ?? 8,
         homepage_auto_load: v?.homepage_auto_load ?? false,
+        homepage_image_slider: v?.homepage_image_slider ?? false,
       };
     },
     staleTime: 60000,
@@ -161,12 +164,14 @@ const FeaturedListings = () => {
                   location={l.location}
                   time={formatTime(l.created_at)}
                   image={l.image_urls?.[0] || "/placeholder.svg"}
+                  images={l.image_urls || []}
                   condition={l.condition}
                   isPremium={l.is_premium}
                   isUrgent={l.is_urgent}
                   storeId={l.store_id}
                   storeName={s?.name}
                   storeLogo={s?.logo_url}
+                  imageSlider={hpSettings.homepage_image_slider}
                 />
               );
             })}

@@ -1,10 +1,11 @@
-import { Heart, MapPin, Clock, Store, Crown, Zap, GitCompareArrows } from "lucide-react";
+import { Heart, MapPin, Clock, Store, Crown, Zap, GitCompareArrows, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompare } from "@/contexts/CompareContext";
 import WatermarkOverlay from "@/components/WatermarkOverlay";
+import { useState, useEffect, useCallback } from "react";
 
 interface ListingCardProps {
   id: string;
@@ -13,20 +14,36 @@ interface ListingCardProps {
   location: string;
   time: string;
   image: string;
+  images?: string[];
   condition?: string;
   isPremium?: boolean;
   isUrgent?: boolean;
   storeId?: string | null;
   storeName?: string;
   storeLogo?: string | null;
+  imageSlider?: boolean;
 }
 
-const ListingCard = ({ id, title, price, location, time, image, condition, isPremium, isUrgent, storeId, storeName, storeLogo }: ListingCardProps) => {
+const ListingCard = ({ id, title, price, location, time, image, images, condition, isPremium, isUrgent, storeId, storeName, storeLogo, imageSlider }: ListingCardProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toggle, has } = useCompare();
   const isComparing = has(id);
+
+  const allImages = images && images.length > 1 ? images : [image];
+  const hasSlider = imageSlider && allImages.length > 1;
+  const [currentImg, setCurrentImg] = useState(0);
+  const [hovered, setHovered] = useState(false);
+
+  // Auto-rotate images
+  useEffect(() => {
+    if (!hasSlider) return;
+    const timer = setInterval(() => {
+      setCurrentImg((prev) => (prev + 1) % allImages.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [hasSlider, allImages.length]);
 
   const { data: favoriteData } = useQuery({
     queryKey: ["favorite", id, user?.id],
@@ -64,9 +81,50 @@ const ListingCard = ({ id, title, price, location, time, image, condition, isPre
       className="group relative cursor-pointer overflow-hidden rounded-xl border border-border bg-card shadow-card transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1"
       onClick={() => navigate(`/product/${id}`)}
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-muted">
-        <img src={image} alt={title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+      <div
+        className="relative aspect-[4/3] overflow-hidden bg-muted"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <img
+          src={allImages[currentImg] || image}
+          alt={title}
+          className="h-full w-full object-cover transition-all duration-500 group-hover:scale-105"
+        />
         <WatermarkOverlay />
+
+        {/* Slider dots */}
+        {hasSlider && allImages.length > 1 && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+            {allImages.map((_, i) => (
+              <button
+                key={i}
+                onClick={(e) => { e.stopPropagation(); setCurrentImg(i); }}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i === currentImg ? "w-4 bg-white" : "w-1.5 bg-white/50"
+                }`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Arrows on hover */}
+        {hasSlider && hovered && (
+          <>
+            <button
+              onClick={(e) => { e.stopPropagation(); setCurrentImg((currentImg - 1 + allImages.length) % allImages.length); }}
+              className="absolute left-1 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur-sm"
+            >
+              <ChevronLeft className="h-3 w-3" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); setCurrentImg((currentImg + 1) % allImages.length); }}
+              className="absolute right-1 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur-sm"
+            >
+              <ChevronRight className="h-3 w-3" />
+            </button>
+          </>
+        )}
         <button
           onClick={(e) => {
             e.stopPropagation();
