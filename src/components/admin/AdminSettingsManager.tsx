@@ -68,6 +68,7 @@ const defaults: SiteSettings = {
   homepage_urgent_count: 4,
   homepage_new_count: 8,
   homepage_auto_load: false,
+  homepage_image_slider: false,
   store_listing_limit: 20,
   telegram_bot_daily_limit: 5,
   ai_autofill_daily_limit: 3,
