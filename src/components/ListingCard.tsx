@@ -1,10 +1,11 @@
-import { Heart, MapPin, Clock, Store, Crown, Zap, GitCompareArrows } from "lucide-react";
+import { Heart, MapPin, Clock, Store, Crown, Zap, GitCompareArrows, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompare } from "@/contexts/CompareContext";
 import WatermarkOverlay from "@/components/WatermarkOverlay";
+import { useState, useEffect, useCallback } from "react";
 
 interface ListingCardProps {
   id: string;
@@ -13,12 +14,14 @@ interface ListingCardProps {
   location: string;
   time: string;
   image: string;
+  images?: string[];
   condition?: string;
   isPremium?: boolean;
   isUrgent?: boolean;
   storeId?: string | null;
   storeName?: string;
   storeLogo?: string | null;
+  imageSlider?: boolean;
 }
 
 const ListingCard = ({ id, title, price, location, time, image, condition, isPremium, isUrgent, storeId, storeName, storeLogo }: ListingCardProps) => {
