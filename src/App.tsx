@@ -35,6 +35,7 @@ import FirebaseInit from "./components/FirebaseInit";
 import { CompareProvider } from "@/contexts/CompareContext";
 import CompareBar from "./components/CompareBar";
 import ComparePage from "./pages/ComparePage";
+import PaymentResult from "./pages/PaymentResult";
 import ChatBot from "./components/ChatBot";
 import SpinWheelPopup from "./components/SpinWheelPopup";
 
@@ -86,6 +87,7 @@ const AppWrapper = () => {
         <Route path="/support" element={<Support />} />
         <Route path="/page/:slug" element={<StaticPage />} />
         <Route path="/compare" element={<ComparePage />} />
+        <Route path="/payment-result" element={<PaymentResult />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
