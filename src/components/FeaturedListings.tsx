@@ -11,6 +11,7 @@ interface HomepageSettings {
   homepage_urgent_count: number;
   homepage_new_count: number;
   homepage_auto_load: boolean;
+  homepage_image_slider: boolean;
 }
 
 const defaultSettings: HomepageSettings = {
