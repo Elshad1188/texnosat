@@ -333,6 +333,13 @@ const AdminSettingsManager = () => {
           </div>
           <Switch checked={settings.homepage_auto_load} onCheckedChange={(v) => setSettings({ ...settings, homepage_auto_load: v })} />
         </div>
+        <div className="flex items-center justify-between pt-2 border-t border-border/50">
+          <div>
+            <p className="text-sm text-foreground">Elan şəkillərini slayder kimi göstər</p>
+            <p className="text-xs text-muted-foreground">Aktiv edildikdə elan kartlarında bütün şəkillər avtomatik dövr edəcək</p>
+          </div>
+          <Switch checked={settings.homepage_image_slider} onCheckedChange={(v) => setSettings({ ...settings, homepage_image_slider: v })} />
+        </div>
       </div>
 
       {/* Listing settings */}
