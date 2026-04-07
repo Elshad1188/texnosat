@@ -38,6 +38,7 @@ interface SiteSettings {
   homepage_urgent_count: number;
   homepage_new_count: number;
   homepage_auto_load: boolean;
+  homepage_image_slider: boolean;
   store_listing_limit: number;
   telegram_bot_daily_limit: number;
   ai_autofill_daily_limit: number;
