@@ -87,6 +87,7 @@ const AppWrapper = () => {
         <Route path="/support" element={<Support />} />
         <Route path="/page/:slug" element={<StaticPage />} />
         <Route path="/compare" element={<ComparePage />} />
+        <Route path="/payment-result" element={<PaymentResult />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
