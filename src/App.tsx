@@ -35,6 +35,7 @@ import FirebaseInit from "./components/FirebaseInit";
 import { CompareProvider } from "@/contexts/CompareContext";
 import CompareBar from "./components/CompareBar";
 import ComparePage from "./pages/ComparePage";
+import PaymentResult from "./pages/PaymentResult";
 import ChatBot from "./components/ChatBot";
 import SpinWheelPopup from "./components/SpinWheelPopup";
 
