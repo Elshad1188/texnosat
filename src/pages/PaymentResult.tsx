@@ -6,7 +6,9 @@ import Header from "@/components/Header";
 const PaymentResult = () => {
   const [params] = useSearchParams();
   const status = params.get("status");
+  const orderId = params.get("order_id") || "";
   const isSuccess = status === "success";
+  const isTopUp = orderId.startsWith("topup_");
 
   return (
     <div className="min-h-screen bg-background">
@@ -16,9 +18,13 @@ const PaymentResult = () => {
           {isSuccess ? (
             <>
               <CheckCircle className="h-20 w-20 text-green-500 mx-auto" />
-              <h1 className="text-2xl font-bold text-foreground">Ödəniş uğurlu!</h1>
+              <h1 className="text-2xl font-bold text-foreground">
+                {isTopUp ? "Balans artırıldı!" : "Ödəniş uğurlu!"}
+              </h1>
               <p className="text-muted-foreground">
-                Ödənişiniz qəbul edildi. Sifarişiniz təsdiqləndi.
+                {isTopUp
+                  ? "Məbləğ balansınıza əlavə edildi."
+                  : "Ödənişiniz qəbul edildi. Sifarişiniz təsdiqləndi."}
               </p>
             </>
           ) : (
@@ -35,7 +41,9 @@ const PaymentResult = () => {
               <Link to="/">Ana səhifə</Link>
             </Button>
             <Button asChild>
-              <Link to="/orders">Sifarişlərim</Link>
+              <Link to={isTopUp ? "/balance" : "/orders"}>
+                {isTopUp ? "Balansım" : "Sifarişlərim"}
+              </Link>
             </Button>
           </div>
         </div>

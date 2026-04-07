@@ -54,44 +54,102 @@ Deno.serve(async (req) => {
       return new Response("Missing order_id", { status: 400 });
     }
 
+    // Check if this is a balance top-up
+    const isTopUp = String(order_id).startsWith("topup_");
+
     if (status === "success") {
-      // Update order as paid
-      const { error } = await supabase.from("orders").update({
-        status: "confirmed",
-        paid_at: new Date().toISOString(),
-      }).eq("id", order_id).eq("status", "pending");
+      if (isTopUp) {
+        // Handle balance top-up
+        const { data: topupMeta } = await supabase
+          .from("site_settings")
+          .select("value")
+          .eq("key", `topup_${order_id}`)
+          .maybeSingle();
 
-      if (error) {
-        console.error("Failed to update order:", error);
-      }
+        if (topupMeta?.value) {
+          const meta = topupMeta.value as any;
+          const topupAmount = Number(meta.amount);
+          const userId = meta.user_id;
 
-      // Notify buyer
-      const { data: order } = await supabase.from("orders").select("buyer_id, total_amount").eq("id", order_id).single();
-      if (order) {
-        await supabase.from("notifications").insert({
-          user_id: order.buyer_id,
-          title: "Ödəniş uğurlu! ✅",
-          message: `${order.total_amount} ₼ məbləğində ödənişiniz qəbul edildi.`,
-          type: "payment",
-          link: "/orders",
-        });
+          // Add balance
+          await supabase.from("profiles").update({
+            balance: supabase.rpc ? undefined : undefined,
+          }).eq("user_id", "never"); // dummy - use raw SQL below
+
+          // Use RPC-like approach: update balance directly
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("balance")
+            .eq("user_id", userId)
+            .single();
+
+          if (profile) {
+            await supabase.from("profiles").update({
+              balance: Number(profile.balance) + topupAmount,
+            }).eq("user_id", userId);
+
+            await supabase.from("balance_transactions").insert({
+              user_id: userId,
+              amount: topupAmount,
+              type: "credit",
+              description: `Kart ilə balans artırma: ${topupAmount} ₼`,
+            });
+
+            await supabase.from("notifications").insert({
+              user_id: userId,
+              title: "Balans artırıldı! ✅",
+              message: `${topupAmount} ₼ məbləğ balansınıza əlavə edildi.`,
+              type: "payment",
+              link: "/balance",
+            });
+          }
+
+          // Clean up temp metadata
+          await supabase.from("site_settings").delete().eq("key", `topup_${order_id}`);
+        }
+      } else {
+        // Handle order payment
+        const { error } = await supabase.from("orders").update({
+          status: "confirmed",
+          paid_at: new Date().toISOString(),
+        }).eq("id", order_id).eq("status", "pending");
+
+        if (error) {
+          console.error("Failed to update order:", error);
+        }
+
+        const { data: order } = await supabase.from("orders").select("buyer_id, total_amount").eq("id", order_id).single();
+        if (order) {
+          await supabase.from("notifications").insert({
+            user_id: order.buyer_id,
+            title: "Ödəniş uğurlu! ✅",
+            message: `${order.total_amount} ₼ məbləğində ödənişiniz qəbul edildi.`,
+            type: "payment",
+            link: "/orders",
+          });
+        }
       }
     } else {
-      // Payment failed
-      await supabase.from("orders").update({
-        status: "cancelled",
-        cancelled_at: new Date().toISOString(),
-      }).eq("id", order_id).eq("status", "pending");
+      if (!isTopUp) {
+        // Payment failed for order
+        await supabase.from("orders").update({
+          status: "cancelled",
+          cancelled_at: new Date().toISOString(),
+        }).eq("id", order_id).eq("status", "pending");
 
-      const { data: order } = await supabase.from("orders").select("buyer_id").eq("id", order_id).single();
-      if (order) {
-        await supabase.from("notifications").insert({
-          user_id: order.buyer_id,
-          title: "Ödəniş uğursuz oldu ❌",
-          message: message || "Kart ödənişi uğursuz oldu. Yenidən cəhd edin.",
-          type: "payment",
-          link: "/orders",
-        });
+        const { data: order } = await supabase.from("orders").select("buyer_id").eq("id", order_id).single();
+        if (order) {
+          await supabase.from("notifications").insert({
+            user_id: order.buyer_id,
+            title: "Ödəniş uğursuz oldu ❌",
+            message: message || "Kart ödənişi uğursuz oldu. Yenidən cəhd edin.",
+            type: "payment",
+            link: "/orders",
+          });
+        }
+      } else {
+        // Clean up temp metadata for failed top-up
+        await supabase.from("site_settings").delete().eq("key", `topup_${order_id}`);
       }
     }
 

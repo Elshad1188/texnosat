@@ -33,13 +33,21 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { order_id, amount, description } = body;
+    const { order_id, amount, description, is_topup, user_id: topup_user_id } = body;
 
     if (!order_id || !amount) {
       return new Response(JSON.stringify({ error: "Missing order_id or amount" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // For top-up, store metadata so callback knows it's a balance top-up
+    if (is_topup) {
+      await supabase.from("site_settings").upsert({
+        key: `topup_${order_id}`,
+        value: { user_id: topup_user_id || user.id, amount: Number(amount) },
+      }, { onConflict: "key" });
     }
 
     // Build the base URL for redirects

@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
-import { Wallet, Copy, Users, ArrowUpRight, ArrowDownRight, Gift, Check, Loader2 } from "lucide-react";
+import { Wallet, Copy, Users, ArrowUpRight, ArrowDownRight, Gift, Check, Loader2, CreditCard } from "lucide-react";
 
 const Balance = () => {
   const { user, loading: authLoading } = useAuth();
@@ -19,6 +19,8 @@ const Balance = () => {
   const [referralInput, setReferralInput] = useState("");
   const [processing, setProcessing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState("");
+  const [topUpLoading, setTopUpLoading] = useState(false);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -125,6 +127,35 @@ const Balance = () => {
     }
   };
 
+  const handleTopUp = async () => {
+    const amount = parseFloat(topUpAmount);
+    if (!amount || amount < 1) {
+      toast({ title: "Minimum 1 ₼ daxil edin", variant: "destructive" });
+      return;
+    }
+    setTopUpLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("epoint-payment", {
+        body: {
+          order_id: `topup_${user!.id}_${Date.now()}`,
+          amount,
+          description: `Balans artırma: ${amount} ₼`,
+          is_topup: true,
+          user_id: user!.id,
+        },
+      });
+      if (error || !data?.success) {
+        toast({ title: "Ödəniş xətası", description: data?.error || "Epoint ilə əlaqə yaradıla bilmədi", variant: "destructive" });
+        return;
+      }
+      window.location.href = data.redirect_url;
+    } catch (err: any) {
+      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+    } finally {
+      setTopUpLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -140,6 +171,53 @@ const Balance = () => {
             <p className="text-center text-xs text-muted-foreground">
               Balansınızı premium elan, təcili elan və VIP xidmətlər üçün istifadə edə bilərsiniz
             </p>
+          </CardContent>
+        </Card>
+
+        {/* Top Up Card */}
+        <Card className="mt-4">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <CreditCard className="h-4 w-4 text-primary" />
+              Balans artır
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Kart ilə balansınızı artırın. Epoint vasitəsilə təhlükəsiz ödəniş.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {[5, 10, 20, 50].map((amt) => (
+                <Button
+                  key={amt}
+                  size="sm"
+                  variant={topUpAmount === String(amt) ? "default" : "outline"}
+                  onClick={() => setTopUpAmount(String(amt))}
+                  className="flex-1 min-w-[60px]"
+                >
+                  {amt} ₼
+                </Button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                min="1"
+                step="0.5"
+                value={topUpAmount}
+                onChange={(e) => setTopUpAmount(e.target.value)}
+                placeholder="Məbləğ daxil edin..."
+                className="h-10"
+              />
+              <Button
+                className="h-10 shrink-0 gap-2"
+                disabled={topUpLoading || !topUpAmount || parseFloat(topUpAmount) < 1}
+                onClick={handleTopUp}
+              >
+                {topUpLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                Ödə
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
