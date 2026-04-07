@@ -6,7 +6,9 @@ import Header from "@/components/Header";
 const PaymentResult = () => {
   const [params] = useSearchParams();
   const status = params.get("status");
+  const orderId = params.get("order_id") || "";
   const isSuccess = status === "success";
+  const isTopUp = orderId.startsWith("topup_");
 
   return (
     <div className="min-h-screen bg-background">
