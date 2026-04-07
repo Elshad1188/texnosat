@@ -24,12 +24,26 @@ interface ListingCardProps {
   imageSlider?: boolean;
 }
 
-const ListingCard = ({ id, title, price, location, time, image, condition, isPremium, isUrgent, storeId, storeName, storeLogo }: ListingCardProps) => {
+const ListingCard = ({ id, title, price, location, time, image, images, condition, isPremium, isUrgent, storeId, storeName, storeLogo, imageSlider }: ListingCardProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toggle, has } = useCompare();
   const isComparing = has(id);
+
+  const allImages = images && images.length > 1 ? images : [image];
+  const hasSlider = imageSlider && allImages.length > 1;
+  const [currentImg, setCurrentImg] = useState(0);
+  const [hovered, setHovered] = useState(false);
+
+  // Auto-rotate images
+  useEffect(() => {
+    if (!hasSlider) return;
+    const timer = setInterval(() => {
+      setCurrentImg((prev) => (prev + 1) % allImages.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [hasSlider, allImages.length]);
 
   const { data: favoriteData } = useQuery({
     queryKey: ["favorite", id, user?.id],
