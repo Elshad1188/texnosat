@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
-import { Wallet, Copy, Users, ArrowUpRight, ArrowDownRight, Gift, Check, Loader2 } from "lucide-react";
+import { Wallet, Copy, Users, ArrowUpRight, ArrowDownRight, Gift, Check, Loader2, CreditCard } from "lucide-react";
 
 const Balance = () => {
   const { user, loading: authLoading } = useAuth();
