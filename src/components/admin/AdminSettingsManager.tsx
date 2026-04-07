@@ -158,7 +158,21 @@ const AdminSettingsManager = () => {
     } else {
       await supabase.from("site_settings").insert({ key: "platform_mode", value: modePayload, updated_by: user?.id });
     }
-    
+
+    // Auto-enable ecommerce when marketplace mode is selected
+    if (platformMode === "marketplace" || platformMode === "both") {
+      const { data: ecomData } = await supabase.from("site_settings").select("id, value").eq("key", "ecommerce").maybeSingle();
+      const currentEcom = (ecomData?.value as any) || {};
+      if (!currentEcom.enabled) {
+        const updatedEcom = { ...currentEcom, enabled: true };
+        if (ecomData) {
+          await supabase.from("site_settings").update({ value: updatedEcom, updated_by: user?.id }).eq("key", "ecommerce");
+        } else {
+          await supabase.from("site_settings").insert({ key: "ecommerce", value: updatedEcom, updated_by: user?.id });
+        }
+      }
+    }
+
     await refreshTheme();
     queryClient.invalidateQueries({ queryKey: ["watermark-settings"] });
     queryClient.invalidateQueries({ queryKey: ["platform-mode"] });
