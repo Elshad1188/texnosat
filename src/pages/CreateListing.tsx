@@ -42,7 +42,7 @@ const CreateListing = () => {
   const [existingVideo, setExistingVideo] = useState<string>("");
   const [customFields, setCustomFields] = useState<Record<string, string>>({});
   const [showCustomFields, setShowCustomFields] = useState(false);
-  const [isBuyable, setIsBuyable] = useState(false);
+  const [isBuyable, setIsBuyable] = useState(platform.mode === "marketplace");
   const [stock, setStock] = useState("1");
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const [selectedShippingMethods, setSelectedShippingMethods] = useState<string[]>([]);
@@ -102,6 +102,13 @@ const CreateListing = () => {
     },
     enabled: !!editId && !!user,
   });
+
+  // Auto-enable buyable in marketplace mode
+  useEffect(() => {
+    if (platform.mode === "marketplace" && !editId) {
+      setIsBuyable(true);
+    }
+  }, [platform.mode, editId]);
 
   useEffect(() => {
     if (editListing && categories.length > 0) {
@@ -656,8 +663,8 @@ const CreateListing = () => {
               );
             })()}
 
-            {/* Buyable toggle - only for stores with e-commerce enabled */}
-            {platform.showSales && ecomSettings?.enabled && userStore && userStore.status === "approved" && (
+            {/* Buyable toggle - show in marketplace/both modes when e-commerce is enabled */}
+            {platform.showSales && ecomSettings?.enabled && (
               <div className="rounded-xl border border-border bg-card p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
