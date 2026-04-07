@@ -269,14 +269,14 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
                   )}
                 </Label>
               </div>
-              <div className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/50 opacity-50">
-                <RadioGroupItem value="card" id="card" disabled />
+              <div className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/50">
+                <RadioGroupItem value="card" id="card" />
                 <Label htmlFor="card" className="flex-1 cursor-pointer">
                   <div className="flex items-center gap-2">
-                    <CreditCard className="h-4 w-4 text-muted-foreground" />
+                    <CreditCard className="h-4 w-4 text-primary" />
                     <span className="text-sm font-medium">Kart ilə ödə</span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">Tezliklə əlavə olunacaq</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Epoint vasitəsilə onlayn ödəniş</p>
                 </Label>
               </div>
             </RadioGroup>
