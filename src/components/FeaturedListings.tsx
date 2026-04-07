@@ -19,6 +19,7 @@ const defaultSettings: HomepageSettings = {
   homepage_urgent_count: 4,
   homepage_new_count: 8,
   homepage_auto_load: false,
+  homepage_image_slider: false,
 };
 
 const FeaturedListings = () => {
