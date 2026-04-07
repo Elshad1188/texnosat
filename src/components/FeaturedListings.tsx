@@ -40,6 +40,7 @@ const FeaturedListings = () => {
         homepage_urgent_count: v?.homepage_urgent_count ?? 4,
         homepage_new_count: v?.homepage_new_count ?? 8,
         homepage_auto_load: v?.homepage_auto_load ?? false,
+        homepage_image_slider: v?.homepage_image_slider ?? false,
       };
     },
     staleTime: 60000,
