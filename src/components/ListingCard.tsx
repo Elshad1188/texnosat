@@ -124,7 +124,7 @@ const ListingCard = ({ id, title, price, location, time, image, images, conditio
               <ChevronRight className="h-3 w-3" />
             </button>
           </>
-        )
+        )}
         <button
           onClick={(e) => {
             e.stopPropagation();
