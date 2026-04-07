@@ -18,9 +18,13 @@ const PaymentResult = () => {
           {isSuccess ? (
             <>
               <CheckCircle className="h-20 w-20 text-green-500 mx-auto" />
-              <h1 className="text-2xl font-bold text-foreground">Ödəniş uğurlu!</h1>
+              <h1 className="text-2xl font-bold text-foreground">
+                {isTopUp ? "Balans artırıldı!" : "Ödəniş uğurlu!"}
+              </h1>
               <p className="text-muted-foreground">
-                Ödənişiniz qəbul edildi. Sifarişiniz təsdiqləndi.
+                {isTopUp
+                  ? "Məbləğ balansınıza əlavə edildi."
+                  : "Ödənişiniz qəbul edildi. Sifarişiniz təsdiqləndi."}
               </p>
             </>
           ) : (
