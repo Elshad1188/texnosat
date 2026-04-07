@@ -103,6 +103,13 @@ const CreateListing = () => {
     enabled: !!editId && !!user,
   });
 
+  // Auto-enable buyable in marketplace mode
+  useEffect(() => {
+    if (platform.mode === "marketplace" && !editId) {
+      setIsBuyable(true);
+    }
+  }, [platform.mode, editId]);
+
   useEffect(() => {
     if (editListing && categories.length > 0) {
       // Find if the current category is a subcategory and identify its parent
