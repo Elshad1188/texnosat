@@ -41,7 +41,9 @@ const PaymentResult = () => {
               <Link to="/">Ana səhifə</Link>
             </Button>
             <Button asChild>
-              <Link to="/orders">Sifarişlərim</Link>
+              <Link to={isTopUp ? "/balance" : "/orders"}>
+                {isTopUp ? "Balansım" : "Sifarişlərim"}
+              </Link>
             </Button>
           </div>
         </div>
