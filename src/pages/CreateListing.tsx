@@ -42,7 +42,7 @@ const CreateListing = () => {
   const [existingVideo, setExistingVideo] = useState<string>("");
   const [customFields, setCustomFields] = useState<Record<string, string>>({});
   const [showCustomFields, setShowCustomFields] = useState(false);
-  const [isBuyable, setIsBuyable] = useState(false);
+  const [isBuyable, setIsBuyable] = useState(platform.mode === "marketplace");
   const [stock, setStock] = useState("1");
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const [selectedShippingMethods, setSelectedShippingMethods] = useState<string[]>([]);
