@@ -441,7 +441,7 @@ const AdminPanel = () => {
 
           {/* Stats */}
           <TabsContent value="stats" className="mt-3">
-            <AdminStatsManager />
+            <AdminStatsManager onNavigate={(tab: string) => setActiveTab(tab)} />
           </TabsContent>
 
           {/* Moderation */}
