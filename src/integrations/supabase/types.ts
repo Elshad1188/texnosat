@@ -254,8 +254,66 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_movements: {
+        Row: {
+          barcode: string | null
+          created_at: string
+          id: string
+          listing_id: string
+          movement_type: string
+          new_stock: number
+          note: string | null
+          previous_stock: number
+          quantity: number
+          store_id: string
+          user_id: string
+        }
+        Insert: {
+          barcode?: string | null
+          created_at?: string
+          id?: string
+          listing_id: string
+          movement_type?: string
+          new_stock?: number
+          note?: string | null
+          previous_stock?: number
+          quantity?: number
+          store_id: string
+          user_id: string
+        }
+        Update: {
+          barcode?: string | null
+          created_at?: string
+          id?: string
+          listing_id?: string
+          movement_type?: string
+          new_stock?: number
+          note?: string | null
+          previous_stock?: number
+          quantity?: number
+          store_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_movements_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_movements_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listings: {
         Row: {
+          barcode: string | null
           category: string
           condition: string
           cost_price: number | null
@@ -284,6 +342,7 @@ export type Database = {
           views_count: number
         }
         Insert: {
+          barcode?: string | null
           category: string
           condition?: string
           cost_price?: number | null
@@ -312,6 +371,7 @@ export type Database = {
           views_count?: number
         }
         Update: {
+          barcode?: string | null
           category?: string
           condition?: string
           cost_price?: number | null
