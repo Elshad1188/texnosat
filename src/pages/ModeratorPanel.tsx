@@ -196,6 +196,7 @@ const ModeratorPanel = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <AdminActivitySummary />
       <main className="container mx-auto px-3 py-4 sm:px-4 sm:py-6 pb-20 md:pb-6">
         {/* Header */}
         <div className="mb-6 flex items-center gap-3">
