@@ -324,6 +324,7 @@ const AdminPanel = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-3 py-4 sm:px-4 sm:py-6 pb-20 md:pb-6">
+        <AdminActivitySummary />
         <div className="mb-4 flex items-center gap-2">
           <ShieldCheck className="h-6 w-6 text-primary" />
           <h1 className="font-display text-xl font-bold text-foreground sm:text-2xl">Admin Panel</h1>
