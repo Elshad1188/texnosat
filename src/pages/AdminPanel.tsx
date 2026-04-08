@@ -39,6 +39,7 @@ import AdminAntispamManager from "@/components/admin/AdminAntispamManager";
 import AdminOrderManager from "@/components/admin/AdminOrderManager";
 import AdminStoreRequestsManager from "@/components/admin/AdminStoreRequestsManager";
 import AdminTicketManager from "@/components/admin/AdminTicketManager";
+import AdminEpointManager from "@/components/admin/AdminEpointManager";
 import {
   ShieldCheck,
   ShieldAlert,
