@@ -77,6 +77,7 @@ import {
   ChevronRight,
   LifeBuoy,
   GitPullRequest,
+  CreditCard,
 } from "lucide-react";
 
 interface Listing {
