@@ -239,6 +239,7 @@ const StoreDashboard = () => {
             {platform.showOrders && <TabsTrigger value="orders" className="gap-1 text-xs sm:text-sm"><ShoppingCart className="h-3.5 w-3.5" />Sifarişlər</TabsTrigger>}
             {platform.showShipping && <TabsTrigger value="shipping" className="gap-1 text-xs sm:text-sm"><Truck className="h-3.5 w-3.5" />Çatdırılma</TabsTrigger>}
             <TabsTrigger value="bulk" className="gap-1 text-xs sm:text-sm"><Upload className="h-3.5 w-3.5" />Toplu yükləmə</TabsTrigger>
+            {platform.showStock && <TabsTrigger value="warehouse" className="gap-1 text-xs sm:text-sm"><Warehouse className="h-3.5 w-3.5" />Anbar</TabsTrigger>}
             <TabsTrigger value="followers" className="gap-1 text-xs sm:text-sm"><Users className="h-3.5 w-3.5" />Abunəçilər</TabsTrigger>
             <TabsTrigger value="telegram" className="gap-1 text-xs sm:text-sm"><Bot className="h-3.5 w-3.5" />Telegram Bot</TabsTrigger>
           </TabsList>
