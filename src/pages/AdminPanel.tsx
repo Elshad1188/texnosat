@@ -418,6 +418,9 @@ const AdminPanel = () => {
                 <TabsTrigger value="tickets" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <LifeBuoy className="h-3.5 w-3.5" /> Dəstək
                 </TabsTrigger>
+                <TabsTrigger value="epoint" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <CreditCard className="h-3.5 w-3.5" /> Epoint
+                </TabsTrigger>
               </TabsList>
             </div>
 
