@@ -147,6 +147,7 @@ const AdminPanel = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("stats");
   const [pendingReports, setPendingReports] = useState(0);
   const [regions, setRegions] = useState<{ id: string; name: string }[]>([]);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
