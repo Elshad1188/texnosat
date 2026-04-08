@@ -338,11 +338,9 @@ const StoreDashboard = () => {
             <BulkListingUpload storeId={store.id} />
           </TabsContent>
 
-          {platform.showStock && (
-            <TabsContent value="warehouse">
-              <WarehouseTab storeId={store.id} />
-            </TabsContent>
-          )}
+          <TabsContent value="warehouse">
+            <WarehouseTab storeId={store.id} />
+          </TabsContent>
 
           <TabsContent value="followers">
             {followers.length === 0 ? (
