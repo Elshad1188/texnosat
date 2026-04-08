@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdminOrMod } from "@/hooks/useIsAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
+import AdminActivitySummary from "@/components/admin/AdminActivitySummary";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -195,6 +196,7 @@ const ModeratorPanel = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <AdminActivitySummary />
       <main className="container mx-auto px-3 py-4 sm:px-4 sm:py-6 pb-20 md:pb-6">
         {/* Header */}
         <div className="mb-6 flex items-center gap-3">
