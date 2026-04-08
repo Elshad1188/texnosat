@@ -39,6 +39,7 @@ import AdminAntispamManager from "@/components/admin/AdminAntispamManager";
 import AdminOrderManager from "@/components/admin/AdminOrderManager";
 import AdminStoreRequestsManager from "@/components/admin/AdminStoreRequestsManager";
 import AdminTicketManager from "@/components/admin/AdminTicketManager";
+import AdminEpointManager from "@/components/admin/AdminEpointManager";
 import {
   ShieldCheck,
   ShieldAlert,
@@ -76,6 +77,7 @@ import {
   ChevronRight,
   LifeBuoy,
   GitPullRequest,
+  CreditCard,
 } from "lucide-react";
 
 interface Listing {
@@ -417,6 +419,9 @@ const AdminPanel = () => {
                 <TabsTrigger value="tickets" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <LifeBuoy className="h-3.5 w-3.5" /> Dəstək
                 </TabsTrigger>
+                <TabsTrigger value="epoint" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <CreditCard className="h-3.5 w-3.5" /> Epoint
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -465,6 +470,11 @@ const AdminPanel = () => {
           {/* Tickets */}
           <TabsContent value="tickets" className="mt-3">
             <AdminTicketManager />
+          </TabsContent>
+
+          {/* Epoint */}
+          <TabsContent value="epoint" className="mt-3">
+            <AdminEpointManager />
           </TabsContent>
 
           {/* Search for listings/stores/users */}
