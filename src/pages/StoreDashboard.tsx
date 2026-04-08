@@ -26,6 +26,7 @@ import BulkListingUpload from "@/components/BulkListingUpload";
 import SellerOrdersTab from "@/components/seller/SellerOrdersTab";
 import ShippingMethodsTab from "@/components/seller/ShippingMethodsTab";
 import TelegramBotTab from "@/components/seller/TelegramBotTab";
+import WarehouseTab from "@/components/seller/WarehouseTab";
 
 const StoreDashboard = () => {
   const { user } = useAuth();
