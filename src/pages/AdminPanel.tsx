@@ -325,13 +325,13 @@ const AdminPanel = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-3 py-4 sm:px-4 sm:py-6 pb-20 md:pb-6">
-        <AdminActivitySummary />
+        <AdminActivitySummary onNavigate={(tab) => setActiveTab(tab)} />
         <div className="mb-4 flex items-center gap-2">
           <ShieldCheck className="h-6 w-6 text-primary" />
           <h1 className="font-display text-xl font-bold text-foreground sm:text-2xl">Admin Panel</h1>
         </div>
 
-        <Tabs defaultValue="stats">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="sticky top-[57px] z-30 -mx-3 bg-background/95 backdrop-blur-sm px-3 pb-2 sm:-mx-4 sm:px-4">
             <div className="relative group flex items-center">
               <Button
