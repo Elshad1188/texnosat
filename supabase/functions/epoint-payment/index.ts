@@ -66,7 +66,8 @@ Deno.serve(async (req) => {
     });
 
     // Base64 encode
-    const data = btoa(jsonString);
+    const encoder = new TextEncoder();
+    const data = base64Encode(encoder.encode(jsonString));
 
     // Create signature: base64_encode(sha1(private_key + data + private_key, binary))
     const sgnString = EPOINT_PRIVATE_KEY + data + EPOINT_PRIVATE_KEY;
