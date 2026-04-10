@@ -144,8 +144,26 @@ const Balance = () => {
           user_id: user!.id,
         },
       });
+
       if (error || !data?.success) {
-        toast({ title: "Ödəniş xətası", description: data?.error || "Epoint ilə əlaqə yaradıla bilmədi", variant: "destructive" });
+        let errorMessage = data?.error || "Epoint ilə əlaqə yaradıla bilmədi";
+
+        if (error && typeof error === "object" && "context" in error && (error as any).context) {
+          const context = (error as any).context;
+          try {
+            const payload = await context.json();
+            errorMessage = payload?.error || payload?.message || errorMessage;
+          } catch {
+            try {
+              const text = await context.text();
+              errorMessage = text || errorMessage;
+            } catch {
+              // ignore secondary parsing errors
+            }
+          }
+        }
+
+        toast({ title: "Ödəniş xətası", description: errorMessage, variant: "destructive" });
         return;
       }
       window.location.href = data.redirect_url;

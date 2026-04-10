@@ -44,8 +44,10 @@ Deno.serve(async (req) => {
       return new Response("Invalid signature", { status: 403 });
     }
 
-    // Decode data
-    const decoded = JSON.parse(atob(data));
+    // Decode UTF-8 base64 payload
+    const decodedBinary = atob(data);
+    const decodedBytes = Uint8Array.from(decodedBinary, (char) => char.charCodeAt(0));
+    const decoded = JSON.parse(new TextDecoder().decode(decodedBytes));
     console.log("Epoint callback data:", JSON.stringify(decoded));
 
     const { order_id, status, transaction, amount, code, message } = decoded;
