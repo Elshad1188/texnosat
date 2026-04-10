@@ -1,5 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 import { encode as base64Encode } from "https://deno.land/std@0.208.0/encoding/base64.ts";
 import { crypto } from "https://deno.land/std@0.208.0/crypto/mod.ts";
 
@@ -66,7 +70,8 @@ Deno.serve(async (req) => {
     });
 
     // Base64 encode
-    const data = btoa(jsonString);
+    const encoder = new TextEncoder();
+    const data = base64Encode(encoder.encode(jsonString));
 
     // Create signature: base64_encode(sha1(private_key + data + private_key, binary))
     const sgnString = EPOINT_PRIVATE_KEY + data + EPOINT_PRIVATE_KEY;
