@@ -321,6 +321,7 @@ const SellerProfile = () => {
                     condition={l.condition}
                     isPremium={l.is_premium}
                     isUrgent={l.is_urgent}
+                    isBuyable={l.is_buyable}
                     storeId={l.store_id}
                     storeName={st?.name}
                     storeLogo={st?.logo_url}

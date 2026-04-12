@@ -307,7 +307,7 @@ const Products = () => {
                   location={product.location} time={formatTime(product.created_at)}
                   image={product.image_urls?.[0] || "/placeholder.svg"}
                   condition={product.condition} isPremium={product.is_premium} isUrgent={product.is_urgent}
-                  storeId={product.store_id} storeName={st?.name} storeLogo={st?.logo_url}
+                  isBuyable={product.is_buyable}
                 />
               );
             })}
