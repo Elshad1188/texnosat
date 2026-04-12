@@ -5,12 +5,17 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompare } from "@/contexts/CompareContext";
 import WatermarkOverlay from "@/components/WatermarkOverlay";
+import CheckoutDialog from "@/components/CheckoutDialog";
 import { useState, useEffect, useCallback } from "react";
 
 interface ListingCardProps {
   id: string;
   title: string;
   price: string;
+  numericPrice?: number;
+  currency?: string;
+  userId?: string;
+  customFields?: any;
   location: string;
   time: string;
   image: string;
@@ -25,7 +30,7 @@ interface ListingCardProps {
   imageSlider?: boolean;
 }
 
-const ListingCard = ({ id, title, price, location, time, image, images, condition, isPremium, isUrgent, isBuyable, storeId, storeName, storeLogo, imageSlider }: ListingCardProps) => {
+const ListingCard = ({ id, title, price, numericPrice, currency, userId, customFields, location, time, image, images, condition, isPremium, isUrgent, isBuyable, storeId, storeName, storeLogo, imageSlider }: ListingCardProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -36,6 +41,7 @@ const ListingCard = ({ id, title, price, location, time, image, images, conditio
   const hasSlider = imageSlider && allImages.length > 1;
   const [currentImg, setCurrentImg] = useState(0);
   const [hovered, setHovered] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   // Auto-rotate images
   useEffect(() => {
@@ -197,7 +203,8 @@ const ListingCard = ({ id, title, price, location, time, image, images, conditio
           <button
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/product/${id}`);
+              if (!user) { navigate("/auth"); return; }
+              setCheckoutOpen(true);
             }}
             className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-[11px] font-bold text-primary-foreground transition-colors hover:bg-primary/90"
           >
@@ -220,6 +227,23 @@ const ListingCard = ({ id, title, price, location, time, image, images, conditio
           {isComparing ? "Müqayisədə" : "Müqayisə et"}
         </button>
       </div>
+
+      {isBuyable && numericPrice != null && userId && (
+        <CheckoutDialog
+          open={checkoutOpen}
+          onOpenChange={setCheckoutOpen}
+          listing={{
+            id,
+            title,
+            price: numericPrice,
+            currency: currency || "₼",
+            user_id: userId,
+            store_id: storeId || null,
+            image_urls: images && images.length > 0 ? images : [image],
+            custom_fields: customFields,
+          }}
+        />
+      )}
     </div>
   );
 };
