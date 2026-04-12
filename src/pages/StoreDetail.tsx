@@ -382,6 +382,7 @@ const StoreDetail = () => {
                   image={listing.image_urls?.[0] || "/placeholder.svg"}
                   condition={listing.condition} isPremium={listing.is_premium}
                   isUrgent={listing.is_urgent} isBuyable={(listing as any).is_buyable}
+                  numericPrice={Number(listing.price)} currency={listing.currency} userId={listing.user_id} customFields={(listing as any).custom_fields}
                   storeId={store.id}
                   storeName={store.name} storeLogo={store.logo_url}
                 />

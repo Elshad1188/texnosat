@@ -926,6 +926,7 @@ const ProductDetail = () => {
                   location={l.location} time={formatTime(l.created_at)}
                   image={l.image_urls?.[0] || "/placeholder.svg"}
                   condition={l.condition} isPremium={l.is_premium} isUrgent={l.is_urgent} isBuyable={l.is_buyable}
+                  numericPrice={Number(l.price)} currency={l.currency} userId={l.user_id} customFields={l.custom_fields}
                 />
               ))}
             </div>

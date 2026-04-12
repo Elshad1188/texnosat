@@ -322,6 +322,7 @@ const SellerProfile = () => {
                     isPremium={l.is_premium}
                     isUrgent={l.is_urgent}
                     isBuyable={l.is_buyable}
+                    numericPrice={Number(l.price)} currency={l.currency} userId={l.user_id} customFields={l.custom_fields}
                     storeId={l.store_id}
                     storeName={st?.name}
                     storeLogo={st?.logo_url}
