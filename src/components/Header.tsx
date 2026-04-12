@@ -235,8 +235,8 @@ const Header = () => {
 
         <div className="flex items-center gap-2">
           {user && (
-            <Link to="/balance" className="hidden lg:flex items-center gap-1.5 rounded-lg bg-muted px-2.5 py-1.5 text-sm font-semibold text-foreground hover:bg-accent transition-colors">
-              <Wallet className="h-4 w-4 text-primary" />
+            <Link to="/balance" className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1.5 text-xs sm:text-sm font-semibold text-foreground hover:bg-accent transition-colors">
+              <Wallet className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
               <BalanceDisplay userId={user.id} />
             </Link>
           )}
