@@ -1,4 +1,4 @@
-import { Heart, MapPin, Clock, Store, Crown, Zap, GitCompareArrows, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, MapPin, Clock, Store, Crown, Zap, GitCompareArrows, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -18,13 +18,14 @@ interface ListingCardProps {
   condition?: string;
   isPremium?: boolean;
   isUrgent?: boolean;
+  isBuyable?: boolean;
   storeId?: string | null;
   storeName?: string;
   storeLogo?: string | null;
   imageSlider?: boolean;
 }
 
-const ListingCard = ({ id, title, price, location, time, image, images, condition, isPremium, isUrgent, storeId, storeName, storeLogo, imageSlider }: ListingCardProps) => {
+const ListingCard = ({ id, title, price, location, time, image, images, condition, isPremium, isUrgent, isBuyable, storeId, storeName, storeLogo, imageSlider }: ListingCardProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -137,6 +138,12 @@ const ListingCard = ({ id, title, price, location, time, image, images, conditio
           <Heart className={`h-4 w-4 ${isFavorited ? "fill-primary text-primary" : "text-muted-foreground"}`} />
         </button>
         <div className="absolute left-2 top-2 flex gap-1.5">
+          {isBuyable && (
+            <div className="flex items-center gap-1 rounded-full bg-primary/90 px-2 py-0.5 shadow-lg backdrop-blur-sm">
+              <ShoppingCart className="h-3 w-3 text-primary-foreground" />
+              <span className="text-[10px] font-bold text-primary-foreground">Satışda</span>
+            </div>
+          )}
           {isPremium && (
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500/90 shadow-lg shadow-amber-500/30 backdrop-blur-sm">
               <Crown className="h-3.5 w-3.5 text-white" />
@@ -185,13 +192,25 @@ const ListingCard = ({ id, title, price, location, time, image, images, conditio
           </span>
         </div>
 
-        {/* Compare button */}
+        {/* Buy / Compare buttons */}
+        {isBuyable && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/product/${id}`);
+            }}
+            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-[11px] font-bold text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            <ShoppingCart className="h-3.5 w-3.5" />
+            Satın al
+          </button>
+        )}
         <button
           onClick={(e) => {
             e.stopPropagation();
             toggle({ id, title, price, image, location, condition });
           }}
-          className={`mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border py-1.5 text-[11px] font-medium transition-colors ${
+          className={`mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border py-1.5 text-[11px] font-medium transition-colors ${
             isComparing
               ? "border-primary bg-primary/10 text-primary"
               : "border-border text-muted-foreground hover:border-primary/40 hover:text-primary"

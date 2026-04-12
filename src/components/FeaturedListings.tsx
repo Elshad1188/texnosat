@@ -168,6 +168,7 @@ const FeaturedListings = () => {
                   condition={l.condition}
                   isPremium={l.is_premium}
                   isUrgent={l.is_urgent}
+                  isBuyable={l.is_buyable}
                   storeId={l.store_id}
                   storeName={s?.name}
                   storeLogo={s?.logo_url}

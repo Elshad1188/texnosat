@@ -925,7 +925,7 @@ const ProductDetail = () => {
                   price={`${Number(l.price).toLocaleString()} ${l.currency}`}
                   location={l.location} time={formatTime(l.created_at)}
                   image={l.image_urls?.[0] || "/placeholder.svg"}
-                  condition={l.condition} isPremium={l.is_premium} isUrgent={l.is_urgent}
+                  condition={l.condition} isPremium={l.is_premium} isUrgent={l.is_urgent} isBuyable={l.is_buyable}
                 />
               ))}
             </div>
