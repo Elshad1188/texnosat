@@ -308,6 +308,7 @@ const Products = () => {
                   image={product.image_urls?.[0] || "/placeholder.svg"}
                   condition={product.condition} isPremium={product.is_premium} isUrgent={product.is_urgent}
                   isBuyable={product.is_buyable}
+                  storeId={product.store_id} storeName={st?.name} storeLogo={st?.logo_url}
                 />
               );
             })}

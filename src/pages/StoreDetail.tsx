@@ -383,6 +383,7 @@ const StoreDetail = () => {
                   condition={listing.condition} isPremium={listing.is_premium}
                   isUrgent={listing.is_urgent} isBuyable={(listing as any).is_buyable}
                   storeId={store.id}
+                  storeName={store.name} storeLogo={store.logo_url}
                 />
               ))}
             </div>
