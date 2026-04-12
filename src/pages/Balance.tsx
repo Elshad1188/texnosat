@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
-import { Wallet, Copy, Users, ArrowUpRight, ArrowDownRight, Gift, Check, Loader2, CreditCard } from "lucide-react";
+import { Wallet, Copy, Users, ArrowUpRight, ArrowDownRight, Gift, Check, Loader2, CreditCard, Trophy } from "lucide-react";
 
 const Balance = () => {
   const { user, loading: authLoading } = useAuth();
