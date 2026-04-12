@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
-import { Wallet, Copy, Users, ArrowUpRight, ArrowDownRight, Gift, Check, Loader2, CreditCard } from "lucide-react";
+import { Wallet, Copy, Users, ArrowUpRight, ArrowDownRight, Gift, Check, Loader2, CreditCard, Trophy } from "lucide-react";
 
 const Balance = () => {
   const { user, loading: authLoading } = useAuth();
@@ -239,7 +239,22 @@ const Balance = () => {
           </CardContent>
         </Card>
 
-        {/* Referral Section */}
+        {/* Spin & Win Card */}
+        <Card className="mt-4 overflow-hidden border-dashed border-2 border-primary/30">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-orange-600 dark:bg-orange-900/30">
+              <Trophy className="h-6 w-6" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground">Hədiyyə Çarxı 🎡</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Hər 24 saatda bir dəfə çarxı fırladıb pulsuz bonus qazanın!</p>
+            </div>
+            <Button asChild size="sm" className="shrink-0 bg-gradient-primary text-primary-foreground">
+              <Link to="/spin-win">Fırlat</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
         <Card className="mt-4">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
