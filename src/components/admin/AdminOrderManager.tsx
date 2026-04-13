@@ -35,15 +35,16 @@ const AdminOrderManager = () => {
     },
   });
 
-  const [settingsForm, setSettingsForm] = useState<{ enabled: boolean; commission_rate: number }>({
+  const [settingsForm, setSettingsForm] = useState<{ enabled: boolean; commission_rate: number; balance_payment_enabled: boolean }>({
     enabled: ecomSettings?.enabled ?? false,
     commission_rate: ecomSettings?.commission_rate ?? 5,
+    balance_payment_enabled: ecomSettings?.balance_payment_enabled ?? false,
   });
 
   // Sync form when data loads
   useState(() => {
     if (ecomSettings) {
-      setSettingsForm({ enabled: ecomSettings.enabled ?? false, commission_rate: ecomSettings.commission_rate ?? 5 });
+      setSettingsForm({ enabled: ecomSettings.enabled ?? false, commission_rate: ecomSettings.commission_rate ?? 5, balance_payment_enabled: ecomSettings.balance_payment_enabled ?? false });
     }
   });
 
@@ -157,6 +158,16 @@ const AdminOrderManager = () => {
             <Switch
               checked={settingsForm.enabled}
               onCheckedChange={(v) => setSettingsForm({ ...settingsForm, enabled: v })}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">Balans ilə ödəniş</p>
+              <p className="text-xs text-muted-foreground">İstifadəçilər balansla da ödəyə bilsin</p>
+            </div>
+            <Switch
+              checked={settingsForm.balance_payment_enabled}
+              onCheckedChange={(v) => setSettingsForm({ ...settingsForm, balance_payment_enabled: v })}
             />
           </div>
           <div className="flex items-center gap-3">
