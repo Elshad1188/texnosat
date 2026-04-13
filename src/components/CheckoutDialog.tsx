@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Wallet, CreditCard, Truck, MapPin, ShoppingCart, CheckCircle } from "lucide-react";
+import { Loader2, CreditCard, Truck, MapPin, ShoppingCart, CheckCircle } from "lucide-react";
 
 interface CheckoutDialogProps {
   open: boolean;
