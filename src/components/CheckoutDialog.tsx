@@ -95,7 +95,7 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
     setProcessing(true);
 
     try {
-      // Create order first
+      // Create order
       const { data: newOrder, error } = await supabase.from("orders").insert({
         buyer_id: user.id,
         seller_id: listing.user_id,
@@ -107,63 +107,31 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
         commission_rate: commissionRate,
         commission_amount: commissionAmount,
         total_amount: totalAmount,
-        payment_method: paymentMethod,
+        payment_method: "card",
         shipping_method_id: selectedShipping || null,
         shipping_address: shippingAddress,
         buyer_note: buyerNote || null,
-        paid_at: paymentMethod === "balance" ? new Date().toISOString() : null,
         status: "pending",
       } as any).select("id").single();
 
       if (error) throw error;
 
-      if (paymentMethod === "balance") {
-        if (!canAfford) {
-          toast({ title: "Balansınız kifayət deyil", variant: "destructive" });
-          setProcessing(false);
-          return;
-        }
+      // Card payment via Epoint
+      const { data: epointData, error: epointError } = await supabase.functions.invoke("epoint-payment", {
+        body: {
+          order_id: newOrder.id,
+          amount: totalAmount,
+          description: `Sifariş: ${listing.title}`,
+        },
+      });
 
-        const { data: spent } = await supabase.rpc("spend_balance", {
-          _user_id: user.id,
-          _amount: totalAmount,
-          _description: `Sifariş: ${listing.title}`,
-          _reference_id: listing.id,
-        });
-
-        if (!spent) {
-          toast({ title: "Balans əməliyyatı uğursuz oldu", variant: "destructive" });
-          setProcessing(false);
-          return;
-        }
-
-        // Update order as confirmed
-        await supabase.from("orders").update({
-          status: "confirmed",
-          paid_at: new Date().toISOString(),
-        }).eq("id", newOrder.id);
-
-        setStep("success");
-        toast({ title: "Sifariş uğurla yaradıldı! 🎉" });
-      } else {
-        // Card payment via Epoint
-        const { data: epointData, error: epointError } = await supabase.functions.invoke("epoint-payment", {
-          body: {
-            order_id: newOrder.id,
-            amount: totalAmount,
-            description: `Sifariş: ${listing.title}`,
-          },
-        });
-
-        if (epointError || !epointData?.success) {
-          toast({ title: "Ödəniş xətası", description: epointData?.error || "Epoint ilə əlaqə yaradıla bilmədi", variant: "destructive" });
-          return;
-        }
-
-        // Redirect to Epoint payment page
-        window.location.href = epointData.redirect_url;
+      if (epointError || !epointData?.success) {
+        toast({ title: "Ödəniş xətası", description: epointData?.error || "Epoint ilə əlaqə yaradıla bilmədi", variant: "destructive" });
         return;
       }
+
+      // Redirect to Epoint payment page
+      window.location.href = epointData.redirect_url;
     } catch (err: any) {
       toast({ title: "Xəta", description: err.message, variant: "destructive" });
     } finally {
