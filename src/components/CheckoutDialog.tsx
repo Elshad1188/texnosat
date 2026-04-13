@@ -40,16 +40,6 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
   const [quantity, setQuantity] = useState(1);
   const [processing, setProcessing] = useState(false);
 
-  // Fetch user balance
-  const { data: profile } = useQuery({
-    queryKey: ["profile-balance", user?.id],
-    queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("balance").eq("user_id", user!.id).single();
-      return data;
-    },
-    enabled: !!user && open,
-  });
-
   // Fetch shipping methods for this store (filtered by listing's selected methods)
   const { data: allShippingMethods = [] } = useQuery({
     queryKey: ["shipping-methods", listing.store_id],
@@ -87,8 +77,7 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
   const subtotal = unitPrice * quantity;
   const commissionAmount = (subtotal * commissionRate) / 100;
   const totalAmount = subtotal + shippingPrice;
-  const userBalance = profile?.balance || 0;
-  const canAfford = userBalance >= totalAmount;
+
 
   const handleOrder = async () => {
     if (!user) return;
