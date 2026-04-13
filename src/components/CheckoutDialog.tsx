@@ -36,7 +36,7 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
   const [selectedShipping, setSelectedShipping] = useState<string>("");
   const [shippingAddress, setShippingAddress] = useState("");
   const [buyerNote, setBuyerNote] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<"balance" | "card">("balance");
+  const [paymentMethod] = useState<"card">("card");
   const [quantity, setQuantity] = useState(1);
   const [processing, setProcessing] = useState(false);
 
@@ -176,7 +176,6 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
     setSelectedShipping("");
     setShippingAddress("");
     setBuyerNote("");
-    setPaymentMethod("balance");
     setQuantity(1);
   };
 
@@ -271,46 +270,24 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
           </div>
         )}
 
-        {/* Step 2: Payment */}
+        {/* Step 2: Payment - Card only */}
         {step === "payment" && (
           <div className="space-y-4">
-            <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as "balance" | "card")}>
-              <div className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/50">
-                <RadioGroupItem value="balance" id="balance" />
-                <Label htmlFor="balance" className="flex-1 cursor-pointer">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Wallet className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">Balans ilə ödə</span>
-                    </div>
-                    <Badge variant={canAfford ? "default" : "destructive"} className="text-xs">
-                      {userBalance.toFixed(2)} ₼
-                    </Badge>
-                  </div>
-                  {!canAfford && (
-                    <p className="text-xs text-destructive mt-1">Balansınız kifayət deyil</p>
-                  )}
-                </Label>
+            <div className="flex items-center gap-3 rounded-lg border border-primary bg-primary/5 p-4">
+              <CreditCard className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-sm font-semibold text-foreground">Kart ilə ödəniş</p>
+                <p className="text-xs text-muted-foreground">Epoint vasitəsilə təhlükəsiz onlayn ödəniş</p>
               </div>
-              <div className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/50">
-                <RadioGroupItem value="card" id="card" />
-                <Label htmlFor="card" className="flex-1 cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    <CreditCard className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium">Kart ilə ödə</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">Epoint vasitəsilə onlayn ödəniş</p>
-                </Label>
-              </div>
-            </RadioGroup>
+            </div>
+
+            <p className="text-xs text-muted-foreground text-center">
+              Hazırda yalnız kart ilə ödəniş dəstəklənir.
+            </p>
 
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1" onClick={() => setStep("shipping")}>Geri</Button>
-              <Button
-                className="flex-1"
-                disabled={paymentMethod === "balance" && !canAfford}
-                onClick={() => setStep("confirm")}
-              >
+              <Button className="flex-1" onClick={() => setStep("confirm")}>
                 Davam et
               </Button>
             </div>
