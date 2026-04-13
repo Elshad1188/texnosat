@@ -603,9 +603,7 @@ const ProductDetail = () => {
               </Link>
 
               <div className="mt-4 flex flex-col gap-2">
-                {platform.showCheckout && (
-                  (platform.mode === "marketplace" || (ecomSettings?.enabled && (listing as any).is_buyable))
-                ) && user?.id !== listing.user_id && (
+                {listing.is_buyable && user?.id !== listing.user_id && (
                   <Button 
                     className="w-full gap-2 h-12 text-lg font-bold shadow-lg bg-green-600 hover:bg-green-700 text-white shadow-green-600/20"
                     onClick={() => {
@@ -618,8 +616,8 @@ const ProductDetail = () => {
                 )}
                 {user?.id !== listing.user_id && (
                   <Button 
-                    variant={platform.showCheckout && (platform.mode === "marketplace" || (ecomSettings?.enabled && (listing as any).is_buyable)) ? "outline" : "default"}
-                    className={`w-full gap-2 h-12 text-lg font-bold ${!(platform.showCheckout && (platform.mode === "marketplace" || (ecomSettings?.enabled && (listing as any).is_buyable))) ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-600/20' : ''}`}
+                    variant={listing.is_buyable ? "outline" : "default"}
+                    className={`w-full gap-2 h-12 text-lg font-bold ${!listing.is_buyable ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-600/20' : ''}`}
                     onClick={() => {
                       if (!user) { navigate("/auth"); return; }
                     }}
@@ -706,7 +704,22 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+              {/* Buy button for individual seller buyable listings */}
+              {listing.is_buyable && user?.id !== listing.user_id && (
+                <div className="mt-4">
+                  <Button 
+                    className="w-full gap-2 h-12 text-lg font-bold shadow-lg bg-green-600 hover:bg-green-700 text-white shadow-green-600/20"
+                    onClick={() => {
+                      if (!user) { navigate("/auth"); return; }
+                      setCheckoutOpen(true);
+                    }}
+                  >
+                    <ShoppingCart className="h-5 w-5" /> İndi al
+                  </Button>
+                </div>
+              )}
+
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                 {showPhone ? (
                   <a href={`tel:${seller?.phone || ''}`} className="flex-1">
                     <Button className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2">
@@ -938,7 +951,16 @@ const ProductDetail = () => {
         <CheckoutDialog
           open={checkoutOpen}
           onOpenChange={setCheckoutOpen}
-          listing={listing}
+          listing={{
+            id: listing.id,
+            title: listing.title,
+            price: Number(listing.price),
+            currency: listing.currency,
+            user_id: listing.user_id,
+            store_id: listing.store_id,
+            image_urls: listing.image_urls,
+            custom_fields: listing.custom_fields,
+          }}
         />
       )}
       <Dialog open={shareOpen} onOpenChange={setShareOpen}>
