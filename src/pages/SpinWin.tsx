@@ -96,14 +96,14 @@ const SpinWin = () => {
     }
 
     // Calculate rotation — land clearly inside the segment (avoid edges)
-    // Segment i occupies [i*segmentAngle, (i+1)*segmentAngle) clockwise from top.
-    // CSS rotate(R) clockwise means the needle (fixed at top) points at original angle R%360.
+    // Segment i is drawn at [i*segmentAngle, (i+1)*segmentAngle) clockwise from top.
+    // CSS rotate(R) clockwise: needle (fixed at top) points at angle (360 - R%360).
+    // So to land on segment prizeIndex, we need R%360 = 360 - prizeIndex*segmentAngle - offset.
     const prizeIndex = prizes.indexOf(selectedPrize);
     const segmentAngle = 360 / prizes.length;
     const extraSpins = 5 + Math.floor(Math.random() * 5);
-    // Offset within 25%-75% of segment to never land on a border
     const safeOffset = segmentAngle * 0.25 + Math.random() * segmentAngle * 0.5;
-    const targetRotation = rotation + (extraSpins * 360) + (prizeIndex * segmentAngle) + safeOffset;
+    const targetRotation = rotation + (extraSpins * 360) + (360 - prizeIndex * segmentAngle - safeOffset);
     
     setRotation(targetRotation);
 
