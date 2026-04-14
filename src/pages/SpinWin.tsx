@@ -33,6 +33,7 @@ const SpinWin = () => {
   const [rotation, setRotation] = useState(0);
   const [result, setResult] = useState<SpinPrize | null>(null);
   const [showResultModal, setShowResultModal] = useState(false);
+  const [canSpinAgain, setCanSpinAgain] = useState(false);
   
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
