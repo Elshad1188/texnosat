@@ -56,6 +56,7 @@ const SpinWin = () => {
   });
 
   const canSpin = () => {
+    if (canSpinAgain) return true;
     if (!profile?.last_spin_at) return true;
     const lastSpin = new Date(profile.last_spin_at).getTime();
     const now = new Date().getTime();
