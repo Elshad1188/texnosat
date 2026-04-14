@@ -33,6 +33,7 @@ const SpinWin = () => {
   const [rotation, setRotation] = useState(0);
   const [result, setResult] = useState<SpinPrize | null>(null);
   const [showResultModal, setShowResultModal] = useState(false);
+  const [canSpinAgain, setCanSpinAgain] = useState(false);
   
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -55,6 +56,7 @@ const SpinWin = () => {
   });
 
   const canSpin = () => {
+    if (canSpinAgain) return true;
     if (!profile?.last_spin_at) return true;
     const lastSpin = new Date(profile.last_spin_at).getTime();
     const now = new Date().getTime();
@@ -81,6 +83,7 @@ const SpinWin = () => {
     }
 
     setIsSpinning(true);
+    setCanSpinAgain(false);
     
     // Choose result based on weights (chance)
     const totalWeight = prizes.reduce((acc, p) => acc + p.chance, 0);
@@ -123,6 +126,7 @@ const SpinWin = () => {
         const res = data as any;
         if (res.success) {
           if (res.can_spin_again) {
+            setCanSpinAgain(true);
             toast({
               title: "Yenidən cəhd edin!",
               description: "Bu dəfə bəxtiniz gətirmədi, amma dərhal yenidən fırlada bilərsiniz.",
