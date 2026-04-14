@@ -96,14 +96,18 @@ const SpinWin = () => {
     }
 
     // Calculate rotation — land clearly inside the segment (avoid edges)
-    // Segment i is drawn at [i*segmentAngle, (i+1)*segmentAngle) clockwise from top.
-    // CSS rotate(R) clockwise: needle (fixed at top) points at angle (360 - R%360).
-    // So to land on segment prizeIndex, we need R%360 = 360 - prizeIndex*segmentAngle - offset.
+    // Segment i occupies [i*segmentAngle, (i+1)*segmentAngle) clockwise from top in the SVG.
+    // CSS rotate(R deg) clockwise: needle (fixed at top) points at angle (360 - R%360) on the wheel.
+    // For the needle to land on segment i, we need: R%360 = 360 - i*segmentAngle - offset
     const prizeIndex = prizes.indexOf(selectedPrize);
     const segmentAngle = 360 / prizes.length;
     const extraSpins = 5 + Math.floor(Math.random() * 5);
     const safeOffset = segmentAngle * 0.25 + Math.random() * segmentAngle * 0.5;
-    const targetRotation = rotation + (extraSpins * 360) + (360 - prizeIndex * segmentAngle - safeOffset);
+    // Calculate the exact final angle we want, then compute delta from current rotation
+    const desiredFinalAngle = ((360 - prizeIndex * segmentAngle - safeOffset) % 360 + 360) % 360;
+    const currentAngle = ((rotation % 360) + 360) % 360;
+    const delta = ((desiredFinalAngle - currentAngle) % 360 + 360) % 360;
+    const targetRotation = rotation + extraSpins * 360 + delta;
     
     setRotation(targetRotation);
 
