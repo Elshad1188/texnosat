@@ -83,6 +83,7 @@ const SpinWin = () => {
     }
 
     setIsSpinning(true);
+    setCanSpinAgain(false);
     
     // Choose result based on weights (chance)
     const totalWeight = prizes.reduce((acc, p) => acc + p.chance, 0);
