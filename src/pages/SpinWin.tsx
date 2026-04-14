@@ -126,6 +126,7 @@ const SpinWin = () => {
         const res = data as any;
         if (res.success) {
           if (res.can_spin_again) {
+            setCanSpinAgain(true);
             toast({
               title: "Yenidən cəhd edin!",
               description: "Bu dəfə bəxtiniz gətirmədi, amma dərhal yenidən fırlada bilərsiniz.",
