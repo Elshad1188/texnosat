@@ -349,8 +349,8 @@ const CreateListing = () => {
 
       const finalCategory = form.subcategory || form.category;
 
-      // Add shipping methods to custom fields if buyable
-      if (isBuyable && selectedShippingMethods.length > 0) {
+      // Add shipping methods to custom fields
+      if (selectedShippingMethods.length > 0) {
         resolvedCustomFields._shipping_methods = selectedShippingMethods as any;
       }
 
@@ -676,63 +676,64 @@ const CreateListing = () => {
                   <Switch checked={isBuyable} onCheckedChange={setIsBuyable} />
                 </div>
                 {isBuyable && (
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Stok sayı</Label>
-                      <Input type="number" min="1" value={stock} onChange={(e) => setStock(e.target.value)}
-                        className="h-9 w-32" />
-                    </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Stok sayı</Label>
+                    <Input type="number" min="1" value={stock} onChange={(e) => setStock(e.target.value)}
+                      className="h-9 w-32" />
+                  </div>
+                )}
+              </div>
+            )}
 
-                    {/* Shipping methods */}
-                    {storeShippingMethods.length > 0 ? (
-                      <div className="space-y-2">
-                        <Label className="text-xs flex items-center gap-1.5">
-                          <Truck className="h-3.5 w-3.5 text-primary" /> Çatdırılma üsulları
-                        </Label>
-                        <div className="space-y-2">
-                          {storeShippingMethods.map((method: any) => (
-                            <label
-                              key={method.id}
-                              className={`flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
-                                selectedShippingMethods.includes(method.id)
-                                  ? "border-primary bg-primary/5"
-                                  : "border-border hover:border-primary/40"
-                              }`}
-                            >
-                              <Checkbox
-                                checked={selectedShippingMethods.includes(method.id)}
-                                onCheckedChange={(checked) => {
-                                  setSelectedShippingMethods(prev =>
-                                    checked
-                                      ? [...prev, method.id]
-                                      : prev.filter(id => id !== method.id)
-                                  );
-                                }}
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-medium text-foreground">{method.name}</span>
-                                  <span className="text-sm font-semibold text-primary">{method.price > 0 ? `${method.price} ₼` : "Pulsuz"}</span>
-                                </div>
-                                {(method.description || method.estimated_days) && (
-                                  <p className="text-xs text-muted-foreground mt-0.5">
-                                    {method.description}{method.estimated_days ? ` · ${method.estimated_days}` : ""}
-                                  </p>
-                                )}
-                              </div>
-                            </label>
-                          ))}
+            {/* Shipping methods - always show when store is selected */}
+            {selectedStoreId && (
+              <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Truck className="h-4 w-4 text-primary" /> Çatdırılma üsulları
+                </Label>
+                <p className="text-xs text-muted-foreground -mt-1">Bu elan üçün çatdırılma seçimlərini müəyyən edin</p>
+                {storeShippingMethods.length > 0 ? (
+                  <div className="space-y-2">
+                    {storeShippingMethods.map((method: any) => (
+                      <label
+                        key={method.id}
+                        className={`flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
+                          selectedShippingMethods.includes(method.id)
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/40"
+                        }`}
+                      >
+                        <Checkbox
+                          checked={selectedShippingMethods.includes(method.id)}
+                          onCheckedChange={(checked) => {
+                            setSelectedShippingMethods(prev =>
+                              checked
+                                ? [...prev, method.id]
+                                : prev.filter(id => id !== method.id)
+                            );
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-foreground">{method.name}</span>
+                            <span className="text-sm font-semibold text-primary">{method.price > 0 ? `${method.price} ₼` : "Pulsuz"}</span>
+                          </div>
+                          {(method.description || method.estimated_days) && (
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {method.description}{method.estimated_days ? ` · ${method.estimated_days}` : ""}
+                            </p>
+                          )}
                         </div>
-                      </div>
-                    ) : (
-                      <div className="rounded-lg border border-dashed border-border p-3 text-center">
-                        <Truck className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
-                        <p className="text-xs text-muted-foreground">
-                          Çatdırılma üsulları əlavə edilməyib.{" "}
-                          <a href="/store-dashboard" className="text-primary hover:underline">Mağaza panelindən</a> əlavə edin.
-                        </p>
-                      </div>
-                    )}
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-border p-3 text-center">
+                    <Truck className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
+                    <p className="text-xs text-muted-foreground">
+                      Çatdırılma üsulları əlavə edilməyib.{" "}
+                      <a href="/store-dashboard" className="text-primary hover:underline">Mağaza panelindən</a> əlavə edin.
+                    </p>
                   </div>
                 )}
               </div>
