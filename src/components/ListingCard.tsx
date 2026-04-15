@@ -143,11 +143,17 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
         >
           <Heart className={`h-4 w-4 ${isFavorited ? "fill-primary text-primary" : "text-muted-foreground"}`} />
         </button>
-        <div className="absolute left-2 top-2 flex gap-1.5">
+        <div className="absolute left-2 top-2 flex flex-wrap gap-1.5">
           {isBuyable && (
             <div className="flex items-center gap-1 rounded-full bg-primary/90 px-2 py-0.5 shadow-lg backdrop-blur-sm">
               <ShoppingCart className="h-3 w-3 text-primary-foreground" />
               <span className="text-[10px] font-bold text-primary-foreground">Satışda</span>
+            </div>
+          )}
+          {customFields?._shipping_methods?.length > 0 && (
+            <div className="flex items-center gap-1 rounded-full bg-emerald-500/90 px-2 py-0.5 shadow-lg backdrop-blur-sm">
+              <Truck className="h-3 w-3 text-white" />
+              <span className="text-[10px] font-bold text-white">Çatdırılma</span>
             </div>
           )}
           {isPremium && (

@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Share2, MapPin, Grid, Phone, MessageSquare, MessageCircle, ChevronLeft, Flag, Send, Heart, X, Trash2, Clock, Star, Shield, Eye, Loader2, Store, ExternalLink, Edit2, Crown, Zap, Gem, Play, UserPlus, UserCheck, ShoppingCart, Facebook, Twitter, Link as LinkIcon, Copy } from "lucide-react";
+import { ArrowLeft, Share2, MapPin, Grid, Phone, MessageSquare, MessageCircle, ChevronLeft, Flag, Send, Heart, X, Trash2, Clock, Star, Shield, Eye, Loader2, Store, ExternalLink, Edit2, Crown, Zap, Gem, Play, UserPlus, UserCheck, ShoppingCart, Facebook, Twitter, Link as LinkIcon, Copy, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
