@@ -429,10 +429,15 @@ const ProductDetail = () => {
                     <Zap className="h-4 w-4 text-white fill-white" />
                   </div>
                 )}
-                {(listing.custom_fields as any)?._shipping_methods?.length > 0 && (
+                {(listing.custom_fields as any)?._shipping_methods?.length > 0 ? (
                   <div className="flex items-center gap-1 rounded-full bg-emerald-500/90 px-2.5 py-1 shadow-lg backdrop-blur-sm">
                     <Truck className="h-3.5 w-3.5 text-white" />
                     <span className="text-[11px] font-bold text-white">Çatdırılma var</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 rounded-full bg-muted/80 px-2.5 py-1 backdrop-blur-sm">
+                    <Truck className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-[11px] font-medium text-muted-foreground">Çatdırılma yoxdur</span>
                   </div>
                 )}
                 <Badge variant="secondary">{listing.condition}</Badge>

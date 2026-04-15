@@ -150,10 +150,15 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
               <span className="text-[10px] font-bold text-primary-foreground">Satışda</span>
             </div>
           )}
-          {customFields?._shipping_methods?.length > 0 && (
+          {customFields?._shipping_methods?.length > 0 ? (
             <div className="flex items-center gap-1 rounded-full bg-emerald-500/90 px-2 py-0.5 shadow-lg backdrop-blur-sm">
               <Truck className="h-3 w-3 text-white" />
-              <span className="text-[10px] font-bold text-white">Çatdırılma</span>
+              <span className="text-[10px] font-bold text-white">Çatdırılma var</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 rounded-full bg-muted/80 px-2 py-0.5 backdrop-blur-sm">
+              <Truck className="h-3 w-3 text-muted-foreground" />
+              <span className="text-[10px] font-medium text-muted-foreground">Çatdırılma yoxdur</span>
             </div>
           )}
           {isPremium && (
