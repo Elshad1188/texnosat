@@ -42,7 +42,7 @@ const CreateListing = () => {
   const [existingVideo, setExistingVideo] = useState<string>("");
   const [customFields, setCustomFields] = useState<Record<string, string>>({});
   const [showCustomFields, setShowCustomFields] = useState(false);
-  const [isBuyable, setIsBuyable] = useState(platform.mode === "marketplace");
+  const [isBuyable, setIsBuyable] = useState(platform.mode === "marketplace" || platform.mode === "both");
   const [stock, setStock] = useState("1");
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const [selectedShippingMethods, setSelectedShippingMethods] = useState<string[]>([]);
@@ -103,12 +103,19 @@ const CreateListing = () => {
     enabled: !!editId && !!user,
   });
 
-  // Auto-enable buyable in marketplace mode
+  // Auto-enable buyable when store is selected or in marketplace/both mode
   useEffect(() => {
-    if (platform.mode === "marketplace" && !editId) {
+    if ((platform.mode === "marketplace" || platform.mode === "both") && !editId) {
       setIsBuyable(true);
     }
   }, [platform.mode, editId]);
+
+  // Auto-enable buyable when a store is selected
+  useEffect(() => {
+    if (selectedStoreId && !editId) {
+      setIsBuyable(true);
+    }
+  }, [selectedStoreId, editId]);
 
   useEffect(() => {
     if (editListing && categories.length > 0) {
@@ -362,8 +369,8 @@ const CreateListing = () => {
         video_url: finalVideoUrl,
         store_id: selectedStoreId || null,
         custom_fields: Object.keys(resolvedCustomFields).length > 0 ? resolvedCustomFields : null,
-        is_buyable: platform.mode === "marketplace" ? true : isBuyable,
-        stock: platform.mode === "marketplace" ? Math.max(parseInt(stock) || 1, 1) : (parseInt(stock) || 0),
+        is_buyable: (platform.mode === "marketplace" || selectedStoreId) ? true : isBuyable,
+        stock: (platform.mode === "marketplace" || selectedStoreId) ? Math.max(parseInt(stock) || 1, 1) : (parseInt(stock) || 0),
         status: "pending",
         is_active: false,
       };
