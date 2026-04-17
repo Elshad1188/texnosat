@@ -369,8 +369,8 @@ const CreateListing = () => {
         video_url: finalVideoUrl,
         store_id: selectedStoreId || null,
         custom_fields: Object.keys(resolvedCustomFields).length > 0 ? resolvedCustomFields : null,
-        is_buyable: (platform.mode === "marketplace" || selectedStoreId) ? true : isBuyable,
-        stock: (platform.mode === "marketplace" || selectedStoreId) ? Math.max(parseInt(stock) || 1, 1) : (parseInt(stock) || 0),
+        is_buyable: selectedStoreId ? isBuyable : false,
+        stock: selectedStoreId && isBuyable ? Math.max(parseInt(stock) || 1, 1) : (parseInt(stock) || 0),
         status: "pending",
         is_active: false,
       };
