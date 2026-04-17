@@ -565,14 +565,44 @@ const ProductDetail = () => {
                 <DetailRow label="Valyuta" value={listing.currency} />
                 <DetailRow label="Baxış sayı" value={String(listing.views_count)} />
                 <DetailRow label="Yerləşdirmə tarixi" value={new Date(listing.created_at).toLocaleDateString("az")} />
-                {/* Custom fields */}
+                {listing.is_buyable && (
+                  <DetailRow label="Satış" value="Birbaşa alış mümkündür" />
+                )}
+                {/* Custom fields - skip internal underscore-prefixed keys and complex objects */}
                 {(listing as any).custom_fields && Object.entries((listing as any).custom_fields).map(([key, val]) => {
                   if (!val) return null;
+                  if (key.startsWith("_")) return null;
+                  if (typeof val === "object") return null;
                   const fieldDef = categoryFieldDefs.find((f: any) => f.field_name === key);
                   return <DetailRow key={key} label={fieldDef?.field_label || key} value={String(val)} />;
                 })}
               </div>
             </div>
+
+            {/* Shipping Methods */}
+            {(listing.custom_fields as any)?._shipping_methods?.length > 0 && (
+              <div className="mt-4 rounded-xl border border-border bg-card p-4">
+                <h3 className="mb-3 flex items-center gap-2 font-display text-sm font-semibold text-foreground">
+                  <Truck className="h-4 w-4 text-emerald-600" />
+                  Çatdırılma üsulları
+                </h3>
+                <div className="space-y-2">
+                  {((listing.custom_fields as any)._shipping_methods as any[]).map((m: any, i: number) => (
+                    <div key={i} className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2 text-sm">
+                      <div className="flex-1 min-w-0">
+                        <p className="truncate font-medium text-foreground">{m.name || "Çatdırılma"}</p>
+                        {m.estimated_days && (
+                          <p className="text-xs text-muted-foreground">{m.estimated_days}</p>
+                        )}
+                      </div>
+                      <p className="ml-2 font-bold text-primary">
+                        {Number(m.price || 0) === 0 ? "Pulsuz" : `${Number(m.price).toLocaleString()} ${listing.currency}`}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
