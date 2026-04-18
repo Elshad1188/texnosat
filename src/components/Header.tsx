@@ -1,4 +1,4 @@
-import { Plus, User, Heart, Menu, X, LogOut, Store, ShieldCheck, MessageCircle, Wallet, Phone, Mail, MapPin, FileText, FolderTree, Play, Home, CircuitBoard, Trophy } from "lucide-react";
+import { Plus, User, Heart, Menu, X, LogOut, Store, ShieldCheck, MessageCircle, Wallet, Phone, Mail, MapPin, FileText, FolderTree, Play, Home, CircuitBoard, Trophy, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
@@ -114,6 +114,7 @@ const Header = () => {
                   { to: "/products", label: "Elanlar", icon: FolderTree },
                   { to: "/stores", label: "Mağazalar", icon: Store },
                   { to: "/reels", label: "Reels", icon: Play },
+                  { to: "/blog", label: "Blog", icon: BookOpen },
                   { to: "/create-store", label: "Mağaza aç", icon: Store },
                 ].map(item => (
                   <Link
@@ -225,6 +226,7 @@ const Header = () => {
           <Link to="/" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Ana səhifə</Link>
           <Link to="/products" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Elanlar</Link>
           <Link to="/stores" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Mağazalar</Link>
+          <Link to="/blog" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Blog</Link>
           <Link to="/create-store" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Mağaza aç</Link>
           {isAdmin && (
             <Link to="/admin" className="flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary/80">

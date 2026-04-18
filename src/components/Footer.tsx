@@ -62,6 +62,7 @@ const Footer = () => {
               <li><Link to="/products?category=noutbuklar" className="hover:text-primary">Noutbuklar</Link></li>
               <li><Link to="/products?category=plansetler" className="hover:text-primary">Planşetlər</Link></li>
               <li><Link to="/products?category=aksesuarlar" className="hover:text-primary">Aksesuarlar</Link></li>
+              <li><Link to="/blog" className="hover:text-primary">Blog</Link></li>
             </ul>
           </div>
 
