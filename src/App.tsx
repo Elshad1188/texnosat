@@ -38,6 +38,8 @@ import ComparePage from "./pages/ComparePage";
 import PaymentResult from "./pages/PaymentResult";
 import ChatBot from "./components/ChatBot";
 import SpinWheelPopup from "./components/SpinWheelPopup";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 
 const queryClient = new QueryClient();
 
@@ -88,6 +90,8 @@ const AppWrapper = () => {
         <Route path="/page/:slug" element={<StaticPage />} />
         <Route path="/compare" element={<ComparePage />} />
         <Route path="/payment-result" element={<PaymentResult />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
