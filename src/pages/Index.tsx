@@ -4,6 +4,7 @@ import Categories from "@/components/Categories";
 import StoresSlider from "@/components/StoresSlider";
 import FeaturedListings from "@/components/FeaturedListings";
 import BannerDisplay from "@/components/BannerDisplay";
+import LatestBlogPosts from "@/components/LatestBlogPosts";
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -18,6 +19,7 @@ const Index = () => {
         </div>
         <StoresSlider />
         <FeaturedListings />
+        <LatestBlogPosts />
         <div className="container mx-auto px-4 pb-8">
           <BannerDisplay position="home_middle" />
         </div>
