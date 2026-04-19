@@ -7,6 +7,7 @@ import { useCompare } from "@/contexts/CompareContext";
 import WatermarkOverlay from "@/components/WatermarkOverlay";
 import CheckoutDialog from "@/components/CheckoutDialog";
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 
 interface ListingCardProps {
   id: string;
