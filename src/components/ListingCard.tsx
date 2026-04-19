@@ -7,6 +7,7 @@ import { useCompare } from "@/contexts/CompareContext";
 import WatermarkOverlay from "@/components/WatermarkOverlay";
 import CheckoutDialog from "@/components/CheckoutDialog";
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 
 interface ListingCardProps {
   id: string;
@@ -243,7 +244,7 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
         </button>
       </div>
 
-      {isBuyable && numericPrice != null && userId && (
+      {isBuyable && numericPrice != null && userId && createPortal(
         <CheckoutDialog
           open={checkoutOpen}
           onOpenChange={setCheckoutOpen}
@@ -257,7 +258,8 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
             image_urls: images && images.length > 0 ? images : [image],
             custom_fields: customFields,
           }}
-        />
+        />,
+        document.body
       )}
     </div>
   );
