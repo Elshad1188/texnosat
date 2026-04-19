@@ -62,7 +62,7 @@ const AppDownloadBanner = () => {
   const hasStoreLinks = appStoreUrl || playStoreUrl;
 
   return (
-    <div className="fixed bottom-16 left-0 right-0 z-40 p-3 md:bottom-0 md:hidden">
+    <div className="fixed bottom-36 left-0 right-0 z-30 px-3 md:bottom-0 md:hidden">
       <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-3 shadow-lg">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-primary">
