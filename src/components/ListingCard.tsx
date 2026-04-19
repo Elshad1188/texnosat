@@ -244,7 +244,7 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
         </button>
       </div>
 
-      {isBuyable && numericPrice != null && userId && (
+      {isBuyable && numericPrice != null && userId && createPortal(
         <CheckoutDialog
           open={checkoutOpen}
           onOpenChange={setCheckoutOpen}
@@ -258,7 +258,8 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
             image_urls: images && images.length > 0 ? images : [image],
             custom_fields: customFields,
           }}
-        />
+        />,
+        document.body
       )}
     </div>
   );
