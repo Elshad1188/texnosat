@@ -1,10 +1,40 @@
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { initFirebaseMessaging, requestNotificationPermission } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
 const FirebaseInit = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // Listen for notification clicks coming from the service worker
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === "NOTIFICATION_NAVIGATE" && event.data.link) {
+        const link: string = event.data.link;
+        if (link.startsWith("http://") || link.startsWith("https://")) {
+          try {
+            const url = new URL(link);
+            if (url.origin === window.location.origin) {
+              navigate(url.pathname + url.search + url.hash);
+            } else {
+              window.location.href = link;
+            }
+          } catch {
+            window.location.href = link;
+          }
+        } else {
+          navigate(link.startsWith("/") ? link : `/${link}`);
+        }
+      }
+    };
+
+    navigator.serviceWorker.addEventListener("message", handler);
+    return () => navigator.serviceWorker.removeEventListener("message", handler);
+  }, [navigate]);
 
   useEffect(() => {
     if (!user) return;
