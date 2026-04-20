@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Store, Loader2, Crown, Upload, CheckCircle, Image } from "lucide-react";
 import { cn } from "@/lib/utils";
+import AddressAutocomplete from "@/components/AddressAutocomplete";
 
 const CreateStore = () => {
   const { user } = useAuth();
