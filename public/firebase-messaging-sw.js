@@ -52,9 +52,35 @@ self.addEventListener("message", (event) => {
   }
 });
 
-// Handle notification click
+// Handle notification click — focus existing tab or open new one
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data?.link || "/";
-  event.waitUntil(clients.openWindow(url));
+  const link = event.notification.data?.link || "/";
+
+  event.waitUntil(
+    (async () => {
+      const allClients = await clients.matchAll({ type: "window", includeUncontrolled: true });
+      const targetUrl = new URL(link, self.location.origin).href;
+
+      // Try to find an already-open tab on our origin
+      for (const client of allClients) {
+        try {
+          const clientUrl = new URL(client.url);
+          if (clientUrl.origin === self.location.origin) {
+            await client.focus();
+            // Ask the page to navigate to the link (SPA-friendly)
+            client.postMessage({ type: "NOTIFICATION_NAVIGATE", link });
+            return;
+          }
+        } catch (_) {
+          // ignore parse errors
+        }
+      }
+
+      // No matching tab — open a new window directly to the link
+      if (clients.openWindow) {
+        await clients.openWindow(targetUrl);
+      }
+    })()
+  );
 });
