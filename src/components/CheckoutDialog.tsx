@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, CreditCard, Truck, MapPin, ShoppingCart, CheckCircle, Wallet } from "lucide-react";
+import AddressAutocomplete from "@/components/AddressAutocomplete";
 
 interface CheckoutDialogProps {
   open: boolean;
