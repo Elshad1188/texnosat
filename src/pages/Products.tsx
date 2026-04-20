@@ -11,6 +11,7 @@ import Footer from "@/components/Footer";
 import ListingCard from "@/components/ListingCard";
 import { supabase } from "@/integrations/supabase/client";
 import { iconMap } from "@/lib/icons";
+import SaveSearchButton from "@/components/SaveSearchButton";
 
 const conditions = ["Hamısı", "Yeni", "Yeni kimi", "İşlənmiş"];
 const sortOptions = [
