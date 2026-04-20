@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,6 +16,7 @@ import {
 const NotificationBell = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
 
@@ -47,10 +49,20 @@ const NotificationBell = () => {
   const unreadCount = notifications.filter((n: any) => !n.is_read).length;
 
   const handleNotificationClick = async (n: any) => {
-    setSelectedNotification(n);
     if (!n.is_read) {
       await supabase.from("notifications").update({ is_read: true }).eq("id", n.id);
       queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
+    }
+    if (n.link) {
+      setOpen(false);
+      const link = n.link as string;
+      if (link.startsWith("http://") || link.startsWith("https://")) {
+        window.open(link, "_blank", "noopener,noreferrer");
+      } else {
+        navigate(link.startsWith("/") ? link : `/${link}`);
+      }
+    } else {
+      setSelectedNotification(n);
     }
   };
 
@@ -136,6 +148,23 @@ const NotificationBell = () => {
           <div className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
             {selectedNotification?.message || "Məzmun yoxdur"}
           </div>
+          {selectedNotification?.link && (
+            <Button
+              className="w-full mt-2"
+              onClick={() => {
+                const link = selectedNotification.link as string;
+                setSelectedNotification(null);
+                setOpen(false);
+                if (link.startsWith("http://") || link.startsWith("https://")) {
+                  window.open(link, "_blank", "noopener,noreferrer");
+                } else {
+                  navigate(link.startsWith("/") ? link : `/${link}`);
+                }
+              }}
+            >
+              Keçid et
+            </Button>
+          )}
         </DialogContent>
       </Dialog>
     </div>
