@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, CreditCard, Truck, MapPin, ShoppingCart, CheckCircle, Wallet } from "lucide-react";
+import AddressAutocomplete from "@/components/AddressAutocomplete";
 
 interface CheckoutDialogProps {
   open: boolean;
@@ -256,11 +257,9 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
 
             <div className="space-y-1.5">
               <Label className="text-xs flex items-center gap-1"><MapPin className="h-3 w-3" /> Çatdırılma ünvanı</Label>
-              <Textarea
+              <AddressAutocomplete
                 value={shippingAddress}
-                onChange={(e) => setShippingAddress(e.target.value)}
-                placeholder="Tam ünvanınızı daxil edin..."
-                rows={2}
+                onChange={setShippingAddress}
               />
             </div>
 
