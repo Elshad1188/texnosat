@@ -148,6 +148,23 @@ const NotificationBell = () => {
           <div className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
             {selectedNotification?.message || "Məzmun yoxdur"}
           </div>
+          {selectedNotification?.link && (
+            <Button
+              className="w-full mt-2"
+              onClick={() => {
+                const link = selectedNotification.link as string;
+                setSelectedNotification(null);
+                setOpen(false);
+                if (link.startsWith("http://") || link.startsWith("https://")) {
+                  window.open(link, "_blank", "noopener,noreferrer");
+                } else {
+                  navigate(link.startsWith("/") ? link : `/${link}`);
+                }
+              }}
+            >
+              Keçid et
+            </Button>
+          )}
         </DialogContent>
       </Dialog>
     </div>
