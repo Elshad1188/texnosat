@@ -1207,6 +1207,51 @@ export type Database = {
           },
         ]
       }
+      saved_searches: {
+        Row: {
+          category: string | null
+          condition: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          last_notified_at: string | null
+          price_max: number | null
+          price_min: number | null
+          query: string | null
+          region: string | null
+          subcategory: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          condition?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_notified_at?: string | null
+          price_max?: number | null
+          price_min?: number | null
+          query?: string | null
+          region?: string | null
+          subcategory?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          condition?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_notified_at?: string | null
+          price_max?: number | null
+          price_min?: number | null
+          query?: string | null
+          region?: string | null
+          subcategory?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       scraper_schedules: {
         Row: {
           category_url: string
