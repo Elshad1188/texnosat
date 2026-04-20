@@ -16,6 +16,7 @@ import {
 const NotificationBell = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
 
