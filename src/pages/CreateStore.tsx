@@ -321,7 +321,11 @@ const CreateStore = () => {
 
           <div className="space-y-2">
             <Label htmlFor="address">Ünvan</Label>
-            <Input id="address" placeholder="Küçə, bina" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+            <AddressAutocomplete
+              value={form.address}
+              onChange={(v) => setForm({ ...form, address: v })}
+              placeholder="Küçə, bina"
+            />
           </div>
 
           <div className="space-y-2">
