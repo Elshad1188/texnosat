@@ -11,6 +11,7 @@ import Footer from "@/components/Footer";
 import ListingCard from "@/components/ListingCard";
 import { supabase } from "@/integrations/supabase/client";
 import { iconMap } from "@/lib/icons";
+import SaveSearchButton from "@/components/SaveSearchButton";
 
 const conditions = ["Hamısı", "Yeni", "Yeni kimi", "İşlənmiş"];
 const sortOptions = [
@@ -181,10 +182,19 @@ const Products = () => {
             <input type="text" placeholder="Məhsul axtar..." value={query} onChange={(e) => setQuery(e.target.value)}
               className="h-11 w-full rounded-xl border border-border bg-card pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
           </form>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button variant="outline" onClick={() => setShowFilters(!showFilters)} className="gap-2">
               <SlidersHorizontal className="h-4 w-4" /> Filterlər
             </Button>
+            <SaveSearchButton
+              query={query}
+              category={selectedCategory}
+              subcategory={selectedSubcategory}
+              region={selectedRegion ? (regions.find((r: any) => r.id === selectedRegion) as any)?.name : ""}
+              condition={selectedCondition}
+              priceMin={priceMin}
+              priceMax={priceMax}
+            />
             <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
               className="h-11 rounded-xl border border-border bg-card px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
               {sortOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
