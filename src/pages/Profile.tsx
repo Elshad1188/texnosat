@@ -244,8 +244,16 @@ const Profile = () => {
             <TabsTrigger value="listings" className="gap-1 text-xs sm:text-sm"><Package className="h-3.5 w-3.5" />Elanlarım</TabsTrigger>
             <TabsTrigger value="stores" className="gap-1 text-xs sm:text-sm"><Store className="h-3.5 w-3.5" />Mağazalar</TabsTrigger>
             <TabsTrigger value="reviews" className="gap-1 text-xs sm:text-sm"><Star className="h-3.5 w-3.5" />Rəylər</TabsTrigger>
+            <TabsTrigger value="saved-searches" className="gap-1 text-xs sm:text-sm"><Bell className="h-3.5 w-3.5" />Axtarışlar</TabsTrigger>
             <TabsTrigger value="settings" className="gap-1 text-xs sm:text-sm"><Edit2 className="h-3.5 w-3.5" />Tənzimləmələr</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="saved-searches">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Yadda saxlanılmış axtarışlar</CardTitle></CardHeader>
+              <CardContent><SavedSearchesList /></CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="listings">
             {listings.length === 0 ? (
