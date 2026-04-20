@@ -49,10 +49,20 @@ const NotificationBell = () => {
   const unreadCount = notifications.filter((n: any) => !n.is_read).length;
 
   const handleNotificationClick = async (n: any) => {
-    setSelectedNotification(n);
     if (!n.is_read) {
       await supabase.from("notifications").update({ is_read: true }).eq("id", n.id);
       queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
+    }
+    if (n.link) {
+      setOpen(false);
+      const link = n.link as string;
+      if (link.startsWith("http://") || link.startsWith("https://")) {
+        window.open(link, "_blank", "noopener,noreferrer");
+      } else {
+        navigate(link.startsWith("/") ? link : `/${link}`);
+      }
+    } else {
+      setSelectedNotification(n);
     }
   };
 
