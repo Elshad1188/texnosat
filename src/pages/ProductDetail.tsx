@@ -38,11 +38,15 @@ function formatTime(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("az");
 }
 
-function getUserLevel(reviewCount: number, avg: number) {
+function getUserLevel(reviewCount: number, avg: number, listingsCount: number, createdAt?: string | null) {
   if (reviewCount >= 25 && avg >= 4) return { label: "VIP Satıcı", color: "bg-amber-500/20 text-amber-600" };
   if (reviewCount >= 10 && avg >= 3.5) return { label: "Etibarlı", color: "bg-green-500/20 text-green-600" };
-  if (reviewCount >= 3) return { label: "Aktiv", color: "bg-blue-500/20 text-blue-600" };
-  return { label: "Yeni", color: "bg-muted text-muted-foreground" };
+  if (listingsCount >= 5 || reviewCount >= 3) return { label: "Aktiv", color: "bg-blue-500/20 text-blue-600" };
+  if (createdAt) {
+    const days = (Date.now() - new Date(createdAt).getTime()) / 86400000;
+    if (days <= 30) return { label: "Yeni", color: "bg-muted text-muted-foreground" };
+  }
+  return null;
 }
 
 const ProductDetail = () => {
@@ -139,6 +143,20 @@ const ProductDetail = () => {
     queryFn: async () => {
       const { data } = await supabase.from("reviews").select("*").eq("reviewed_user_id", listing!.user_id).order("created_at", { ascending: false });
       return data || [];
+    },
+    enabled: !!listing?.user_id,
+  });
+
+  // Fetch seller's active listings count (for level)
+  const { data: sellerListingsCount = 0 } = useQuery({
+    queryKey: ["seller-listings-count", listing?.user_id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("listings")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", listing!.user_id)
+        .eq("is_active", true);
+      return count || 0;
     },
     enabled: !!listing?.user_id,
   });
@@ -330,7 +348,7 @@ const ProductDetail = () => {
 
   const images = listing.image_urls?.length ? listing.image_urls : ["/placeholder.svg"];
   const avgRating = sellerReviews.length > 0 ? sellerReviews.reduce((s: number, r: any) => s + r.rating, 0) / sellerReviews.length : 0;
-  const level = getUserLevel(sellerReviews.length, avgRating);
+  const level = getUserLevel(sellerReviews.length, avgRating, sellerListingsCount, seller?.created_at);
 
   // Share handler
   const handleShare = async () => {
@@ -726,7 +744,7 @@ const ProductDetail = () => {
                   </div>
                 </Link>
                 <div className="flex items-center gap-2">
-                  <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>
+                  {level && <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>}
                   {user && user.id !== listing.user_id && (
                     <Button
                       variant={isFollowingSeller ? "outline" : "default"}

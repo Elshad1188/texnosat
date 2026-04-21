@@ -294,10 +294,16 @@ const AdminPanel = () => {
     const userReviews = reviews.filter((r) => r.reviewed_user_id === userId);
     const count = userReviews.length;
     const avg = count > 0 ? userReviews.reduce((s, r) => s + r.rating, 0) / count : 0;
+    const userListingsCount = listings.filter((l) => l.user_id === userId && l.is_active).length;
+    const profile = profiles.find((p) => p.user_id === userId);
     if (count >= 25 && avg >= 4) return { label: "VIP Satıcı", color: "bg-amber-500/20 text-amber-600" };
     if (count >= 10 && avg >= 3.5) return { label: "Etibarlı", color: "bg-green-500/20 text-green-600" };
-    if (count >= 3) return { label: "Aktiv", color: "bg-blue-500/20 text-blue-600" };
-    return { label: "Yeni", color: "bg-muted text-muted-foreground" };
+    if (userListingsCount >= 5 || count >= 3) return { label: "Aktiv", color: "bg-blue-500/20 text-blue-600" };
+    if (profile?.created_at) {
+      const days = (Date.now() - new Date(profile.created_at).getTime()) / 86400000;
+      if (days <= 30) return { label: "Yeni", color: "bg-muted text-muted-foreground" };
+    }
+    return null;
   };
 
   const getProfileName = (userId: string) => profiles.find((p) => p.user_id === userId)?.full_name || "Adsız";
@@ -717,7 +723,7 @@ const AdminPanel = () => {
                             <div className="flex flex-wrap gap-1 mt-1">
                               {isUserAdmin && <Badge className="bg-primary/20 text-primary border-0 text-[10px]">Admin</Badge>}
                               {isUserMod && <Badge className="bg-blue-500/20 text-blue-600 border-0 text-[10px]">Mod</Badge>}
-                              <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>
+                              {level && <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>}
                               {isSelf && <Badge variant="outline" className="text-[10px]">Siz</Badge>}
                             </div>
                           </div>
@@ -808,7 +814,7 @@ const AdminPanel = () => {
                           <h3 className="truncate text-xs font-semibold text-foreground">{p.full_name || "Adsız"}</h3>
                           {isUserAdmin && <Badge className="bg-primary/20 text-primary border-0 text-[10px]">Admin</Badge>}
                           {isUserMod && <Badge className="bg-blue-500/20 text-blue-600 border-0 text-[10px]">Mod</Badge>}
-                          <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>
+                          {level && <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>}
                           {isSelf && <Badge variant="outline" className="text-[10px]">Siz</Badge>}
                         </div>
                         <p className="text-[11px] text-muted-foreground truncate">

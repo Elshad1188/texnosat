@@ -30,11 +30,15 @@ function formatTime(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("az");
 }
 
-function getUserLevel(reviewCount: number, avg: number) {
+function getUserLevel(reviewCount: number, avg: number, listingsCount: number, createdAt?: string | null) {
   if (reviewCount >= 25 && avg >= 4) return { label: "VIP Satıcı", color: "bg-amber-500/20 text-amber-600" };
   if (reviewCount >= 10 && avg >= 3.5) return { label: "Etibarlı", color: "bg-green-500/20 text-green-600" };
-  if (reviewCount >= 3) return { label: "Aktiv", color: "bg-blue-500/20 text-blue-600" };
-  return { label: "Yeni", color: "bg-muted text-muted-foreground" };
+  if (listingsCount >= 5 || reviewCount >= 3) return { label: "Aktiv", color: "bg-blue-500/20 text-blue-600" };
+  if (createdAt) {
+    const days = (Date.now() - new Date(createdAt).getTime()) / 86400000;
+    if (days <= 30) return { label: "Yeni", color: "bg-muted text-muted-foreground" };
+  }
+  return null;
 }
 
 const SellerProfile = () => {
@@ -124,7 +128,7 @@ const SellerProfile = () => {
   const avgRating = reviews.length > 0
     ? reviews.reduce((s: number, r: any) => s + r.rating, 0) / reviews.length
     : 0;
-  const level = getUserLevel(reviews.length, avgRating);
+  const level = getUserLevel(reviews.length, avgRating, listings.length, profile?.created_at);
   const getReviewerName = (uid: string) =>
     (reviewerProfiles as any[]).find((p) => p.user_id === uid)?.full_name || "Adsız";
 
@@ -231,7 +235,7 @@ const SellerProfile = () => {
                 <h1 className="font-display text-2xl font-bold text-foreground">
                   {profile.full_name || "Adsız satıcı"}
                 </h1>
-                <Badge className={`${level.color} border-0`}>{level.label}</Badge>
+                {level && <Badge className={`${level.color} border-0`}>{level.label}</Badge>}
               </div>
 
               <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
