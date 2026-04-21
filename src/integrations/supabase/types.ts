@@ -1739,6 +1739,36 @@ export type Database = {
         }
         Relationships: []
       }
+      translations: {
+        Row: {
+          az: string
+          category: string
+          created_at: string
+          id: string
+          key: string
+          ru: string
+          updated_at: string
+        }
+        Insert: {
+          az?: string
+          category?: string
+          created_at?: string
+          id?: string
+          key: string
+          ru?: string
+          updated_at?: string
+        }
+        Update: {
+          az?: string
+          category?: string
+          created_at?: string
+          id?: string
+          key?: string
+          ru?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_followers: {
         Row: {
           created_at: string
