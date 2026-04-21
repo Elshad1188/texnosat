@@ -42,6 +42,7 @@ import AdminTicketManager from "@/components/admin/AdminTicketManager";
 import AdminEpointManager from "@/components/admin/AdminEpointManager";
 import AdminActivitySummary from "@/components/admin/AdminActivitySummary";
 import AdminBlogManager from "@/components/admin/AdminBlogManager";
+import AdminTranslationsManager from "@/components/admin/AdminTranslationsManager";
 import {
   ShieldCheck,
   ShieldAlert,
@@ -81,6 +82,7 @@ import {
   GitPullRequest,
   CreditCard,
   BookOpen,
+  Languages,
 } from "lucide-react";
 
 interface Listing {
@@ -436,6 +438,9 @@ const AdminPanel = () => {
                 <TabsTrigger value="blog" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <BookOpen className="h-3.5 w-3.5" /> Blog
                 </TabsTrigger>
+                <TabsTrigger value="translations" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <Languages className="h-3.5 w-3.5" /> Tərcümələr
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -464,6 +469,11 @@ const AdminPanel = () => {
           <TabsContent value="notifications" className="mt-3 space-y-6">
             <AdminNotificationSettings />
             <AdminNotificationSender />
+          </TabsContent>
+
+          {/* Translations */}
+          <TabsContent value="translations" className="mt-3">
+            <AdminTranslationsManager />
           </TabsContent>
 
           {/* Antispam */}

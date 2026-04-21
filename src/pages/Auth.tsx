@@ -10,10 +10,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, User, ArrowLeft, Gift } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useTranslation } from "react-i18next";
 
 type AuthMode = "login" | "register" | "forgot";
 
 const Auth = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
@@ -83,15 +85,15 @@ const Auth = () => {
   };
 
   const titles: Record<AuthMode, string> = {
-    login: "Daxil ol",
-    register: "Qeydiyyat",
-    forgot: "Şifrəni sıfırla",
+    login: t("nav.login"),
+    register: t("nav.register"),
+    forgot: t("auth.forgot_password"),
   };
 
   const descriptions: Record<AuthMode, string> = {
-    login: "Hesabınıza daxil olun",
-    register: "Yeni hesab yaradın və elan yerləşdirin",
-    forgot: "E-mail ünvanınızı daxil edin, şifrə sıfırlama linki göndəriləcək",
+    login: t("auth.signin_title"),
+    register: t("auth.signup_title"),
+    forgot: t("auth.forgot_password"),
   };
 
   return (
@@ -119,7 +121,7 @@ const Auth = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               {mode === "register" && (
                 <div className="space-y-2">
-                  <Label htmlFor="fullName">Ad və soyad</Label>
+                  <Label htmlFor="fullName">{t("auth.full_name")}</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input id="fullName" placeholder="Ad Soyad" value={fullName} onChange={(e) => setFullName(e.target.value)} className="pl-10" required />
@@ -128,7 +130,7 @@ const Auth = () => {
               )}
               {mode === "register" && (
                 <div className="space-y-2">
-                  <Label htmlFor="referral">Referal kodu (istəyə bağlı)</Label>
+                  <Label htmlFor="referral">{t("auth.referral_code")}</Label>
                   <div className="relative">
                     <Gift className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input id="referral" placeholder="XXXXXXXX" value={referralCode} onChange={(e) => setReferralCode(e.target.value)} className="pl-10 uppercase font-mono" />
@@ -136,7 +138,7 @@ const Auth = () => {
                 </div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
+                <Label htmlFor="email">{t("common.email")}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input id="email" type="email" placeholder="email@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" required />
@@ -144,7 +146,7 @@ const Auth = () => {
               </div>
               {mode !== "forgot" && (
                 <div className="space-y-2">
-                  <Label htmlFor="password">Şifrə</Label>
+                  <Label htmlFor="password">{t("common.password")}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" minLength={6} required />
@@ -152,25 +154,25 @@ const Auth = () => {
                 </div>
               )}
               <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90" disabled={loading}>
-                {loading ? "Gözləyin..." : titles[mode]}
+                {loading ? t("common.loading") : titles[mode]}
               </Button>
             </form>
 
             {mode === "login" && (
               <div className="mt-3 text-center">
                 <button onClick={() => setMode("forgot")} className="text-xs text-muted-foreground hover:text-primary hover:underline">
-                  Şifrəni unutmusunuz?
+                  {t("auth.forgot_password")}
                 </button>
               </div>
             )}
 
             <div className="mt-4 text-center text-sm text-muted-foreground">
               {mode === "login" ? (
-                <>Hesabınız yoxdur?{" "}<button onClick={() => setMode("register")} className="text-primary font-medium hover:underline">Qeydiyyatdan keçin</button></>
+                <>{t("auth.no_account")}{" "}<button onClick={() => setMode("register")} className="text-primary font-medium hover:underline">{t("auth.signup_link")}</button></>
               ) : mode === "register" ? (
-                <>Artıq hesabınız var?{" "}<button onClick={() => setMode("login")} className="text-primary font-medium hover:underline">Daxil olun</button></>
+                <>{t("auth.have_account")}{" "}<button onClick={() => setMode("login")} className="text-primary font-medium hover:underline">{t("auth.signin_link")}</button></>
               ) : (
-                <button onClick={() => setMode("login")} className="text-primary font-medium hover:underline">Geri qayıt</button>
+                <button onClick={() => setMode("login")} className="text-primary font-medium hover:underline">{t("common.back")}</button>
               )}
             </div>
           </CardContent>
@@ -178,7 +180,7 @@ const Auth = () => {
 
         <div className="mt-4 text-center">
           <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4" /> Ana səhifəyə qayıt
+            <ArrowLeft className="h-4 w-4" /> {t("nav.home")}
           </Link>
         </div>
       </div>
