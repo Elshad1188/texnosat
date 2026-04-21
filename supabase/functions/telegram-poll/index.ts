@@ -141,11 +141,17 @@ async function handleSingle(msg: any, supabase: any, lovableKey: string, botToke
   const chatId = msg.chat.id;
   const text = msg.text || msg.caption || "";
 
-  if (text === "/ping") { await sendMessage(chatId, "🟢 v9.0 - Direct API + Admin Token", botToken); return; }
+  if (text === "/ping") { await sendMessage(chatId, "🟢 v9.1 - Direct API + Link Scraping", botToken); return; }
   if (text.startsWith("/start")) return handleStart(chatId, text, supabase, botToken);
   if (text.startsWith("/store")) return handleStoreSelect(chatId, text, supabase, botToken);
   if (text.startsWith("/markup")) return handleMarkup(chatId, text, supabase, botToken);
   if (text === "/settings") return handleSettings(chatId, supabase, botToken);
+
+  // Detect product link (Temu, Tap.az, etc.) — must come before media checks
+  const productUrlMatch = text.match(/https?:\/\/[^\s]+/i);
+  if (productUrlMatch && !msg.photo && !msg.video && !msg.document) {
+    return handleProductLink(chatId, productUrlMatch[0], supabase, lovableKey, botToken, categoryTree);
+  }
 
   const hasPhoto = !!msg.photo;
   const hasVideo = !!msg.video;
