@@ -294,10 +294,16 @@ const AdminPanel = () => {
     const userReviews = reviews.filter((r) => r.reviewed_user_id === userId);
     const count = userReviews.length;
     const avg = count > 0 ? userReviews.reduce((s, r) => s + r.rating, 0) / count : 0;
+    const userListingsCount = listings.filter((l) => l.user_id === userId && l.is_active).length;
+    const profile = profiles.find((p) => p.user_id === userId);
     if (count >= 25 && avg >= 4) return { label: "VIP Satıcı", color: "bg-amber-500/20 text-amber-600" };
     if (count >= 10 && avg >= 3.5) return { label: "Etibarlı", color: "bg-green-500/20 text-green-600" };
-    if (count >= 3) return { label: "Aktiv", color: "bg-blue-500/20 text-blue-600" };
-    return { label: "Yeni", color: "bg-muted text-muted-foreground" };
+    if (userListingsCount >= 5 || count >= 3) return { label: "Aktiv", color: "bg-blue-500/20 text-blue-600" };
+    if (profile?.created_at) {
+      const days = (Date.now() - new Date(profile.created_at).getTime()) / 86400000;
+      if (days <= 30) return { label: "Yeni", color: "bg-muted text-muted-foreground" };
+    }
+    return null;
   };
 
   const getProfileName = (userId: string) => profiles.find((p) => p.user_id === userId)?.full_name || "Adsız";

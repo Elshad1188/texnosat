@@ -38,11 +38,15 @@ function formatTime(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("az");
 }
 
-function getUserLevel(reviewCount: number, avg: number) {
+function getUserLevel(reviewCount: number, avg: number, listingsCount: number, createdAt?: string | null) {
   if (reviewCount >= 25 && avg >= 4) return { label: "VIP Satıcı", color: "bg-amber-500/20 text-amber-600" };
   if (reviewCount >= 10 && avg >= 3.5) return { label: "Etibarlı", color: "bg-green-500/20 text-green-600" };
-  if (reviewCount >= 3) return { label: "Aktiv", color: "bg-blue-500/20 text-blue-600" };
-  return { label: "Yeni", color: "bg-muted text-muted-foreground" };
+  if (listingsCount >= 5 || reviewCount >= 3) return { label: "Aktiv", color: "bg-blue-500/20 text-blue-600" };
+  if (createdAt) {
+    const days = (Date.now() - new Date(createdAt).getTime()) / 86400000;
+    if (days <= 30) return { label: "Yeni", color: "bg-muted text-muted-foreground" };
+  }
+  return null;
 }
 
 const ProductDetail = () => {
