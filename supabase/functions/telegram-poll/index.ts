@@ -385,3 +385,101 @@ async function handleSettings(chatId: number, supabase: any, botToken: string) {
   const { data: s } = await supabase.from("telegram_bot_settings").select("*, stores(name)").eq("telegram_chat_id", chatId).single();
   if (s) await sendMessage(chatId, `⚙️ Mağaza: ${(s as any).stores?.name || "Yox"}\nMarkup: ${s.markup_value}${s.markup_type === "percent" ? "%" : "₼"}`, botToken);
 }
+
+// ─── Product link handler (Temu, Tap.az, etc.) ──────────────
+async function handleProductLink(chatId: number, url: string, supabase: any, lovableKey: string, botToken: string, categoryTree: string) {
+  const { data: settings } = await supabase.from("telegram_bot_settings").select("*").eq("telegram_chat_id", chatId).maybeSingle();
+  if (!settings?.store_id) {
+    await sendMessage(chatId, "⚠️ Əvvəlcə /store ilə mağaza seçin.", botToken);
+    return;
+  }
+
+  let source = "generic";
+  const lowerUrl = url.toLowerCase();
+  if (lowerUrl.includes("temu.com")) source = "temu";
+  else if (lowerUrl.includes("tap.az")) source = "tap.az";
+  else if (lowerUrl.includes("telefon.az")) source = "telefon.az";
+
+  await sendMessage(chatId, `🔗 Link aşkarlandı (${source}). Məhsul məlumatları çəkilir...`, botToken);
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const resp = await fetch(`${supabaseUrl}/functions/v1/scrape-listings`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
+      body: JSON.stringify({ source, categoryUrl: url, singleUrlMode: true, cronMode: true, limit: 1 }),
+    });
+
+    const result = await resp.json();
+    if (!resp.ok || !result.success) {
+      console.error("Scrape failed:", result);
+      await sendMessage(chatId, `❌ Məhsul çəkilə bilmədi: ${result.error || "naməlum xəta"}`, botToken);
+      return;
+    }
+
+    const item = result.listings?.[0];
+    if (!item || !item.title) {
+      await sendMessage(chatId, "❌ Məhsul məlumatları tapılmadı.", botToken);
+      return;
+    }
+
+    // Re-upload images to our storage
+    const uploadedImages: string[] = [];
+    for (const imgUrl of (item.image_urls || []).slice(0, 8)) {
+      try {
+        const imgResp = await fetch(imgUrl);
+        if (!imgResp.ok) continue;
+        const bytes = await imgResp.arrayBuffer();
+        const ext = imgUrl.split(".").pop()?.split("?")[0]?.toLowerCase() || "jpg";
+        const safeExt = ["jpg", "jpeg", "png", "webp"].includes(ext) ? ext : "jpg";
+        const name = `telegram/${Date.now()}_${Math.random().toString(36).slice(2)}.${safeExt}`;
+        await supabase.storage.from("listing-images").upload(name, bytes, { contentType: `image/${safeExt}` });
+        const pub = supabase.storage.from("listing-images").getPublicUrl(name).data.publicUrl;
+        if (pub) uploadedImages.push(pub);
+      } catch (e) { console.error("Image re-upload:", e); }
+    }
+
+    const ai = await analyzeWithAI(uploadedImages[0] || null, `${item.title}\n${item.description || ""}`, lovableKey, categoryTree);
+
+    const limitCheck = await checkStoreLimit(settings.store_id, supabase);
+    if (!limitCheck.allowed) {
+      await sendMessage(chatId, `⚠️ ${limitCheck.reason}`, botToken);
+      return;
+    }
+
+    const costPrice = Number(item.price) || Number(ai.price) || 0;
+    const sellingPrice = costPrice > 0
+      ? (settings.markup_type === "percent"
+        ? Math.round(costPrice * (1 + settings.markup_value / 100))
+        : costPrice + settings.markup_value)
+      : 0;
+
+    const insertData: any = {
+      user_id: settings.user_id,
+      store_id: settings.store_id,
+      title: item.title || ai.title || "Məhsul",
+      description: (item.description || ai.description || "") + `\n\nMənbə: ${url}`,
+      price: sellingPrice,
+      cost_price: costPrice,
+      condition: item.condition || ai.condition || "Yeni",
+      category: ai.subcategory || ai.category || settings.target_category,
+      location: settings.target_location,
+      image_urls: uploadedImages,
+      is_active: false,
+      status: "pending",
+    };
+
+    const { error } = await supabase.from("listings").insert(insertData);
+    if (error) {
+      console.error(error.message);
+      await sendMessage(chatId, `❌ Xəta: ${error.message}`, botToken);
+      return;
+    }
+
+    await sendMessage(chatId, `✅ <b>Linkdən elan yaradıldı!</b>\n📝 ${insertData.title}\n📁 ${insertData.category}\n💰 ${sellingPrice}₼ (Maya: ${costPrice}₼)\n📸 ${uploadedImages.length} şəkil\n⏳ Admin təsdiqi gözləyir.`, botToken);
+  } catch (e: any) {
+    console.error("handleProductLink error:", e);
+    await sendMessage(chatId, `❌ Xəta baş verdi: ${e.message}`, botToken);
+  }
+}
