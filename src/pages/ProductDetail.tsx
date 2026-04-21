@@ -147,6 +147,20 @@ const ProductDetail = () => {
     enabled: !!listing?.user_id,
   });
 
+  // Fetch seller's active listings count (for level)
+  const { data: sellerListingsCount = 0 } = useQuery({
+    queryKey: ["seller-listings-count", listing?.user_id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("listings")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", listing!.user_id)
+        .eq("is_active", true);
+      return count || 0;
+    },
+    enabled: !!listing?.user_id,
+  });
+
   // Fetch comments for this listing
   const { data: comments = [] } = useQuery({
     queryKey: ["reel-comments", id],
@@ -334,7 +348,7 @@ const ProductDetail = () => {
 
   const images = listing.image_urls?.length ? listing.image_urls : ["/placeholder.svg"];
   const avgRating = sellerReviews.length > 0 ? sellerReviews.reduce((s: number, r: any) => s + r.rating, 0) / sellerReviews.length : 0;
-  const level = getUserLevel(sellerReviews.length, avgRating);
+  const level = getUserLevel(sellerReviews.length, avgRating, sellerListingsCount, seller?.created_at);
 
   // Share handler
   const handleShare = async () => {
@@ -730,7 +744,7 @@ const ProductDetail = () => {
                   </div>
                 </Link>
                 <div className="flex items-center gap-2">
-                  <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>
+                  {level && <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>}
                   {user && user.id !== listing.user_id && (
                     <Button
                       variant={isFollowingSeller ? "outline" : "default"}
