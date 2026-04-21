@@ -87,6 +87,7 @@ const TelegramBotTab = ({ storeId }: TelegramBotTabProps) => {
               <li>Mağaza seçin: /store 1</li>
               <li>Qiymət əlavəsi təyin edin: /markup faiz 20</li>
               <li>Qrupdan məhsul mesajını bota forward edin — elan avtomatik yaradılacaq!</li>
+              <li><b>YENİ:</b> Temu/Tap.az məhsul linkini bota göndərin — məlumatlar avtomatik çəkiləcək!</li>
             </ol>
           </div>
 
