@@ -4,9 +4,11 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useTranslation } from "react-i18next";
 
 const Footer = () => {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
 
   useEffect(() => {
@@ -56,18 +58,18 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="mb-3 font-display text-sm font-semibold">Kateqoriyalar</h4>
+            <h4 className="mb-3 font-display text-sm font-semibold">{t("categories.title")}</h4>
             <ul className="space-y-2 text-sm text-secondary-foreground/60">
               <li><Link to="/products?category=telefonlar" className="hover:text-primary">Telefonlar</Link></li>
               <li><Link to="/products?category=noutbuklar" className="hover:text-primary">Noutbuklar</Link></li>
               <li><Link to="/products?category=plansetler" className="hover:text-primary">Planşetlər</Link></li>
               <li><Link to="/products?category=aksesuarlar" className="hover:text-primary">Aksesuarlar</Link></li>
-              <li><Link to="/blog" className="hover:text-primary">Blog</Link></li>
+              <li><Link to="/blog" className="hover:text-primary">{t("nav.blog")}</Link></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="mb-3 font-display text-sm font-semibold">Şirkət</h4>
+            <h4 className="mb-3 font-display text-sm font-semibold">{t("footer.about")}</h4>
             <ul className="space-y-2 text-sm text-secondary-foreground/60">
               {pages.length > 0 ? (
                 pages.map((p: any) => (
@@ -75,16 +77,16 @@ const Footer = () => {
                 ))
               ) : (
                 <>
-                  <li><Link to="/page/about" className="hover:text-primary">Haqqımızda</Link></li>
-                  <li><Link to="/page/rules" className="hover:text-primary">Qaydalar</Link></li>
-                  <li><Link to="/page/privacy" className="hover:text-primary">Məxfilik</Link></li>
+                  <li><Link to="/page/about" className="hover:text-primary">{t("footer.about")}</Link></li>
+                  <li><Link to="/page/rules" className="hover:text-primary">{t("footer.rules")}</Link></li>
+                  <li><Link to="/page/privacy" className="hover:text-primary">{t("footer.privacy")}</Link></li>
                 </>
               )}
             </ul>
           </div>
 
           <div>
-            <h4 className="mb-3 font-display text-sm font-semibold">Əlaqə</h4>
+            <h4 className="mb-3 font-display text-sm font-semibold">{t("footer.contact")}</h4>
             <ul className="space-y-2 text-sm text-secondary-foreground/60">
               <li className="flex items-center gap-2"><Phone className="h-4 w-4" /> {phone}</li>
               <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> {email}</li>

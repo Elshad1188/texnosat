@@ -4,8 +4,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 const MobileBottomNav = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const { user } = useAuth();
 
@@ -33,11 +35,11 @@ const MobileBottomNav = () => {
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
-    { path: "/", icon: Home, label: "Ana səhifə" },
-    { path: "/reels", icon: Play, label: "Reels" },
-    { path: "/create-listing", icon: Plus, label: "Yerləşdir", isCenter: true },
-    { path: "/messages", icon: MessageCircle, label: "Mesajlar", badge: unreadCount },
-    { path: user ? "/profile" : "/auth", icon: User, label: "Profil" },
+    { path: "/", icon: Home, label: t("mobilenav.home") },
+    { path: "/reels", icon: Play, label: t("mobilenav.reels") },
+    { path: "/create-listing", icon: Plus, label: t("mobilenav.add"), isCenter: true },
+    { path: "/messages", icon: MessageCircle, label: t("mobilenav.messages"), badge: unreadCount },
+    { path: user ? "/profile" : "/auth", icon: User, label: t("mobilenav.profile") },
   ];
 
   return (

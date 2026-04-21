@@ -8,11 +8,14 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import NotificationBell from "@/components/NotificationBell";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { iconMap } from "@/lib/icons";
+import { useTranslation } from "react-i18next";
 
 const Header = () => {
+  const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const { theme } = useTheme();
   const { isAdmin } = useIsAdmin();
@@ -110,12 +113,12 @@ const Header = () => {
               {/* Nav links */}
               <div className="p-4 space-y-1">
                 {[
-                  { to: "/", label: "Ana səhifə", icon: Home },
-                  { to: "/products", label: "Elanlar", icon: FolderTree },
-                  { to: "/stores", label: "Mağazalar", icon: Store },
-                  { to: "/reels", label: "Reels", icon: Play },
-                  { to: "/blog", label: "Blog", icon: BookOpen },
-                  { to: "/create-store", label: "Mağaza aç", icon: Store },
+                  { to: "/", label: t("nav.home"), icon: Home },
+                  { to: "/products", label: t("nav.products"), icon: FolderTree },
+                  { to: "/stores", label: t("nav.stores"), icon: Store },
+                  { to: "/reels", label: t("nav.reels"), icon: Play },
+                  { to: "/blog", label: t("nav.blog"), icon: BookOpen },
+                  { to: "/create-store", label: t("nav.create_store"), icon: Store },
                 ].map(item => (
                   <Link
                     key={item.to}
@@ -130,7 +133,7 @@ const Header = () => {
                 {isAdmin && (
                   <Link to="/admin" onClick={() => setSheetOpen(false)}
                     className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-muted">
-                    <ShieldCheck className="h-4 w-4" /> Admin Paneli
+                    <ShieldCheck className="h-4 w-4" /> {t("nav.admin")}
                   </Link>
                 )}
               </div>
@@ -139,7 +142,7 @@ const Header = () => {
 
               {/* Categories */}
               <div className="p-4">
-                <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Kateqoriyalar</h4>
+                <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("categories.title")}</h4>
                 <div className="space-y-1">
                   {categories.map((c: any) => {
                     const Icon = iconMap[c.icon] || CircuitBoard;
@@ -166,7 +169,7 @@ const Header = () => {
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-100 text-orange-600">
                     <Trophy className="h-4 w-4" />
                   </div>
-                  Hədiyyə Çarxı
+                  {t("nav.spin")}
                 </Link>
               </div>
 
@@ -195,7 +198,7 @@ const Header = () => {
 
               {/* Contact */}
               <div className="p-4">
-                <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Əlaqə</h4>
+                <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("footer.contact")}</h4>
                 <div className="space-y-2 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2"><Phone className="h-4 w-4" /> {phone}</div>
                   <div className="flex items-center gap-2"><Mail className="h-4 w-4" /> {email}</div>
@@ -223,19 +226,20 @@ const Header = () => {
         </div>
 
         <nav className="hidden items-center gap-6 lg:flex">
-          <Link to="/" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Ana səhifə</Link>
-          <Link to="/products" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Elanlar</Link>
-          <Link to="/stores" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Mağazalar</Link>
-          <Link to="/blog" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Blog</Link>
-          <Link to="/create-store" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Mağaza aç</Link>
+          <Link to="/" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.home")}</Link>
+          <Link to="/products" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.products")}</Link>
+          <Link to="/stores" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.stores")}</Link>
+          <Link to="/blog" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.blog")}</Link>
+          <Link to="/create-store" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.create_store")}</Link>
           {isAdmin && (
             <Link to="/admin" className="flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary/80">
-              <ShieldCheck className="h-4 w-4" /> Admin
+              <ShieldCheck className="h-4 w-4" /> {t("nav.admin")}
             </Link>
           )}
         </nav>
 
         <div className="flex items-center gap-2">
+          <LanguageSwitcher />
           {user && (
             <Link to="/balance" className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1.5 text-xs sm:text-sm font-semibold text-foreground hover:bg-accent transition-colors">
               <Wallet className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
@@ -275,7 +279,7 @@ const Header = () => {
               <Button className="hidden lg:flex bg-gradient-primary text-primary-foreground hover:opacity-90 gap-1.5" asChild>
                 <Link to="/create-listing">
                   <Plus className="h-4 w-4" />
-                  <span>Elan yerləşdir</span>
+                  <span>{t("nav.create_listing")}</span>
                 </Link>
               </Button>
             </>
@@ -283,7 +287,7 @@ const Header = () => {
             <Button variant="outline" className="gap-1.5" asChild>
               <Link to="/auth">
                 <User className="h-4 w-4" />
-                <span>Daxil ol</span>
+                <span>{t("nav.login")}</span>
               </Link>
             </Button>
           )}

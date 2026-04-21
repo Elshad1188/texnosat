@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import VisualSearchButton from "@/components/VisualSearchButton";
+import { useTranslation } from "react-i18next";
 
 const HeroSection = () => {
+  const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
 
@@ -20,7 +22,7 @@ const HeroSection = () => {
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Axtar..."
+              placeholder={t("nav.search_placeholder")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="h-12 w-full rounded-2xl border border-border bg-card pl-12 pr-32 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
@@ -32,7 +34,7 @@ const HeroSection = () => {
                 size="sm"
                 className="h-8 bg-gradient-primary text-primary-foreground hover:opacity-90 rounded-xl px-4"
               >
-                Axtar
+                {t("hero.search_button")}
               </Button>
             </div>
           </div>
