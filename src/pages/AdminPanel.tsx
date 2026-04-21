@@ -723,7 +723,7 @@ const AdminPanel = () => {
                             <div className="flex flex-wrap gap-1 mt-1">
                               {isUserAdmin && <Badge className="bg-primary/20 text-primary border-0 text-[10px]">Admin</Badge>}
                               {isUserMod && <Badge className="bg-blue-500/20 text-blue-600 border-0 text-[10px]">Mod</Badge>}
-                              <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>
+                              {level && <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>}
                               {isSelf && <Badge variant="outline" className="text-[10px]">Siz</Badge>}
                             </div>
                           </div>
@@ -814,7 +814,7 @@ const AdminPanel = () => {
                           <h3 className="truncate text-xs font-semibold text-foreground">{p.full_name || "Adsız"}</h3>
                           {isUserAdmin && <Badge className="bg-primary/20 text-primary border-0 text-[10px]">Admin</Badge>}
                           {isUserMod && <Badge className="bg-blue-500/20 text-blue-600 border-0 text-[10px]">Mod</Badge>}
-                          <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>
+                          {level && <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>}
                           {isSelf && <Badge variant="outline" className="text-[10px]">Siz</Badge>}
                         </div>
                         <p className="text-[11px] text-muted-foreground truncate">
