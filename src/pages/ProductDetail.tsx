@@ -747,7 +747,7 @@ const ProductDetail = () => {
                   </div>
                 </Link>
                 <div className="flex items-center gap-2">
-                  {level && {level && <Badge className={`${level.color} border-0 text-[10px]`}>{t(level.labelKey)}</Badge>}}
+                  {level && <Badge className={`${level.color} border-0 text-[10px]`}>{t(level.labelKey)}</Badge>}
                   {user && user.id !== listing.user_id && (
                     <Button
                       variant={isFollowingSeller ? "outline" : "default"}
