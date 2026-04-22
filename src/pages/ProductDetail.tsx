@@ -519,7 +519,7 @@ const ProductDetail = () => {
 
             <div className="mt-4 flex flex-wrap gap-3 text-sm text-muted-foreground">
               <span className="flex items-center gap-1"><MapPin className="h-4 w-4" /> {listing.location}</span>
-              <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {formatTime(listing.created_at)}</span>
+              <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {formatTime(listing.created_at, t, language)}</span>
               <Badge variant="outline">{listing.category}</Badge>
             </div>
 
