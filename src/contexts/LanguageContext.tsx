@@ -48,7 +48,6 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
       let effective: Lang = stored || (defaultLang as Lang);
       if (effective === "ru" && !ru) effective = "az";
       setLanguageState(effective);
-      i18n.changeLanguage(effective);
 
       // Load all translations from DB
       const { data: rows } = await supabase.from("translations").select("key, az, ru");
@@ -62,6 +61,8 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
         i18n.addResourceBundle("az", "translation", azBundle, true, true);
         i18n.addResourceBundle("ru", "translation", ruBundle, true, true);
       }
+
+      await i18n.changeLanguage(effective);
 
       setIsLoaded(true);
     };
@@ -77,6 +78,8 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     i18n.changeLanguage(lang);
     document.documentElement.lang = lang;
   };
+
+  if (!isLoaded) return null;
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, ruEnabled, isLoaded }}>
