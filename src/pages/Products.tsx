@@ -12,27 +12,36 @@ import ListingCard from "@/components/ListingCard";
 import { supabase } from "@/integrations/supabase/client";
 import { iconMap } from "@/lib/icons";
 import SaveSearchButton from "@/components/SaveSearchButton";
+import { useLanguage, useTranslation } from "@/contexts/LanguageContext";
 
-const conditions = ["Hamısı", "Yeni", "Yeni kimi", "İşlənmiş"];
-const sortOptions = [
-  { value: "newest", label: "Ən yeni" },
-  { value: "price-asc", label: "Ucuzdan bahaya" },
-  { value: "price-desc", label: "Bahadan ucuza" },
-  { value: "views", label: "Ən çox baxılan" },
+const conditions = [
+  { value: "all", dbValue: "", labelKey: "common.all" },
+  { value: "new", dbValue: "Yeni", labelKey: "products.condition_new" },
+  { value: "like_new", dbValue: "Yeni kimi", labelKey: "products.condition_like_new" },
+  { value: "used", dbValue: "İşlənmiş", labelKey: "products.condition_used" },
 ];
+const sortOptions = [
+  { value: "newest", labelKey: "products.sort_newest" },
+  { value: "price-asc", labelKey: "products.sort_price_asc" },
+  { value: "price-desc", labelKey: "products.sort_price_desc" },
+  { value: "views", labelKey: "products.sort_views" },
+];
+const conditionDbMap = Object.fromEntries(conditions.map((c) => [c.value, c.dbValue]));
 
-function formatTime(dateStr: string) {
+function formatTime(dateStr: string, t: (key: string, options?: any) => string, language: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const hours = Math.floor(diff / 3600000);
-  if (hours < 1) return "Az əvvəl";
-  if (hours < 24) return `${hours} saat əvvəl`;
+  if (hours < 1) return t("time.just_now");
+  if (hours < 24) return t("time.hours_ago", { count: hours });
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days} gün əvvəl`;
-  return new Date(dateStr).toLocaleDateString("az");
+  if (days < 7) return t("time.days_ago", { count: days });
+  return new Date(dateStr).toLocaleDateString(language);
 }
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { t } = useTranslation();
+  const { language } = useLanguage();
   const initialSearch = searchParams.get("search") || "";
   const initialCategory = searchParams.get("category") || "";
 
@@ -40,7 +49,7 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("");
-  const [selectedCondition, setSelectedCondition] = useState("Hamısı");
+  const [selectedCondition, setSelectedCondition] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const [showFilters, setShowFilters] = useState(false);
   const [priceMin, setPriceMin] = useState("");
@@ -130,8 +139,8 @@ const Products = () => {
       result = result.filter((p: any) => p.subcategory === selectedSubcategory);
     }
 
-    if (selectedCondition !== "Hamısı") {
-      result = result.filter((p: any) => p.condition === selectedCondition);
+    if (selectedCondition !== "all") {
+      result = result.filter((p: any) => p.condition === conditionDbMap[selectedCondition]);
     }
 
     if (selectedRegion) {
@@ -163,13 +172,13 @@ const Products = () => {
 
   const clearFilters = () => {
     setQuery(""); setSelectedCategory(""); setSelectedSubcategory("");
-    setSelectedRegion(""); setSelectedCondition("Hamısı");
+    setSelectedRegion(""); setSelectedCondition("all");
     setPriceMin(""); setPriceMax(""); setSortBy("newest");
     setCustomFilters({});
     setSearchParams({});
   };
 
-  const hasActiveFilters = query || selectedCategory || selectedCondition !== "Hamısı" || priceMin || priceMax || selectedRegion || Object.values(customFilters).some(v => v !== "");
+  const hasActiveFilters = query || selectedCategory || selectedCondition !== "all" || priceMin || priceMax || selectedRegion || Object.values(customFilters).some(v => v !== "");
 
   return (
     <div className="min-h-screen bg-background">
@@ -179,25 +188,25 @@ const Products = () => {
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
           <form onSubmit={(e) => e.preventDefault()} className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-            <input type="text" placeholder="Məhsul axtar..." value={query} onChange={(e) => setQuery(e.target.value)}
+            <input type="text" placeholder={t("products.search_placeholder")} value={query} onChange={(e) => setQuery(e.target.value)}
               className="h-11 w-full rounded-xl border border-border bg-card pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
           </form>
           <div className="flex gap-2 flex-wrap">
             <Button variant="outline" onClick={() => setShowFilters(!showFilters)} className="gap-2">
-              <SlidersHorizontal className="h-4 w-4" /> Filterlər
+              <SlidersHorizontal className="h-4 w-4" /> {t("products.filters")}
             </Button>
             <SaveSearchButton
               query={query}
               category={selectedCategory}
               subcategory={selectedSubcategory}
               region={selectedRegion ? (regions.find((r: any) => r.id === selectedRegion) as any)?.name : ""}
-              condition={selectedCondition}
+              condition={selectedCondition === "all" ? "" : conditionDbMap[selectedCondition]}
               priceMin={priceMin}
               priceMax={priceMax}
             />
             <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
               className="h-11 rounded-xl border border-border bg-card px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary">
-              {sortOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              {sortOptions.map((opt) => <option key={opt.value} value={opt.value}>{t(opt.labelKey)}</option>)}
             </select>
           </div>
         </div>
@@ -207,33 +216,33 @@ const Products = () => {
           <div className="mb-6 animate-fade-in rounded-xl border border-border bg-card p-4 shadow-card">
             <div className="flex flex-wrap gap-4">
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Vəziyyət</label>
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{t("products.condition")}</label>
                 <div className="flex flex-wrap gap-1.5">
                   {conditions.map((c) => (
-                    <button key={c} onClick={() => setSelectedCondition(c)}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${selectedCondition === c ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
-                      {c}
+                    <button key={c.value} onClick={() => setSelectedCondition(c.value)}
+                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${selectedCondition === c.value ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
+                      {t(c.labelKey)}
                     </button>
                   ))}
                 </div>
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Bölgə</label>
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{t("products.region")}</label>
                 <Select value={selectedRegion || "all"} onValueChange={(v) => setSelectedRegion(v === "all" ? "" : v)}>
-                  <SelectTrigger className="w-40"><SelectValue placeholder="Bölgə seçin" /></SelectTrigger>
+                  <SelectTrigger className="w-40"><SelectValue placeholder={t("products.select_region")} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Hamısı</SelectItem>
+                    <SelectItem value="all">{t("common.all")}</SelectItem>
                     {parentRegions.map((r: any) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Qiymət aralığı (₼)</label>
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{t("products.price_range")}</label>
                 <div className="flex items-center gap-2">
-                  <input type="number" placeholder="Min" value={priceMin} onChange={(e) => setPriceMin(e.target.value)}
+                  <input type="number" placeholder={t("products.min")} value={priceMin} onChange={(e) => setPriceMin(e.target.value)}
                     className="h-9 w-24 rounded-lg border border-border bg-muted px-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
                   <span className="text-muted-foreground">—</span>
-                  <input type="number" placeholder="Max" value={priceMax} onChange={(e) => setPriceMax(e.target.value)}
+                  <input type="number" placeholder={t("products.max")} value={priceMax} onChange={(e) => setPriceMax(e.target.value)}
                     className="h-9 w-24 rounded-lg border border-border bg-muted px-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
                 </div>
               </div>
@@ -241,15 +250,15 @@ const Products = () => {
               {categoryFields.length > 0 && (
                 <div className="flex flex-wrap gap-4 pt-4 mt-4 border-t border-border w-full">
                   <div className="w-full">
-                    <h4 className="text-[10px] font-bold text-primary uppercase tracking-wider mb-3">Kateqoriyaya özəl filtrlər</h4>
+                    <h4 className="text-[10px] font-bold text-primary uppercase tracking-wider mb-3">{t("products.category_filters")}</h4>
                     <div className="flex flex-wrap gap-4">
                       {categoryFields.map((field: any) => (
                         <div key={field.id}>
                           <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{field.field_label}</label>
                           <Select value={customFilters[field.field_name] || "all"} onValueChange={(v) => setCustomFilters(prev => ({ ...prev, [field.field_name]: v === "all" ? "" : v }))}>
-                            <SelectTrigger className="w-44 bg-muted/30"><SelectValue placeholder="Seçin" /></SelectTrigger>
+                            <SelectTrigger className="w-44 bg-muted/30"><SelectValue placeholder={t("products.select")} /></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="all">Hamısı</SelectItem>
+                              <SelectItem value="all">{t("common.all")}</SelectItem>
                               {Array.isArray(field.options) && field.options.map((opt: string) => (
                                 <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                               ))}
@@ -264,7 +273,7 @@ const Products = () => {
             </div>
             {hasActiveFilters && (
               <button onClick={clearFilters} className="mt-3 flex items-center gap-1 text-xs text-primary hover:underline">
-                <X className="h-3 w-3" /> Filterləri sıfırla
+                <X className="h-3 w-3" /> {t("products.clear_filters")}
               </button>
             )}
           </div>
@@ -274,7 +283,7 @@ const Products = () => {
         <div className="mb-6 flex flex-wrap gap-2">
           <button onClick={() => { setSelectedCategory(""); setSelectedSubcategory(""); }}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${!selectedCategory ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
-            Hamısı
+            {t("common.all")}
           </button>
           {parentCategories.map((cat: any) => {
             const Icon = iconMap[cat.icon] || CircuitBoard;
@@ -301,7 +310,7 @@ const Products = () => {
 
         {/* Results */}
         <div className="mb-4 text-sm text-muted-foreground">
-          {isLoading ? "Yüklənir..." : `${filteredProducts.length} elan tapıldı`}
+          {isLoading ? t("common.loading") : t("products.results_count", { count: filteredProducts.length })}
         </div>
 
         {isLoading ? (
@@ -314,7 +323,7 @@ const Products = () => {
                 <ListingCard
                   key={product.id} id={product.id} title={product.title}
                   price={`${Number(product.price).toLocaleString()} ${product.currency}`}
-                  location={product.location} time={formatTime(product.created_at)}
+                  location={product.location} time={formatTime(product.created_at, t, language)}
                   image={product.image_urls?.[0] || "/placeholder.svg"}
                   condition={product.condition} isPremium={product.is_premium} isUrgent={product.is_urgent}
                   isBuyable={product.is_buyable}
@@ -327,9 +336,9 @@ const Products = () => {
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Search className="mb-4 h-12 w-12 text-muted-foreground/30" />
-            <h3 className="font-display text-lg font-semibold text-foreground">Elan tapılmadı</h3>
-            <p className="mt-1 text-sm text-muted-foreground">Axtarış meyarlarınızı dəyişməyi yoxlayın</p>
-            <Button variant="outline" onClick={clearFilters} className="mt-4">Filterləri sıfırla</Button>
+            <h3 className="font-display text-lg font-semibold text-foreground">{t("products.no_results_title")}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{t("products.no_results_desc")}</p>
+            <Button variant="outline" onClick={clearFilters} className="mt-4">{t("products.clear_filters")}</Button>
           </div>
         )}
       </main>

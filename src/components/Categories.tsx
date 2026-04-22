@@ -4,9 +4,11 @@ import { iconMap } from "@/lib/icons";
 import { useNavigate } from "react-router-dom";
 import { CircuitBoard, LayoutGrid } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 const Categories = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["categories-home"],
@@ -51,7 +53,7 @@ const Categories = () => {
               <LayoutGrid className="h-7 w-7 text-primary-foreground" />
             </div>
             <span className="max-w-[68px] text-center text-[11px] font-medium leading-tight text-foreground">
-              Hamısı
+              {t("common.all")}
             </span>
           </button>
 
