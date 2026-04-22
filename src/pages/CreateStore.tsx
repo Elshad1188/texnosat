@@ -14,11 +14,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Store, Loader2, Crown, Upload, CheckCircle, Image } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 const CreateStore = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const logoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const [searchParams] = useSearchParams();
@@ -60,7 +62,7 @@ const CreateStore = () => {
 
   const getDayRangeString = (days: string[]) => {
     if (days.length === 0) return "";
-    if (days.length === 7) return "Hər gün";
+    if (days.length === 7) return t("create_store.every_day", "Hər gün");
     if (days.length === 5 && days.every(d => ["B.e", "Ç.a", "Ç.", "C.a", "Cü"].includes(d))) return "B.e - Cü";
     
     // Check for continuous range
@@ -171,7 +173,7 @@ const CreateStore = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name) { toast({ title: "Mağaza adını daxil edin", variant: "destructive" }); return; }
+    if (!form.name) { toast({ title: t("create_store.name_required", "Mağaza adını daxil edin"), variant: "destructive" }); return; }
     setLoading(true);
     try {
       let logoUrl = editStore?.logo_url || null;
@@ -195,15 +197,15 @@ const CreateStore = () => {
           changes: payload,
         });
         if (error) throw error;
-        toast({ title: "Redaktə sorğusu göndərildi! Admin təsdiqi gözlənilir." });
+        toast({ title: t("create_store.edit_request_sent", "Redaktə sorğusu göndərildi! Admin təsdiqi gözlənilir.") });
       } else {
         const { error } = await supabase.from("stores").insert({ user_id: user!.id, ...payload, status: "pending" });
         if (error) throw error;
-        toast({ title: "Mağaza yaradıldı! Admin təsdiqi gözlənilir." });
+        toast({ title: t("create_store.created_success", "Mağaza yaradıldı! Admin təsdiqi gözlənilir.") });
       }
       navigate("/profile");
     } catch (err: any) {
-      toast({ title: "Xəta baş verdi", description: err.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: err.message, variant: "destructive" });
     } finally { setLoading(false); }
   };
 
@@ -227,29 +229,29 @@ const CreateStore = () => {
           </div>
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground">
-              {editId ? "Mağazanı redaktə et" : "Mağaza aç"}
+              {editId ? t("create_store.title_edit") : t("create_store.title_new")}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {editId ? "Mağaza məlumatlarını yeniləyin" : "Yeni mağaza yaradın — admin təsdiqi tələb olunur"}
+              {editId ? t("create_store.subtitle_edit") : t("create_store.subtitle_new")}
             </p>
           </div>
         </div>
 
         <div className="mt-6 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5">
-          <h3 className="font-display text-base font-bold text-foreground">🚀 Mağaza açın, satışa başlayın!</h3>
-          <p className="mt-1 text-xs text-muted-foreground">Elan24-də mağaza açmaq pulsuzdur. Elanlarınızı bir yerdə idarə edin və müştərilərinizə peşəkar görüntü təqdim edin.</p>
+          <h3 className="font-display text-base font-bold text-foreground">{t("create_store.banner_title")}</h3>
+          <p className="mt-1 text-xs text-muted-foreground">{t("create_store.banner_desc")}</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <div className="flex items-start gap-2 rounded-xl bg-card/80 p-3 border border-border/50">
               <CheckCircle className="mt-0.5 h-4 w-4 text-emerald-500 shrink-0" />
-              <div><p className="text-xs font-semibold text-foreground">Pulsuz</p><p className="text-[10px] text-muted-foreground">Mağaza profili və limitsiz elan</p></div>
+              <div><p className="text-xs font-semibold text-foreground">{t("create_store.free")}</p><p className="text-[10px] text-muted-foreground">{t("create_store.free_desc")}</p></div>
             </div>
             <div className="flex items-start gap-2 rounded-xl bg-card/80 p-3 border border-border/50">
               <Crown className="mt-0.5 h-4 w-4 text-amber-500 shrink-0" />
-              <div><p className="text-xs font-semibold text-foreground">Premium</p><p className="text-[10px] text-muted-foreground">Üst sıralarda göstərilmə</p></div>
+              <div><p className="text-xs font-semibold text-foreground">Premium</p><p className="text-[10px] text-muted-foreground">{t("create_store.premium_desc")}</p></div>
             </div>
             <div className="flex items-start gap-2 rounded-xl bg-card/80 p-3 border border-border/50">
               <Store className="mt-0.5 h-4 w-4 text-primary shrink-0" />
-              <div><p className="text-xs font-semibold text-foreground">Birbaşa satış</p><p className="text-[10px] text-muted-foreground">Sifariş və çatdırılma idarəsi</p></div>
+              <div><p className="text-xs font-semibold text-foreground">{t("create_listing.direct_sale")}</p><p className="text-[10px] text-muted-foreground">{t("create_store.direct_sales_desc")}</p></div>
             </div>
           </div>
         </div>
@@ -257,17 +259,17 @@ const CreateStore = () => {
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           {/* Cover Image */}
           <div>
-            <Label>Cover şəkil</Label>
+            <Label>{t("create_store.cover_image")}</Label>
             <div className="mt-2">
               {coverPreview ? (
                 <div className="relative h-40 w-full overflow-hidden rounded-xl border border-border">
                   <img src={coverPreview} alt="Cover" className="h-full w-full object-cover" />
-                  <Button type="button" variant="secondary" size="sm" className="absolute bottom-2 right-2" onClick={() => coverInputRef.current?.click()}>Dəyişdir</Button>
+                  <Button type="button" variant="secondary" size="sm" className="absolute bottom-2 right-2" onClick={() => coverInputRef.current?.click()}>{t("common.change")}</Button>
                 </div>
               ) : (
                 <button type="button" onClick={() => coverInputRef.current?.click()}
                   className="flex h-40 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary">
-                  <Image className="h-8 w-8" /><span className="mt-2 text-sm">Cover şəkil yüklə</span>
+                  <Image className="h-8 w-8" /><span className="mt-2 text-sm">{t("create_store.upload_cover")}</span>
                 </button>
               )}
               <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, "cover")} />
@@ -276,7 +278,7 @@ const CreateStore = () => {
 
           {/* Logo */}
           <div>
-            <Label>Mağaza logosu</Label>
+            <Label>{t("create_store.logo")}</Label>
             <div className="mt-2 flex items-center gap-4">
               {logoPreview ? (
                 <img src={logoPreview} alt="Logo" className="h-20 w-20 rounded-xl border border-border object-cover" />
@@ -286,33 +288,33 @@ const CreateStore = () => {
                 </div>
               )}
               <Button type="button" variant="outline" onClick={() => logoInputRef.current?.click()}>
-                <Upload className="mr-2 h-4 w-4" />{logoPreview ? "Dəyişdir" : "Yüklə"}
+                <Upload className="mr-2 h-4 w-4" />{logoPreview ? t("common.change") : t("common.upload")}
               </Button>
               <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, "logo")} />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="name">Mağaza adı *</Label>
-            <Input id="name" placeholder="Məs: TechStore" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <Label htmlFor="name">{t("create_store.name")}</Label>
+            <Input id="name" placeholder={t("create_store.name_placeholder")} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="desc">Təsvir</Label>
-            <Textarea id="desc" placeholder="Mağaza haqqında..." rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <Label htmlFor="desc">{t("create_listing.desc_field")}</Label>
+            <Textarea id="desc" placeholder={t("create_store.desc_placeholder")} rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="phone">Telefon</Label>
+              <Label htmlFor="phone">{t("profile.phone")}</Label>
               <Input id="phone" placeholder="+994 50 000 0000" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>Şəhər</Label>
+              <Label>{t("create_store.city")}</Label>
               <Select value={form.city || "none"} onValueChange={(v) => setForm({ ...form, city: v === "none" ? "" : v })}>
-                <SelectTrigger><SelectValue placeholder="Şəhər seçin" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("create_store.select_city")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Seçin</SelectItem>
+                  <SelectItem value="none">{t("products.select")}</SelectItem>
                   {regions.map((r: any) => <SelectItem key={r.id} value={r.name}>{r.name}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -320,21 +322,21 @@ const CreateStore = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="address">Ünvan</Label>
+            <Label htmlFor="address">{t("create_store.address")}</Label>
             <AddressAutocomplete
               value={form.address}
               onChange={(v) => setForm({ ...form, address: v })}
-              placeholder="Küçə, bina"
+              placeholder={t("create_store.address_placeholder")}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="instagram">Instagram hesabı</Label>
+            <Label htmlFor="instagram">{t("create_store.instagram")}</Label>
             <Input id="instagram" placeholder="@magazaadi və ya https://instagram.com/magazaadi" value={form.instagram_url} onChange={(e) => setForm({ ...form, instagram_url: e.target.value })} />
           </div>
 
           <div className="space-y-4 rounded-xl border border-border p-4 bg-muted/30">
-            <Label>İş günləri və saatları</Label>
+            <Label>{t("create_store.working_hours")}</Label>
             
             <div className="flex flex-wrap gap-2">
               {daysOfWeek.map((day) => (
@@ -356,7 +358,7 @@ const CreateStore = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-[10px] uppercase text-muted-foreground">Açılış</Label>
+                <Label className="text-[10px] uppercase text-muted-foreground">{t("create_store.opening")}</Label>
                 <Select value={startTime} onValueChange={setStartTime}>
                   <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent className="max-h-[200px]">
@@ -365,7 +367,7 @@ const CreateStore = () => {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[10px] uppercase text-muted-foreground">Qapanış</Label>
+                <Label className="text-[10px] uppercase text-muted-foreground">{t("create_store.closing")}</Label>
                 <Select value={endTime} onValueChange={setEndTime}>
                   <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent className="max-h-[200px]">
@@ -377,13 +379,13 @@ const CreateStore = () => {
 
             <div className="pt-2 border-t border-border/50">
               <p className="text-xs text-muted-foreground italic">
-                Nəticə: <span className="text-foreground font-medium">{selectedDays.length > 0 ? formattedWorkingHours : "Seçilməyib"}</span>
+                {t("create_store.result")} <span className="text-foreground font-medium">{selectedDays.length > 0 ? formattedWorkingHours : t("create_store.not_selected")}</span>
               </p>
             </div>
           </div>
 
           <Button type="submit" disabled={loading} className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90">
-            {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saxlanılır...</> : editId ? "Yenilə" : "Mağazanı yarat"}
+            {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("create_store.saving")}</> : editId ? t("common.update") : t("create_store.create")}
           </Button>
         </form>
       </main>
