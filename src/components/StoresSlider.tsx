@@ -4,9 +4,11 @@ import { Store, ChevronLeft, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRef } from "react";
 import StoreCard from "./StoreCard";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 const StoresSlider = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   const { data: stores = [], isLoading } = useQuery({
     queryKey: ["stores-home"],
@@ -57,8 +59,8 @@ const StoresSlider = () => {
               <Store className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-bold tracking-tight text-foreground">Mağazalar</h2>
-              <p className="text-xs text-muted-foreground">Premium və seçilmiş mağazalar</p>
+              <h2 className="text-xl font-bold tracking-tight text-foreground">{t("home.stores_title")}</h2>
+              <p className="text-xs text-muted-foreground">{t("home.stores_subtitle")}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -80,7 +82,7 @@ const StoresSlider = () => {
               href="/stores"
               className="group flex items-center gap-1.5 text-xs font-semibold text-primary hover:opacity-80 transition-all"
             >
-              Hamısı 
+              {t("common.all_short")} 
               <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </a>
           </div>
