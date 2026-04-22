@@ -19,6 +19,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import IdentitySwitcher from "@/components/IdentitySwitcher";
 import { getModelsByCategory } from "@/data/brandModels";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 const conditions = ["Yeni", "Yeni kimi", "İşlənmiş"];
 
@@ -28,6 +29,7 @@ const CreateListing = () => {
   const platform = usePlatformMode();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const [searchParams] = useSearchParams();
@@ -211,7 +213,7 @@ const CreateListing = () => {
 
   const handleAiAutofill = async () => {
     if (images.length === 0 && existingImages.length === 0) {
-      toast({ title: "Əvvəlcə şəkil yükləyin", variant: "destructive" });
+      toast({ title: t("create_listing.upload_image_first", "Əvvəlcə şəkil yükləyin"), variant: "destructive" });
       return;
     }
     setAiLoading(true);
@@ -243,9 +245,9 @@ const CreateListing = () => {
         category: data.category || prev.category,
         condition: data.condition || prev.condition,
       }));
-      toast({ title: "AI məlumatları uğurla doldurdu! ✨" });
+      toast({ title: t("create_listing.ai_success", "AI məlumatları uğurla doldurdu! ✨") });
     } catch (err: any) {
-      toast({ title: "AI xətası", description: err.message, variant: "destructive" });
+      toast({ title: t("create_listing.ai_error", "AI xətası"), description: err.message, variant: "destructive" });
     } finally {
       setAiLoading(false);
     }
@@ -255,7 +257,7 @@ const CreateListing = () => {
     const files = Array.from(e.target.files || []);
     const totalImages = existingImages.length + images.length + files.length;
     if (totalImages > maxImages) {
-      toast({ title: `Maksimum ${maxImages} şəkil yükləyə bilərsiniz`, variant: "destructive" });
+      toast({ title: t("create_listing.max_images_error", { count: maxImages, defaultValue: `Maksimum ${maxImages} şəkil yükləyə bilərsiniz` }), variant: "destructive" });
       return;
     }
     setImages((prev) => [...prev, ...files]);
@@ -284,7 +286,7 @@ const CreateListing = () => {
     video.onloadedmetadata = () => {
       window.URL.revokeObjectURL(video.src);
       if (video.duration > maxDur) {
-        toast({ title: `Video ${maxDur} saniyədən uzun ola bilməz`, variant: "destructive" });
+        toast({ title: t("create_listing.video_too_long", { count: maxDur, defaultValue: `Video ${maxDur} saniyədən uzun ola bilməz` }), variant: "destructive" });
         return;
       }
       setVideoFile(file);
@@ -303,7 +305,7 @@ const CreateListing = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title || !form.price || !form.category) {
-      toast({ title: "Zəhmət olmasa bütün sahələri doldurun", variant: "destructive" });
+      toast({ title: t("create_listing.required_fields", "Zəhmət olmasa bütün sahələri doldurun"), variant: "destructive" });
       return;
     }
     setLoading(true);
@@ -316,7 +318,7 @@ const CreateListing = () => {
           const storeLimit = generalSettings?.store_listing_limit || 20;
           const { count } = await supabase.from("listings").select("id", { count: "exact", head: true }).eq("store_id", selectedStoreId);
           if ((count || 0) >= storeLimit) {
-            toast({ title: `Mağazanızda maksimum ${storeLimit} elan limiti dolub`, description: "Premium mağaza alın limitsiz elan yerləşdirin.", variant: "destructive" });
+            toast({ title: `Mağazanızda maksimum ${storeLimit} elan limiti dolub`, description: t("create_listing.premium_unlimited", "Premium mağaza alın limitsiz elan yerləşdirin."), variant: "destructive" });
             setLoading(false);
             return;
           }
@@ -378,16 +380,16 @@ const CreateListing = () => {
       if (editId) {
         const { error } = await supabase.from("listings").update(listingData).eq("id", editId).eq("user_id", user.id);
         if (error) throw error;
-        toast({ title: "Elan uğurla yeniləndi!" });
+        toast({ title: t("create_listing.updated_success", "Elan uğurla yeniləndi!") });
         navigate(`/product/${editId}`);
       } else {
         const { error } = await supabase.from("listings").insert({ ...listingData, user_id: user.id });
         if (error) throw error;
-        toast({ title: "Elan göndərildi!", description: "Admin təsdiqindən sonra yayımlanacaq." });
+        toast({ title: t("create_listing.sent_success", "Elan göndərildi!"), description: t("create_listing.pending_approval", "Admin təsdiqindən sonra yayımlanacaq.") });
         navigate("/profile");
       }
     } catch (err: any) {
-      toast({ title: "Xəta baş verdi", description: err.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: err.message, variant: "destructive" });
     } finally { setLoading(false); }
   };
 
@@ -407,16 +409,16 @@ const CreateListing = () => {
       <main className="container mx-auto max-w-2xl px-4 py-8">
         <div className="rounded-2xl border-2 border-primary p-6 shadow-lg shadow-primary/5 bg-card">
           <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl">
-            {editId ? "Elanı redaktə et" : "Elan yerləşdir"}
+            {editId ? t("create_listing.title_edit") : t("create_listing.title_new")}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {editId ? "Elanınızın məlumatlarını yeniləyin" : "Məhsulunuzu satışa çıxarın"}
+            {editId ? t("create_listing.subtitle_edit") : t("create_listing.subtitle_new")}
           </p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-6">
             {/* Images */}
             <div>
-              <Label>Şəkillər (maks. {maxImages})</Label>
+              <Label>{t("create_listing.images", { count: maxImages })}</Label>
               <div className="mt-2 flex flex-wrap gap-3">
                 {existingImages.map((src, i) => (
                   <div key={`existing-${i}`} className="relative h-24 w-24 overflow-hidden rounded-xl border border-border">
@@ -439,7 +441,7 @@ const CreateListing = () => {
                 {existingImages.length + images.length < maxImages && (
                   <button type="button" onClick={() => fileInputRef.current?.click()}
                     className="flex h-24 w-24 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary">
-                    <ImagePlus className="h-6 w-6" /><span className="mt-1 text-xs">Əlavə et</span>
+                    <ImagePlus className="h-6 w-6" /><span className="mt-1 text-xs">{t("common.add")}</span>
                   </button>
                 )}
                 <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageAdd} />
@@ -455,9 +457,9 @@ const CreateListing = () => {
                   className="mt-2 gap-2 border-primary/30 text-primary hover:bg-primary/5"
                 >
                   {aiLoading ? (
-                    <><Loader2 className="h-3.5 w-3.5 animate-spin" /> AI analiz edir...</>
+                    <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("create_listing.ai_analyzing")}</>
                   ) : (
-                    <><Sparkles className="h-3.5 w-3.5" /> AI ilə avtomatik doldur</>
+                    <><Sparkles className="h-3.5 w-3.5" /> {t("create_listing.ai_autofill")}</>
                   )}
                 </Button>
               )}
@@ -465,7 +467,7 @@ const CreateListing = () => {
 
             {/* Video */}
             <div>
-              <Label>Video (maks. {videoSettings?.max_duration || 60} san.)</Label>
+              <Label>{t("create_listing.video", { count: videoSettings?.max_duration || 60 })}</Label>
               <div className="mt-2 flex flex-wrap gap-3">
                 {(existingVideo || videoPreview) && (
                   <div className="relative h-24 w-36 overflow-hidden rounded-xl border border-border bg-black">
@@ -480,34 +482,34 @@ const CreateListing = () => {
                 {!existingVideo && !videoPreview && (
                   <button type="button" onClick={() => videoInputRef.current?.click()}
                     className="flex h-24 w-36 flex-col items-center justify-center rounded-xl border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary">
-                    <Video className="h-6 w-6" /><span className="mt-1 text-xs">Video əlavə et</span>
+                    <Video className="h-6 w-6" /><span className="mt-1 text-xs">{t("create_listing.add_video")}</span>
                   </button>
                 )}
                 <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={handleVideoAdd} />
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">Video əlavə etsəniz, elanınız Reels bölməsində görünəcək</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t("create_listing.video_hint")}</p>
             </div>
 
 
             <div className="space-y-2">
-              <Label htmlFor="title">Başlıq *</Label>
+              <Label htmlFor="title">{t("create_listing.title_field")}</Label>
               <Input id="title" placeholder="Məs: iPhone 15 Pro Max 256GB" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="desc">Təsvir</Label>
-              <Textarea id="desc" placeholder="Məhsul haqqında ətraflı məlumat..." rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              <Label htmlFor="desc">{t("create_listing.desc_field")}</Label>
+              <Textarea id="desc" placeholder={t("create_listing.desc_placeholder")} rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="price">Qiymət (₼) *</Label>
+                <Label htmlFor="price">{t("create_listing.price")}</Label>
                 <Input id="price" type="number" min="0" placeholder="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label>Kateqoriya *</Label>
+                <Label>{t("create_listing.category")}</Label>
                 <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v, subcategory: "" })}>
-                  <SelectTrigger><SelectValue placeholder="Seçin" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("products.select")} /></SelectTrigger>
                   <SelectContent>
                     {parentCategories.map((c: any) => <SelectItem key={c.id} value={c.slug}>{c.name}</SelectItem>)}
                   </SelectContent>
@@ -518,9 +520,9 @@ const CreateListing = () => {
             {/* Subcategory */}
             {subCategories.length > 0 && (
               <div className="space-y-2">
-                <Label>Alt kateqoriya</Label>
+                <Label>{t("create_listing.subcategory")}</Label>
                 <Select value={form.subcategory} onValueChange={(v) => setForm({ ...form, subcategory: v })}>
-                  <SelectTrigger><SelectValue placeholder="Alt kateqoriya seçin" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("create_listing.select_subcategory")} /></SelectTrigger>
                   <SelectContent>
                     {subCategories.map((c: any) => <SelectItem key={c.id} value={c.slug}>{c.name}</SelectItem>)}
                   </SelectContent>
@@ -530,7 +532,7 @@ const CreateListing = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Vəziyyət</Label>
+                <Label>{t("products.condition")}</Label>
                 <Select value={form.condition} onValueChange={(v) => setForm({ ...form, condition: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -539,9 +541,9 @@ const CreateListing = () => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Bölgə</Label>
+                <Label>{t("products.region")}</Label>
                 <Select value={form.location} onValueChange={(v) => setForm({ ...form, location: v })}>
-                  <SelectTrigger><SelectValue placeholder="Bölgə seçin" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("products.select_region")} /></SelectTrigger>
                   <SelectContent>
                     {regions.map((r: any) => <SelectItem key={r.id} value={r.name}>{r.name}</SelectItem>)}
                   </SelectContent>
@@ -552,16 +554,16 @@ const CreateListing = () => {
             {/* Identity switcher - personal vs store */}
             {approvedStores.length > 0 && (
               <div className="space-y-2">
-                <Label className="flex items-center gap-2"><Store className="h-4 w-4 text-primary" /> Kim adından yerləşdirirsiniz?</Label>
+                <Label className="flex items-center gap-2"><Store className="h-4 w-4 text-primary" /> {t("create_listing.identity_label")}</Label>
                 <IdentitySwitcher
                   selectedStoreId={selectedStoreId}
                   onSelect={(id) => setSelectedStoreId(id)}
                 />
                 {selectedStoreId && (
-                  <p className="text-xs text-muted-foreground">Elan seçilmiş mağaza adından yerləşdiriləcək</p>
+                  <p className="text-xs text-muted-foreground">{t("create_listing.store_identity_hint")}</p>
                 )}
                 {!selectedStoreId && (
-                  <p className="text-xs text-muted-foreground">Elan şəxsi hesabınız adından yerləşdiriləcək</p>
+                  <p className="text-xs text-muted-foreground">{t("create_listing.personal_identity_hint")}</p>
                 )}
               </div>
             )}
@@ -581,7 +583,7 @@ const CreateListing = () => {
                     onClick={() => setShowCustomFields(!showCustomFields)}
                     className="flex w-full items-center justify-between p-4"
                   >
-                    <span className="text-sm font-semibold text-foreground">Əlavə məlumatlar ({categoryFields.length})</span>
+                    <span className="text-sm font-semibold text-foreground">{t("create_listing.extra_info", { count: categoryFields.length })}</span>
                     {showCustomFields ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                   </button>
                   {showCustomFields && (
@@ -599,18 +601,18 @@ const CreateListing = () => {
                                   value={customFields[field.field_name] || ""}
                                   onValueChange={v => setCustomFields(prev => ({ ...prev, [field.field_name]: v, [field.field_name + "_other"]: "" }))}
                                 >
-                                  <SelectTrigger><SelectValue placeholder="Model seçin" /></SelectTrigger>
+                                  <SelectTrigger><SelectValue placeholder={t("create_listing.select_model")} /></SelectTrigger>
                                   <SelectContent>
                                     {modelOptions.map((m: string) => (
                                       <SelectItem key={m} value={m}>{m}</SelectItem>
                                     ))}
-                                    <SelectItem value="__other__">Digər</SelectItem>
+                                    <SelectItem value="__other__">{t("common.other")}</SelectItem>
                                   </SelectContent>
                                 </Select>
                                 {customFields[field.field_name] === "__other__" && (
                                   <Input
                                     className="mt-2"
-                                    placeholder="Model adını daxil edin..."
+                                    placeholder={t("create_listing.enter_model")}
                                     value={customFields[field.field_name + "_other"] || ""}
                                     onChange={e => setCustomFields(prev => ({ ...prev, [field.field_name + "_other"]: e.target.value }))}
                                   />
@@ -630,18 +632,18 @@ const CreateListing = () => {
                                     setCustomFields(prev => ({ ...prev, ...updates }));
                                   }}
                                 >
-                                  <SelectTrigger><SelectValue placeholder="Seçin" /></SelectTrigger>
+                                  <SelectTrigger><SelectValue placeholder={t("products.select")} /></SelectTrigger>
                                   <SelectContent>
                                     {field.options.map((opt: string) => (
                                       <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                                     ))}
-                                    <SelectItem value="__other__">Digər</SelectItem>
+                                    <SelectItem value="__other__">{t("common.other")}</SelectItem>
                                   </SelectContent>
                                 </Select>
                                 {customFields[field.field_name] === "__other__" && (
                                   <Input
                                     className="mt-2"
-                                    placeholder={`${field.field_label} daxil edin...`}
+                                    placeholder={t("create_listing.enter_field", { field: field.field_label })}
                                     value={customFields[field.field_name + "_other"] || ""}
                                     onChange={e => setCustomFields(prev => ({ ...prev, [field.field_name + "_other"]: e.target.value }))}
                                   />
@@ -676,15 +678,15 @@ const CreateListing = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label className="text-sm font-medium flex items-center gap-2">
-                      <ShoppingBag className="h-4 w-4 text-primary" /> Birbaşa satış
+                      <ShoppingBag className="h-4 w-4 text-primary" /> {t("create_listing.direct_sale")}
                     </Label>
-                    <p className="text-xs text-muted-foreground mt-0.5">Müştərilər bu məhsulu birbaşa ala bilsin</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t("create_listing.direct_sale_desc")}</p>
                   </div>
                   <Switch checked={isBuyable} onCheckedChange={setIsBuyable} />
                 </div>
                 {isBuyable && (
                   <div className="space-y-1">
-                    <Label className="text-xs">Stok sayı</Label>
+                    <Label className="text-xs">{t("create_listing.stock")}</Label>
                     <Input type="number" min="1" value={stock} onChange={(e) => setStock(e.target.value)}
                       className="h-9 w-32" />
                   </div>
@@ -696,9 +698,9 @@ const CreateListing = () => {
             {selectedStoreId && (
               <div className="rounded-xl border border-border bg-card p-4 space-y-3">
                 <Label className="text-sm font-medium flex items-center gap-2">
-                  <Truck className="h-4 w-4 text-primary" /> Çatdırılma üsulları
+                  <Truck className="h-4 w-4 text-primary" /> {t("detail.shipping_methods")}
                 </Label>
-                <p className="text-xs text-muted-foreground -mt-1">Bu elan üçün çatdırılma seçimlərini müəyyən edin</p>
+                <p className="text-xs text-muted-foreground -mt-1">{t("create_listing.shipping_desc")}</p>
                 {storeShippingMethods.length > 0 ? (
                   <div className="space-y-2">
                     {storeShippingMethods.map((method: any) => (
@@ -723,7 +725,7 @@ const CreateListing = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-foreground">{method.name}</span>
-                            <span className="text-sm font-semibold text-primary">{method.price > 0 ? `${method.price} ₼` : "Pulsuz"}</span>
+                            <span className="text-sm font-semibold text-primary">{method.price > 0 ? `${method.price} ₼` : t("detail.free")}</span>
                           </div>
                           {(method.description || method.estimated_days) && (
                             <p className="text-xs text-muted-foreground mt-0.5">
@@ -738,8 +740,8 @@ const CreateListing = () => {
                   <div className="rounded-lg border border-dashed border-border p-3 text-center">
                     <Truck className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
                     <p className="text-xs text-muted-foreground">
-                      Çatdırılma üsulları əlavə edilməyib.{" "}
-                      <a href="/store-dashboard" className="text-primary hover:underline">Mağaza panelindən</a> əlavə edin.
+                      {t("create_listing.no_shipping")}{" "}
+                      <a href="/store-dashboard" className="text-primary hover:underline">{t("create_listing.from_store_panel")}</a> {t("create_listing.add_from_panel")}
                     </p>
                   </div>
                 )}
@@ -747,7 +749,7 @@ const CreateListing = () => {
             )}
 
             <Button type="submit" disabled={loading} className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90">
-              {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {editId ? "Yenilənir..." : "Yerləşdirilir..."}</> : (editId ? "Elanı yenilə" : "Elanı yerləşdir")}
+              {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {editId ? t("create_listing.updating") : t("create_listing.posting")}</> : (editId ? t("create_listing.update_listing") : t("create_listing.post_listing"))}
             </Button>
           </form>
         </div>

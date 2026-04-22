@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Crown, Zap, Clock, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useLanguage, useTranslation } from "@/contexts/LanguageContext";
 
 interface HomepageSettings {
   homepage_premium_count: number;
@@ -24,6 +25,8 @@ const defaultSettings: HomepageSettings = {
 
 const FeaturedListings = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { language } = useLanguage();
   const [newOffset, setNewOffset] = useState(0);
   const [allNewListings, setAllNewListings] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
@@ -148,7 +151,7 @@ const FeaturedListings = () => {
             </div>
             {showAll && (
               <button onClick={() => navigate("/products")} className="text-sm font-medium text-primary hover:underline">
-                Hamısına bax →
+                {t("common.view_all")}
               </button>
             )}
           </div>
@@ -162,7 +165,7 @@ const FeaturedListings = () => {
                   title={l.title}
                   price={`${Number(l.price).toLocaleString()} ${l.currency}`}
                   location={l.location}
-                  time={formatTime(l.created_at)}
+                  time={formatTime(l.created_at, t, language)}
                   image={l.image_urls?.[0] || "/placeholder.svg"}
                   images={l.image_urls || []}
                   condition={l.condition}
@@ -191,7 +194,7 @@ const FeaturedListings = () => {
                   className="flex items-center gap-2 rounded-lg bg-primary/10 px-6 py-2.5 text-sm font-medium text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
                 >
                   {loadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Daha çox göstər
+                  {t("home.load_more")}
                 </button>
               )}
             </div>
@@ -215,21 +218,21 @@ const FeaturedListings = () => {
 
   return (
     <div>
-      {renderSection("Premium elanlar", "Seçilmiş yüksək keyfiyyətli elanlar", <Crown className="h-6 w-6 text-amber-500" />, premiumListings)}
-      {renderSection("Təcili elanlar", "Tez satılmalı məhsullar", <Zap className="h-6 w-6 text-destructive" />, urgentListings)}
-      {renderSection("Son elanlar", "Ən yeni elanlar", <Clock className="h-6 w-6 text-primary" />, displayNewListings, "bg-muted/50", true, true)}
+      {renderSection(t("home.premium_title"), t("home.premium_subtitle"), <Crown className="h-6 w-6 text-amber-500" />, premiumListings)}
+      {renderSection(t("home.urgent_title"), t("home.urgent_subtitle"), <Zap className="h-6 w-6 text-destructive" />, urgentListings)}
+      {renderSection(t("home.latest_title"), t("home.latest_subtitle"), <Clock className="h-6 w-6 text-primary" />, displayNewListings, "bg-muted/50", true, true)}
     </div>
   );
 };
 
-function formatTime(dateStr: string) {
+function formatTime(dateStr: string, t: (key: string, options?: any) => string, language: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const hours = Math.floor(diff / 3600000);
-  if (hours < 1) return "Az əvvəl";
-  if (hours < 24) return `${hours} saat əvvəl`;
+  if (hours < 1) return t("time.just_now");
+  if (hours < 24) return t("time.hours_ago", { count: hours });
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days} gün əvvəl`;
-  return new Date(dateStr).toLocaleDateString("az");
+  if (days < 7) return t("time.days_ago", { count: days });
+  return new Date(dateStr).toLocaleDateString(language);
 }
 
 export default FeaturedListings;

@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, Clock, ArrowRight } from "lucide-react";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 const LatestBlogPosts = () => {
+  const { t } = useTranslation();
   const { data: posts = [] } = useQuery({
     queryKey: ["latest-blog-posts-home"],
     queryFn: async () => {
@@ -25,13 +27,13 @@ const LatestBlogPosts = () => {
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BookOpen className="h-5 w-5 text-primary" />
-          <h2 className="text-xl sm:text-2xl font-bold text-foreground">Son blog yazıları</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground">{t("home.blog_latest")}</h2>
         </div>
         <Link
           to="/blog"
           className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
         >
-          Hamısı <ArrowRight className="h-4 w-4" />
+          {t("common.all_short")} <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
 
@@ -58,7 +60,7 @@ const LatestBlogPosts = () => {
                 )}
                 <div className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
-                  {post.reading_minutes || 1} dəq oxunuş
+                  {t("home.reading_minutes", { count: post.reading_minutes || 1 })}
                 </div>
               </CardContent>
             </Card>

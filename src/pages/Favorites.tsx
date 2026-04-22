@@ -9,10 +9,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Package, MapPin, Trash2, Crown, Zap } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 const Favorites = () => {
   const { user, loading } = useAuth();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const { data: favorites = [], isLoading } = useQuery({
     queryKey: ["favorites", user?.id],
@@ -34,7 +36,7 @@ const Favorites = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["favorites", user?.id] });
-      toast({ title: "Seçilmişlərdən silindi" });
+      toast({ title: t("detail.remove_favorite_success") });
     },
   });
 
@@ -55,16 +57,16 @@ const Favorites = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-6">
-        <h1 className="mb-6 text-2xl font-bold text-foreground">Seçilmişlər</h1>
+        <h1 className="mb-6 text-2xl font-bold text-foreground">{t("favorites.title")}</h1>
 
         {favorites.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center py-16 text-center">
               <Heart className="mb-4 h-16 w-16 text-muted-foreground/30" />
-              <p className="text-lg font-medium text-foreground">Seçilmişlər boşdur</p>
-              <p className="mt-1 text-sm text-muted-foreground">Bəyəndiyiniz elanları ürək ikonuna basaraq əlavə edin</p>
+              <p className="text-lg font-medium text-foreground">{t("favorites.empty_title")}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{t("favorites.empty_desc")}</p>
               <Button className="mt-6 bg-gradient-primary text-primary-foreground" asChild>
-                <Link to="/products">Elanlara bax</Link>
+                <Link to="/products">{t("favorites.view_listings")}</Link>
               </Button>
             </CardContent>
           </Card>

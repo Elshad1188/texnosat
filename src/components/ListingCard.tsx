@@ -8,6 +8,7 @@ import WatermarkOverlay from "@/components/WatermarkOverlay";
 import CheckoutDialog from "@/components/CheckoutDialog";
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 interface ListingCardProps {
   id: string;
@@ -33,6 +34,7 @@ interface ListingCardProps {
 
 const ListingCard = ({ id, title, price, numericPrice, currency, userId, customFields, location, time, image, images, condition, isPremium, isUrgent, isBuyable, storeId, storeName, storeLogo, imageSlider }: ListingCardProps) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toggle, has } = useCompare();
@@ -71,7 +73,7 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
 
   const toggleFavorite = useMutation({
     mutationFn: async () => {
-      if (!user) throw new Error("Auth required");
+      if (!user) throw new Error(t("auth.login_required", "Daxil olun"));
       if (isFavorited) {
         await supabase.from("favorites").delete().eq("listing_id", id).eq("user_id", user.id);
       } else {
@@ -148,19 +150,19 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
           {isBuyable && (
             <div className="flex items-center gap-1 rounded-full bg-primary/90 px-2 py-0.5 shadow-lg backdrop-blur-sm">
               <ShoppingCart className="h-3 w-3 text-primary-foreground" />
-              <span className="text-[10px] font-bold text-primary-foreground">Satışda</span>
+              <span className="text-[10px] font-bold text-primary-foreground">{t("card.for_sale")}</span>
             </div>
           )}
           {customFields?._shipping_methods?.length > 0 ? (
             <div
-              title="Çatdırılma var"
+              title={t("card.delivery_available")}
               className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/90 shadow-lg shadow-emerald-500/30 backdrop-blur-sm"
             >
               <Truck className="h-3.5 w-3.5 text-white" />
             </div>
           ) : (
             <div
-              title="Çatdırılma yoxdur"
+              title={t("card.delivery_unavailable")}
               className="flex h-7 w-7 items-center justify-center rounded-full bg-muted/80 backdrop-blur-sm"
             >
               <Truck className="h-3.5 w-3.5 text-muted-foreground" />
@@ -225,7 +227,7 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
             className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-[11px] font-bold text-primary-foreground transition-colors hover:bg-primary/90"
           >
             <ShoppingCart className="h-3.5 w-3.5" />
-            Satın al
+            {t("card.buy")}
           </button>
         )}
         <button
@@ -240,7 +242,7 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
           }`}
         >
           <GitCompareArrows className="h-3.5 w-3.5" />
-          {isComparing ? "Müqayisədə" : "Müqayisə et"}
+          {isComparing ? t("card.comparing") : t("card.compare")}
         </button>
       </div>
 

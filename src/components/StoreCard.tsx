@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Store, MapPin, Crown, Package, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 interface StoreCardProps {
   id: string;
@@ -24,6 +25,7 @@ const StoreCard = ({
   listingCount,
   className,
 }: StoreCardProps) => {
+  const { t } = useTranslation();
   return (
     <Link
       to={`/store/${id}`}
@@ -86,14 +88,14 @@ const StoreCard = ({
           {typeof listingCount === "number" && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
               <Package className="h-3.5 w-3.5 text-primary/60" />
-              <span>{listingCount} elan</span>
+              <span>{t("stores.listing_count", { count: listingCount })}</span>
             </div>
           )}
         </div>
 
         <div className="mt-6 flex items-center justify-between">
           <span className="text-[11px] font-bold uppercase tracking-widest text-primary/70 group-hover:text-primary transition-colors flex items-center gap-1">
-            Mağazaya keç <ChevronRight className="h-3 w-3" />
+            {t("stores.open_store")} <ChevronRight className="h-3 w-3" />
           </span>
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/5 text-primary opacity-0 -translate-x-4 transition-all duration-500 group-hover:opacity-100 group-hover:translate-x-0 group-hover:bg-primary group-hover:text-white group-hover:shadow-lg group-hover:shadow-primary/30">
             <ChevronRight className="h-4 w-4" />

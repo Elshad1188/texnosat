@@ -6,9 +6,11 @@ import Footer from "@/components/Footer";
 import { Input } from "@/components/ui/input";
 import { Search, Store } from "lucide-react";
 import StoreCard from "@/components/StoreCard";
+import { useTranslation } from "@/contexts/LanguageContext";
 
 const Stores = () => {
   const [search, setSearch] = useState("");
+  const { t } = useTranslation();
 
   const { data: stores = [], isLoading } = useQuery({
     queryKey: ["stores-list"],
@@ -49,13 +51,13 @@ const Stores = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">Mağazalar</h1>
-            <p className="text-sm text-muted-foreground">Texnosat platformasındakı rəsmi satıcılar</p>
+            <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">{t("stores.title")}</h1>
+            <p className="text-sm text-muted-foreground">{t("stores.subtitle")}</p>
           </div>
           <div className="relative w-full max-w-xs">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Mağaza axtar..."
+              placeholder={t("stores.search_placeholder")}
               className="pl-9 h-11 rounded-xl bg-card border-border transition-all focus:ring-primary/20"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -74,8 +76,8 @@ const Stores = () => {
             <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-muted mb-4">
               <Store className="h-10 w-10 text-muted-foreground/40" />
             </div>
-            <p className="text-lg font-medium text-foreground">Mağaza tapılmadı</p>
-            <p className="text-sm text-muted-foreground mt-1">Başqa bir axtarış sözü yoxlayın</p>
+            <p className="text-lg font-medium text-foreground">{t("stores.not_found")}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t("stores.try_other_search")}</p>
           </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
