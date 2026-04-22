@@ -17,6 +17,7 @@ import { useIsAdminOrMod, useIsAdmin } from "@/hooks/useIsAdmin";
 import { usePlatformMode } from "@/hooks/usePlatformMode";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
+import { useLanguage, useTranslation } from "@/contexts/LanguageContext";
 import Footer from "@/components/Footer";
 import ListingCard from "@/components/ListingCard";
 import WatermarkOverlay from "@/components/WatermarkOverlay";
@@ -28,23 +29,23 @@ import {
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-function formatTime(dateStr: string) {
+function formatTime(dateStr: string, t: (key: string, options?: any) => string, language: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const hours = Math.floor(diff / 3600000);
-  if (hours < 1) return "Az əvvəl";
-  if (hours < 24) return `${hours} saat əvvəl`;
+  if (hours < 1) return t("time.just_now");
+  if (hours < 24) return t("time.hours_ago", { count: hours });
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days} gün əvvəl`;
-  return new Date(dateStr).toLocaleDateString("az");
+  if (days < 7) return t("time.days_ago", { count: days });
+  return new Date(dateStr).toLocaleDateString(language);
 }
 
 function getUserLevel(reviewCount: number, avg: number, listingsCount: number, createdAt?: string | null) {
-  if (reviewCount >= 25 && avg >= 4) return { label: "VIP Satıcı", color: "bg-amber-500/20 text-amber-600" };
-  if (reviewCount >= 10 && avg >= 3.5) return { label: "Etibarlı", color: "bg-green-500/20 text-green-600" };
-  if (listingsCount >= 5 || reviewCount >= 3) return { label: "Aktiv", color: "bg-blue-500/20 text-blue-600" };
+  if (reviewCount >= 25 && avg >= 4) return { labelKey: "level.vip_seller", color: "bg-amber-500/20 text-amber-600" };
+  if (reviewCount >= 10 && avg >= 3.5) return { labelKey: "level.trusted", color: "bg-green-500/20 text-green-600" };
+  if (listingsCount >= 5 || reviewCount >= 3) return { labelKey: "level.active", color: "bg-blue-500/20 text-blue-600" };
   if (createdAt) {
     const days = (Date.now() - new Date(createdAt).getTime()) / 86400000;
-    if (days <= 30) return { label: "Yeni", color: "bg-muted text-muted-foreground" };
+    if (days <= 30) return { labelKey: "level.new", color: "bg-muted text-muted-foreground" };
   }
   return null;
 }
@@ -53,6 +54,8 @@ const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
+  const { language } = useLanguage();
   const { isPrivileged } = useIsAdminOrMod();
   const { toast } = useToast();
   const platform = usePlatformMode();
@@ -100,7 +103,7 @@ const ProductDetail = () => {
   // Toggle favorite mutation
   const toggleFavorite = useMutation({
     mutationFn: async () => {
-      if (!user) throw new Error("Daxil olun");
+      if (!user) throw new Error(t("auth.login_required", "Daxil olun"));
       if (isFavorited) {
         await supabase.from("favorites").delete().eq("listing_id", id!).eq("user_id", user.id);
       } else {
@@ -110,10 +113,10 @@ const ProductDetail = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["favorite", id, user?.id] });
       queryClient.invalidateQueries({ queryKey: ["favorites"] });
-      toast({ title: isFavorited ? "Seçilmişlərdən silindi" : "Seçilmişlərə əlavə edildi" });
+      toast({ title: isFavorited ? t("detail.remove_favorite_success") : t("detail.add_favorite_success") });
     },
     onError: (err: any) => {
-      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: err.message, variant: "destructive" });
     },
   });
 
@@ -232,7 +235,7 @@ const ProductDetail = () => {
 
   const toggleFollowSeller = useMutation({
     mutationFn: async () => {
-      if (!user || !listing) throw new Error("Auth required");
+      if (!user || !listing) throw new Error(t("auth.login_required", "Daxil olun"));
       if (isFollowingSeller) {
         await supabase.from("user_followers").delete().eq("follower_id", user.id).eq("followed_id", listing.user_id);
       } else {
@@ -241,7 +244,7 @@ const ProductDetail = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-follow", listing?.user_id, user?.id] });
-      toast({ title: isFollowingSeller ? "İzləmə dayandırıldı" : "İzləyirsən" });
+      toast({ title: isFollowingSeller ? t("detail.follow_stopped") : t("detail.following") });
     },
   });
 
@@ -288,10 +291,10 @@ const ProductDetail = () => {
       setCommentText("");
       setReplyingTo(null);
       queryClient.invalidateQueries({ queryKey: ["reel-comments", id] });
-      toast({ title: replyingTo ? "Cavab əlavə edildi" : "Şərh əlavə edildi" });
+      toast({ title: replyingTo ? t("detail.reply_added", "Cavab əlavə edildi") : t("detail.comment_added", "Şərh əlavə edildi") });
     },
     onError: (err: any) => {
-      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: err.message, variant: "destructive" });
     },
   });
 
@@ -303,10 +306,10 @@ const ProductDetail = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reel-comments", id] });
-      toast({ title: "Şərh silindi" });
+      toast({ title: t("detail.comment_deleted", "Şərh silindi") });
     },
     onError: (err: any) => {
-      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: err.message, variant: "destructive" });
     },
   });
 
@@ -336,9 +339,9 @@ const ProductDetail = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="flex flex-col items-center justify-center py-32 text-center">
-          <h2 className="font-display text-2xl font-bold text-foreground">Elan tapılmadı</h2>
+          <h2 className="font-display text-2xl font-bold text-foreground">{t("detail.listing_not_found")}</h2>
           <Button variant="outline" onClick={() => navigate("/products")} className="mt-4">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Elanlara qayıt
+            <ArrowLeft className="mr-2 h-4 w-4" /> {t("detail.back_to_listings")}
           </Button>
         </div>
         <Footer />
@@ -355,7 +358,7 @@ const ProductDetail = () => {
     if (!listing) return;
     const shareData = {
       title: listing.title,
-      text: listing.description || `Azərbaycanın pulsuz elan saytı Elan24-də buna bax: ${listing.title}`,
+      text: listing.description || `Elan24: ${listing.title}`,
       url: window.location.href,
     };
 
@@ -380,7 +383,7 @@ const ProductDetail = () => {
     twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(listing.title)}`,
     copy: async () => {
       await navigator.clipboard.writeText(window.location.href);
-      toast({ title: "Link kopyalandı!" });
+      toast({ title: t("detail.link_copied") });
       setShareOpen(false);
     }
   };
@@ -399,7 +402,7 @@ const ProductDetail = () => {
       <Header />
       <main className="container mx-auto px-4 py-6">
         <button onClick={() => navigate(-1)} className="mb-4 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-4 w-4" /> Geri qayıt
+          <ArrowLeft className="h-4 w-4" /> {t("detail.back")}
         </button>
 
         <div className="grid gap-6 lg:grid-cols-5">
@@ -450,18 +453,18 @@ const ProductDetail = () => {
                 {(listing.custom_fields as any)?._shipping_methods?.length > 0 ? (
                   <div className="flex items-center gap-1 rounded-full bg-emerald-500/90 px-2.5 py-1 shadow-lg backdrop-blur-sm">
                     <Truck className="h-3.5 w-3.5 text-white" />
-                    <span className="text-[11px] font-bold text-white">Çatdırılma var</span>
+                    <span className="text-[11px] font-bold text-white">{t("detail.delivery_available")}</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-1 rounded-full bg-muted/80 px-2.5 py-1 backdrop-blur-sm">
                     <Truck className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-[11px] font-medium text-muted-foreground">Çatdırılma yoxdur</span>
+                    <span className="text-[11px] font-medium text-muted-foreground">{t("detail.delivery_unavailable")}</span>
                   </div>
                 )}
                 <Badge variant="secondary">{listing.condition}</Badge>
               </div>
               <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded-lg bg-card/80 px-2 py-1 text-xs backdrop-blur-sm z-10 pointer-events-none">
-                <Eye className="h-3 w-3" /> {listing.views_count} baxış
+                <Eye className="h-3 w-3" /> {t("detail.views", { count: listing.views_count })}
               </div>
             </div>
             {images.length > 1 && (
@@ -494,7 +497,7 @@ const ProductDetail = () => {
                   </div>
                 </div>
                 <span className="absolute bottom-2 left-2 rounded-md bg-black/60 px-2 py-0.5 text-xs text-white font-medium">
-                  Reels-də izlə
+                  {t("detail.watch_reels")}
                 </span>
               </button>
             )}
@@ -531,7 +534,7 @@ const ProductDetail = () => {
                 disabled={toggleFavorite.isPending}
               >
                 <Heart className={`h-4 w-4 ${isFavorited ? "fill-primary text-primary" : ""}`} />
-                {isFavorited ? "Seçilmişlərdə" : "Seçilmişlərə əlavə et"}
+                {isFavorited ? t("detail.in_favorites") : t("detail.add_favorite")}
               </Button>
               <Button variant="outline" size="icon" onClick={handleShare}><Share2 className="h-4 w-4" /></Button>
               <ReportButton targetType="listing" targetId={listing.id} />
@@ -548,16 +551,16 @@ const ProductDetail = () => {
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Elanı silmək istəyirsiniz?</AlertDialogTitle>
-                        <AlertDialogDescription>Bu əməliyyat geri alına bilməz.</AlertDialogDescription>
+                        <AlertDialogTitle>{t("detail.delete_listing_title")}</AlertDialogTitle>
+                        <AlertDialogDescription>{t("detail.delete_irreversible")}</AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Ləğv et</AlertDialogCancel>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction onClick={async () => {
                           await supabase.from("listings").delete().eq("id", listing.id);
-                          toast({ title: "Elan silindi" });
+                          toast({ title: t("detail.listing_deleted") });
                           navigate("/profile");
-                        }}>Sil</AlertDialogAction>
+                        }}>{t("common.delete")}</AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
@@ -568,23 +571,23 @@ const ProductDetail = () => {
             {/* Description */}
             {listing.description && (
               <div className="mt-6">
-                <h3 className="font-display text-sm font-semibold text-foreground">Təsvir</h3>
+                <h3 className="font-display text-sm font-semibold text-foreground">{t("detail.description")}</h3>
                 <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{listing.description}</p>
               </div>
             )}
 
             {/* Details Table */}
             <div className="mt-6 rounded-xl border border-border bg-card p-4">
-              <h3 className="mb-3 font-display text-sm font-semibold text-foreground">Məhsul məlumatları</h3>
+              <h3 className="mb-3 font-display text-sm font-semibold text-foreground">{t("detail.product_info")}</h3>
               <div className="space-y-2 text-sm">
-                <DetailRow label="Kateqoriya" value={listing.category} />
-                <DetailRow label="Vəziyyət" value={listing.condition} />
-                <DetailRow label="Şəhər" value={listing.location} />
-                <DetailRow label="Valyuta" value={listing.currency} />
-                <DetailRow label="Baxış sayı" value={String(listing.views_count)} />
-                <DetailRow label="Yerləşdirmə tarixi" value={new Date(listing.created_at).toLocaleDateString("az")} />
+                <DetailRow label={t("detail.category")} value={listing.category} />
+                <DetailRow label={t("products.condition")} value={listing.condition} />
+                <DetailRow label={t("detail.city")} value={listing.location} />
+                <DetailRow label={t("detail.currency")} value={listing.currency} />
+                <DetailRow label={t("detail.views_count")} value={String(listing.views_count)} />
+                <DetailRow label={t("detail.created_date")} value={new Date(listing.created_at).toLocaleDateString(language)} />
                 {listing.is_buyable && (
-                  <DetailRow label="Satış" value="Birbaşa alış mümkündür" />
+                  <DetailRow label={t("detail.sale")} value={t("detail.direct_purchase_available")} />
                 )}
                 {/* Custom fields - skip internal underscore-prefixed keys and complex objects */}
                 {(listing as any).custom_fields && Object.entries((listing as any).custom_fields).map(([key, val]) => {
@@ -602,19 +605,19 @@ const ProductDetail = () => {
               <div className="mt-4 rounded-xl border border-border bg-card p-4">
                 <h3 className="mb-3 flex items-center gap-2 font-display text-sm font-semibold text-foreground">
                   <Truck className="h-4 w-4 text-emerald-600" />
-                  Çatdırılma üsulları
+                  {t("detail.shipping_methods")}
                 </h3>
                 <div className="space-y-2">
                   {((listing.custom_fields as any)._shipping_methods as any[]).map((m: any, i: number) => (
                     <div key={i} className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2 text-sm">
                       <div className="flex-1 min-w-0">
-                        <p className="truncate font-medium text-foreground">{m.name || "Çatdırılma"}</p>
+                        <p className="truncate font-medium text-foreground">{m.name || t("detail.delivery")}</p>
                         {m.estimated_days && (
                           <p className="text-xs text-muted-foreground">{m.estimated_days}</p>
                         )}
                       </div>
                       <p className="ml-2 font-bold text-primary">
-                        {Number(m.price || 0) === 0 ? "Pulsuz" : `${Number(m.price).toLocaleString()} ${listing.currency}`}
+                        {Number(m.price || 0) === 0 ? t("detail.free") : `${Number(m.price).toLocaleString()} ${listing.currency}`}
                       </p>
                     </div>
                   ))}
@@ -648,13 +651,13 @@ const ProductDetail = () => {
                         <Crown className="h-3 w-3 text-white" />
                       </div>
                     )}
-                    <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>
+                    {level && <Badge className={`${level.color} border-0 text-[10px]`}>{t(level.labelKey)}</Badge>}
                   </div>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Star className="h-3 w-3 fill-primary text-primary" />
                     <span>{storeAvgRating.toFixed(1)}</span>
                     <span>·</span>
-                    <span>{storeOwnerReviews.length} rəy</span>
+                    <span>{t("detail.review_count", { count: storeOwnerReviews.length })}</span>
                     {store.city && <><span>·</span><span>{store.city}</span></>}
                   </div>
                 </div>
@@ -670,7 +673,7 @@ const ProductDetail = () => {
                       setCheckoutOpen(true);
                     }}
                   >
-                    <ShoppingCart className="h-5 w-5" /> İndi al
+                    <ShoppingCart className="h-5 w-5" /> {t("detail.buy_now")}
                   </Button>
                 )}
                 {user?.id !== listing.user_id && (
@@ -681,7 +684,7 @@ const ProductDetail = () => {
                       if (!user) { navigate("/auth"); return; }
                     }}
                   >
-                    <MessageSquare className="h-5 w-5" /> Mağaza ilə əlaqə
+                    <MessageSquare className="h-5 w-5" /> {t("detail.contact_store")}
                   </Button>
                 )}
                 <div className="flex flex-col gap-2 sm:flex-row">
@@ -689,13 +692,13 @@ const ProductDetail = () => {
                     <a href={`tel:${store.phone || seller?.phone || ''}`} className="flex-1">
                       <Button className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2">
                         <Phone className="h-4 w-4" />
-                        {store.phone || seller?.phone || "Nömrə yoxdur"}
+                        {store.phone || seller?.phone || t("detail.no_number")}
                       </Button>
                     </a>
                   ) : (
                     <Button className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2" onClick={() => setShowPhone(true)}>
                       <Phone className="h-4 w-4" />
-                      Nömrəni göstər
+                      {t("detail.show_number")}
                     </Button>
                   )}
                   <Button
@@ -722,7 +725,7 @@ const ProductDetail = () => {
                       }
                     }}
                   >
-                    <MessageCircle className="h-4 w-4" /> Mesaj yaz
+                    <MessageCircle className="h-4 w-4" /> {t("detail.send_message")}
                   </Button>
                 </div>
               </div>
@@ -733,18 +736,18 @@ const ProductDetail = () => {
               <div className="flex items-center justify-between">
                 <Link to={`/seller/${listing.user_id}`} className="group flex-1">
                   <p className="font-medium text-foreground group-hover:text-primary transition-colors">
-                    {seller?.full_name || "Adsız"}
+                    {seller?.full_name || t("common.unnamed")}
                   </p>
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
                     <Star className="h-3.5 w-3.5 fill-primary text-primary" />
                     <span>{avgRating.toFixed(1)}</span>
                     <span>·</span>
-                    <span>{sellerReviews.length} rəy</span>
+                    <span>{t("detail.review_count", { count: sellerReviews.length })}</span>
                     {seller?.city && <><span>·</span><span>{seller.city}</span></>}
                   </div>
                 </Link>
                 <div className="flex items-center gap-2">
-                  {level && <Badge className={`${level.color} border-0 text-[10px]`}>{level.label}</Badge>}
+                  {level && {level && <Badge className={`${level.color} border-0 text-[10px]`}>{t(level.labelKey)}</Badge>}}
                   {user && user.id !== listing.user_id && (
                     <Button
                       variant={isFollowingSeller ? "outline" : "default"}
@@ -757,7 +760,7 @@ const ProductDetail = () => {
                       disabled={toggleFollowSeller.isPending}
                     >
                       {isFollowingSeller ? <UserCheck className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
-                      {isFollowingSeller ? "İzləyirsən" : "İzlə"}
+                      {isFollowingSeller ? t("detail.following") : t("detail.follow")}
                     </Button>
                   )}
                 </div>
@@ -773,7 +776,7 @@ const ProductDetail = () => {
                       setCheckoutOpen(true);
                     }}
                   >
-                    <ShoppingCart className="h-5 w-5" /> İndi al
+                    <ShoppingCart className="h-5 w-5" /> {t("detail.buy_now")}
                   </Button>
                 </div>
               )}
@@ -783,13 +786,13 @@ const ProductDetail = () => {
                   <a href={`tel:${seller?.phone || ''}`} className="flex-1">
                     <Button className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2">
                       <Phone className="h-4 w-4" />
-                      {seller?.phone || "Nömrə yoxdur"}
+                      {seller?.phone || t("detail.no_number")}
                     </Button>
                   </a>
                 ) : (
                   <Button className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2" onClick={() => setShowPhone(true)}>
                     <Phone className="h-4 w-4" />
-                    Nömrəni göstər
+                    {t("detail.show_number")}
                   </Button>
                 )}
                 <Button
@@ -816,7 +819,7 @@ const ProductDetail = () => {
                     }
                   }}
                 >
-                  <MessageCircle className="h-4 w-4" /> Mesaj yaz
+                  <MessageCircle className="h-4 w-4" /> {t("detail.send_message")}
                 </Button>
               </div>
             </>
@@ -827,7 +830,7 @@ const ProductDetail = () => {
         {/* Comments */}
         <div className="mt-8">
           <h2 className="mb-4 font-display text-xl font-bold text-foreground">
-            Şərhlər ({comments.length})
+            {t("detail.comments", { count: comments.length })}
           </h2>
 
           {/* Comment Form */}
@@ -836,16 +839,16 @@ const ProductDetail = () => {
               {replyingTo && (
                 <div className="mb-2 flex items-center justify-between rounded-md bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground">
                   <span>
-                    <span className="font-semibold text-foreground">{replyingTo.name}</span> istifadəçisinə cavab yazırsınız...
+                    {t("detail.replying_to", { name: replyingTo.name })}
                   </span>
                   <button onClick={() => setReplyingTo(null)} className="flex items-center gap-1 hover:text-foreground">
-                    <X className="h-3 w-3" /> Ləğv et
+                    <X className="h-3 w-3" /> {t("common.cancel")}
                   </button>
                 </div>
               )}
               <div className="flex gap-3">
                 <Input
-                  placeholder={replyingTo ? "Cavabınız..." : "Şərhiniz..."}
+                  placeholder={replyingTo ? t("detail.reply_placeholder") : t("detail.comment_placeholder")}
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   onKeyDown={(e) => {
@@ -860,14 +863,14 @@ const ProductDetail = () => {
                   disabled={!commentText.trim() || addComment.isPending}
                   className="shrink-0 gap-2"
                 >
-                  <Send className="h-4 w-4" /> Göndər
+                  <Send className="h-4 w-4" /> {t("detail.send")}
                 </Button>
               </div>
             </div>
           ) : (
             <div className="mb-6 rounded-xl border border-border bg-card p-4 text-center">
               <button onClick={() => navigate("/auth")} className="text-sm font-medium text-primary hover:underline">
-                Şərh yazmaq üçün daxil olun
+                {t("detail.login_to_comment")}
               </button>
             </div>
           )}
@@ -887,17 +890,17 @@ const ProductDetail = () => {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="truncate text-sm font-semibold text-foreground">
-                          {c.profile?.full_name || "İstifadəçi"}
+                          {c.profile?.full_name || t("common.user")}
                         </span>
-                        <span className="shrink-0 text-[10px] text-muted-foreground">{formatTime(c.created_at)}</span>
+                        <span className="shrink-0 text-[10px] text-muted-foreground">{formatTime(c.created_at, t, language)}</span>
                       </div>
                       <p className="mt-1 break-words text-sm text-foreground">{c.content}</p>
                       {user && (
                         <button 
-                          onClick={() => setReplyingTo({ id: c.id, name: c.profile?.full_name || "İstifadəçi" })}
+                          onClick={() => setReplyingTo({ id: c.id, name: c.profile?.full_name || t("common.user") })}
                           className="mt-1 text-xs font-semibold text-muted-foreground transition-colors hover:text-primary"
                         >
-                          Cavab yaz
+                          {t("detail.reply")}
                         </button>
                       )}
                       {(user?.id === c.user_id || isPrivileged) && (
@@ -910,11 +913,11 @@ const ProductDetail = () => {
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Şərhi silmək istəyirsiniz?</AlertDialogTitle>
-                              <AlertDialogDescription>Bu əməliyyat geri alına bilməz.</AlertDialogDescription>
+                              <AlertDialogTitle>{t("detail.delete_comment_title")}</AlertDialogTitle>
+                              <AlertDialogDescription>{t("detail.delete_irreversible")}</AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Ləğv et</AlertDialogCancel>
+                              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                               <AlertDialogAction 
                                 onClick={() => deleteComment.mutate(c.id)}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -943,9 +946,9 @@ const ProductDetail = () => {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
                               <span className="truncate text-sm font-semibold text-foreground">
-                                {reply.profile?.full_name || "İstifadəçi"}
+                                {reply.profile?.full_name || t("common.user")}
                               </span>
-                              <span className="shrink-0 text-[10px] text-muted-foreground">{formatTime(reply.created_at)}</span>
+                              <span className="shrink-0 text-[10px] text-muted-foreground">{formatTime(reply.created_at, t, language)}</span>
                             </div>
                             <p className="mt-1 break-words text-sm text-foreground">{reply.content}</p>
                             {(user?.id === reply.user_id || isPrivileged) && (
@@ -958,11 +961,11 @@ const ProductDetail = () => {
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
-                                    <AlertDialogTitle>Şərhi silmək istəyirsiniz?</AlertDialogTitle>
-                                    <AlertDialogDescription>Bu əməliyyat geri alına bilməz.</AlertDialogDescription>
+                                    <AlertDialogTitle>{t("detail.delete_comment_title")}</AlertDialogTitle>
+                                    <AlertDialogDescription>{t("detail.delete_irreversible")}</AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
-                                    <AlertDialogCancel>Ləğv et</AlertDialogCancel>
+                                    <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                                     <AlertDialogAction 
                                       onClick={() => deleteComment.mutate(reply.id)}
                                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -982,20 +985,20 @@ const ProductDetail = () => {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Hələ şərh yoxdur. İlk şərhi siz yazın!</p>
+            <p className="text-sm text-muted-foreground">{t("detail.no_comments")}</p>
           )}
         </div>
 
         {/* Similar Listings */}
         {similarListings.length > 0 && (
           <div className="mt-12">
-            <h2 className="mb-6 font-display text-xl font-bold text-foreground">Oxşar elanlar</h2>
+            <h2 className="mb-6 font-display text-xl font-bold text-foreground">{t("detail.similar_listings")}</h2>
             <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
               {similarListings.map((l: any) => (
                 <ListingCard
                   key={l.id} id={l.id} title={l.title}
                   price={`${Number(l.price).toLocaleString()} ${l.currency}`}
-                  location={l.location} time={formatTime(l.created_at)}
+                  location={l.location} time={formatTime(l.created_at, t, language)}
                   image={l.image_urls?.[0] || "/placeholder.svg"}
                   condition={l.condition} isPremium={l.is_premium} isUrgent={l.is_urgent} isBuyable={l.is_buyable}
                   numericPrice={Number(l.price)} currency={l.currency} userId={l.user_id} customFields={l.custom_fields}
@@ -1025,9 +1028,9 @@ const ProductDetail = () => {
       <Dialog open={shareOpen} onOpenChange={setShareOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Paylaş</DialogTitle>
+            <DialogTitle>{t("detail.share")}</DialogTitle>
             <DialogDescription>
-              Bu elanı dostlarınızla paylaşın
+              {t("detail.share_desc")}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center gap-6 py-4">
@@ -1040,7 +1043,7 @@ const ProductDetail = () => {
                   className="h-44 w-44"
                 />
               </div>
-              <p className="text-[12px] font-semibold text-foreground tracking-tight">QR kodu skan et və ya kopyala</p>
+              <p className="text-[12px] font-semibold text-foreground tracking-tight">{t("detail.qr_scan_copy")}</p>
             </div>
 
             {/* Social Icons Grid */}
@@ -1106,7 +1109,7 @@ const ProductDetail = () => {
                 onClick={shareLinks.copy}
               >
                 <Copy className="h-3.5 w-3.5" />
-                <span className="text-[10px]">Kopyala</span>
+                <span className="text-[10px]">{t("detail.copy")}</span>
               </Button>
             </div>
           </div>
