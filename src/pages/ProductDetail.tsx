@@ -361,6 +361,7 @@ const ProductDetail = () => {
   const images = listing.image_urls?.length ? listing.image_urls : ["/placeholder.svg"];
   const avgRating = sellerReviews.length > 0 ? sellerReviews.reduce((s: number, r: any) => s + r.rating, 0) / sellerReviews.length : 0;
   const level = getUserLevel(sellerReviews.length, avgRating, sellerListingsCount, seller?.created_at);
+  const shareUrl = listing ? `https://elan24.az/product/${listing.id}?v=20260423` : window.location.href;
 
   // Share handler
   const handleShare = async () => {
@@ -368,7 +369,7 @@ const ProductDetail = () => {
     const shareData = {
       title: listing.title,
       text: listing.description || `Elan24: ${listing.title}`,
-      url: window.location.href,
+      url: shareUrl,
     };
 
     if (navigator.share) {
@@ -386,12 +387,12 @@ const ProductDetail = () => {
   };
 
   const shareLinks = {
-    whatsapp: `https://wa.me/?text=${encodeURIComponent(`${listing.title} - ${window.location.href}`)}`,
-    telegram: `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(listing.title)}`,
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`,
-    twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(listing.title)}`,
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(`${listing.title} - ${shareUrl}`)}`,
+    telegram: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(listing.title)}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+    twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(listing.title)}`,
     copy: async () => {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(shareUrl);
       toast({ title: t("detail.link_copied") });
       setShareOpen(false);
     }
