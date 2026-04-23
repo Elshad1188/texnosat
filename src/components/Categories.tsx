@@ -1,10 +1,40 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { iconMap } from "@/lib/icons";
 import { useNavigate } from "react-router-dom";
-import { CircuitBoard, LayoutGrid } from "lucide-react";
+import { LayoutGrid } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/contexts/LanguageContext";
+import electronicsImage from "@/assets/categories/electronics.jpg";
+import transportImage from "@/assets/categories/transport.jpg";
+import realEstateImage from "@/assets/categories/real-estate.jpg";
+import homeGardenImage from "@/assets/categories/home-garden.jpg";
+import fashionImage from "@/assets/categories/fashion.jpg";
+import jobsServicesImage from "@/assets/categories/jobs-services.jpg";
+import hobbySportImage from "@/assets/categories/hobby-sport.jpg";
+import petsImage from "@/assets/categories/pets.jpg";
+import kidsImage from "@/assets/categories/kids.jpg";
+import businessIndustryImage from "@/assets/categories/business-industry.jpg";
+import healthBeautyImage from "@/assets/categories/health-beauty.jpg";
+import entertainmentEventsImage from "@/assets/categories/entertainment-events.jpg";
+import foodDrinkImage from "@/assets/categories/food-drink.jpg";
+import otherImage from "@/assets/categories/other.jpg";
+
+const categoryImages: Record<string, string> = {
+  elektronika: electronicsImage,
+  neqliyyat: transportImage,
+  "dasinmaz-emlak": realEstateImage,
+  "ev-ve-bag": homeGardenImage,
+  "geyim-aksesuar": fashionImage,
+  "is-ve-xidmetler": jobsServicesImage,
+  "hobbi-idman": hobbySportImage,
+  heyvanlar: petsImage,
+  "usaq-dunyasi": kidsImage,
+  "biznes-senaye": businessIndustryImage,
+  "saglamliq-gozellik": healthBeautyImage,
+  "eylence-tedbirler": entertainmentEventsImage,
+  "qida-icki": foodDrinkImage,
+  diger: otherImage,
+};
 
 const Categories = () => {
   const navigate = useNavigate();
@@ -58,22 +88,7 @@ const Categories = () => {
           </button>
 
           {categories.map((cat: any) => {
-            const Icon = iconMap[cat.icon] || CircuitBoard;
-            // Generate a consistent pastel color from the category name
-            const colors = [
-              { bg: "bg-blue-500", shadow: "shadow-blue-400/30" },
-              { bg: "bg-violet-500", shadow: "shadow-violet-400/30" },
-              { bg: "bg-amber-500", shadow: "shadow-amber-400/30" },
-              { bg: "bg-emerald-500", shadow: "shadow-emerald-400/30" },
-              { bg: "bg-rose-500", shadow: "shadow-rose-400/30" },
-              { bg: "bg-sky-500", shadow: "shadow-sky-400/30" },
-              { bg: "bg-fuchsia-500", shadow: "shadow-fuchsia-400/30" },
-              { bg: "bg-orange-500", shadow: "shadow-orange-400/30" },
-              { bg: "bg-teal-500", shadow: "shadow-teal-400/30" },
-              { bg: "bg-indigo-500", shadow: "shadow-indigo-400/30" },
-            ];
-            const colorIdx = (cat.name?.charCodeAt(0) || 0) % colors.length;
-            const { bg, shadow } = colors[colorIdx];
+            const imageSrc = categoryImages[cat.slug] || otherImage;
 
             return (
               <button
@@ -81,10 +96,15 @@ const Categories = () => {
                 onClick={() => navigate(`/products?category=${cat.slug}`)}
                 className="flex flex-col items-center gap-2 flex-shrink-0 group"
               >
-                <div
-                  className={`flex h-16 w-16 items-center justify-center rounded-full ${bg} shadow-md transition-all group-hover:scale-105 group-hover:shadow-lg ${shadow}`}
-                >
-                  <Icon className="h-7 w-7 text-white" />
+                <div className="h-16 w-16 overflow-hidden rounded-full border border-border bg-muted shadow-md transition-all group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-primary/20">
+                  <img
+                    src={imageSrc}
+                    alt={cat.name}
+                    width={768}
+                    height={768}
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                  />
                 </div>
                 <span className="max-w-[68px] text-center text-[11px] font-medium leading-tight text-foreground line-clamp-2">
                   {cat.name}
