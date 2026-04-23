@@ -361,14 +361,16 @@ const ProductDetail = () => {
   const images = listing.image_urls?.length ? listing.image_urls : ["/placeholder.svg"];
   const avgRating = sellerReviews.length > 0 ? sellerReviews.reduce((s: number, r: any) => s + r.rating, 0) / sellerReviews.length : 0;
   const level = getUserLevel(sellerReviews.length, avgRating, sellerListingsCount, seller?.created_at);
-  const shareUrl = listing ? `https://elan24.az/product/${listing.id}?v=20260423` : window.location.href;
+  const formatSharePrice = (price: number, currency: string) => `${price.toLocaleString("az-AZ")} ${currency}`;
+  const shareText = `${listing.title} — ${formatSharePrice(Number(listing.price), listing.currency || "AZN")}`;
+  const shareUrl = `https://qkeymzkgymmceclilaot.supabase.co/functions/v1/listing-share?id=${listing.id}&v=20260423`;
 
   // Share handler
   const handleShare = async () => {
     if (!listing) return;
     const shareData = {
       title: listing.title,
-      text: listing.description || `Elan24: ${listing.title}`,
+      text: shareText,
       url: shareUrl,
     };
 
@@ -387,10 +389,10 @@ const ProductDetail = () => {
   };
 
   const shareLinks = {
-    whatsapp: `https://wa.me/?text=${encodeURIComponent(`${listing.title} - ${shareUrl}`)}`,
-    telegram: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(listing.title)}`,
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`,
+    telegram: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-    twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(listing.title)}`,
+    twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
     copy: async () => {
       await navigator.clipboard.writeText(shareUrl);
       toast({ title: t("detail.link_copied") });
