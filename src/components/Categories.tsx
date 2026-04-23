@@ -103,7 +103,7 @@ const Categories = () => {
                     width={768}
                     height={768}
                     loading="lazy"
-                    className="h-full w-full object-cover"
+                    className={`h-full w-full object-cover ${cat.slug === "dasinmaz-emlak" ? "scale-110" : ""}`}
                   />
                 </div>
                 <span className="max-w-[68px] text-center text-[11px] font-medium leading-tight text-foreground line-clamp-2">
