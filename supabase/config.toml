@@ -2,3 +2,6 @@ project_id = "qkeymzkgymmceclilaot"
 
 [functions.process-email-queue]
 verify_jwt = true
+
+[functions.listing-share]
+verify_jwt = false
