@@ -16,6 +16,9 @@ const absoluteUrl = (url?: string | null) => {
   return `${SITE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
 };
 
+const isPreviewCrawler = (userAgent: string) =>
+  /whatsapp|facebookexternalhit|facebot|telegrambot|twitterbot|linkedinbot|slackbot|discordbot|viber|skypeuripreview|pinterest/i.test(userAgent);
+
 serve(async (req) => {
   const requestUrl = new URL(req.url);
   const id = requestUrl.searchParams.get("id");
@@ -42,6 +45,10 @@ serve(async (req) => {
   const price = `${Number(listing.price).toLocaleString("az-AZ")} ${listing.currency || "AZN"}`;
   const title = `${listing.title} — ${price}`;
   const imageUrl = absoluteUrl(Array.isArray(listing.image_urls) ? listing.image_urls[0] : null);
+
+  if (!isPreviewCrawler(req.headers.get("user-agent") || "")) {
+    return Response.redirect(productUrl, 302);
+  }
 
   return new Response(`<!doctype html>
 <html lang="az">

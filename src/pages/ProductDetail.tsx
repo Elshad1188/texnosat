@@ -363,7 +363,8 @@ const ProductDetail = () => {
   const level = getUserLevel(sellerReviews.length, avgRating, sellerListingsCount, seller?.created_at);
   const formatSharePrice = (price: number, currency: string) => `${price.toLocaleString("az-AZ")} ${currency}`;
   const shareText = `${listing.title} — ${formatSharePrice(Number(listing.price), listing.currency || "AZN")}`;
-  const shareUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/listing-share?id=${listing.id}&v=20260423`;
+  const productUrl = `https://elan24.az/product/${listing.id}`;
+  const previewShareUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/listing-share?id=${listing.id}&v=20260423`;
 
   // Share handler
   const handleShare = async () => {
@@ -371,7 +372,7 @@ const ProductDetail = () => {
     const shareData = {
       title: listing.title,
       text: shareText,
-      url: shareUrl,
+      url: previewShareUrl,
     };
 
     if (navigator.share) {
@@ -389,12 +390,12 @@ const ProductDetail = () => {
   };
 
   const shareLinks = {
-    whatsapp: `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`,
-    telegram: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-    twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${previewShareUrl}`)}`,
+    telegram: `https://t.me/share/url?url=${encodeURIComponent(previewShareUrl)}&text=${encodeURIComponent(shareText)}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(previewShareUrl)}`,
+    twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(previewShareUrl)}&text=${encodeURIComponent(shareText)}`,
     copy: async () => {
-      await navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(productUrl);
       toast({ title: t("detail.link_copied") });
       setShareOpen(false);
     }
@@ -1057,7 +1058,7 @@ const ProductDetail = () => {
             <div className="flex flex-col items-center gap-3">
               <div className="rounded-2xl border-4 border-white bg-white p-4 shadow-xl ring-1 ring-black/5">
                 <img
-                  src={`https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent(window.location.href)}&choe=UTF-8`}
+                  src={`https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent(productUrl)}&choe=UTF-8`}
                   alt="QR Code"
                   className="h-44 w-44"
                 />
@@ -1118,7 +1119,7 @@ const ProductDetail = () => {
               <LinkIcon className="h-4 w-4 shrink-0 text-muted-foreground ml-1" />
               <input
                 readOnly
-                value={window.location.href}
+                value={productUrl}
                 className="flex-1 bg-transparent text-xs text-foreground outline-none truncate"
               />
               <Button
