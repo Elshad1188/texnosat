@@ -363,7 +363,7 @@ const ProductDetail = () => {
   const level = getUserLevel(sellerReviews.length, avgRating, sellerListingsCount, seller?.created_at);
   const formatSharePrice = (price: number, currency: string) => `${price.toLocaleString("az-AZ")} ${currency}`;
   const shareText = `${listing.title} — ${formatSharePrice(Number(listing.price), listing.currency || "AZN")}`;
-  const shareUrl = `https://qkeymzkgymmceclilaot.supabase.co/functions/v1/listing-share?id=${listing.id}&v=20260423`;
+  const shareUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/listing-share?id=${listing.id}&v=20260423`;
 
   // Share handler
   const handleShare = async () => {
