@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from "@/components/ui/carousel";
 import ImageViewer from "@/components/ImageViewer";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import CheckoutDialog from "@/components/CheckoutDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,6 +73,15 @@ const ProductDetail = () => {
   const [replyingTo, setReplyingTo] = useState<{ id: string, name: string } | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  useEffect(() => {
+    thumbnailRefs.current[selectedImage]?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+  }, [selectedImage]);
 
   // Check if e-commerce is enabled
   const { data: ecomSettings } = useQuery({
@@ -407,7 +416,7 @@ const ProductDetail = () => {
 
         <div className="grid gap-6 lg:grid-cols-5">
           {/* Images */}
-          <div className="lg:col-span-3">
+          <div className="min-w-0 lg:col-span-3">
             <div className="relative overflow-hidden rounded-2xl bg-muted">
               <Carousel
                 opts={{ startIndex: selectedImage, loop: images.length > 1 }}
@@ -468,13 +477,20 @@ const ProductDetail = () => {
               </div>
             </div>
             {images.length > 1 && (
-              <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-none">
-                {images.map((img: string, i: number) => (
-                  <button key={i} onClick={() => setSelectedImage(i)}
-                    className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-colors ${i === selectedImage ? "border-primary" : "border-border"}`}>
-                    <img src={img} alt="" className="h-full w-full object-cover" />
-                  </button>
-                ))}
+              <div className="mt-3 max-w-full overflow-hidden">
+                <div className="flex max-w-full snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain pb-2 scrollbar-none">
+                  {images.map((img: string, i: number) => (
+                    <button
+                      key={i}
+                      ref={(node) => { thumbnailRefs.current[i] = node; }}
+                      onClick={() => setSelectedImage(i)}
+                      className={`relative h-14 w-14 flex-none snap-center overflow-hidden rounded-lg border-2 transition-all sm:h-16 sm:w-16 ${i === selectedImage ? "border-primary ring-2 ring-primary/20" : "border-border opacity-75 hover:opacity-100"}`}
+                      aria-label={`${i + 1} / ${images.length}`}
+                    >
+                      <img src={img} alt="" className="h-full w-full object-cover" />
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
