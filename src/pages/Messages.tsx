@@ -649,15 +649,18 @@ const Messages = () => {
                     const ls = c.profile?.last_seen;
                     const online = ls && (Date.now() - new Date(ls).getTime() < 120000);
                     return (
-                      <button
+                      <div
                         key={c.id}
-                        onClick={() => navigate(`/messages?c=${c.id}`)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-200 border-b border-border/30 ${
+                        className={`group/convo relative flex items-center gap-3 px-4 py-3 transition-all duration-200 border-b border-border/30 ${
                           activeConvoId === c.id
                             ? "bg-primary/5 border-l-2 border-l-primary"
                             : "hover:bg-muted/40"
                         }`}
                       >
+                        <button
+                          onClick={() => navigate(`/messages?c=${c.id}`)}
+                          className="flex flex-1 items-center gap-3 text-left min-w-0"
+                        >
                         <div className="relative flex-shrink-0">
                           <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary/20 to-primary/5 text-primary font-bold text-sm ring-2 ring-background">
                             {c.displayAvatar ? (
@@ -705,7 +708,46 @@ const Messages = () => {
                             )}
                           </div>
                         </div>
-                      </button>
+                        </button>
+                        {/* Hover/long-press delete menu */}
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/convo:opacity-100 transition-opacity">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full bg-card/90 shadow-sm border border-border/40">
+                                <MoreVertical className="h-3.5 w-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem
+                                    onSelect={(e) => e.preventDefault()}
+                                    className="text-destructive gap-2 font-medium"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                    Söhbəti sil
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Söhbəti silmək istəyirsiniz?</AlertDialogTitle>
+                                    <AlertDialogDescription>Bu söhbət bütün mesajlarla birlikdə silinəcək.</AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Ləğv et</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteConversation.mutate(c.id)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Sil
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
                     );
                   })
                 )}
