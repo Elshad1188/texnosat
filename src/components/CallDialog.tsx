@@ -124,16 +124,16 @@ const CallDialog = ({
     setStatus("ended");
     cleanup();
     if (callIdRef.current) {
-      await supabase
-        .from("calls")
-        .update({
-          status: markStatus,
-          ended_at: new Date().toISOString(),
-          duration_seconds: duration,
-        })
-        .eq("id", callIdRef.current)
-        .then(() => {})
-        .catch(() => {});
+      try {
+        await supabase
+          .from("calls")
+          .update({
+            status: markStatus,
+            ended_at: new Date().toISOString(),
+            duration_seconds: duration,
+          })
+          .eq("id", callIdRef.current);
+      } catch {}
     }
     setTimeout(() => onClose(), 400);
   };
@@ -144,10 +144,10 @@ const CallDialog = ({
 
     pc.onicecandidate = async (e) => {
       if (e.candidate) {
-        await supabase.from("call_ice_candidates").insert({
+        await (supabase.from("call_ice_candidates") as any).insert({
           call_id: currentCallId,
           sender_id: selfId,
-          candidate: e.candidate.toJSON(),
+          candidate: e.candidate.toJSON() as any,
         });
       }
     };
@@ -263,9 +263,8 @@ const CallDialog = ({
 
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        await supabase
-          .from("calls")
-          .update({ offer: offer })
+        await (supabase.from("calls") as any)
+          .update({ offer: offer as any })
           .eq("id", callRow.id);
       } catch (err: any) {
         toast({
@@ -311,10 +310,9 @@ const CallDialog = ({
       pendingIceRef.current = [];
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
-      await supabase
-        .from("calls")
+      await (supabase.from("calls") as any)
         .update({
-          answer: answer,
+          answer: answer as any,
           status: "accepted",
           answered_at: new Date().toISOString(),
         })
