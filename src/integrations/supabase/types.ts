@@ -306,6 +306,91 @@ export type Database = {
         }
         Relationships: []
       }
+      call_ice_candidates: {
+        Row: {
+          call_id: string
+          candidate: Json
+          created_at: string
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          call_id: string
+          candidate: Json
+          created_at?: string
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          call_id?: string
+          candidate?: Json
+          created_at?: string
+          id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_ice_candidates_call_id_fkey"
+            columns: ["call_id"]
+            isOneToOne: false
+            referencedRelation: "calls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calls: {
+        Row: {
+          answer: Json | null
+          answered_at: string | null
+          call_type: string
+          callee_id: string
+          caller_id: string
+          conversation_id: string
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          offer: Json | null
+          started_at: string
+          status: string
+        }
+        Insert: {
+          answer?: Json | null
+          answered_at?: string | null
+          call_type?: string
+          callee_id: string
+          caller_id: string
+          conversation_id: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          offer?: Json | null
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          answer?: Json | null
+          answered_at?: string | null
+          call_type?: string
+          callee_id?: string
+          caller_id?: string
+          conversation_id?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          offer?: Json | null
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calls_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string | null

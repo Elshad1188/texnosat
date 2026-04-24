@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { MessageCircle, Send, ArrowLeft, Loader2, Check, CheckCheck, Store, Trash2, MoreVertical, ImagePlus, Mic, MicOff, X, Image as ImageIcon } from "lucide-react";
+import { MessageCircle, Send, ArrowLeft, Loader2, Check, CheckCheck, Store, Trash2, MoreVertical, ImagePlus, Mic, X, Phone, Lock, Pause, Play } from "lucide-react";
+import CallDialog from "@/components/CallDialog";
+import { useIncomingCall } from "@/hooks/useIncomingCall";
 import IdentitySwitcher from "@/components/IdentitySwitcher";
 import {
   Tooltip,
@@ -89,6 +91,26 @@ const Messages = () => {
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  // Voice recording state (WhatsApp-like)
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [recordLocked, setRecordLocked] = useState(false);
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
+  const audioPreviewBlobRef = useRef<Blob | null>(null);
+  const recordTimerRef = useRef<number | null>(null);
+  const cancelRecordRef = useRef(false);
+  const slideXRef = useRef(0);
+  const startXRef = useRef(0);
+  const startYRef = useRef(0);
+  const [slideX, setSlideX] = useState(0);
+  const [slideY, setSlideY] = useState(0);
+
+  // Call state
+  const [callOpen, setCallOpen] = useState(false);
+  const [callMode, setCallMode] = useState<"outgoing" | "incoming">("outgoing");
+  const [callPeer, setCallPeer] = useState<{ id: string; name: string; avatar: string | null } | null>(null);
+  const [activeIncomingCall, setActiveIncomingCall] = useState<any>(null);
+  const { incoming, dismiss } = useIncomingCall();
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -141,34 +163,64 @@ const Messages = () => {
       const recorder = new MediaRecorder(stream);
       mediaRecorderRef.current = recorder;
       audioChunksRef.current = [];
-      recorder.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
-      recorder.onstop = uploadAudio;
+      cancelRecordRef.current = false;
+      audioPreviewBlobRef.current = null;
+      setAudioPreviewUrl(null);
+      setRecordingTime(0);
+      setRecordLocked(false);
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      recorder.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        if (recordTimerRef.current) {
+          window.clearInterval(recordTimerRef.current);
+          recordTimerRef.current = null;
+        }
+        if (cancelRecordRef.current) {
+          audioChunksRef.current = [];
+          setIsRecording(false);
+          setRecordLocked(false);
+          setRecordingTime(0);
+          return;
+        }
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        audioPreviewBlobRef.current = blob;
+        if (recordLocked) {
+          // Show preview
+          setAudioPreviewUrl(URL.createObjectURL(blob));
+          setIsRecording(false);
+        } else {
+          // Quick send
+          uploadAudioBlob(blob);
+          setIsRecording(false);
+        }
+      };
       recorder.start();
       setIsRecording(true);
+      recordTimerRef.current = window.setInterval(() => {
+        setRecordingTime((t) => t + 1);
+      }, 1000);
     } catch {
       toast({ title: "Mikrofona icazə lazımdır", variant: "destructive" });
     }
   };
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
+  const stopRecording = (cancel = false) => {
+    cancelRecordRef.current = cancel;
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop());
-      setIsRecording(false);
     }
   };
 
-  const uploadAudio = async () => {
+  const uploadAudioBlob = async (blob: Blob) => {
     if (!user || !activeConvoId) return;
     try {
       setUploadingMedia(true);
-      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
       const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.webm`;
       const filePath = `${user.id}/${fileName}`;
-      const { error: uploadError } = await supabase.storage.from("chat_media").upload(filePath, audioBlob);
+      const { error: uploadError } = await supabase.storage.from("chat_media").upload(filePath, blob);
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from("chat_media").getPublicUrl(filePath);
-      
+
       const msgData: any = {
         conversation_id: activeConvoId,
         sender_id: user.id,
@@ -176,15 +228,74 @@ const Messages = () => {
         audio_url: publicUrl,
       };
       if (selectedStoreId) msgData.sender_store_id = selectedStoreId;
-      
+
       const { error: msgErr } = await supabase.from("messages").insert(msgData);
       if (msgErr) throw msgErr;
+      audioPreviewBlobRef.current = null;
+      setAudioPreviewUrl(null);
+      setRecordingTime(0);
+      setRecordLocked(false);
       queryClient.invalidateQueries({ queryKey: ["messages", activeConvoId] });
     } catch {
       toast({ title: "Səs göndərilmədi", variant: "destructive" });
     } finally {
       setUploadingMedia(false);
     }
+  };
+
+  const sendVoicePreview = () => {
+    if (audioPreviewBlobRef.current) uploadAudioBlob(audioPreviewBlobRef.current);
+  };
+
+  const cancelVoicePreview = () => {
+    audioPreviewBlobRef.current = null;
+    if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
+    setAudioPreviewUrl(null);
+    setRecordingTime(0);
+    setRecordLocked(false);
+  };
+
+  // Pointer handlers for hold-to-record
+  const handleMicPointerDown = (e: React.PointerEvent) => {
+    if (audioPreviewUrl) return;
+    e.preventDefault();
+    startXRef.current = e.clientX;
+    startYRef.current = e.clientY;
+    slideXRef.current = 0;
+    setSlideX(0);
+    setSlideY(0);
+    startRecording();
+  };
+
+  const handleMicPointerMove = (e: React.PointerEvent) => {
+    if (!isRecording || recordLocked) return;
+    const dx = Math.min(0, e.clientX - startXRef.current); // only left
+    const dy = Math.min(0, e.clientY - startYRef.current); // only up
+    setSlideX(dx);
+    setSlideY(dy);
+    if (dx < -100) {
+      // Cancel
+      stopRecording(true);
+    } else if (dy < -80) {
+      // Lock
+      setRecordLocked(true);
+      setSlideX(0);
+      setSlideY(0);
+    }
+  };
+
+  const handleMicPointerUp = () => {
+    if (!isRecording) return;
+    if (recordLocked) return; // stay recording until user taps stop
+    setSlideX(0);
+    setSlideY(0);
+    if (recordingTime < 1) {
+      // too short
+      stopRecording(true);
+      toast({ title: "Səsli mesaj çox qısadır", description: "Mikrofonu basıb saxlayın" });
+      return;
+    }
+    stopRecording(false);
   };
 
   const removeMessageFromCache = (messageId: string) => {
@@ -538,15 +649,18 @@ const Messages = () => {
                     const ls = c.profile?.last_seen;
                     const online = ls && (Date.now() - new Date(ls).getTime() < 120000);
                     return (
-                      <button
+                      <div
                         key={c.id}
-                        onClick={() => navigate(`/messages?c=${c.id}`)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-200 border-b border-border/30 ${
+                        className={`group/convo relative flex items-center gap-3 px-4 py-3 transition-all duration-200 border-b border-border/30 ${
                           activeConvoId === c.id
                             ? "bg-primary/5 border-l-2 border-l-primary"
                             : "hover:bg-muted/40"
                         }`}
                       >
+                        <button
+                          onClick={() => navigate(`/messages?c=${c.id}`)}
+                          className="flex flex-1 items-center gap-3 text-left min-w-0"
+                        >
                         <div className="relative flex-shrink-0">
                           <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary/20 to-primary/5 text-primary font-bold text-sm ring-2 ring-background">
                             {c.displayAvatar ? (
@@ -594,7 +708,46 @@ const Messages = () => {
                             )}
                           </div>
                         </div>
-                      </button>
+                        </button>
+                        {/* Hover/long-press delete menu */}
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/convo:opacity-100 transition-opacity">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full bg-card/90 shadow-sm border border-border/40">
+                                <MoreVertical className="h-3.5 w-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem
+                                    onSelect={(e) => e.preventDefault()}
+                                    className="text-destructive gap-2 font-medium"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                    Söhbəti sil
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Söhbəti silmək istəyirsiniz?</AlertDialogTitle>
+                                    <AlertDialogDescription>Bu söhbət bütün mesajlarla birlikdə silinəcək.</AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Ləğv et</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteConversation.mutate(c.id)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Sil
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
                     );
                   })
                 )}
@@ -650,6 +803,26 @@ const Messages = () => {
                         </span>
                       </div>
                     )}
+
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-9 w-9 text-primary hover:bg-primary/10 rounded-full"
+                      onClick={() => {
+                        const peerId = activeConvo.buyer_id === user.id ? activeConvo.seller_id : activeConvo.buyer_id;
+                        setCallPeer({
+                          id: peerId,
+                          name: activeConvo.displayName,
+                          avatar: activeConvo.displayAvatar,
+                        });
+                        setCallMode("outgoing");
+                        setActiveIncomingCall(null);
+                        setCallOpen(true);
+                      }}
+                      title="Səsli zəng"
+                    >
+                      <Phone className="h-4.5 w-4.5" />
+                    </Button>
 
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
@@ -852,6 +1025,29 @@ const Messages = () => {
                     </div>
                   )}
 
+                  {/* Voice preview (locked recording finished) */}
+                  {audioPreviewUrl && (
+                    <div className="border-t border-border/50 px-4 py-3 bg-card flex items-center gap-3">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={cancelVoicePreview}
+                        className="h-9 w-9 rounded-full text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <audio src={audioPreviewUrl} controls className="flex-1 h-10" />
+                      <Button
+                        size="icon"
+                        onClick={sendVoicePreview}
+                        disabled={uploadingMedia}
+                        className="h-10 w-10 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-md"
+                      >
+                        {uploadingMedia ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  )}
+
                   {/* Input area */}
                   <div className="border-t border-border/50 p-3 sm:p-4 bg-card">
                     <div className="mb-2">
@@ -861,65 +1057,114 @@ const Messages = () => {
                         compact
                       />
                     </div>
-                    <form onSubmit={handleSubmit} className="flex items-end gap-2">
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleImageSelect}
-                        accept="image/*"
-                        className="hidden"
-                      />
-                      <div className="flex gap-1">
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="ghost"
-                          className="h-10 w-10 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={uploadingMedia}
-                        >
-                          {uploadingMedia ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
-                        </Button>
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="ghost"
-                          className={`h-10 w-10 rounded-xl transition-colors ${
-                            isRecording 
-                              ? "text-destructive bg-destructive/10 hover:bg-destructive/20" 
-                              : "text-muted-foreground hover:text-primary hover:bg-primary/10"
-                          }`}
-                          onClick={isRecording ? stopRecording : startRecording}
-                        >
-                          {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-                        </Button>
+
+                    {/* Recording overlay (WhatsApp-like) */}
+                    {isRecording && !audioPreviewUrl ? (
+                      <div className="relative flex items-center gap-3 h-12 px-3 rounded-xl bg-muted/40 border border-border/50">
+                        <span className="flex h-3 w-3">
+                          <span className="absolute inline-flex h-3 w-3 rounded-full bg-destructive opacity-75 animate-ping" />
+                          <span className="relative inline-flex h-3 w-3 rounded-full bg-destructive" />
+                        </span>
+                        <span className="text-sm font-mono text-foreground tabular-nums w-14">
+                          {Math.floor(recordingTime / 60).toString().padStart(2, "0")}:
+                          {(recordingTime % 60).toString().padStart(2, "0")}
+                        </span>
+
+                        {recordLocked ? (
+                          <>
+                            <div className="flex-1 text-xs text-muted-foreground">Səs yazılır... bitirmək üçün basın</div>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => { cancelRecordRef.current = true; stopRecording(true); }}
+                              className="h-9 w-9 rounded-full text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              onClick={() => { cancelRecordRef.current = false; stopRecording(false); }}
+                              className="h-10 w-10 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-md"
+                            >
+                              <Send className="h-4 w-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <div
+                            className="flex-1 flex items-center justify-end gap-2 text-xs text-muted-foreground select-none"
+                            style={{ transform: `translateX(${slideX}px)` }}
+                          >
+                            <ArrowLeft className="h-3.5 w-3.5" />
+                            <span>Ləğv etmək üçün sürüşdürün · yuxarı çəkib kilidləyin</span>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex-1 relative">
-                        <textarea
-                          ref={inputRef}
-                          value={messageText}
-                          onChange={handleTextareaInput}
-                          onKeyDown={handleKeyDown}
-                          placeholder="Mesaj yazın..."
-                          rows={1}
-                          className="w-full resize-none rounded-xl border border-border/50 bg-muted/30 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
-                          style={{ maxHeight: 120 }}
+                    ) : (
+                      <form onSubmit={handleSubmit} className="flex items-end gap-2">
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleImageSelect}
+                          accept="image/*"
+                          className="hidden"
                         />
-                      </div>
-                      <Button
-                        type="submit"
-                        size="icon"
-                        disabled={(!messageText.trim() && !imagePreviewFile) || sendMessage.isPending}
-                        className="h-10 w-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-all disabled:opacity-40"
-                      >
-                        <Send className="h-4 w-4" />
-                      </Button>
-                    </form>
-                    {isRecording && (
-                      <div className="mt-2 flex items-center gap-2 text-destructive animate-pulse">
-                        <span className="h-2 w-2 rounded-full bg-destructive" />
-                        <span className="text-xs font-medium">Səs yazılır... dayandırmaq üçün basın</span>
-                      </div>
+                        <div className="flex gap-1">
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-10 w-10 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploadingMedia}
+                          >
+                            {uploadingMedia ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
+                          </Button>
+                        </div>
+                        <div className="flex-1 relative">
+                          <textarea
+                            ref={inputRef}
+                            value={messageText}
+                            onChange={handleTextareaInput}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Mesaj yazın..."
+                            rows={1}
+                            className="w-full resize-none rounded-xl border border-border/50 bg-muted/30 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+                            style={{ maxHeight: 120 }}
+                          />
+                          {slideY < -20 && !recordLocked && (
+                            <div
+                              className="absolute -top-12 right-2 flex flex-col items-center gap-1 text-primary"
+                              style={{ transform: `translateY(${Math.max(slideY, -60)}px)` }}
+                            >
+                              <Lock className="h-5 w-5" />
+                              <span className="text-[10px]">Kilidlə</span>
+                            </div>
+                          )}
+                        </div>
+                        {messageText.trim() || imagePreviewFile ? (
+                          <Button
+                            type="submit"
+                            size="icon"
+                            disabled={sendMessage.isPending}
+                            className="h-10 w-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-all disabled:opacity-40"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button
+                            type="button"
+                            size="icon"
+                            onPointerDown={handleMicPointerDown}
+                            onPointerMove={handleMicPointerMove}
+                            onPointerUp={handleMicPointerUp}
+                            onPointerCancel={handleMicPointerUp}
+                            className="h-10 w-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-all touch-none select-none"
+                            title="Basıb saxlayın və danışın"
+                          >
+                            <Mic className="h-5 w-5" />
+                          </Button>
+                        )}
+                      </form>
                     )}
                   </div>
                 </>
@@ -950,6 +1195,46 @@ const Messages = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Outgoing call dialog */}
+      {callOpen && callPeer && user && activeConvoId && (
+        <CallDialog
+          open={callOpen}
+          onClose={() => { setCallOpen(false); setCallPeer(null); setActiveIncomingCall(null); }}
+          mode={callMode}
+          callId={activeIncomingCall?.id ?? null}
+          conversationId={activeIncomingCall?.conversation_id ?? activeConvoId}
+          selfId={user.id}
+          peerId={callPeer.id}
+          peerName={callPeer.name}
+          peerAvatar={callPeer.avatar}
+          initialOffer={activeIncomingCall?.offer}
+        />
+      )}
+
+      {/* Incoming call popup (works regardless of active conversation) */}
+      {incoming && !callOpen && user && (
+        <CallDialog
+          open
+          onClose={() => dismiss()}
+          mode="incoming"
+          callId={incoming.id}
+          conversationId={incoming.conversation_id}
+          selfId={user.id}
+          peerId={incoming.caller_id}
+          peerName={
+            conversations.find((c: any) =>
+              c.buyer_id === incoming.caller_id || c.seller_id === incoming.caller_id
+            )?.displayName ?? "Naməlum"
+          }
+          peerAvatar={
+            conversations.find((c: any) =>
+              c.buyer_id === incoming.caller_id || c.seller_id === incoming.caller_id
+            )?.displayAvatar ?? null
+          }
+          initialOffer={incoming.offer}
+        />
+      )}
     </div>
   );
 };
