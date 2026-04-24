@@ -1025,6 +1025,29 @@ const Messages = () => {
                     </div>
                   )}
 
+                  {/* Voice preview (locked recording finished) */}
+                  {audioPreviewUrl && (
+                    <div className="border-t border-border/50 px-4 py-3 bg-card flex items-center gap-3">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={cancelVoicePreview}
+                        className="h-9 w-9 rounded-full text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <audio src={audioPreviewUrl} controls className="flex-1 h-10" />
+                      <Button
+                        size="icon"
+                        onClick={sendVoicePreview}
+                        disabled={uploadingMedia}
+                        className="h-10 w-10 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-md"
+                      >
+                        {uploadingMedia ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  )}
+
                   {/* Input area */}
                   <div className="border-t border-border/50 p-3 sm:p-4 bg-card">
                     <div className="mb-2">
@@ -1034,65 +1057,114 @@ const Messages = () => {
                         compact
                       />
                     </div>
-                    <form onSubmit={handleSubmit} className="flex items-end gap-2">
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleImageSelect}
-                        accept="image/*"
-                        className="hidden"
-                      />
-                      <div className="flex gap-1">
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="ghost"
-                          className="h-10 w-10 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={uploadingMedia}
-                        >
-                          {uploadingMedia ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
-                        </Button>
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="ghost"
-                          className={`h-10 w-10 rounded-xl transition-colors ${
-                            isRecording 
-                              ? "text-destructive bg-destructive/10 hover:bg-destructive/20" 
-                              : "text-muted-foreground hover:text-primary hover:bg-primary/10"
-                          }`}
-                          onClick={isRecording ? stopRecording : startRecording}
-                        >
-                          {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-                        </Button>
+
+                    {/* Recording overlay (WhatsApp-like) */}
+                    {isRecording && !audioPreviewUrl ? (
+                      <div className="relative flex items-center gap-3 h-12 px-3 rounded-xl bg-muted/40 border border-border/50">
+                        <span className="flex h-3 w-3">
+                          <span className="absolute inline-flex h-3 w-3 rounded-full bg-destructive opacity-75 animate-ping" />
+                          <span className="relative inline-flex h-3 w-3 rounded-full bg-destructive" />
+                        </span>
+                        <span className="text-sm font-mono text-foreground tabular-nums w-14">
+                          {Math.floor(recordingTime / 60).toString().padStart(2, "0")}:
+                          {(recordingTime % 60).toString().padStart(2, "0")}
+                        </span>
+
+                        {recordLocked ? (
+                          <>
+                            <div className="flex-1 text-xs text-muted-foreground">Səs yazılır... bitirmək üçün basın</div>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => { cancelRecordRef.current = true; stopRecording(true); }}
+                              className="h-9 w-9 rounded-full text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              onClick={() => { cancelRecordRef.current = false; stopRecording(false); }}
+                              className="h-10 w-10 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-md"
+                            >
+                              <Send className="h-4 w-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <div
+                            className="flex-1 flex items-center justify-end gap-2 text-xs text-muted-foreground select-none"
+                            style={{ transform: `translateX(${slideX}px)` }}
+                          >
+                            <ArrowLeft className="h-3.5 w-3.5" />
+                            <span>Ləğv etmək üçün sürüşdürün · yuxarı çəkib kilidləyin</span>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex-1 relative">
-                        <textarea
-                          ref={inputRef}
-                          value={messageText}
-                          onChange={handleTextareaInput}
-                          onKeyDown={handleKeyDown}
-                          placeholder="Mesaj yazın..."
-                          rows={1}
-                          className="w-full resize-none rounded-xl border border-border/50 bg-muted/30 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
-                          style={{ maxHeight: 120 }}
+                    ) : (
+                      <form onSubmit={handleSubmit} className="flex items-end gap-2">
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleImageSelect}
+                          accept="image/*"
+                          className="hidden"
                         />
-                      </div>
-                      <Button
-                        type="submit"
-                        size="icon"
-                        disabled={(!messageText.trim() && !imagePreviewFile) || sendMessage.isPending}
-                        className="h-10 w-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-all disabled:opacity-40"
-                      >
-                        <Send className="h-4 w-4" />
-                      </Button>
-                    </form>
-                    {isRecording && (
-                      <div className="mt-2 flex items-center gap-2 text-destructive animate-pulse">
-                        <span className="h-2 w-2 rounded-full bg-destructive" />
-                        <span className="text-xs font-medium">Səs yazılır... dayandırmaq üçün basın</span>
-                      </div>
+                        <div className="flex gap-1">
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-10 w-10 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploadingMedia}
+                          >
+                            {uploadingMedia ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
+                          </Button>
+                        </div>
+                        <div className="flex-1 relative">
+                          <textarea
+                            ref={inputRef}
+                            value={messageText}
+                            onChange={handleTextareaInput}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Mesaj yazın..."
+                            rows={1}
+                            className="w-full resize-none rounded-xl border border-border/50 bg-muted/30 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+                            style={{ maxHeight: 120 }}
+                          />
+                          {slideY < -20 && !recordLocked && (
+                            <div
+                              className="absolute -top-12 right-2 flex flex-col items-center gap-1 text-primary"
+                              style={{ transform: `translateY(${Math.max(slideY, -60)}px)` }}
+                            >
+                              <Lock className="h-5 w-5" />
+                              <span className="text-[10px]">Kilidlə</span>
+                            </div>
+                          )}
+                        </div>
+                        {messageText.trim() || imagePreviewFile ? (
+                          <Button
+                            type="submit"
+                            size="icon"
+                            disabled={sendMessage.isPending}
+                            className="h-10 w-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-all disabled:opacity-40"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button
+                            type="button"
+                            size="icon"
+                            onPointerDown={handleMicPointerDown}
+                            onPointerMove={handleMicPointerMove}
+                            onPointerUp={handleMicPointerUp}
+                            onPointerCancel={handleMicPointerUp}
+                            className="h-10 w-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-all touch-none select-none"
+                            title="Basıb saxlayın və danışın"
+                          >
+                            <Mic className="h-5 w-5" />
+                          </Button>
+                        )}
+                      </form>
                     )}
                   </div>
                 </>
@@ -1123,6 +1195,46 @@ const Messages = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Outgoing call dialog */}
+      {callOpen && callPeer && user && activeConvoId && (
+        <CallDialog
+          open={callOpen}
+          onClose={() => { setCallOpen(false); setCallPeer(null); setActiveIncomingCall(null); }}
+          mode={callMode}
+          callId={activeIncomingCall?.id ?? null}
+          conversationId={activeIncomingCall?.conversation_id ?? activeConvoId}
+          selfId={user.id}
+          peerId={callPeer.id}
+          peerName={callPeer.name}
+          peerAvatar={callPeer.avatar}
+          initialOffer={activeIncomingCall?.offer}
+        />
+      )}
+
+      {/* Incoming call popup (works regardless of active conversation) */}
+      {incoming && !callOpen && user && (
+        <CallDialog
+          open
+          onClose={() => dismiss()}
+          mode="incoming"
+          callId={incoming.id}
+          conversationId={incoming.conversation_id}
+          selfId={user.id}
+          peerId={incoming.caller_id}
+          peerName={
+            conversations.find((c: any) =>
+              c.buyer_id === incoming.caller_id || c.seller_id === incoming.caller_id
+            )?.displayName ?? "Naməlum"
+          }
+          peerAvatar={
+            conversations.find((c: any) =>
+              c.buyer_id === incoming.caller_id || c.seller_id === incoming.caller_id
+            )?.displayAvatar ?? null
+          }
+          initialOffer={incoming.offer}
+        />
+      )}
     </div>
   );
 };
