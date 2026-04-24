@@ -364,7 +364,7 @@ const ProductDetail = () => {
   const formatSharePrice = (price: number, currency: string) => `${price.toLocaleString("az-AZ")} ${currency}`;
   const shareText = `${listing.title} — ${formatSharePrice(Number(listing.price), listing.currency || "AZN")}`;
   const productUrl = `https://elan24.az/product/${listing.id}`;
-  const previewShareUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/listing-share?id=${listing.id}&v=20260423`;
+  const previewShareUrl = productUrl;
 
   // Share handler
   const handleShare = async () => {
