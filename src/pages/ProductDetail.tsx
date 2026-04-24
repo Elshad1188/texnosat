@@ -364,7 +364,30 @@ const ProductDetail = () => {
   const formatSharePrice = (price: number, currency: string) => `${price.toLocaleString("az-AZ")} ${currency}`;
   const shareText = `${listing.title} — ${formatSharePrice(Number(listing.price), listing.currency || "AZN")}`;
   const productUrl = `https://elan24.az/product/${listing.id}`;
-  const previewShareUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/listing-share?id=${listing.id}&v=20260424`;
+  const shareImageUrl = (() => {
+    const imageUrl = images[0];
+    if (!imageUrl || imageUrl === "/placeholder.svg") return null;
+    if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) return imageUrl;
+    return new URL(imageUrl, window.location.origin).toString();
+  })();
+
+  const getShareImageFile = async () => {
+    if (!shareImageUrl || typeof File === "undefined") return null;
+
+    try {
+      const response = await fetch(shareImageUrl);
+      if (!response.ok) throw new Error(`Image fetch failed: ${response.status}`);
+
+      const blob = await response.blob();
+      const extension = blob.type.split("/")[1]?.split("+")[0] || "jpg";
+      return new File([blob], `elan24-${listing.id}.${extension}`, {
+        type: blob.type || "image/jpeg",
+      });
+    } catch (error) {
+      console.error("Share image fetch error:", error);
+      return null;
+    }
+  };
 
   // Share handler
   const handleShare = async () => {
@@ -372,11 +395,22 @@ const ProductDetail = () => {
     const shareData = {
       title: listing.title,
       text: shareText,
-      url: previewShareUrl,
+      url: productUrl,
     };
 
     if (navigator.share) {
       try {
+        if (typeof navigator.canShare === "function") {
+          const shareImageFile = await getShareImageFile();
+          if (shareImageFile && navigator.canShare({ files: [shareImageFile] })) {
+            await navigator.share({
+              ...shareData,
+              files: [shareImageFile],
+            });
+            return;
+          }
+        }
+
         await navigator.share(shareData);
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
@@ -390,10 +424,10 @@ const ProductDetail = () => {
   };
 
   const shareLinks = {
-    whatsapp: `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${previewShareUrl}`)}`,
-    telegram: `https://t.me/share/url?url=${encodeURIComponent(previewShareUrl)}&text=${encodeURIComponent(shareText)}`,
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(previewShareUrl)}`,
-    twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(previewShareUrl)}&text=${encodeURIComponent(shareText)}`,
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${productUrl}`)}`,
+    telegram: `https://t.me/share/url?url=${encodeURIComponent(productUrl)}&text=${encodeURIComponent(shareText)}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}`,
+    twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(productUrl)}&text=${encodeURIComponent(shareText)}`,
     copy: async () => {
       await navigator.clipboard.writeText(productUrl);
       toast({ title: t("detail.link_copied") });
