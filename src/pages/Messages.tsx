@@ -804,6 +804,26 @@ const Messages = () => {
                       </div>
                     )}
 
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-9 w-9 text-primary hover:bg-primary/10 rounded-full"
+                      onClick={() => {
+                        const peerId = activeConvo.buyer_id === user.id ? activeConvo.seller_id : activeConvo.buyer_id;
+                        setCallPeer({
+                          id: peerId,
+                          name: activeConvo.displayName,
+                          avatar: activeConvo.displayAvatar,
+                        });
+                        setCallMode("outgoing");
+                        setActiveIncomingCall(null);
+                        setCallOpen(true);
+                      }}
+                      title="Səsli zəng"
+                    >
+                      <Phone className="h-4.5 w-4.5" />
+                    </Button>
+
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive rounded-lg">
