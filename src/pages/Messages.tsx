@@ -163,34 +163,64 @@ const Messages = () => {
       const recorder = new MediaRecorder(stream);
       mediaRecorderRef.current = recorder;
       audioChunksRef.current = [];
-      recorder.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
-      recorder.onstop = uploadAudio;
+      cancelRecordRef.current = false;
+      audioPreviewBlobRef.current = null;
+      setAudioPreviewUrl(null);
+      setRecordingTime(0);
+      setRecordLocked(false);
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      recorder.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        if (recordTimerRef.current) {
+          window.clearInterval(recordTimerRef.current);
+          recordTimerRef.current = null;
+        }
+        if (cancelRecordRef.current) {
+          audioChunksRef.current = [];
+          setIsRecording(false);
+          setRecordLocked(false);
+          setRecordingTime(0);
+          return;
+        }
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        audioPreviewBlobRef.current = blob;
+        if (recordLocked) {
+          // Show preview
+          setAudioPreviewUrl(URL.createObjectURL(blob));
+          setIsRecording(false);
+        } else {
+          // Quick send
+          uploadAudioBlob(blob);
+          setIsRecording(false);
+        }
+      };
       recorder.start();
       setIsRecording(true);
+      recordTimerRef.current = window.setInterval(() => {
+        setRecordingTime((t) => t + 1);
+      }, 1000);
     } catch {
       toast({ title: "Mikrofona icazə lazımdır", variant: "destructive" });
     }
   };
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
+  const stopRecording = (cancel = false) => {
+    cancelRecordRef.current = cancel;
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop());
-      setIsRecording(false);
     }
   };
 
-  const uploadAudio = async () => {
+  const uploadAudioBlob = async (blob: Blob) => {
     if (!user || !activeConvoId) return;
     try {
       setUploadingMedia(true);
-      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
       const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.webm`;
       const filePath = `${user.id}/${fileName}`;
-      const { error: uploadError } = await supabase.storage.from("chat_media").upload(filePath, audioBlob);
+      const { error: uploadError } = await supabase.storage.from("chat_media").upload(filePath, blob);
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from("chat_media").getPublicUrl(filePath);
-      
+
       const msgData: any = {
         conversation_id: activeConvoId,
         sender_id: user.id,
@@ -198,15 +228,74 @@ const Messages = () => {
         audio_url: publicUrl,
       };
       if (selectedStoreId) msgData.sender_store_id = selectedStoreId;
-      
+
       const { error: msgErr } = await supabase.from("messages").insert(msgData);
       if (msgErr) throw msgErr;
+      audioPreviewBlobRef.current = null;
+      setAudioPreviewUrl(null);
+      setRecordingTime(0);
+      setRecordLocked(false);
       queryClient.invalidateQueries({ queryKey: ["messages", activeConvoId] });
     } catch {
       toast({ title: "Səs göndərilmədi", variant: "destructive" });
     } finally {
       setUploadingMedia(false);
     }
+  };
+
+  const sendVoicePreview = () => {
+    if (audioPreviewBlobRef.current) uploadAudioBlob(audioPreviewBlobRef.current);
+  };
+
+  const cancelVoicePreview = () => {
+    audioPreviewBlobRef.current = null;
+    if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
+    setAudioPreviewUrl(null);
+    setRecordingTime(0);
+    setRecordLocked(false);
+  };
+
+  // Pointer handlers for hold-to-record
+  const handleMicPointerDown = (e: React.PointerEvent) => {
+    if (audioPreviewUrl) return;
+    e.preventDefault();
+    startXRef.current = e.clientX;
+    startYRef.current = e.clientY;
+    slideXRef.current = 0;
+    setSlideX(0);
+    setSlideY(0);
+    startRecording();
+  };
+
+  const handleMicPointerMove = (e: React.PointerEvent) => {
+    if (!isRecording || recordLocked) return;
+    const dx = Math.min(0, e.clientX - startXRef.current); // only left
+    const dy = Math.min(0, e.clientY - startYRef.current); // only up
+    setSlideX(dx);
+    setSlideY(dy);
+    if (dx < -100) {
+      // Cancel
+      stopRecording(true);
+    } else if (dy < -80) {
+      // Lock
+      setRecordLocked(true);
+      setSlideX(0);
+      setSlideY(0);
+    }
+  };
+
+  const handleMicPointerUp = () => {
+    if (!isRecording) return;
+    if (recordLocked) return; // stay recording until user taps stop
+    setSlideX(0);
+    setSlideY(0);
+    if (recordingTime < 1) {
+      // too short
+      stopRecording(true);
+      toast({ title: "Səsli mesaj çox qısadır", description: "Mikrofonu basıb saxlayın" });
+      return;
+    }
+    stopRecording(false);
   };
 
   const removeMessageFromCache = (messageId: string) => {
