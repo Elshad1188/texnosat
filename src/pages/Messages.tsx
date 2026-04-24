@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { MessageCircle, Send, ArrowLeft, Loader2, Check, CheckCheck, Store, Trash2, MoreVertical, ImagePlus, Mic, MicOff, X, Image as ImageIcon } from "lucide-react";
+import { MessageCircle, Send, ArrowLeft, Loader2, Check, CheckCheck, Store, Trash2, MoreVertical, ImagePlus, Mic, X, Phone, Lock, Pause, Play } from "lucide-react";
+import CallDialog from "@/components/CallDialog";
+import { useIncomingCall } from "@/hooks/useIncomingCall";
 import IdentitySwitcher from "@/components/IdentitySwitcher";
 import {
   Tooltip,
