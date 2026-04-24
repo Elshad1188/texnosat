@@ -91,6 +91,26 @@ const Messages = () => {
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  // Voice recording state (WhatsApp-like)
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [recordLocked, setRecordLocked] = useState(false);
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
+  const audioPreviewBlobRef = useRef<Blob | null>(null);
+  const recordTimerRef = useRef<number | null>(null);
+  const cancelRecordRef = useRef(false);
+  const slideXRef = useRef(0);
+  const startXRef = useRef(0);
+  const startYRef = useRef(0);
+  const [slideX, setSlideX] = useState(0);
+  const [slideY, setSlideY] = useState(0);
+
+  // Call state
+  const [callOpen, setCallOpen] = useState(false);
+  const [callMode, setCallMode] = useState<"outgoing" | "incoming">("outgoing");
+  const [callPeer, setCallPeer] = useState<{ id: string; name: string; avatar: string | null } | null>(null);
+  const [activeIncomingCall, setActiveIncomingCall] = useState<any>(null);
+  const { incoming, dismiss } = useIncomingCall();
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
