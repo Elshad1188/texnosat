@@ -293,9 +293,10 @@ const Messages = () => {
   };
 
   // Pointer handlers for hold-to-record
-  const handleMicPointerDown = (e: React.PointerEvent) => {
+  const handleMicPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
     if (audioPreviewUrl) return;
     e.preventDefault();
+    e.currentTarget.setPointerCapture?.(e.pointerId);
     startXRef.current = e.clientX;
     startYRef.current = e.clientY;
     slideXRef.current = 0;
@@ -304,7 +305,7 @@ const Messages = () => {
     startRecording();
   };
 
-  const handleMicPointerMove = (e: React.PointerEvent) => {
+  const handleMicPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
     if (!isRecording || recordLocked) return;
     const dx = Math.min(0, e.clientX - startXRef.current); // only left
     const dy = Math.min(0, e.clientY - startYRef.current); // only up
@@ -321,12 +322,14 @@ const Messages = () => {
     }
   };
 
-  const handleMicPointerUp = () => {
+  const handleMicPointerUp = (e?: React.PointerEvent<HTMLButtonElement>) => {
+    e?.currentTarget.releasePointerCapture?.(e.pointerId);
     if (!isRecording) return;
     if (recordLocked) return; // stay recording until user taps stop
     setSlideX(0);
     setSlideY(0);
-    if (recordingTime < 1) {
+    const elapsedMs = Date.now() - recordingStartedAtRef.current;
+    if (elapsedMs < 700) {
       // too short
       stopRecording(true);
       toast({ title: "Səsli mesaj çox qısadır", description: "Mikrofonu basıb saxlayın" });
