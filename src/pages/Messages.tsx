@@ -157,10 +157,35 @@ const Messages = () => {
     }
   };
 
+  const recordLockedRef = useRef(false);
+  useEffect(() => { recordLockedRef.current = recordLocked; }, [recordLocked]);
+
+  const pickAudioMime = () => {
+    const candidates = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/mp4;codecs=mp4a.40.2",
+      "audio/mp4",
+      "audio/ogg;codecs=opus",
+      "audio/ogg",
+    ];
+    for (const m of candidates) {
+      try {
+        if ((window as any).MediaRecorder && MediaRecorder.isTypeSupported?.(m)) return m;
+      } catch {}
+    }
+    return "";
+  };
+
   const startRecording = async () => {
     try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        toast({ title: "Brauzeriniz mikrofonu dəstəkləmir", variant: "destructive" });
+        return;
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      const mime = pickAudioMime();
+      const recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
       mediaRecorderRef.current = recorder;
       audioChunksRef.current = [];
       cancelRecordRef.current = false;
@@ -168,6 +193,7 @@ const Messages = () => {
       setAudioPreviewUrl(null);
       setRecordingTime(0);
       setRecordLocked(false);
+      recordLockedRef.current = false;
       recorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
       recorder.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
@@ -182,25 +208,27 @@ const Messages = () => {
           setRecordingTime(0);
           return;
         }
-        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || mime || "audio/webm" });
         audioPreviewBlobRef.current = blob;
-        if (recordLocked) {
-          // Show preview
+        if (recordLockedRef.current) {
           setAudioPreviewUrl(URL.createObjectURL(blob));
           setIsRecording(false);
         } else {
-          // Quick send
           uploadAudioBlob(blob);
           setIsRecording(false);
         }
+      };
+      recorder.onerror = () => {
+        toast({ title: "Səs yazılmadı", variant: "destructive" });
+        setIsRecording(false);
       };
       recorder.start();
       setIsRecording(true);
       recordTimerRef.current = window.setInterval(() => {
         setRecordingTime((t) => t + 1);
       }, 1000);
-    } catch {
-      toast({ title: "Mikrofona icazə lazımdır", variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: "Mikrofona icazə lazımdır", description: err?.message, variant: "destructive" });
     }
   };
 
