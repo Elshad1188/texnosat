@@ -243,9 +243,16 @@ const Messages = () => {
     if (!user || !activeConvoId) return;
     try {
       setUploadingMedia(true);
-      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.webm`;
+      const type = blob.type || "audio/webm";
+      let ext = "webm";
+      if (type.includes("mp4")) ext = "m4a";
+      else if (type.includes("ogg")) ext = "ogg";
+      else if (type.includes("webm")) ext = "webm";
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const filePath = `${user.id}/${fileName}`;
-      const { error: uploadError } = await supabase.storage.from("chat_media").upload(filePath, blob);
+      const { error: uploadError } = await supabase.storage
+        .from("chat_media")
+        .upload(filePath, blob, { contentType: type, upsert: false });
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from("chat_media").getPublicUrl(filePath);
 
@@ -264,8 +271,8 @@ const Messages = () => {
       setRecordingTime(0);
       setRecordLocked(false);
       queryClient.invalidateQueries({ queryKey: ["messages", activeConvoId] });
-    } catch {
-      toast({ title: "Səs göndərilmədi", variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: "Səs göndərilmədi", description: err?.message, variant: "destructive" });
     } finally {
       setUploadingMedia(false);
     }
