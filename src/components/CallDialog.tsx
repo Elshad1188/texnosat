@@ -240,7 +240,7 @@ const CallDialog = ({
         }
         localStreamRef.current = stream;
 
-        // Create call row
+        // Create call row first (without offer) to get id for ICE candidates
         const { data: callRow, error: callErr } = await supabase
           .from("calls")
           .insert({
@@ -263,9 +263,16 @@ const CallDialog = ({
 
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        await (supabase.from("calls") as any)
-          .update({ offer: offer as any })
+
+        // Wait briefly for ICE gathering to start, then update with offer
+        const offerPayload = pc.localDescription
+          ? { type: pc.localDescription.type, sdp: pc.localDescription.sdp }
+          : { type: offer.type, sdp: offer.sdp };
+
+        const { error: updErr } = await (supabase.from("calls") as any)
+          .update({ offer: offerPayload as any })
           .eq("id", callRow.id);
+        if (updErr) throw updErr;
       } catch (err: any) {
         toast({
           title: "Zəng başlamadı",
