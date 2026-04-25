@@ -276,7 +276,7 @@ const Header = () => {
               
               <NotificationBell />
               
-              <Button size="icon" className="22xl:hidden bg-gradient-primary text-primary-foreground hover:opacity-90" asChild>
+              <Button size="icon" className="2xl:hidden bg-gradient-primary text-primary-foreground hover:opacity-90" asChild>
                 <Link to="/create-listing" aria-label={t("nav.create_listing")}>
                   <Plus className="h-4 w-4" />
                 </Link>
