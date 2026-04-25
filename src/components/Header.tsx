@@ -225,7 +225,7 @@ const Header = () => {
           </Link>
         </div>
 
-        <nav className="hidden items-center gap-6 xl:flex">
+        <nav className="hidden items-center gap-6 2xl:flex">
           <Link to="/" className="whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.home")}</Link>
           <Link to="/products" className="whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.products")}</Link>
           <Link to="/stores" className="whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.stores")}</Link>
@@ -248,7 +248,7 @@ const Header = () => {
           )}
           {user ? (
             <>
-              <Button variant="ghost" size="icon" className="hidden xl:flex relative" asChild>
+              <Button variant="ghost" size="icon" className="hidden 2xl:flex relative" asChild>
                 <Link to="/messages">
                   <MessageCircle className="h-5 w-5" />
                   {unreadCount > 0 && (
@@ -259,14 +259,14 @@ const Header = () => {
                 </Link>
               </Button>
               {isAdmin && (
-                <Button variant="ghost" size="icon" className="hidden xl:flex" asChild>
+                <Button variant="ghost" size="icon" className="hidden 2xl:flex" asChild>
                   <Link to="/admin"><ShieldCheck className="h-5 w-5 text-primary" /></Link>
                 </Button>
               )}
-              <Button variant="ghost" size="icon" className="hidden xl:flex" asChild>
+              <Button variant="ghost" size="icon" className="hidden 2xl:flex" asChild>
                 <Link to="/profile"><User className="h-5 w-5" /></Link>
               </Button>
-              <Button variant="ghost" size="icon" className="hidden xl:flex" onClick={() => signOut()}>
+              <Button variant="ghost" size="icon" className="hidden 2xl:flex" onClick={() => signOut()}>
                 <LogOut className="h-5 w-5" />
               </Button>
               
@@ -276,12 +276,12 @@ const Header = () => {
               
               <NotificationBell />
               
-              <Button size="icon" className="xl:hidden bg-gradient-primary text-primary-foreground hover:opacity-90" asChild>
+              <Button size="icon" className="22xl:hidden bg-gradient-primary text-primary-foreground hover:opacity-90" asChild>
                 <Link to="/create-listing" aria-label={t("nav.create_listing")}>
                   <Plus className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button className="hidden xl:flex bg-gradient-primary text-primary-foreground hover:opacity-90 gap-1.5 whitespace-nowrap" asChild>
+              <Button className="hidden 2xl:flex bg-gradient-primary text-primary-foreground hover:opacity-90 gap-1.5 whitespace-nowrap" asChild>
                 <Link to="/create-listing">
                   <Plus className="h-4 w-4" />
                   <span>{t("nav.create_listing")}</span>
