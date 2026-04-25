@@ -157,10 +157,35 @@ const Messages = () => {
     }
   };
 
+  const recordLockedRef = useRef(false);
+  useEffect(() => { recordLockedRef.current = recordLocked; }, [recordLocked]);
+
+  const pickAudioMime = () => {
+    const candidates = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/mp4;codecs=mp4a.40.2",
+      "audio/mp4",
+      "audio/ogg;codecs=opus",
+      "audio/ogg",
+    ];
+    for (const m of candidates) {
+      try {
+        if ((window as any).MediaRecorder && MediaRecorder.isTypeSupported?.(m)) return m;
+      } catch {}
+    }
+    return "";
+  };
+
   const startRecording = async () => {
     try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        toast({ title: "Brauzeriniz mikrofonu dəstəkləmir", variant: "destructive" });
+        return;
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      const mime = pickAudioMime();
+      const recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
       mediaRecorderRef.current = recorder;
       audioChunksRef.current = [];
       cancelRecordRef.current = false;
@@ -168,6 +193,7 @@ const Messages = () => {
       setAudioPreviewUrl(null);
       setRecordingTime(0);
       setRecordLocked(false);
+      recordLockedRef.current = false;
       recorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
       recorder.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
@@ -182,25 +208,27 @@ const Messages = () => {
           setRecordingTime(0);
           return;
         }
-        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || mime || "audio/webm" });
         audioPreviewBlobRef.current = blob;
-        if (recordLocked) {
-          // Show preview
+        if (recordLockedRef.current) {
           setAudioPreviewUrl(URL.createObjectURL(blob));
           setIsRecording(false);
         } else {
-          // Quick send
           uploadAudioBlob(blob);
           setIsRecording(false);
         }
+      };
+      recorder.onerror = () => {
+        toast({ title: "Səs yazılmadı", variant: "destructive" });
+        setIsRecording(false);
       };
       recorder.start();
       setIsRecording(true);
       recordTimerRef.current = window.setInterval(() => {
         setRecordingTime((t) => t + 1);
       }, 1000);
-    } catch {
-      toast({ title: "Mikrofona icazə lazımdır", variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: "Mikrofona icazə lazımdır", description: err?.message, variant: "destructive" });
     }
   };
 
@@ -215,9 +243,16 @@ const Messages = () => {
     if (!user || !activeConvoId) return;
     try {
       setUploadingMedia(true);
-      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.webm`;
+      const type = blob.type || "audio/webm";
+      let ext = "webm";
+      if (type.includes("mp4")) ext = "m4a";
+      else if (type.includes("ogg")) ext = "ogg";
+      else if (type.includes("webm")) ext = "webm";
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const filePath = `${user.id}/${fileName}`;
-      const { error: uploadError } = await supabase.storage.from("chat_media").upload(filePath, blob);
+      const { error: uploadError } = await supabase.storage
+        .from("chat_media")
+        .upload(filePath, blob, { contentType: type, upsert: false });
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from("chat_media").getPublicUrl(filePath);
 
@@ -236,8 +271,8 @@ const Messages = () => {
       setRecordingTime(0);
       setRecordLocked(false);
       queryClient.invalidateQueries({ queryKey: ["messages", activeConvoId] });
-    } catch {
-      toast({ title: "Səs göndərilmədi", variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: "Səs göndərilmədi", description: err?.message, variant: "destructive" });
     } finally {
       setUploadingMedia(false);
     }
@@ -1151,18 +1186,19 @@ const Messages = () => {
                             <Send className="h-4 w-4" />
                           </Button>
                         ) : (
-                          <Button
+                          <button
                             type="button"
-                            size="icon"
                             onPointerDown={handleMicPointerDown}
                             onPointerMove={handleMicPointerMove}
                             onPointerUp={handleMicPointerUp}
                             onPointerCancel={handleMicPointerUp}
-                            className="h-10 w-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-all touch-none select-none"
+                            onContextMenu={(e) => e.preventDefault()}
+                            className="h-10 w-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-all touch-none select-none flex items-center justify-center active:scale-110"
                             title="Basıb saxlayın və danışın"
+                            aria-label="Səsli mesaj"
                           >
                             <Mic className="h-5 w-5" />
-                          </Button>
+                          </button>
                         )}
                       </form>
                     )}
