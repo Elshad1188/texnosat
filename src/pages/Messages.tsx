@@ -101,6 +101,7 @@ const Messages = () => {
   const slideXRef = useRef(0);
   const startXRef = useRef(0);
   const startYRef = useRef(0);
+  const recordingStartedAtRef = useRef(0);
   const [slideX, setSlideX] = useState(0);
   const [slideY, setSlideY] = useState(0);
 
@@ -194,6 +195,7 @@ const Messages = () => {
       setRecordingTime(0);
       setRecordLocked(false);
       recordLockedRef.current = false;
+      recordingStartedAtRef.current = Date.now();
       recorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
       recorder.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
