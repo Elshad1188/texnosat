@@ -1186,18 +1186,19 @@ const Messages = () => {
                             <Send className="h-4 w-4" />
                           </Button>
                         ) : (
-                          <Button
+                          <button
                             type="button"
-                            size="icon"
                             onPointerDown={handleMicPointerDown}
                             onPointerMove={handleMicPointerMove}
                             onPointerUp={handleMicPointerUp}
                             onPointerCancel={handleMicPointerUp}
-                            className="h-10 w-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-all touch-none select-none"
+                            onContextMenu={(e) => e.preventDefault()}
+                            className="h-10 w-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-all touch-none select-none flex items-center justify-center active:scale-110"
                             title="Basıb saxlayın və danışın"
+                            aria-label="Səsli mesaj"
                           >
                             <Mic className="h-5 w-5" />
-                          </Button>
+                          </button>
                         )}
                       </form>
                     )}
