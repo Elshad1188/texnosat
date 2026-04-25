@@ -1099,18 +1099,26 @@ const Messages = () => {
                     </div>
 
                     {/* Recording overlay (WhatsApp-like) */}
-                    {isRecording && !audioPreviewUrl ? (
-                      <div className="relative flex items-center gap-3 h-12 px-3 rounded-xl bg-muted/40 border border-border/50">
-                        <span className="flex h-3 w-3">
-                          <span className="absolute inline-flex h-3 w-3 rounded-full bg-destructive opacity-75 animate-ping" />
-                          <span className="relative inline-flex h-3 w-3 rounded-full bg-destructive" />
-                        </span>
-                        <span className="text-sm font-mono text-foreground tabular-nums w-14">
-                          {Math.floor(recordingTime / 60).toString().padStart(2, "0")}:
-                          {(recordingTime % 60).toString().padStart(2, "0")}
-                        </span>
+                    <form onSubmit={handleSubmit} className="flex items-end gap-2">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleImageSelect}
+                        accept="image/*"
+                        className="hidden"
+                      />
+                      {isRecording && !audioPreviewUrl ? (
+                        <div className="relative flex flex-1 items-center gap-3 h-12 px-3 rounded-xl bg-muted/40 border border-border/50">
+                          <span className="flex h-3 w-3">
+                            <span className="absolute inline-flex h-3 w-3 rounded-full bg-destructive opacity-75 animate-ping" />
+                            <span className="relative inline-flex h-3 w-3 rounded-full bg-destructive" />
+                          </span>
+                          <span className="text-sm font-mono text-foreground tabular-nums w-14">
+                            {Math.floor(recordingTime / 60).toString().padStart(2, "0")}:
+                            {(recordingTime % 60).toString().padStart(2, "0")}
+                          </span>
 
-                        {recordLocked ? (
+                          {recordLocked ? (
                           <>
                             <div className="flex-1 text-xs text-muted-foreground">Səs yazılır... bitirmək üçün basın</div>
                             <Button
@@ -1129,7 +1137,7 @@ const Messages = () => {
                               <Send className="h-4 w-4" />
                             </Button>
                           </>
-                        ) : (
+                          ) : (
                           <div
                             className="flex-1 flex items-center justify-end gap-2 text-xs text-muted-foreground select-none"
                             style={{ transform: `translateX(${slideX}px)` }}
@@ -1137,17 +1145,10 @@ const Messages = () => {
                             <ArrowLeft className="h-3.5 w-3.5" />
                             <span>Ləğv etmək üçün sürüşdürün · yuxarı çəkib kilidləyin</span>
                           </div>
-                        )}
-                      </div>
-                    ) : (
-                      <form onSubmit={handleSubmit} className="flex items-end gap-2">
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          onChange={handleImageSelect}
-                          accept="image/*"
-                          className="hidden"
-                        />
+                          )}
+                        </div>
+                      ) : (
+                        <>
                         <div className="flex gap-1">
                           <Button
                             type="button"
@@ -1181,6 +1182,8 @@ const Messages = () => {
                             </div>
                           )}
                         </div>
+                        </>
+                      )}
                         {messageText.trim() || imagePreviewFile ? (
                           <Button
                             type="submit"
@@ -1206,7 +1209,6 @@ const Messages = () => {
                           </button>
                         )}
                       </form>
-                    )}
                   </div>
                 </>
               ) : (
