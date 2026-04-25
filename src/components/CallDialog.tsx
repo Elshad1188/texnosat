@@ -317,9 +317,12 @@ const CallDialog = ({
       pendingIceRef.current = [];
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
+      const answerPayload = pc.localDescription
+        ? { type: pc.localDescription.type, sdp: pc.localDescription.sdp }
+        : { type: answer.type, sdp: answer.sdp };
       await (supabase.from("calls") as any)
         .update({
-          answer: answer as any,
+          answer: answerPayload as any,
           status: "accepted",
           answered_at: new Date().toISOString(),
         })
