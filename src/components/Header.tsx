@@ -225,14 +225,14 @@ const Header = () => {
           </Link>
         </div>
 
-        <nav className="hidden items-center gap-6 lg:flex">
-          <Link to="/" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.home")}</Link>
-          <Link to="/products" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.products")}</Link>
-          <Link to="/stores" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.stores")}</Link>
-          <Link to="/blog" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.blog")}</Link>
-          <Link to="/create-store" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.create_store")}</Link>
+        <nav className="hidden items-center gap-6 xl:flex">
+          <Link to="/" className="whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.home")}</Link>
+          <Link to="/products" className="whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.products")}</Link>
+          <Link to="/stores" className="whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.stores")}</Link>
+          <Link to="/blog" className="whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.blog")}</Link>
+          <Link to="/create-store" className="whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.create_store")}</Link>
           {isAdmin && (
-            <Link to="/admin" className="flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary/80">
+            <Link to="/admin" className="flex items-center gap-1 whitespace-nowrap text-sm font-medium text-primary transition-colors hover:text-primary/80">
               <ShieldCheck className="h-4 w-4" /> {t("nav.admin")}
             </Link>
           )}
