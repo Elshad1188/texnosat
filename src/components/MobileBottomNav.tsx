@@ -60,7 +60,13 @@ const MobileBottomNav = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl lg:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+    <nav
+      className={cn(
+        "fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border xl:hidden transition-transform duration-300 ease-out will-change-transform",
+        hidden ? "translate-y-full" : "translate-y-0"
+      )}
+      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+    >
       <div className="flex items-center justify-around h-14">
         {navItems.map((item) => {
           const active = isActive(item.path);
