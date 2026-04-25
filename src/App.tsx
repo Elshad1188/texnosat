@@ -114,6 +114,7 @@ const App = () => (
                 <AppWrapper />
                 <CompareBar />
                 <MobileBottomNav />
+                <MobileTopSearch />
                 <ChatBot />
                 <SpinWheelPopup />
                 <AppDownloadBanner />
