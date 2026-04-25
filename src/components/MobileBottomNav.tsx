@@ -5,11 +5,28 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useEffect, useRef, useState } from "react";
 
 const MobileBottomNav = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const { user } = useAuth();
+  const [hidden, setHidden] = useState(false);
+  const lastY = useRef(0);
+
+  useEffect(() => {
+    lastY.current = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      const dy = y - lastY.current;
+      if (y < 80) setHidden(false);
+      else if (dy > 6) setHidden(true);
+      else if (dy < -6) setHidden(false);
+      lastY.current = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ["unread-messages-mobile", user?.id],
