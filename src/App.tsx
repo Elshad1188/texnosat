@@ -31,6 +31,7 @@ import ModeratorPanel from "./pages/ModeratorPanel";
 import Orders from "./pages/Orders";
 import Support from "./pages/Support";
 import MobileBottomNav from "./components/MobileBottomNav";
+import MobileTopSearch from "./components/MobileTopSearch";
 import AppDownloadBanner from "./components/AppDownloadBanner";
 import FirebaseInit from "./components/FirebaseInit";
 import { CompareProvider } from "@/contexts/CompareContext";
