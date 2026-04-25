@@ -248,7 +248,7 @@ const Header = () => {
           )}
           {user ? (
             <>
-              <Button variant="ghost" size="icon" className="hidden lg:flex relative" asChild>
+              <Button variant="ghost" size="icon" className="hidden xl:flex relative" asChild>
                 <Link to="/messages">
                   <MessageCircle className="h-5 w-5" />
                   {unreadCount > 0 && (
@@ -259,24 +259,29 @@ const Header = () => {
                 </Link>
               </Button>
               {isAdmin && (
-                <Button variant="ghost" size="icon" className="hidden lg:flex" asChild>
+                <Button variant="ghost" size="icon" className="hidden xl:flex" asChild>
                   <Link to="/admin"><ShieldCheck className="h-5 w-5 text-primary" /></Link>
                 </Button>
               )}
-              <Button variant="ghost" size="icon" className="hidden lg:flex" asChild>
+              <Button variant="ghost" size="icon" className="hidden xl:flex" asChild>
                 <Link to="/profile"><User className="h-5 w-5" /></Link>
               </Button>
-              <Button variant="ghost" size="icon" className="hidden lg:flex" onClick={() => signOut()}>
+              <Button variant="ghost" size="icon" className="hidden xl:flex" onClick={() => signOut()}>
                 <LogOut className="h-5 w-5" />
               </Button>
               
-              <Button variant="ghost" size="icon" asChild>
+              <Button variant="ghost" size="icon" className="hidden sm:flex" asChild>
                 <Link to="/favorites"><Heart className="h-5 w-5" /></Link>
               </Button>
               
               <NotificationBell />
               
-              <Button className="hidden lg:flex bg-gradient-primary text-primary-foreground hover:opacity-90 gap-1.5" asChild>
+              <Button size="icon" className="xl:hidden bg-gradient-primary text-primary-foreground hover:opacity-90" asChild>
+                <Link to="/create-listing" aria-label={t("nav.create_listing")}>
+                  <Plus className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button className="hidden xl:flex bg-gradient-primary text-primary-foreground hover:opacity-90 gap-1.5 whitespace-nowrap" asChild>
                 <Link to="/create-listing">
                   <Plus className="h-4 w-4" />
                   <span>{t("nav.create_listing")}</span>
