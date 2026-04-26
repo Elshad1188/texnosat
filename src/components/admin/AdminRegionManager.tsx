@@ -17,6 +17,7 @@ interface Region {
   sort_order: number;
   is_active: boolean;
   created_at: string;
+  type?: string;
 }
 
 const AdminRegionManager = () => {
