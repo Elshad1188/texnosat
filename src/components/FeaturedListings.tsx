@@ -89,14 +89,18 @@ const FeaturedListings = () => {
   }, [newListings, hpSettings.homepage_new_count]);
 
   const loadMore = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
+    if (loadingMore || !hasMore || newOffset === 0) return;
     setLoadingMore(true);
     const { data } = await supabase.from("listings").select("*")
       .eq("is_active", true)
       .order("created_at", { ascending: false })
       .range(newOffset, newOffset + hpSettings.homepage_new_count - 1);
     if (data && data.length > 0) {
-      setAllNewListings(prev => [...prev, ...data]);
+      setAllNewListings(prev => {
+        const existingIds = new Set(prev.map((l: any) => l.id));
+        const fresh = data.filter((l: any) => !existingIds.has(l.id));
+        return [...prev, ...fresh];
+      });
       setNewOffset(prev => prev + data.length);
       setHasMore(data.length >= hpSettings.homepage_new_count);
     } else {
@@ -116,8 +120,9 @@ const FeaturedListings = () => {
     return () => observer.disconnect();
   }, [hpSettings.homepage_auto_load, loadMore]);
 
-  // Collect all store IDs and fetch stores
-  const displayNewListings = allNewListings.length > 0 ? allNewListings : newListings;
+  // Collect all store IDs and fetch stores (dedupe by id as safety)
+  const rawDisplayNew = allNewListings.length > 0 ? allNewListings : newListings;
+  const displayNewListings = Array.from(new Map(rawDisplayNew.map((l: any) => [l.id, l])).values());
   const allListings = [...premiumListings, ...urgentListings, ...displayNewListings];
   const storeIds = [...new Set(allListings.map(l => l.store_id).filter(Boolean))] as string[];
 
