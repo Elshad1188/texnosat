@@ -17,6 +17,7 @@ import { useLanguage, useTranslation } from "@/contexts/LanguageContext";
 import { getListingCoords } from "@/components/ListingsMap";
 const ListingsMap = lazy(() => import("@/components/ListingsMap"));
 import DealTypeTabs from "@/components/DealTypeTabs";
+import RegionPicker from "@/components/RegionPicker";
 
 type MapBounds = { north: number; south: number; east: number; west: number };
 
@@ -171,7 +172,19 @@ const Products = () => {
     if (selectedRegion) {
       const region = regions.find((r: any) => r.id === selectedRegion);
       if (region) {
-        result = result.filter((p: any) => p.location === (region as any).name);
+        const acceptable = new Set<string>();
+        acceptable.add((region as any).name);
+        // If a child region is selected, also accept the parent's name (legacy listings only store parent city)
+        if ((region as any).parent_id) {
+          const parent = regions.find((r: any) => r.id === (region as any).parent_id);
+          if (parent) acceptable.add((parent as any).name);
+        } else {
+          // If a parent is selected, also accept any of its children's names
+          regions
+            .filter((r: any) => r.parent_id === (region as any).id)
+            .forEach((c: any) => acceptable.add(c.name));
+        }
+        result = result.filter((p: any) => acceptable.has(p.location));
       }
     }
 
@@ -312,13 +325,13 @@ const Products = () => {
 
                   {/* Region */}
                   <FilterSection icon={MapPin} title={t("products.region")}>
-                    <Select value={selectedRegion || "all"} onValueChange={(v) => setSelectedRegion(v === "all" ? "" : v)}>
-                      <SelectTrigger><SelectValue placeholder={t("products.select_region")} /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t("common.all")}</SelectItem>
-                        {parentRegions.map((r: any) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <RegionPicker
+                      regions={regions as any}
+                      value={selectedRegion}
+                      onChange={setSelectedRegion}
+                      placeholder={t("products.select_region")}
+                      allLabel={t("common.all")}
+                    />
                   </FilterSection>
 
                   {/* Price */}

@@ -15,6 +15,7 @@ import { Store, Loader2, Crown, Upload, CheckCircle, Image } from "lucide-react"
 import { cn } from "@/lib/utils";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { useTranslation } from "@/contexts/LanguageContext";
+import RegionPicker from "@/components/RegionPicker";
 
 const CreateStore = () => {
   const { user } = useAuth();
@@ -80,9 +81,9 @@ const CreateStore = () => {
   const formattedWorkingHours = `${getDayRangeString(selectedDays)}, ${startTime} - ${endTime}`;
 
   const { data: regions = [] } = useQuery({
-    queryKey: ["regions-parent"],
+    queryKey: ["regions-all-tree"],
     queryFn: async () => {
-      const { data } = await supabase.from("regions").select("*").is("parent_id", null).eq("is_active", true).order("sort_order");
+      const { data } = await supabase.from("regions").select("*").eq("is_active", true).eq("type", "region").order("sort_order");
       return data || [];
     },
   });
@@ -324,13 +325,16 @@ const CreateStore = () => {
             </div>
             <div className="space-y-2">
               <Label>{t("create_store.city")}</Label>
-              <Select value={form.city || "none"} onValueChange={(v) => setForm({ ...form, city: v === "none" ? "" : v })}>
-                <SelectTrigger><SelectValue placeholder={t("create_store.select_city")} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">{t("products.select")}</SelectItem>
-                  {regions.map((r: any) => <SelectItem key={r.id} value={r.name}>{r.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <RegionPicker
+                regions={regions as any}
+                value={(regions as any[]).find((r: any) => r.name === form.city)?.id || ""}
+                onChange={(id) => {
+                  const r = (regions as any[]).find((x: any) => x.id === id);
+                  setForm({ ...form, city: r?.name || "" });
+                }}
+                placeholder={t("create_store.select_city")}
+                allLabel={t("products.select")}
+              />
             </div>
           </div>
 

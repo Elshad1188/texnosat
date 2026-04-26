@@ -20,6 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import IdentitySwitcher from "@/components/IdentitySwitcher";
 import { getModelsByCategory } from "@/data/brandModels";
 import { useTranslation } from "@/contexts/LanguageContext";
+import RegionPicker from "@/components/RegionPicker";
 
 const conditions = ["Yeni", "Yeni kimi", "İşlənmiş"];
 
@@ -88,9 +89,9 @@ const CreateListing = () => {
   });
 
   const { data: regions = [] } = useQuery({
-    queryKey: ["regions-parent"],
+    queryKey: ["regions-all-tree"],
     queryFn: async () => {
-      const { data } = await supabase.from("regions").select("*").is("parent_id", null).eq("is_active", true).eq("type", "region").order("sort_order");
+      const { data } = await supabase.from("regions").select("*").eq("is_active", true).eq("type", "region").order("sort_order");
       return data || [];
     },
   });
@@ -554,12 +555,17 @@ const CreateListing = () => {
 
             <div className="space-y-2">
               <Label>{t("products.region")}</Label>
-              <Select value={form.location} onValueChange={(v) => setForm({ ...form, location: v })}>
-                <SelectTrigger><SelectValue placeholder={t("products.select_region")} /></SelectTrigger>
-                <SelectContent>
-                  {regions.map((r: any) => <SelectItem key={r.id} value={r.name}>{r.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <RegionPicker
+                regions={regions as any}
+                value={(regions as any[]).find((r: any) => r.name === form.location)?.id || ""}
+                onChange={(id) => {
+                  const r = (regions as any[]).find((x: any) => x.id === id);
+                  setForm({ ...form, location: r?.name || "" });
+                }}
+                placeholder={t("products.select_region")}
+                showAll={false}
+                required
+              />
             </div>
 
             {/* Identity switcher - personal vs store */}
