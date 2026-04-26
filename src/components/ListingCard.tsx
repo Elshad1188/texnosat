@@ -9,6 +9,7 @@ import CheckoutDialog from "@/components/CheckoutDialog";
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "@/contexts/LanguageContext";
+import { usePlatformMode } from "@/hooks/usePlatformMode";
 
 interface ListingCardProps {
   id: string;
