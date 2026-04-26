@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import IdentitySwitcher from "@/components/IdentitySwitcher";
 import { getModelsByCategory } from "@/data/brandModels";
 import { useTranslation } from "@/contexts/LanguageContext";
-import RegionPicker from "@/components/RegionPicker";
+import RegionCascader from "@/components/RegionCascader";
 
 const conditions = ["Yeni", "Yeni kimi", "İşlənmiş"];
 
@@ -555,16 +555,13 @@ const CreateListing = () => {
 
             <div className="space-y-2">
               <Label>{t("products.region")}</Label>
-              <RegionPicker
+              <RegionCascader
                 regions={regions as any}
                 value={(regions as any[]).find((r: any) => r.name === form.location)?.id || ""}
                 onChange={(id) => {
                   const r = (regions as any[]).find((x: any) => x.id === id);
                   setForm({ ...form, location: r?.name || "" });
                 }}
-                placeholder={t("products.select_region")}
-                showAll={false}
-                required
               />
             </div>
 

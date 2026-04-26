@@ -15,7 +15,7 @@ import { Store, Loader2, Crown, Upload, CheckCircle, Image } from "lucide-react"
 import { cn } from "@/lib/utils";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { useTranslation } from "@/contexts/LanguageContext";
-import RegionPicker from "@/components/RegionPicker";
+import RegionCascader from "@/components/RegionCascader";
 
 const CreateStore = () => {
   const { user } = useAuth();
@@ -325,15 +325,13 @@ const CreateStore = () => {
             </div>
             <div className="space-y-2">
               <Label>{t("create_store.city")}</Label>
-              <RegionPicker
+              <RegionCascader
                 regions={regions as any}
                 value={(regions as any[]).find((r: any) => r.name === form.city)?.id || ""}
                 onChange={(id) => {
                   const r = (regions as any[]).find((x: any) => x.id === id);
                   setForm({ ...form, city: r?.name || "" });
                 }}
-                placeholder={t("create_store.select_city")}
-                allLabel={t("products.select")}
               />
             </div>
           </div>
