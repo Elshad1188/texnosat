@@ -12,6 +12,7 @@ const MobileBottomNav = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const { user } = useAuth();
+  const { showReels } = usePlatformMode();
   const [hidden, setHidden] = useState(false);
   const lastY = useRef(0);
 
