@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, lazy, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, SlidersHorizontal, X, Loader2, MapPin, Tag, CircleDollarSign, Calendar, Sparkles, Layers, Filter } from "lucide-react";
+import { Search, SlidersHorizontal, X, Loader2, MapPin, Tag, CircleDollarSign, Calendar, Sparkles, Layers, Filter, Map as MapIcon, LayoutGrid } from "lucide-react";
 import { CircuitBoard, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { iconMap } from "@/lib/icons";
 import SaveSearchButton from "@/components/SaveSearchButton";
 import { useLanguage, useTranslation } from "@/contexts/LanguageContext";
+import { getListingCoords } from "@/components/ListingsMap";
+const ListingsMap = lazy(() => import("@/components/ListingsMap"));
+
+type MapBounds = { north: number; south: number; east: number; west: number };
 
 const conditions = [
   { value: "all", dbValue: "", labelKey: "common.all" },
@@ -57,6 +61,9 @@ const Products = () => {
   const [priceMax, setPriceMax] = useState("");
   const [dateRange, setDateRange] = useState("all");
   const [customFilters, setCustomFilters] = useState<Record<string, string>>({});
+  const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
+  const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
+  const [useMapBoundsFilter, setUseMapBoundsFilter] = useState(true);
 
   // Fetch categories
   const { data: categories = [] } = useQuery({
@@ -180,6 +187,17 @@ const Products = () => {
     return result;
   }, [query, selectedCategory, selectedSubcategory, selectedCondition, sortBy, priceMin, priceMax, allListings, selectedRegion, regions, customFilters, dateRange]);
 
+  // Apply map-bounds filter on top of standard filters when in map view
+  const visibleProducts = useMemo(() => {
+    if (viewMode !== "map" || !mapBounds || !useMapBoundsFilter) return filteredProducts;
+    return filteredProducts.filter((p: any) => {
+      const c = getListingCoords(p);
+      if (!c) return false;
+      const [lat, lng] = c;
+      return lat <= mapBounds.north && lat >= mapBounds.south && lng <= mapBounds.east && lng >= mapBounds.west;
+    });
+  }, [filteredProducts, mapBounds, viewMode, useMapBoundsFilter]);
+
   const clearFilters = () => {
     setQuery(""); setSelectedCategory(""); setSelectedSubcategory("");
     setSelectedRegion(""); setSelectedCondition("all");
@@ -212,6 +230,16 @@ const Products = () => {
               className="h-11 w-full rounded-xl border border-border bg-card pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
           </form>
           <div className="flex gap-2 flex-wrap">
+            <div className="inline-flex h-11 rounded-xl border border-border bg-card p-1">
+              <button onClick={() => setViewMode("grid")}
+                className={`flex items-center gap-1 rounded-lg px-3 text-xs font-medium transition-colors ${viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}>
+                <LayoutGrid className="h-4 w-4" /> Şəbəkə
+              </button>
+              <button onClick={() => setViewMode("map")}
+                className={`flex items-center gap-1 rounded-lg px-3 text-xs font-medium transition-colors ${viewMode === "map" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}>
+                <MapIcon className="h-4 w-4" /> Xəritə
+              </button>
+            </div>
             <Sheet open={showFilters} onOpenChange={setShowFilters}>
               <SheetTrigger asChild>
                 <Button variant="outline" className="relative gap-2">
@@ -400,12 +428,52 @@ const Products = () => {
         )}
 
         {/* Results */}
-        <div className="mb-4 text-sm text-muted-foreground">
-          {isLoading ? t("common.loading") : t("products.results_count", { count: filteredProducts.length })}
+        <div className="mb-4 flex items-center justify-between gap-2 text-sm text-muted-foreground">
+          <span>
+            {isLoading
+              ? t("common.loading")
+              : t("products.results_count", { count: viewMode === "map" ? visibleProducts.length : filteredProducts.length })}
+            {viewMode === "map" && useMapBoundsFilter && mapBounds && (
+              <span className="ml-1 text-xs text-primary">(görünən sahədə)</span>
+            )}
+          </span>
+          {viewMode === "map" && (
+            <label className="flex items-center gap-1.5 text-xs">
+              <input type="checkbox" checked={useMapBoundsFilter} onChange={(e) => setUseMapBoundsFilter(e.target.checked)} className="accent-primary" />
+              Xəritə sahəsi üzrə filtrlə
+            </label>
+          )}
         </div>
 
         {isLoading ? (
           <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+        ) : viewMode === "map" ? (
+          <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+            <ListingsMap
+              listings={filteredProducts as any}
+              height="600px"
+              onBoundsChange={setMapBounds}
+            />
+            {visibleProducts.length > 0 && (
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+                {visibleProducts.slice(0, 24).map((product: any) => {
+                  const st = product.store_id ? storesMap[product.store_id] : undefined;
+                  return (
+                    <ListingCard
+                      key={product.id} id={product.id} title={product.title}
+                      price={`${Number(product.price).toLocaleString()} ${product.currency}`}
+                      location={product.location} time={formatTime(product.created_at, t, language)}
+                      image={product.image_urls?.[0] || "/placeholder.svg"}
+                      condition={product.condition} isPremium={product.is_premium} isUrgent={product.is_urgent}
+                      isBuyable={product.is_buyable}
+                      numericPrice={Number(product.price)} currency={product.currency} userId={product.user_id} customFields={product.custom_fields}
+                      storeId={product.store_id} storeName={st?.name} storeLogo={st?.logo_url}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </Suspense>
         ) : filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
             {filteredProducts.map((product: any) => {

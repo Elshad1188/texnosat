@@ -719,7 +719,9 @@ export type Database = {
           is_buyable: boolean
           is_premium: boolean
           is_urgent: boolean
+          latitude: number | null
           location: string
+          longitude: number | null
           premium_until: string | null
           price: number
           rejection_reason: string | null
@@ -748,7 +750,9 @@ export type Database = {
           is_buyable?: boolean
           is_premium?: boolean
           is_urgent?: boolean
+          latitude?: number | null
           location?: string
+          longitude?: number | null
           premium_until?: string | null
           price: number
           rejection_reason?: string | null
@@ -777,7 +781,9 @@ export type Database = {
           is_buyable?: boolean
           is_premium?: boolean
           is_urgent?: boolean
+          latitude?: number | null
           location?: string
+          longitude?: number | null
           premium_until?: string | null
           price?: number
           rejection_reason?: string | null
