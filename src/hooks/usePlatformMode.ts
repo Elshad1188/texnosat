@@ -64,15 +64,20 @@ export function usePlatformMode(): PlatformConfig & { isLoading: boolean } {
   const { data, isLoading } = useQuery({
     queryKey: ["platform-mode"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("site_settings")
-        .select("value")
-        .eq("key", "platform_mode")
-        .maybeSingle();
-      return ((data?.value as any)?.mode as PlatformMode) || "both";
+      const [{ data: modeRow }, { data: generalRow }] = await Promise.all([
+        supabase.from("site_settings").select("value").eq("key", "platform_mode").maybeSingle(),
+        supabase.from("site_settings").select("value").eq("key", "general").maybeSingle(),
+      ]);
+      const mode = ((modeRow?.value as any)?.mode as PlatformMode) || "both";
+      const disableShipping = !!(generalRow?.value as any)?.disable_shipping;
+      return { mode, disableShipping };
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  return { ...getConfig(data || "both"), isLoading };
+  const cfg = getConfig(data?.mode || "both");
+  if (data?.disableShipping) {
+    cfg.showShipping = false;
+  }
+  return { ...cfg, isLoading };
 }
