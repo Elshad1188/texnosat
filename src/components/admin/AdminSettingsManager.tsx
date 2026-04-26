@@ -42,6 +42,7 @@ interface SiteSettings {
   store_listing_limit: number;
   telegram_bot_daily_limit: number;
   ai_autofill_daily_limit: number;
+  disable_shipping: boolean;
 }
 
 const defaults: SiteSettings = {
