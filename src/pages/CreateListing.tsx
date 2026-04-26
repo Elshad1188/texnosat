@@ -43,7 +43,7 @@ const CreateListing = () => {
   const [videoPreview, setVideoPreview] = useState<string>("");
   const [existingVideo, setExistingVideo] = useState<string>("");
   const [customFields, setCustomFields] = useState<Record<string, string>>({});
-  const [showCustomFields, setShowCustomFields] = useState(false);
+  const [showCustomFields, setShowCustomFields] = useState(true);
   const [isBuyable, setIsBuyable] = useState(platform.mode === "marketplace" || platform.mode === "both");
   const [stock, setStock] = useState("1");
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
@@ -304,7 +304,7 @@ const CreateListing = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title || !form.price || !form.category) {
+    if (!form.price || !form.category) {
       toast({ title: t("create_listing.required_fields", "Zəhmət olmasa bütün sahələri doldurun"), variant: "destructive" });
       return;
     }
@@ -363,10 +363,21 @@ const CreateListing = () => {
         resolvedCustomFields._shipping_methods = selectedShippingMethods as any;
       }
 
+      // Auto-generate listing title from category + key real-estate fields
+      const catName = (categories.find((c: any) => c.slug === finalCategory) as any)?.name || "Elan";
+      const titleParts: string[] = [];
+      if (resolvedCustomFields.deal_type) titleParts.push(resolvedCustomFields.deal_type);
+      titleParts.push(catName);
+      if (resolvedCustomFields.rooms) titleParts.push(`${resolvedCustomFields.rooms} otaq`);
+      if (resolvedCustomFields.area_m2) titleParts.push(`${resolvedCustomFields.area_m2} m²`);
+      if (form.location) titleParts.push(form.location);
+      const generatedTitle = titleParts.join(" · ");
+
       const listingData: any = {
-        title: form.title, description: form.description,
+        title: generatedTitle,
+        description: form.description,
         price: parseFloat(form.price), category: finalCategory,
-        condition: form.condition, location: form.location || "Bakı",
+        condition: "Yeni", location: form.location || "Bakı",
         image_urls: allImages,
         video_url: finalVideoUrl,
         store_id: selectedStoreId || null,
@@ -492,11 +503,6 @@ const CreateListing = () => {
 
 
             <div className="space-y-2">
-              <Label htmlFor="title">{t("create_listing.title_field")}</Label>
-              <Input id="title" placeholder="Məs: iPhone 15 Pro Max 256GB" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="desc">{t("create_listing.desc_field")}</Label>
               <Textarea id="desc" placeholder={t("create_listing.desc_placeholder")} rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </div>
@@ -530,25 +536,14 @@ const CreateListing = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>{t("products.condition")}</Label>
-                <Select value={form.condition} onValueChange={(v) => setForm({ ...form, condition: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {conditions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>{t("products.region")}</Label>
-                <Select value={form.location} onValueChange={(v) => setForm({ ...form, location: v })}>
-                  <SelectTrigger><SelectValue placeholder={t("products.select_region")} /></SelectTrigger>
-                  <SelectContent>
-                    {regions.map((r: any) => <SelectItem key={r.id} value={r.name}>{r.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <Label>{t("products.region")}</Label>
+              <Select value={form.location} onValueChange={(v) => setForm({ ...form, location: v })}>
+                <SelectTrigger><SelectValue placeholder={t("products.select_region")} /></SelectTrigger>
+                <SelectContent>
+                  {regions.map((r: any) => <SelectItem key={r.id} value={r.name}>{r.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Identity switcher - personal vs store */}
