@@ -261,7 +261,7 @@ const ProductDetail = () => {
   const { data: categoryFieldDefs = [] } = useQuery({
     queryKey: ["category-fields-detail", listing?.category],
     queryFn: async () => {
-      const { data } = await supabase.from("category_fields").select("field_name, field_label").eq("category_slug", listing!.category).eq("is_active", true);
+      const { data } = await supabase.from("category_fields").select("field_name, field_label, display_order").eq("category_slug", listing!.category).eq("is_active", true).order("display_order", { ascending: true });
       return data || [];
     },
     enabled: !!listing?.category,
