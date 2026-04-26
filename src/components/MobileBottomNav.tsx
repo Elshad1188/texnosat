@@ -55,7 +55,9 @@ const MobileBottomNav = () => {
 
   const navItems = [
     { path: "/", icon: Home, label: t("mobilenav.home") },
-    { path: "/favorites", icon: Heart, label: t("mobilenav.favorites") },
+    showReels
+      ? { path: "/reels", icon: Play, label: "Reels" }
+      : { path: "/favorites", icon: Heart, label: t("mobilenav.favorites") },
     { path: "/create-listing", icon: Plus, label: t("mobilenav.add"), isCenter: true },
     { path: "/messages", icon: MessageCircle, label: t("mobilenav.messages"), badge: unreadCount },
     { path: user ? "/profile" : "/auth", icon: User, label: t("mobilenav.profile") },
