@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronDown, MapPin, Search, X, ChevronRight } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, MapPin, Search, X, ArrowLeft } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,25 +17,15 @@ export interface RegionItem {
 
 interface RegionPickerProps {
   regions: RegionItem[];
-  /** ID of currently selected region (parent or child). Empty string means none. */
   value: string;
   onChange: (id: string) => void;
   placeholder?: string;
   allLabel?: string;
   showAll?: boolean;
   className?: string;
-  /** Restrict to a single parent (for child-only pickers); when set, parent list is hidden */
-  parentId?: string | null;
-  /** Hide the "Hamısı" option entirely */
   required?: boolean;
 }
 
-/**
- * Hierarchical, searchable region picker.
- * - Lists parent cities/regions, expandable to reveal children (rayon/qəsəbə/kənd).
- * - Real-time fuzzy search across the entire tree.
- * - Selecting a parent filters by city; selecting a child narrows further.
- */
 const normalize = (s: string) =>
   s.toLowerCase()
     .replace(/ə/g, "e").replace(/ı/g, "i").replace(/ö/g, "o")
@@ -50,12 +40,12 @@ const RegionPicker = ({
   allLabel = "Bütün bölgələr",
   showAll = true,
   className,
-  parentId = null,
   required = false,
 }: RegionPickerProps) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  /** Stack of parent IDs being navigated. Empty = root level. */
+  const [stack, setStack] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const onlyRegions = useMemo(
@@ -63,156 +53,130 @@ const RegionPicker = ({
     [regions]
   );
 
-  const parents = useMemo(() => {
-    if (parentId) return [];
-    return onlyRegions
-      .filter((r) => !r.parent_id)
-      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name, "az"));
-  }, [onlyRegions, parentId]);
+  const byId = useMemo(() => {
+    const m = new Map<string, RegionItem>();
+    for (const r of onlyRegions) m.set(r.id, r);
+    return m;
+  }, [onlyRegions]);
 
   const childrenByParent = useMemo(() => {
-    const map: Record<string, RegionItem[]> = {};
+    const map: Record<string, RegionItem[]> = { __root__: [] };
     for (const r of onlyRegions) {
-      if (r.parent_id) {
-        (map[r.parent_id] ||= []).push(r);
-      }
+      const key = r.parent_id || "__root__";
+      (map[key] ||= []).push(r);
     }
     for (const k of Object.keys(map)) {
-      map[k].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name, "az"));
+      map[k].sort(
+        (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name, "az")
+      );
     }
     return map;
   }, [onlyRegions]);
 
-  const selected = useMemo(() => onlyRegions.find((r) => r.id === value) || null, [onlyRegions, value]);
+  const hasChildren = (id: string) => (childrenByParent[id]?.length ?? 0) > 0;
+
+  const selected = value ? byId.get(value) || null : null;
   const selectedLabel = useMemo(() => {
     if (!selected) return "";
-    if (selected.parent_id) {
-      const parent = onlyRegions.find((r) => r.id === selected.parent_id);
-      return parent ? `${parent.name} • ${selected.name}` : selected.name;
+    // Build breadcrumb path
+    const path: string[] = [];
+    let cur: RegionItem | null = selected;
+    while (cur) {
+      path.unshift(cur.name);
+      cur = cur.parent_id ? byId.get(cur.parent_id) || null : null;
     }
-    return selected.name;
-  }, [selected, onlyRegions]);
+    return path.join(" • ");
+  }, [selected, byId]);
 
-  // Focus search and auto-expand parent of current value when opening
+  // When opening: focus search; if a value is set, navigate stack to its parent so it's visible
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 50);
-      if (selected?.parent_id) {
-        setExpanded((prev) => new Set(prev).add(selected.parent_id!));
+      if (selected) {
+        const path: string[] = [];
+        let cur = selected.parent_id ? byId.get(selected.parent_id) || null : null;
+        while (cur) {
+          path.unshift(cur.id);
+          cur = cur.parent_id ? byId.get(cur.parent_id) || null : null;
+        }
+        setStack(path);
+      } else {
+        setStack([]);
       }
     } else {
       setSearch("");
     }
-  }, [open, selected]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const q = normalize(search.trim());
 
-  // When searching, flatten matches and auto-expand any parent with a child match
-  const matchedParentIds = useMemo(() => {
-    if (!q) return null;
-    const set = new Set<string>();
-    for (const p of parents) {
-      if (normalize(p.name).includes(q)) set.add(p.id);
-      const kids = childrenByParent[p.id] || [];
-      if (kids.some((c) => normalize(c.name).includes(q))) set.add(p.id);
+  // Search mode: flat list of all matches (any depth)
+  const searchResults = useMemo(() => {
+    if (!q) return [];
+    return onlyRegions
+      .filter((r) => normalize(r.name).includes(q))
+      .slice(0, 100)
+      .sort((a, b) => {
+        // Parents first, then by name
+        const ad = a.parent_id ? 1 : 0;
+        const bd = b.parent_id ? 1 : 0;
+        if (ad !== bd) return ad - bd;
+        return a.name.localeCompare(b.name, "az");
+      });
+  }, [q, onlyRegions]);
+
+  const buildPath = (r: RegionItem) => {
+    const out: string[] = [];
+    let cur: RegionItem | null = r;
+    while (cur) {
+      out.unshift(cur.name);
+      cur = cur.parent_id ? byId.get(cur.parent_id) || null : null;
     }
-    return set;
-  }, [q, parents, childrenByParent]);
-
-  const visibleParents = matchedParentIds ? parents.filter((p) => matchedParentIds.has(p.id)) : parents;
-
-  const toggleExpand = (id: string) => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    return out.join(" › ");
   };
 
-  const select = (id: string) => {
-    onChange(id);
-    setOpen(false);
+  const currentParentId = stack.length > 0 ? stack[stack.length - 1] : null;
+  const currentList = currentParentId
+    ? childrenByParent[currentParentId] || []
+    : childrenByParent["__root__"] || [];
+  const currentParent = currentParentId ? byId.get(currentParentId) : null;
+
+  const breadcrumbs = useMemo(() => stack.map((id) => byId.get(id)).filter(Boolean) as RegionItem[], [stack, byId]);
+
+  const handleItemClick = (r: RegionItem) => {
+    if (hasChildren(r.id)) {
+      // Has children → drill down (do NOT select yet)
+      setStack((s) => [...s, r.id]);
+      setSearch("");
+    } else {
+      // Leaf → select and close
+      onChange(r.id);
+      setOpen(false);
+    }
+  };
+
+  const selectCurrentParent = () => {
+    if (currentParentId) {
+      onChange(currentParentId);
+      setOpen(false);
+    }
+  };
+
+  const goBack = () => {
+    setStack((s) => s.slice(0, -1));
+    setSearch("");
+  };
+
+  const goRoot = () => {
+    setStack([]);
+    setSearch("");
   };
 
   const clear = (e: React.MouseEvent) => {
     e.stopPropagation();
     onChange("");
   };
-
-  // Child-only picker (used inside CreateListing once parent city is chosen)
-  if (parentId) {
-    const kids = (childrenByParent[parentId] || []).filter(
-      (c) => !q || normalize(c.name).includes(q)
-    );
-    return (
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            role="combobox"
-            className={cn("w-full justify-between font-normal", className)}
-          >
-            <span className="flex items-center gap-2 truncate">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-              {selected?.name || placeholder}
-            </span>
-            <ChevronDown className="h-4 w-4 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-          <div className="p-2 border-b border-border">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                ref={inputRef}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Axtar..."
-                className="pl-8 h-9"
-              />
-            </div>
-          </div>
-          <ScrollArea className="max-h-72">
-            <div className="p-1">
-              {showAll && (
-                <button
-                  type="button"
-                  onClick={() => select("")}
-                  className={cn(
-                    "w-full text-left px-2 py-2 rounded-md text-sm hover:bg-accent flex items-center justify-between",
-                    !value && "bg-accent"
-                  )}
-                >
-                  <span className="text-muted-foreground">{allLabel}</span>
-                  {!value && <Check className="h-4 w-4" />}
-                </button>
-              )}
-              {kids.length === 0 ? (
-                <div className="px-2 py-6 text-center text-sm text-muted-foreground">Heç nə tapılmadı</div>
-              ) : (
-                kids.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => select(c.id)}
-                    className={cn(
-                      "w-full text-left px-2 py-2 rounded-md text-sm hover:bg-accent flex items-center justify-between",
-                      value === c.id && "bg-accent"
-                    )}
-                  >
-                    <span>{c.name}</span>
-                    {value === c.id && <Check className="h-4 w-4" />}
-                  </button>
-                ))
-              )}
-            </div>
-          </ScrollArea>
-        </PopoverContent>
-      </Popover>
-    );
-  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -244,6 +208,7 @@ const RegionPicker = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] min-w-[280px] p-0" align="start">
+        {/* Search */}
         <div className="p-2 border-b border-border">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -256,96 +221,167 @@ const RegionPicker = ({
             />
           </div>
         </div>
-        <ScrollArea className="max-h-80">
-          <div className="p-1">
-            {showAll && !q && (
-              <button
-                type="button"
-                onClick={() => select("")}
-                className={cn(
-                  "w-full text-left px-2 py-2 rounded-md text-sm hover:bg-accent flex items-center justify-between",
-                  !value && "bg-accent"
-                )}
-              >
-                <span className="text-muted-foreground">{allLabel}</span>
-                {!value && <Check className="h-4 w-4" />}
-              </button>
-            )}
 
-            {visibleParents.length === 0 ? (
-              <div className="px-2 py-6 text-center text-sm text-muted-foreground">
-                Heç nə tapılmadı
+        {/* Breadcrumb / back nav (hidden during search) */}
+        {!q && stack.length > 0 && (
+          <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border bg-muted/30 text-xs">
+            <button
+              type="button"
+              onClick={goBack}
+              className="flex items-center gap-1 px-1.5 py-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Geri
+            </button>
+            <span className="text-muted-foreground/60">|</span>
+            <button
+              type="button"
+              onClick={goRoot}
+              className="px-1.5 py-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground"
+            >
+              Şəhərlər
+            </button>
+            {breadcrumbs.map((b, i) => (
+              <div key={b.id} className="flex items-center gap-1 min-w-0">
+                <ChevronRight className="h-3 w-3 text-muted-foreground/60 flex-shrink-0" />
+                <button
+                  type="button"
+                  onClick={() => setStack((s) => s.slice(0, i + 1))}
+                  className={cn(
+                    "px-1.5 py-1 rounded hover:bg-accent truncate",
+                    i === breadcrumbs.length - 1 ? "text-foreground font-medium" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {b.name}
+                </button>
               </div>
-            ) : (
-              visibleParents.map((p) => {
-                const kids = childrenByParent[p.id] || [];
-                const isExpanded = expanded.has(p.id) || !!q;
-                const visibleKids = q
-                  ? kids.filter((c) => normalize(c.name).includes(q))
-                  : kids;
-                const parentMatches = !q || normalize(p.name).includes(q);
-                return (
-                  <div key={p.id} className="mb-0.5">
-                    <div
-                      className={cn(
-                        "group flex items-stretch rounded-md hover:bg-accent",
-                        value === p.id && "bg-accent"
-                      )}
-                    >
-                      {kids.length > 0 ? (
-                        <button
-                          type="button"
-                          onClick={() => toggleExpand(p.id)}
-                          className="flex items-center px-1.5 hover:bg-muted/50 rounded-l-md"
-                          aria-label={isExpanded ? "Bağla" : "Aç"}
-                        >
-                          <ChevronRight
-                            className={cn(
-                              "h-3.5 w-3.5 text-muted-foreground transition-transform",
-                              isExpanded && "rotate-90"
-                            )}
-                          />
-                        </button>
-                      ) : (
-                        <span className="w-6" />
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => select(p.id)}
-                        className="flex-1 text-left py-2 pr-2 text-sm flex items-center justify-between"
-                      >
-                        <span className={cn("font-medium", !parentMatches && "text-muted-foreground")}>
-                          {p.name}
+            ))}
+          </div>
+        )}
+
+        {/* "Use this region" shortcut when drilled into a parent */}
+        {!q && currentParent && (
+          <button
+            type="button"
+            onClick={selectCurrentParent}
+            className={cn(
+              "w-full flex items-center justify-between px-3 py-2 text-sm border-b border-border hover:bg-accent",
+              value === currentParent.id && "bg-accent"
+            )}
+          >
+            <span className="flex items-center gap-2">
+              <MapPin className="h-3.5 w-3.5 text-primary" />
+              <span>Bütün <span className="font-medium">{currentParent.name}</span></span>
+            </span>
+            {value === currentParent.id && <Check className="h-4 w-4" />}
+          </button>
+        )}
+
+        <ScrollArea className="max-h-72">
+          <div className="p-1">
+            {/* Search results */}
+            {q ? (
+              searchResults.length === 0 ? (
+                <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+                  Heç nə tapılmadı
+                </div>
+              ) : (
+                searchResults.map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => {
+                      if (hasChildren(r.id)) {
+                        // Drill into it
+                        const path: string[] = [];
+                        let cur: RegionItem | null = r;
+                        while (cur) {
+                          path.unshift(cur.id);
+                          cur = cur.parent_id ? byId.get(cur.parent_id) || null : null;
+                        }
+                        setStack(path);
+                        setSearch("");
+                      } else {
+                        onChange(r.id);
+                        setOpen(false);
+                      }
+                    }}
+                    className={cn(
+                      "w-full text-left px-2 py-2 rounded-md text-sm hover:bg-accent flex items-center justify-between gap-2",
+                      value === r.id && "bg-accent"
+                    )}
+                  >
+                    <div className="flex flex-col min-w-0">
+                      <span className="truncate">{r.name}</span>
+                      {r.parent_id && (
+                        <span className="text-[11px] text-muted-foreground truncate">
+                          {buildPath(r)}
                         </span>
-                        <span className="flex items-center gap-1.5">
-                          {kids.length > 0 && (
-                            <span className="text-[10px] text-muted-foreground">{kids.length}</span>
+                      )}
+                    </div>
+                    <span className="flex items-center gap-1 flex-shrink-0">
+                      {hasChildren(r.id) && (
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                      )}
+                      {value === r.id && <Check className="h-4 w-4" />}
+                    </span>
+                  </button>
+                ))
+              )
+            ) : (
+              <>
+                {/* "All" option only at root level */}
+                {showAll && stack.length === 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChange("");
+                      setOpen(false);
+                    }}
+                    className={cn(
+                      "w-full text-left px-2 py-2 rounded-md text-sm hover:bg-accent flex items-center justify-between",
+                      !value && "bg-accent"
+                    )}
+                  >
+                    <span className="text-muted-foreground">{allLabel}</span>
+                    {!value && <Check className="h-4 w-4" />}
+                  </button>
+                )}
+
+                {currentList.length === 0 ? (
+                  <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+                    Alt bölgə yoxdur
+                  </div>
+                ) : (
+                  currentList.map((r) => {
+                    const drillable = hasChildren(r.id);
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => handleItemClick(r)}
+                        className={cn(
+                          "w-full text-left px-2 py-2 rounded-md text-sm hover:bg-accent flex items-center justify-between gap-2",
+                          value === r.id && "bg-accent"
+                        )}
+                      >
+                        <span className="truncate">{r.name}</span>
+                        <span className="flex items-center gap-1.5 flex-shrink-0">
+                          {drillable && (
+                            <>
+                              <span className="text-[10px] text-muted-foreground">
+                                {childrenByParent[r.id].length}
+                              </span>
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            </>
                           )}
-                          {value === p.id && <Check className="h-4 w-4" />}
+                          {value === r.id && !drillable && <Check className="h-4 w-4" />}
                         </span>
                       </button>
-                    </div>
-                    {isExpanded && visibleKids.length > 0 && (
-                      <div className="ml-6 border-l border-border/60 pl-1 mt-0.5 space-y-0.5">
-                        {visibleKids.map((c) => (
-                          <button
-                            key={c.id}
-                            type="button"
-                            onClick={() => select(c.id)}
-                            className={cn(
-                              "w-full text-left px-2 py-1.5 rounded-md text-sm hover:bg-accent flex items-center justify-between",
-                              value === c.id && "bg-accent"
-                            )}
-                          >
-                            <span>{c.name}</span>
-                            {value === c.id && <Check className="h-3.5 w-3.5" />}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
+                    );
+                  })
+                )}
+              </>
             )}
           </div>
         </ScrollArea>
