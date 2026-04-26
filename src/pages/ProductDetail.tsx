@@ -624,34 +624,30 @@ const ProductDetail = () => {
 
             {/* Description */}
             {listing.description && (
-              <div className="mt-6 rounded-2xl border border-border bg-gradient-to-br from-card to-muted/30 p-5 shadow-sm">
-                <div className="mb-3 flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <FileText className="h-4 w-4" />
-                  </div>
-                  <h3 className="font-display text-base font-semibold text-foreground">{t("detail.description")}</h3>
+              <div className="mt-6">
+                <div className="mb-2 flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary" />
+                  <h3 className="font-display text-sm font-semibold text-foreground">{t("detail.description")}</h3>
                 </div>
                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{listing.description}</p>
               </div>
             )}
 
-            {/* Details — modern icon grid */}
-            <div className="mt-4 rounded-2xl border border-border bg-card p-5 shadow-sm">
-              <div className="mb-4 flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Info className="h-4 w-4" />
-                </div>
-                <h3 className="font-display text-base font-semibold text-foreground">{t("detail.product_info")}</h3>
+            {/* Details — minimalist icon list */}
+            <div className="mt-6">
+              <div className="mb-3 flex items-center gap-2">
+                <Info className="h-4 w-4 text-primary" />
+                <h3 className="font-display text-sm font-semibold text-foreground">{t("detail.product_info")}</h3>
               </div>
-              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-                <SpecChip icon={Tag} label={t("detail.category")} value={listing.category} />
-                <SpecChip icon={Sparkles} label={t("products.condition")} value={listing.condition} />
-                <SpecChip icon={MapPin} label={t("detail.city")} value={listing.location} />
-                <SpecChip icon={CircleDollarSign} label={t("detail.currency")} value={listing.currency} />
-                <SpecChip icon={Eye} label={t("detail.views_count")} value={String(listing.views_count)} />
-                <SpecChip icon={Calendar} label={t("detail.created_date")} value={new Date(listing.created_at).toLocaleDateString(language)} />
+              <div className="divide-y divide-border/60 rounded-xl border border-border/60 bg-card/50">
+                <SpecRow icon={Tag} accent="primary" label={t("detail.category")} value={listing.category} />
+                <SpecRow icon={Sparkles} accent="amber" label={t("products.condition")} value={listing.condition} />
+                <SpecRow icon={MapPin} accent="rose" label={t("detail.city")} value={listing.location} />
+                <SpecRow icon={CircleDollarSign} accent="emerald" label={t("detail.currency")} value={listing.currency} />
+                <SpecRow icon={Eye} accent="blue" label={t("detail.views_count")} value={String(listing.views_count)} />
+                <SpecRow icon={Calendar} accent="violet" label={t("detail.created_date")} value={new Date(listing.created_at).toLocaleDateString(language)} />
                 {listing.is_buyable && (
-                  <SpecChip icon={ShoppingCart} label={t("detail.sale")} value={t("detail.direct_purchase_available")} accent="emerald" />
+                  <SpecRow icon={ShoppingCart} accent="emerald" label={t("detail.sale")} value={t("detail.direct_purchase_available")} />
                 )}
                 {(listing as any).custom_fields && Object.entries((listing as any).custom_fields).map(([key, val]) => {
                   if (!val) return null;
@@ -660,12 +656,12 @@ const ProductDetail = () => {
                   const fieldDef = categoryFieldDefs.find((f: any) => f.field_name === key);
                   const { icon, accent } = getFieldVisual(key);
                   return (
-                    <SpecChip
+                    <SpecRow
                       key={key}
                       icon={icon}
+                      accent={accent}
                       label={fieldDef?.field_label || key}
                       value={String(val)}
-                      accent={accent}
                     />
                   );
                 })}
@@ -1208,7 +1204,7 @@ const accentMap: Record<AccentKey, string> = {
   violet: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
 };
 
-const SpecChip = ({
+const SpecRow = ({
   icon: Icon,
   label,
   value,
@@ -1219,14 +1215,12 @@ const SpecChip = ({
   value: string;
   accent?: AccentKey;
 }) => (
-  <div className="group flex items-center gap-2.5 rounded-xl border border-border/60 bg-background/60 px-3 py-2.5 transition-colors hover:border-primary/30 hover:bg-muted/40">
-    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${accentMap[accent]}`}>
-      <Icon className="h-4 w-4" />
+  <div className="flex items-center gap-3 px-4 py-3">
+    <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${accentMap[accent]}`}>
+      <Icon className="h-3.5 w-3.5" />
     </div>
-    <div className="min-w-0 flex-1">
-      <p className="truncate text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="truncate text-sm font-semibold text-foreground" title={value}>{value}</p>
-    </div>
+    <span className="flex-1 text-sm text-muted-foreground">{label}</span>
+    <span className="text-sm font-medium text-foreground text-right truncate max-w-[55%]" title={value}>{value}</span>
   </div>
 );
 
