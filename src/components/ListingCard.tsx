@@ -184,8 +184,8 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
       </div>
 
       <div className="p-2 sm:p-2.5">
-        <div className="flex items-baseline justify-between gap-1">
-          <p className="font-display text-[15px] sm:text-base font-bold text-foreground leading-tight truncate">{price}</p>
+        <div className="flex items-baseline justify-between gap-1 flex-wrap">
+          <p className="font-display text-[15px] sm:text-base font-bold text-foreground leading-tight break-words">{price}</p>
           {customFields?.deal_type && (
             <span className="shrink-0 text-[10px] font-medium text-primary">{customFields.deal_type}</span>
           )}
@@ -259,9 +259,9 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
           </button>
         )}
 
-        <div className="mt-1.5 flex items-center justify-between gap-1 text-[10px] text-muted-foreground">
-          <span className="flex items-center gap-0.5 truncate">
-            <MapPin className="h-2.5 w-2.5 shrink-0" /> <span className="truncate">{location}</span>
+        <div className="mt-1.5 flex items-start justify-between gap-1.5 text-[10px] text-muted-foreground">
+          <span className="flex items-start gap-0.5 min-w-0 flex-1">
+            <MapPin className="h-2.5 w-2.5 shrink-0 mt-0.5" /> <span className="break-words">{location}</span>
           </span>
           <span className="flex items-center gap-0.5 shrink-0">
             <Clock className="h-2.5 w-2.5" /> {time}
