@@ -123,7 +123,7 @@ const Reels = () => {
     queryFn: async () => {
       const { data: allListings } = await supabase
         .from("listings")
-        .select("id, title, price, currency, video_url, image_urls, user_id, store_id, created_at, category, views_count, is_premium, is_urgent, reel_comments(count)")
+        .select("id, title, price, currency, video_url, image_urls, user_id, store_id, created_at, category, views_count, is_premium, is_urgent, custom_fields, reel_comments(count)")
         .eq("is_active", true);
 
       if (!allListings || allListings.length === 0) return [];
