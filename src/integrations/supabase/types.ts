@@ -712,6 +712,7 @@ export type Database = {
           created_at: string
           currency: string
           custom_fields: Json | null
+          deal_type: string
           description: string | null
           id: string
           image_urls: string[] | null
@@ -743,6 +744,7 @@ export type Database = {
           created_at?: string
           currency?: string
           custom_fields?: Json | null
+          deal_type?: string
           description?: string | null
           id?: string
           image_urls?: string[] | null
@@ -774,6 +776,7 @@ export type Database = {
           created_at?: string
           currency?: string
           custom_fields?: Json | null
+          deal_type?: string
           description?: string | null
           id?: string
           image_urls?: string[] | null
