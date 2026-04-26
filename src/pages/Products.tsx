@@ -438,4 +438,25 @@ const Products = () => {
   );
 };
 
+const FilterSection = ({ icon: Icon, title, children }: { icon: LucideIcon; title: string; children: React.ReactNode }) => (
+  <div>
+    <div className="mb-2 flex items-center gap-2">
+      <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
+        <Icon className="h-3.5 w-3.5" />
+      </div>
+      <h4 className="text-sm font-semibold text-foreground">{title}</h4>
+    </div>
+    {children}
+  </div>
+);
+
+const FilterChip = ({ label, onClear }: { label: string; onClear: () => void }) => (
+  <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+    {label}
+    <button onClick={onClear} className="ml-0.5 rounded-full hover:bg-primary/20" aria-label="clear">
+      <X className="h-3 w-3" />
+    </button>
+  </span>
+);
+
 export default Products;
