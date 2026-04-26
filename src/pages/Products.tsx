@@ -242,7 +242,16 @@ const Products = () => {
       <main className="container mx-auto px-4 py-6">
         {/* Deal type tabs (bina.az style) */}
         <div className="mb-5">
-          <DealTypeTabs value={selectedDeal} onChange={setSelectedDeal} variant="controlled" />
+          <DealTypeTabs
+            value={selectedDeal}
+            onChange={(v) => {
+              setSelectedDeal(v);
+              const params = new URLSearchParams(searchParams);
+              if (v) params.set("deal", v); else params.delete("deal");
+              setSearchParams(params);
+            }}
+            variant="controlled"
+          />
         </div>
 
         {/* Search */}
