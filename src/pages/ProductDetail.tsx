@@ -642,7 +642,15 @@ const ProductDetail = () => {
                   )
                 : [];
 
-              // Sort custom fields by display_order from category field defs (fallback: keep insertion order)
+              // Logical priority order for common fields (lower = shown first)
+              const FIELD_PRIORITY: Record<string, number> = {
+                brand: 10, model: 11, year: 12, color: 13,
+                mileage: 14, fuel: 15, transmission: 16, engine: 17,
+                rooms: 20, area_m2: 21, area: 21,
+                floor: 22, total_floors: 23, building_floors: 24,
+                repair: 25, document: 26, mortgage: 27, deal_type: 28,
+              };
+
               const orderedCustom = customEntries
                 .map(([key, val]) => {
                   const def = categoryFieldDefs.find((f: any) => f.field_name === key);
@@ -650,7 +658,7 @@ const ProductDetail = () => {
                     key,
                     val,
                     label: def?.field_label || key,
-                    order: def?.display_order ?? 999,
+                    order: FIELD_PRIORITY[key] ?? 500,
                   };
                 })
                 .sort((a, b) => {
