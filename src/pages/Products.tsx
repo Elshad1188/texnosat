@@ -1,7 +1,7 @@
 import { useState, useMemo, lazy, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, SlidersHorizontal, X, Loader2, MapPin, Tag, CircleDollarSign, Calendar, Sparkles, Layers, Filter, Map as MapIcon, LayoutGrid } from "lucide-react";
+import { Search, SlidersHorizontal, X, Loader2, MapPin, Tag, CircleDollarSign, Calendar, Layers, Filter, Map as MapIcon, LayoutGrid } from "lucide-react";
 import { CircuitBoard, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,19 +21,12 @@ import RegionPicker from "@/components/RegionPicker";
 
 type MapBounds = { north: number; south: number; east: number; west: number };
 
-const conditions = [
-  { value: "all", dbValue: "", labelKey: "common.all" },
-  { value: "new", dbValue: "Yeni", labelKey: "products.condition_new" },
-  { value: "like_new", dbValue: "Yeni kimi", labelKey: "products.condition_like_new" },
-  { value: "used", dbValue: "İşlənmiş", labelKey: "products.condition_used" },
-];
 const sortOptions = [
   { value: "newest", labelKey: "products.sort_newest" },
   { value: "price-asc", labelKey: "products.sort_price_asc" },
   { value: "price-desc", labelKey: "products.sort_price_desc" },
   { value: "views", labelKey: "products.sort_views" },
 ];
-const conditionDbMap = Object.fromEntries(conditions.map((c) => [c.value, c.dbValue]));
 
 function formatTime(dateStr: string, t: (key: string, options?: any) => string, language: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -58,7 +51,6 @@ const Products = () => {
   const [selectedDeal, setSelectedDeal] = useState(initialDeal);
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("");
-  const [selectedCondition, setSelectedCondition] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const [showFilters, setShowFilters] = useState(false);
   const [priceMin, setPriceMin] = useState("");
