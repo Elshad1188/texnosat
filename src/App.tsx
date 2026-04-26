@@ -32,6 +32,7 @@ import MobileTopSearch from "./components/MobileTopSearch";
 import AppDownloadBanner from "./components/AppDownloadBanner";
 import FirebaseInit from "./components/FirebaseInit";
 import PaymentResult from "./pages/PaymentResult";
+import { CompareProvider } from "@/contexts/CompareContext";
 import ChatBot from "./components/ChatBot";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
@@ -95,19 +96,21 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
-          <LanguageProvider>
-            <ThemeProvider>
-              <ScrollToTop />
-              <AppWrapper />
-              <MobileBottomNav />
-              <MobileTopSearch />
-              <ChatBot />
-              <AppDownloadBanner />
-              <FirebaseInit />
-            </ThemeProvider>
-          </LanguageProvider>
-        </AuthProvider>
+        <CompareProvider>
+          <AuthProvider>
+            <LanguageProvider>
+              <ThemeProvider>
+                <ScrollToTop />
+                <AppWrapper />
+                <MobileBottomNav />
+                <MobileTopSearch />
+                <ChatBot />
+                <AppDownloadBanner />
+                <FirebaseInit />
+              </ThemeProvider>
+            </LanguageProvider>
+          </AuthProvider>
+        </CompareProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
