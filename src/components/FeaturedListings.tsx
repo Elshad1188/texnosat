@@ -120,8 +120,9 @@ const FeaturedListings = () => {
     return () => observer.disconnect();
   }, [hpSettings.homepage_auto_load, loadMore]);
 
-  // Collect all store IDs and fetch stores
-  const displayNewListings = allNewListings.length > 0 ? allNewListings : newListings;
+  // Collect all store IDs and fetch stores (dedupe by id as safety)
+  const rawDisplayNew = allNewListings.length > 0 ? allNewListings : newListings;
+  const displayNewListings = Array.from(new Map(rawDisplayNew.map((l: any) => [l.id, l])).values());
   const allListings = [...premiumListings, ...urgentListings, ...displayNewListings];
   const storeIds = [...new Set(allListings.map(l => l.store_id).filter(Boolean))] as string[];
 
