@@ -200,7 +200,7 @@ const Products = () => {
     else if (sortBy === "views") result.sort((a: any, b: any) => (b.views_count || 0) - (a.views_count || 0));
 
     return result;
-  }, [query, selectedCategory, selectedSubcategory, selectedCondition, sortBy, priceMin, priceMax, allListings, selectedRegion, regions, customFilters, dateRange]);
+  }, [query, selectedCategory, selectedSubcategory, selectedCondition, sortBy, priceMin, priceMax, allListings, selectedRegion, regions, customFilters, dateRange, selectedDeal]);
 
   // Apply map-bounds filter on top of standard filters when in map view
   const visibleProducts = useMemo(() => {
@@ -219,6 +219,7 @@ const Products = () => {
     setPriceMin(""); setPriceMax(""); setSortBy("newest");
     setDateRange("all");
     setCustomFilters({});
+    setSelectedDeal("");
     setSearchParams({});
   };
 
@@ -230,6 +231,7 @@ const Products = () => {
     (selectedRegion ? 1 : 0) +
     (priceMin || priceMax ? 1 : 0) +
     (dateRange !== "all" ? 1 : 0) +
+    (selectedDeal ? 1 : 0) +
     Object.values(customFilters).filter((v) => v).length;
   const hasActiveFilters = activeFilterCount > 0;
 
