@@ -10,7 +10,7 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Crown, Edit2, Eye, MapPin, Phone, Clock, Trash2 } from "lucide-react";
+import { Crown, Edit2, Eye, MapPin, Phone, Clock, Trash2, ShieldCheck, Users, Building2 } from "lucide-react";
 
 interface StoreHeaderProps {
   store: any;
@@ -57,6 +57,25 @@ const StoreHeader = ({ store, userId }: StoreHeaderProps) => {
                 </span>
               )}
             </div>
+            {(store.license_number || store.agent_count || store.specialization) && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {store.license_number && (
+                  <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/40 text-emerald-700 dark:text-emerald-400 bg-emerald-500/5">
+                    <ShieldCheck className="h-3 w-3" /> Lisenziya №{store.license_number}
+                  </Badge>
+                )}
+                {store.agent_count && (
+                  <Badge variant="outline" className="gap-1 text-[10px]">
+                    <Users className="h-3 w-3" /> {store.agent_count} agent
+                  </Badge>
+                )}
+                {store.specialization && (
+                  <Badge variant="outline" className="gap-1 text-[10px]">
+                    <Building2 className="h-3 w-3" /> {store.specialization}
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
         </div>
         <div className="flex gap-2 mt-3 flex-wrap">
