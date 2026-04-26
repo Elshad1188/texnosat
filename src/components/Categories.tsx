@@ -1,39 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { LayoutGrid } from "lucide-react";
+import { LayoutGrid, Building2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/contexts/LanguageContext";
-import electronicsImage from "@/assets/categories/electronics.jpg";
-import transportImage from "@/assets/categories/transport.jpg";
-import realEstateImage from "@/assets/categories/real-estate.jpg";
-import homeGardenImage from "@/assets/categories/home-garden.jpg";
-import fashionImage from "@/assets/categories/fashion.jpg";
-import jobsServicesImage from "@/assets/categories/jobs-services.jpg";
-import hobbySportImage from "@/assets/categories/hobby-sport.jpg";
-import petsImage from "@/assets/categories/pets.jpg";
-import kidsImage from "@/assets/categories/kids.jpg";
-import businessIndustryImage from "@/assets/categories/business-industry.jpg";
-import healthBeautyImage from "@/assets/categories/health-beauty.jpg";
-import entertainmentEventsImage from "@/assets/categories/entertainment-events.jpg";
-import foodDrinkImage from "@/assets/categories/food-drink.jpg";
-import otherImage from "@/assets/categories/other.jpg";
+import { iconMap } from "@/lib/icons";
 
-const categoryImages: Record<string, string> = {
-  elektronika: electronicsImage,
-  neqliyyat: transportImage,
-  "dasinmaz-emlak": realEstateImage,
-  "ev-ve-bag": homeGardenImage,
-  "geyim-aksesuar": fashionImage,
-  "is-ve-xidmetler": jobsServicesImage,
-  "hobbi-idman": hobbySportImage,
-  heyvanlar: petsImage,
-  "usaq-dunyasi": kidsImage,
-  "biznes-senaye": businessIndustryImage,
-  "saglamliq-gozellik": healthBeautyImage,
-  "eylence-tedbirler": entertainmentEventsImage,
-  "qida-icki": foodDrinkImage,
-  diger: otherImage,
+// Daşınmaz əmlak kateqoriyaları üçün rəng paleti (slug → tailwind gradient)
+const categoryColors: Record<string, string> = {
+  menziller: "from-blue-500 to-blue-600",
+  "heyet-evi": "from-emerald-500 to-emerald-600",
+  ofisler: "from-indigo-500 to-indigo-600",
+  qarajlar: "from-amber-500 to-amber-600",
+  torpaq: "from-teal-500 to-teal-600",
+  obyektler: "from-rose-500 to-rose-600",
+  "qeyri-yasayis": "from-slate-500 to-slate-600",
 };
 
 const Categories = () => {
@@ -88,7 +69,8 @@ const Categories = () => {
           </button>
 
           {categories.map((cat: any) => {
-            const imageSrc = categoryImages[cat.slug] || otherImage;
+            const Icon = (cat.icon && iconMap[cat.icon]) || Building2;
+            const gradient = categoryColors[cat.slug] || "from-primary to-primary/70";
 
             return (
               <button
@@ -96,15 +78,8 @@ const Categories = () => {
                 onClick={() => navigate(`/products?category=${cat.slug}`)}
                 className="flex flex-col items-center gap-2 flex-shrink-0 group"
               >
-                <div className="h-16 w-16 overflow-hidden rounded-full border border-border bg-muted shadow-md transition-all group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-primary/20">
-                  <img
-                    src={imageSrc}
-                    alt={cat.name}
-                    width={768}
-                    height={768}
-                    loading="lazy"
-                    className={`h-full w-full object-cover ${cat.slug === "dasinmaz-emlak" ? "scale-110" : ""}`}
-                  />
+                <div className={`flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br ${gradient} shadow-md transition-all group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-primary/20`}>
+                  <Icon className="h-7 w-7 text-white" strokeWidth={2} />
                 </div>
                 <span className="max-w-[68px] text-center text-[11px] font-medium leading-tight text-foreground line-clamp-2">
                   {cat.name}

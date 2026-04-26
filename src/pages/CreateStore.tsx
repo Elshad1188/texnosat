@@ -173,7 +173,7 @@ const CreateStore = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name) { toast({ title: t("create_store.name_required", "Mağaza adını daxil edin"), variant: "destructive" }); return; }
+    if (!form.name) { toast({ title: t("create_store.name_required", "Agentlik adını daxil edin"), variant: "destructive" }); return; }
     setLoading(true);
     try {
       let logoUrl = editStore?.logo_url || null;
@@ -201,7 +201,7 @@ const CreateStore = () => {
       } else {
         const { error } = await supabase.from("stores").insert({ user_id: user!.id, ...payload, status: "pending" });
         if (error) throw error;
-        toast({ title: t("create_store.created_success", "Mağaza yaradıldı! Admin təsdiqi gözlənilir.") });
+        toast({ title: t("create_store.created_success", "Agentlik yaradıldı! Admin təsdiqi gözlənilir.") });
       }
       navigate("/profile");
     } catch (err: any) {

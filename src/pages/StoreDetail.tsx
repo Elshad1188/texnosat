@@ -236,8 +236,8 @@ const StoreDetail = () => {
         <Header />
         <div className="container mx-auto flex flex-col items-center py-32 text-center">
           <Store className="h-16 w-16 text-muted-foreground/50" />
-          <p className="mt-4 text-lg font-medium text-muted-foreground">Mağaza tapılmadı</p>
-          <Button asChild className="mt-6"><Link to="/stores">Mağazalara qayıt</Link></Button>
+          <p className="mt-4 text-lg font-medium text-muted-foreground">Agentlik tapılmadı</p>
+          <Button asChild className="mt-6"><Link to="/stores">Agentliklərə qayıt</Link></Button>
         </div>
         <Footer />
       </div>
@@ -339,7 +339,7 @@ const StoreDetail = () => {
                       className="gap-2 bg-gradient-primary text-primary-foreground hover:opacity-90"
                       onClick={handleMessageStore}
                     >
-                      <MessageCircle className="h-4 w-4" />Mağazaya mesaj yaz
+                      <MessageCircle className="h-4 w-4" />Agentliyə mesaj yaz
                     </Button>
                     {user && (
                       <Button
@@ -360,11 +360,11 @@ const StoreDetail = () => {
 
         <div className="mb-8">
           <h2 className="mb-4 font-display text-xl font-bold text-foreground">
-            Mağaza elanları ({listings.length})
+            Agentliyin elanları ({listings.length})
           </h2>
           {listings.length === 0 ? (
             <div className="rounded-xl border border-border bg-card p-8 text-center">
-              <p className="text-muted-foreground">Bu mağazada hələ elan yoxdur</p>
+              <p className="text-muted-foreground">Bu agentlikdə hələ elan yoxdur</p>
               {isOwner && (
                 <Button className="mt-4 bg-gradient-primary text-primary-foreground" asChild>
                   <Link to="/create-listing">Elan yerləşdir</Link>
@@ -394,13 +394,13 @@ const StoreDetail = () => {
         {/* Reviews */}
         <div className="mb-8">
           <h2 className="mb-4 font-display text-xl font-bold text-foreground">
-            Mağaza rəyləri ({reviews.length})
+            Agentlik rəyləri ({reviews.length})
           </h2>
 
           {/* Review Form */}
           {canReview && (
             <div className="mb-6 rounded-xl border border-border bg-card p-4 shadow-sm">
-              <h3 className="mb-3 text-sm font-semibold text-foreground">Mağaza haqqında rəy yazın</h3>
+              <h3 className="mb-3 text-sm font-semibold text-foreground">Agentlik haqqında rəy yazın</h3>
               <div className="mb-3 flex gap-1">
                 {[1, 2, 3, 4, 5].map((s) => (
                   <button key={s} onClick={() => setReviewRating(s)}>
@@ -408,7 +408,7 @@ const StoreDetail = () => {
                   </button>
                 ))}
               </div>
-              <Textarea placeholder="Mağaza haqqında rəyiniz..." value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} rows={3} className="resize-none" />
+              <Textarea placeholder="Agentlik haqqında rəyiniz..." value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} rows={3} className="resize-none" />
               <Button onClick={() => submitReview.mutate()} disabled={submitReview.isPending} className="mt-3 gap-2">
                 <Send className="h-4 w-4" /> {submitReview.isPending ? "Göndərilir..." : "Rəy göndər"}
               </Button>

@@ -17,7 +17,7 @@ import {
   Trophy, Mountain, Tent, Target,
 
   // Food & Drink
-  Apple, Coffee, Pizza, Wine,
+  Apple, Coffee, Pizza, Wine, UtensilsCrossed,
 
   // Health & Beauty
   Heart, Pill, Baby,
@@ -26,16 +26,17 @@ import {
   BookOpen, GraduationCap, Briefcase, Calculator, Globe,
 
   // Real Estate
-  Building, Building2, MapPin, Warehouse,
+  Building, Building2, MapPin, Warehouse, Hotel, Factory, ParkingCircle,
+  KeyRound, LandPlot, DoorOpen,
 
   // Nature
-  Leaf, TreePine,
+  Leaf, TreePine, Trees, Sprout, Snowflake,
 
   // Entertainment
   Music, Film, Mic, Gamepad, Ticket, Video, Play,
 
   // Tools & Services
-  Hammer, Zap, Package, Gift, Star,
+  Hammer, Zap, Package, Gift, Star, Users,
 
   // Common UI icons used in project (verified working)
   Search, User, Store, Flag, Eye, Clock, Image, Send,
@@ -64,7 +65,7 @@ export const iconMap: Record<string, LucideIcon> = {
   Trophy, Mountain, Tent, Target,
 
   // Food & Drink
-  Apple, Coffee, Pizza, Wine,
+  Apple, Coffee, Pizza, Wine, UtensilsCrossed,
 
   // Health & Beauty
   Heart, Pill, Baby,
@@ -73,16 +74,17 @@ export const iconMap: Record<string, LucideIcon> = {
   BookOpen, GraduationCap, Briefcase, Calculator, Globe,
 
   // Real Estate
-  Building, Building2, MapPin, Warehouse,
+  Building, Building2, MapPin, Warehouse, Hotel, Factory, ParkingCircle,
+  KeyRound, LandPlot, DoorOpen,
 
   // Nature
-  Leaf, TreePine,
+  Leaf, TreePine, Trees, Sprout, Snowflake,
 
   // Entertainment
   Music, Film, Mic, Gamepad, Ticket, Video, Play,
 
   // Tools & Services
-  Hammer, Zap, Package, Gift, Star,
+  Hammer, Zap, Package, Gift, Star, Users,
 
   // Other
   Store, User, Phone, Mail, Settings, Wallet,

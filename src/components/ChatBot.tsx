@@ -145,7 +145,7 @@ const ChatBot = () => {
                 <p className="text-sm text-muted-foreground">Salam! 👋</p>
                 <p className="text-xs text-muted-foreground mt-1">Sayt haqqında hər hansı sualınız varsa soruşun</p>
                 <div className="mt-4 flex flex-wrap gap-2 justify-center">
-                  {["Elan necə yerləşdirim?", "Mağaza necə açım?", "Premium nədir?", "Balans necə artırım?", "Sifariş necə verim?", "Çarx çevirmə nədir?"].map((q) => (
+                  {["Elan necə yerləşdirim?", "Agentlik necə açım?", "Premium nədir?", "Balans necə artırım?", "Sifariş necə verim?", "Çarx çevirmə nədir?"].map((q) => (
                     <button key={q} className="rounded-full border border-border px-3 py-1.5 text-[11px] text-foreground hover:bg-muted transition-colors" onClick={() => setInput(q)}>
                       {q}
                     </button>
