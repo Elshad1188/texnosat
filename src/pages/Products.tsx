@@ -325,13 +325,13 @@ const Products = () => {
 
                   {/* Region */}
                   <FilterSection icon={MapPin} title={t("products.region")}>
-                    <Select value={selectedRegion || "all"} onValueChange={(v) => setSelectedRegion(v === "all" ? "" : v)}>
-                      <SelectTrigger><SelectValue placeholder={t("products.select_region")} /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t("common.all")}</SelectItem>
-                        {parentRegions.map((r: any) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <RegionPicker
+                      regions={regions as any}
+                      value={selectedRegion}
+                      onChange={setSelectedRegion}
+                      placeholder={t("products.select_region")}
+                      allLabel={t("common.all")}
+                    />
                   </FilterSection>
 
                   {/* Price */}
