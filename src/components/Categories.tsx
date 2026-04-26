@@ -69,7 +69,8 @@ const Categories = () => {
           </button>
 
           {categories.map((cat: any) => {
-            const imageSrc = categoryImages[cat.slug] || otherImage;
+            const Icon = (cat.icon && iconMap[cat.icon]) || Building2;
+            const gradient = categoryColors[cat.slug] || "from-primary to-primary/70";
 
             return (
               <button
@@ -77,15 +78,8 @@ const Categories = () => {
                 onClick={() => navigate(`/products?category=${cat.slug}`)}
                 className="flex flex-col items-center gap-2 flex-shrink-0 group"
               >
-                <div className="h-16 w-16 overflow-hidden rounded-full border border-border bg-muted shadow-md transition-all group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-primary/20">
-                  <img
-                    src={imageSrc}
-                    alt={cat.name}
-                    width={768}
-                    height={768}
-                    loading="lazy"
-                    className={`h-full w-full object-cover ${cat.slug === "dasinmaz-emlak" ? "scale-110" : ""}`}
-                  />
+                <div className={`flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br ${gradient} shadow-md transition-all group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-primary/20`}>
+                  <Icon className="h-7 w-7 text-white" strokeWidth={2} />
                 </div>
                 <span className="max-w-[68px] text-center text-[11px] font-medium leading-tight text-foreground line-clamp-2">
                   {cat.name}
