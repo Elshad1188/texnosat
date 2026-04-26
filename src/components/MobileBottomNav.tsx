@@ -1,4 +1,4 @@
-import { Home, Heart, Plus, MessageCircle, User, Play } from "lucide-react";
+import { Home, Heart, Plus, MessageCircle, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -53,7 +53,7 @@ const MobileBottomNav = () => {
 
   const navItems = [
     { path: "/", icon: Home, label: t("mobilenav.home") },
-    { path: "/reels", icon: Play, label: t("mobilenav.reels") },
+    { path: "/favorites", icon: Heart, label: t("mobilenav.favorites") },
     { path: "/create-listing", icon: Plus, label: t("mobilenav.add"), isCenter: true },
     { path: "/messages", icon: MessageCircle, label: t("mobilenav.messages"), badge: unreadCount },
     { path: user ? "/profile" : "/auth", icon: User, label: t("mobilenav.profile") },
