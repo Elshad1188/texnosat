@@ -157,9 +157,6 @@ const Products = () => {
       result = result.filter((p: any) => p.subcategory === selectedSubcategory);
     }
 
-    if (selectedCondition !== "all") {
-      result = result.filter((p: any) => p.condition === conditionDbMap[selectedCondition]);
-    }
 
     if (selectedRegion) {
       const region = regions.find((r: any) => r.id === selectedRegion);
@@ -206,7 +203,7 @@ const Products = () => {
     else if (sortBy === "views") result.sort((a: any, b: any) => (b.views_count || 0) - (a.views_count || 0));
 
     return result;
-  }, [query, selectedCategory, selectedSubcategory, selectedCondition, sortBy, priceMin, priceMax, allListings, selectedRegion, regions, customFilters, dateRange, selectedDeal]);
+  }, [query, selectedCategory, selectedSubcategory, sortBy, priceMin, priceMax, allListings, selectedRegion, regions, customFilters, dateRange, selectedDeal]);
 
   // Apply map-bounds filter on top of standard filters when in map view
   const visibleProducts = useMemo(() => {
@@ -221,7 +218,7 @@ const Products = () => {
 
   const clearFilters = () => {
     setQuery(""); setSelectedCategory(""); setSelectedSubcategory("");
-    setSelectedRegion(""); setSelectedCondition("all");
+    setSelectedRegion("");
     setPriceMin(""); setPriceMax(""); setSortBy("newest");
     setDateRange("all");
     setCustomFilters({});
@@ -233,7 +230,7 @@ const Products = () => {
     (query ? 1 : 0) +
     (selectedCategory ? 1 : 0) +
     (selectedSubcategory ? 1 : 0) +
-    (selectedCondition !== "all" ? 1 : 0) +
+    
     (selectedRegion ? 1 : 0) +
     (priceMin || priceMax ? 1 : 0) +
     (dateRange !== "all" ? 1 : 0) +
