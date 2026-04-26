@@ -1819,56 +1819,71 @@ export type Database = {
       stores: {
         Row: {
           address: string | null
+          agent_count: number | null
           city: string | null
           cover_url: string | null
           created_at: string
           description: string | null
+          established_year: number | null
           id: string
           instagram_url: string | null
           is_premium: boolean
+          license_number: string | null
           logo_url: string | null
           name: string
           phone: string | null
           premium_until: string | null
+          specialization: string | null
           status: string
           updated_at: string
           user_id: string
+          website_url: string | null
           working_hours: string | null
         }
         Insert: {
           address?: string | null
+          agent_count?: number | null
           city?: string | null
           cover_url?: string | null
           created_at?: string
           description?: string | null
+          established_year?: number | null
           id?: string
           instagram_url?: string | null
           is_premium?: boolean
+          license_number?: string | null
           logo_url?: string | null
           name: string
           phone?: string | null
           premium_until?: string | null
+          specialization?: string | null
           status?: string
           updated_at?: string
           user_id: string
+          website_url?: string | null
           working_hours?: string | null
         }
         Update: {
           address?: string | null
+          agent_count?: number | null
           city?: string | null
           cover_url?: string | null
           created_at?: string
           description?: string | null
+          established_year?: number | null
           id?: string
           instagram_url?: string | null
           is_premium?: boolean
+          license_number?: string | null
           logo_url?: string | null
           name?: string
           phone?: string | null
           premium_until?: string | null
+          specialization?: string | null
           status?: string
           updated_at?: string
           user_id?: string
+          website_url?: string | null
           working_hours?: string | null
         }
         Relationships: []
