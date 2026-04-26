@@ -1,4 +1,4 @@
-import { Heart, MapPin, Clock, Store, Crown, Zap, GitCompareArrows, ChevronLeft, ChevronRight, ShoppingCart, Truck } from "lucide-react";
+import { Heart, MapPin, Clock, Store, Crown, Zap, GitCompareArrows, ChevronLeft, ChevronRight, ShoppingCart, Truck, BedDouble, Maximize2, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -182,10 +182,40 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
       </div>
 
       <div className="p-3">
-        <h3 className="line-clamp-2 text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-          {title}
-        </h3>
-        <p className="mt-2 font-display text-lg font-bold text-foreground">{price}</p>
+        <p className="font-display text-lg font-bold text-foreground">{price}</p>
+        {customFields?.deal_type && (
+          <p className="mt-0.5 text-[11px] font-medium text-primary">{customFields.deal_type}</p>
+        )}
+
+        {/* Real estate parameters */}
+        {(customFields?.rooms || customFields?.area_m2 || customFields?.floor) && (
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            {customFields?.rooms && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-muted/70 px-1.5 py-0.5 text-[11px] font-medium text-foreground">
+                <BedDouble className="h-3 w-3 text-primary" />
+                {customFields.rooms} otaq
+              </span>
+            )}
+            {customFields?.area_m2 && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-muted/70 px-1.5 py-0.5 text-[11px] font-medium text-foreground">
+                <Maximize2 className="h-3 w-3 text-primary" />
+                {customFields.area_m2} m²
+              </span>
+            )}
+            {customFields?.floor && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-muted/70 px-1.5 py-0.5 text-[11px] font-medium text-foreground">
+                <Building2 className="h-3 w-3 text-primary" />
+                {customFields.floor}{customFields?.total_floors ? `/${customFields.total_floors}` : ""}
+              </span>
+            )}
+          </div>
+        )}
+
+        {title && (
+          <h3 className="mt-2 line-clamp-2 text-xs text-muted-foreground group-hover:text-primary transition-colors">
+            {title}
+          </h3>
+        )}
 
         {/* Store Badge */}
         {storeId && storeName && (
