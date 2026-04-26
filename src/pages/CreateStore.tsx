@@ -325,15 +325,13 @@ const CreateStore = () => {
             </div>
             <div className="space-y-2">
               <Label>{t("create_store.city")}</Label>
-              <RegionPicker
+              <RegionCascader
                 regions={regions as any}
                 value={(regions as any[]).find((r: any) => r.name === form.city)?.id || ""}
                 onChange={(id) => {
                   const r = (regions as any[]).find((x: any) => x.id === id);
                   setForm({ ...form, city: r?.name || "" });
                 }}
-                placeholder={t("create_store.select_city")}
-                allLabel={t("products.select")}
               />
             </div>
           </div>
