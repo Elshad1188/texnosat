@@ -27,6 +27,12 @@ export interface PlatformConfig {
   showAiAutofill: boolean;
   /** Mağaza panelində Telegram bot inteqrasiyası mövcuddur */
   showTelegramBot: boolean;
+  /** Reels (şaquli video lenti) mövcuddur */
+  showReels: boolean;
+  /** Hədiyyə çarxı (Spin Win) mövcuddur */
+  showSpinWin: boolean;
+  /** Müqayisə (Compare) funksiyası mövcuddur */
+  showCompare: boolean;
 }
 
 function getConfig(mode: PlatformMode): PlatformConfig {
