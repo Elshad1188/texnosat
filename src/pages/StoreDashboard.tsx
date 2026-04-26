@@ -126,14 +126,16 @@ const StoreDashboard = () => {
         <Tabs defaultValue="listings" className="space-y-3">
           <TabsList className="w-full grid grid-cols-3 sm:grid-cols-4 h-auto gap-0.5 p-1">
             <TabsTrigger value="listings" className="gap-1 text-[11px] px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Package className="h-3 w-3" />Elanlar
+              <Package className="h-3 w-3" />Obyektlər
             </TabsTrigger>
-            <TabsTrigger value="warehouse" className="gap-1 text-[11px] px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Warehouse className="h-3 w-3" />Anbar
-            </TabsTrigger>
+            {platform.showWarehouse && (
+              <TabsTrigger value="warehouse" className="gap-1 text-[11px] px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Warehouse className="h-3 w-3" />Anbar
+              </TabsTrigger>
+            )}
             {platform.showOrders && (
               <TabsTrigger value="orders" className="gap-1 text-[11px] px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <ShoppingCart className="h-3 w-3" />Sifarişlər
+                <ShoppingCart className="h-3 w-3" />Müraciətlər
               </TabsTrigger>
             )}
             {platform.showShipping && (
@@ -142,23 +144,27 @@ const StoreDashboard = () => {
               </TabsTrigger>
             )}
             <TabsTrigger value="followers" className="gap-1 text-[11px] px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Users className="h-3 w-3" />Abunəçilər
+              <Users className="h-3 w-3" />Müştərilər
             </TabsTrigger>
             <TabsTrigger value="bulk" className="gap-1 text-[11px] px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Upload className="h-3 w-3" />Toplu
             </TabsTrigger>
-            <TabsTrigger value="telegram" className="gap-1 text-[11px] px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Bot className="h-3 w-3" />Bot
-            </TabsTrigger>
+            {platform.showTelegramBot && (
+              <TabsTrigger value="telegram" className="gap-1 text-[11px] px-2 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Bot className="h-3 w-3" />Bot
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="listings">
             <StoreListingsTab listings={listings} onBoost={setBoostListingId} />
           </TabsContent>
 
-          <TabsContent value="warehouse">
-            <WarehouseTab storeId={store.id} />
-          </TabsContent>
+          {platform.showWarehouse && (
+            <TabsContent value="warehouse">
+              <WarehouseTab storeId={store.id} />
+            </TabsContent>
+          )}
 
           {platform.showOrders && (
             <TabsContent value="orders">
@@ -180,9 +186,11 @@ const StoreDashboard = () => {
             <BulkListingUpload storeId={store.id} />
           </TabsContent>
 
-          <TabsContent value="telegram">
-            <TelegramBotTab storeId={store.id} />
-          </TabsContent>
+          {platform.showTelegramBot && (
+            <TabsContent value="telegram">
+              <TelegramBotTab storeId={store.id} />
+            </TabsContent>
+          )}
         </Tabs>
       </main>
       <Footer />
