@@ -1204,7 +1204,7 @@ const accentMap: Record<AccentKey, string> = {
   violet: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
 };
 
-const SpecChip = ({
+const SpecRow = ({
   icon: Icon,
   label,
   value,
@@ -1215,14 +1215,12 @@ const SpecChip = ({
   value: string;
   accent?: AccentKey;
 }) => (
-  <div className="group flex items-center gap-2.5 rounded-xl border border-border/60 bg-background/60 px-3 py-2.5 transition-colors hover:border-primary/30 hover:bg-muted/40">
-    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${accentMap[accent]}`}>
-      <Icon className="h-4 w-4" />
+  <div className="flex items-center gap-3 px-4 py-3">
+    <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${accentMap[accent]}`}>
+      <Icon className="h-3.5 w-3.5" />
     </div>
-    <div className="min-w-0 flex-1">
-      <p className="truncate text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="truncate text-sm font-semibold text-foreground" title={value}>{value}</p>
-    </div>
+    <span className="flex-1 text-sm text-muted-foreground">{label}</span>
+    <span className="text-sm font-medium text-foreground text-right truncate max-w-[55%]" title={value}>{value}</span>
   </div>
 );
 
