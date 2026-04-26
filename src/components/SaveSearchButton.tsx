@@ -12,7 +12,6 @@ interface Props {
   category?: string;
   subcategory?: string;
   region?: string;
-  condition?: string;
   priceMin?: string | number;
   priceMax?: string | number;
 }
@@ -28,13 +27,13 @@ const SaveSearchButton = (props: Props) => {
     category: props.category || null,
     subcategory: props.subcategory || null,
     region: props.region || null,
-    condition: props.condition && props.condition !== "Hamısı" ? props.condition : null,
+    condition: null as string | null,
     price_min: props.priceMin ? Number(props.priceMin) : null,
     price_max: props.priceMax ? Number(props.priceMax) : null,
   });
 
   const filters = normalize();
-  const hasAnyFilter = !!(filters.query || filters.category || filters.region || filters.condition || filters.price_min || filters.price_max);
+  const hasAnyFilter = !!(filters.query || filters.category || filters.region || filters.price_min || filters.price_max);
 
   const { data: existing } = useQuery({
     queryKey: ["saved-search-match", user?.id, filters],

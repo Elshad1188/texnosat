@@ -63,7 +63,7 @@ const SavedSearchesList = () => {
                 {s.query && <Badge variant="secondary">🔍 {s.query}</Badge>}
                 {s.category && <Badge variant="outline">{s.category}</Badge>}
                 {s.region && <Badge variant="outline">📍 {s.region}</Badge>}
-                {s.condition && <Badge variant="outline">{s.condition}</Badge>}
+                
                 {(s.price_min || s.price_max) && (
                   <Badge variant="outline">
                     {s.price_min || 0}–{s.price_max || "∞"} ₼
