@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import IdentitySwitcher from "@/components/IdentitySwitcher";
 import { getModelsByCategory } from "@/data/brandModels";
 import { useTranslation } from "@/contexts/LanguageContext";
-import RegionPicker from "@/components/RegionPicker";
+import RegionCascader from "@/components/RegionCascader";
 
 const conditions = ["Yeni", "Yeni kimi", "İşlənmiş"];
 
