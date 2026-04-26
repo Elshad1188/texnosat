@@ -15,7 +15,7 @@ import { Store, Loader2, Crown, Upload, CheckCircle, Image } from "lucide-react"
 import { cn } from "@/lib/utils";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { useTranslation } from "@/contexts/LanguageContext";
-import RegionPicker from "@/components/RegionPicker";
+import RegionCascader from "@/components/RegionCascader";
 
 const CreateStore = () => {
   const { user } = useAuth();
