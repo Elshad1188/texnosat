@@ -73,6 +73,7 @@ const defaults: SiteSettings = {
   store_listing_limit: 20,
   telegram_bot_daily_limit: 5,
   ai_autofill_daily_limit: 3,
+  disable_shipping: false,
 };
 
 const watermarkPositions = [
