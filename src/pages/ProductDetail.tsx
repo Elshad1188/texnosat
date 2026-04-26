@@ -1198,4 +1198,62 @@ const DetailRow = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
+type AccentKey = "primary" | "emerald" | "blue" | "amber" | "rose" | "violet";
+const accentMap: Record<AccentKey, string> = {
+  primary: "bg-primary/10 text-primary",
+  emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  blue: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+  amber: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  rose: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+  violet: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
+};
+
+const SpecChip = ({
+  icon: Icon,
+  label,
+  value,
+  accent = "primary",
+}: {
+  icon: any;
+  label: string;
+  value: string;
+  accent?: AccentKey;
+}) => (
+  <div className="group flex items-center gap-2.5 rounded-xl border border-border/60 bg-background/60 px-3 py-2.5 transition-colors hover:border-primary/30 hover:bg-muted/40">
+    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${accentMap[accent]}`}>
+      <Icon className="h-4 w-4" />
+    </div>
+    <div className="min-w-0 flex-1">
+      <p className="truncate text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="truncate text-sm font-semibold text-foreground" title={value}>{value}</p>
+    </div>
+  </div>
+);
+
+function getFieldVisual(key: string): { icon: any; accent: AccentKey } {
+  const k = key.toLowerCase();
+  // Real estate
+  if (k.includes("room")) return { icon: BedDouble, accent: "violet" };
+  if (k.includes("area") || k === "area_m2" || k.includes("sahə")) return { icon: Maximize2, accent: "blue" };
+  if (k.includes("floor") || k.includes("mərtəbə")) return { icon: Layers, accent: "amber" };
+  if (k.includes("building") || k.includes("bina")) return { icon: Building2, accent: "primary" };
+  if (k.includes("document") || k.includes("kupça") || k.includes("çıxarış")) return { icon: FileCheck2, accent: "blue" };
+  if (k.includes("mortgage") || k.includes("ipoteka") || k.includes("kredit")) return { icon: Landmark, accent: "emerald" };
+  if (k.includes("deal") || k.includes("əməliyyat")) return { icon: KeyRound, accent: "primary" };
+  if (k.includes("repair") || k.includes("təmir")) return { icon: Wrench, accent: "amber" };
+  // Auto
+  if (k.includes("brand") || k.includes("marka")) return { icon: CarIcon, accent: "primary" };
+  if (k.includes("model")) return { icon: CarIcon, accent: "violet" };
+  if (k.includes("year") || k.includes("il")) return { icon: Calendar, accent: "amber" };
+  if (k.includes("color") || k.includes("rəng")) return { icon: Palette, accent: "rose" };
+  if (k.includes("mileage") || k.includes("km") || k.includes("yürüş")) return { icon: Gauge, accent: "blue" };
+  if (k.includes("fuel") || k.includes("yanacaq")) return { icon: Fuel, accent: "emerald" };
+  if (k.includes("transmission") || k.includes("ötür")) return { icon: Settings2, accent: "primary" };
+  if (k.includes("engine") || k.includes("mühərrik")) return { icon: Settings2, accent: "rose" };
+  // Generic
+  if (k.includes("price") || k.includes("qiymət")) return { icon: CircleDollarSign, accent: "emerald" };
+  if (k.includes("home") || k.includes("ev")) return { icon: HomeIcon, accent: "primary" };
+  return { icon: Tag, accent: "primary" };
+}
+
 export default ProductDetail;
