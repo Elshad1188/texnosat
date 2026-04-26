@@ -348,6 +348,52 @@ const CreateStore = () => {
             <Input id="instagram" placeholder="@magazaadi və ya https://instagram.com/magazaadi" value={form.instagram_url} onChange={(e) => setForm({ ...form, instagram_url: e.target.value })} />
           </div>
 
+          {/* Agency-specific fields */}
+          <div className="space-y-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+            <div className="flex items-center gap-2">
+              <span className="text-base">🏢</span>
+              <Label className="text-sm font-semibold">Agentlik məlumatları</Label>
+            </div>
+            <p className="text-xs text-muted-foreground">Bu məlumatlar müştərilərdə etimad yaradır və axtarış nəticələrində agentliyinizi vurğulayır.</p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="license" className="text-xs">Lisenziya nömrəsi</Label>
+                <Input id="license" placeholder="LIC-123456" value={form.license_number} onChange={(e) => setForm({ ...form, license_number: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="agents" className="text-xs">Agent sayı</Label>
+                <Input id="agents" type="number" min={1} placeholder="5" value={form.agent_count} onChange={(e) => setForm({ ...form, agent_count: e.target.value })} />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">İxtisaslaşma</Label>
+              <Select value={form.specialization || "none"} onValueChange={(v) => setForm({ ...form, specialization: v === "none" ? "" : v })}>
+                <SelectTrigger><SelectValue placeholder="Seçin" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Seçilməyib</SelectItem>
+                  <SelectItem value="Yaşayış">Yaşayış obyektləri</SelectItem>
+                  <SelectItem value="Kommersiya">Kommersiya obyektləri</SelectItem>
+                  <SelectItem value="Lüks">Lüks daşınmaz əmlak</SelectItem>
+                  <SelectItem value="Kirayə">Kirayə xidmətləri</SelectItem>
+                  <SelectItem value="Universal">Universal (hamısı)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="year" className="text-xs">Qurulma ili</Label>
+                <Input id="year" type="number" min={1990} max={new Date().getFullYear()} placeholder="2018" value={form.established_year} onChange={(e) => setForm({ ...form, established_year: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="website" className="text-xs">Vebsayt</Label>
+                <Input id="website" type="url" placeholder="https://..." value={form.website_url} onChange={(e) => setForm({ ...form, website_url: e.target.value })} />
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-4 rounded-xl border border-border p-4 bg-muted/30">
             <Label>{t("create_store.working_hours")}</Label>
             
