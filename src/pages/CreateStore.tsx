@@ -192,15 +192,17 @@ const CreateStore = () => {
       if (logoFile) logoUrl = await uploadFile(logoFile, "logo", "store-logos");
       if (coverFile) coverUrl = await uploadFile(coverFile, "cover", "store-logos");
 
-      const payload = { 
-        ...form, 
+      const { agent_count, established_year, ...rest } = form;
+      const payload: any = { 
+        ...rest, 
         logo_url: logoUrl, 
         cover_url: coverUrl,
+        agent_count: agent_count ? Number(agent_count) : null,
+        established_year: established_year ? Number(established_year) : null,
         working_hours: selectedDays.length > 0 ? formattedWorkingHours : form.working_hours 
       };
 
       if (editId) {
-        // Always submit change request for admin approval when editing
         const { error } = await supabase.from("store_change_requests").insert({
           store_id: editId,
           user_id: user!.id,
@@ -210,7 +212,7 @@ const CreateStore = () => {
         if (error) throw error;
         toast({ title: t("create_store.edit_request_sent", "Redaktə sorğusu göndərildi! Admin təsdiqi gözlənilir.") });
       } else {
-        const { error } = await supabase.from("stores").insert({ user_id: user!.id, ...payload, status: "pending" });
+        const { error } = await supabase.from("stores").insert({ user_id: user!.id, ...payload, status: "pending" } as any);
         if (error) throw error;
         toast({ title: t("create_store.created_success", "Agentlik yaradıldı! Admin təsdiqi gözlənilir.") });
       }
