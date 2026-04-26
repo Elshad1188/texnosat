@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useIsAdminOrMod } from "@/hooks/useIsAdmin";
-import { Heart, MessageCircle, Share2, Eye, ShoppingBag, X, Send, Play, Image as ImageIcon, UserPlus, UserCheck, Trash2, Crown, Zap } from "lucide-react";
+import { Heart, MessageCircle, Share2, Eye, ShoppingBag, X, Send, Play, Image as ImageIcon, UserPlus, UserCheck, Trash2, Crown, Zap, BedDouble, Maximize2, Building2, Landmark, FileCheck2 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
