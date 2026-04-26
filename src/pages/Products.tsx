@@ -230,6 +230,16 @@ const Products = () => {
               className="h-11 w-full rounded-xl border border-border bg-card pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
           </form>
           <div className="flex gap-2 flex-wrap">
+            <div className="inline-flex h-11 rounded-xl border border-border bg-card p-1">
+              <button onClick={() => setViewMode("grid")}
+                className={`flex items-center gap-1 rounded-lg px-3 text-xs font-medium transition-colors ${viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}>
+                <LayoutGrid className="h-4 w-4" /> Şəbəkə
+              </button>
+              <button onClick={() => setViewMode("map")}
+                className={`flex items-center gap-1 rounded-lg px-3 text-xs font-medium transition-colors ${viewMode === "map" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}>
+                <MapIcon className="h-4 w-4" /> Xəritə
+              </button>
+            </div>
             <Sheet open={showFilters} onOpenChange={setShowFilters}>
               <SheetTrigger asChild>
                 <Button variant="outline" className="relative gap-2">
