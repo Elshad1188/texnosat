@@ -61,6 +61,9 @@ const Products = () => {
   const [priceMax, setPriceMax] = useState("");
   const [dateRange, setDateRange] = useState("all");
   const [customFilters, setCustomFilters] = useState<Record<string, string>>({});
+  const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
+  const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
+  const [useMapBoundsFilter, setUseMapBoundsFilter] = useState(true);
 
   // Fetch categories
   const { data: categories = [] } = useQuery({
