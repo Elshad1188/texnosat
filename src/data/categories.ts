@@ -36,7 +36,7 @@ export const CATEGORIES: Category[] = [
     subCategories: [
       { id: "villa", name: "Villa", slug: "heyet-evi-villa", icon: "Home" },
       { id: "bag", name: "Bağ evi", slug: "heyet-evi-bag", icon: "Trees" },
-      { id: "heyet", name: "Həyət evi", slug: "heyet-evi-heyet", icon: "Home" },
+      { id: "heyet", name: "Həyət evi", slug: "heyet-evi-heyet", icon: "DoorOpen" },
     ],
   },
   {
@@ -54,7 +54,7 @@ export const CATEGORIES: Category[] = [
     id: "qarajlar",
     name: "Qarajlar",
     slug: "qarajlar",
-    icon: "Warehouse",
+    icon: "ParkingCircle",
     color: "bg-amber-500",
     subCategories: [
       { id: "qaraj", name: "Qaraj", slug: "qarajlar-qaraj", icon: "Warehouse" },
@@ -65,11 +65,11 @@ export const CATEGORIES: Category[] = [
     id: "torpaq",
     name: "Torpaq sahələri",
     slug: "torpaq",
-    icon: "TreePine",
+    icon: "LandPlot",
     color: "bg-teal-500",
     subCategories: [
-      { id: "yasayis", name: "Yaşayış", slug: "torpaq-yasayis", icon: "TreePine" },
-      { id: "kommersiya", name: "Kommersiya", slug: "torpaq-kommersiya", icon: "TreePine" },
+      { id: "yasayis", name: "Yaşayış", slug: "torpaq-yasayis", icon: "Home" },
+      { id: "kommersiya", name: "Kommersiya", slug: "torpaq-kommersiya", icon: "Store" },
       { id: "kt", name: "Kənd təsərrüfatı", slug: "torpaq-kt", icon: "Sprout" },
     ],
   },
