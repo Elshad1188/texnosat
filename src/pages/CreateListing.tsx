@@ -711,7 +711,7 @@ const CreateListing = () => {
             )}
 
             {/* Shipping methods - always show when store is selected */}
-            {selectedStoreId && (
+            {selectedStoreId && platform.showShipping && (
               <div className="rounded-xl border border-border bg-card p-4 space-y-3">
                 <Label className="text-sm font-medium flex items-center gap-2">
                   <Truck className="h-4 w-4 text-primary" /> {t("detail.shipping_methods")}
