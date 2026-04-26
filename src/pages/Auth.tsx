@@ -55,6 +55,11 @@ const Auth = () => {
         toast({ title: "Uğurla daxil oldunuz!" });
         navigate("/");
       } else {
+        if (password !== confirmPassword) {
+          toast({ title: "Xəta", description: "Şifrələr uyğun gəlmir", variant: "destructive" });
+          setLoading(false);
+          return;
+        }
         await signUp(email, password, fullName);
         toast({ title: "Hesab yaradıldı!", description: "Xoş gəldiniz!" });
         if (autoReferralCode) {
