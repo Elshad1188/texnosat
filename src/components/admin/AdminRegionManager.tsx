@@ -58,7 +58,7 @@ const AdminRegionManager = () => {
 
   const handleSave = async () => {
     if (!form.name) { toast({ title: "Ad daxil edin", variant: "destructive" }); return; }
-    const payload = { name: form.name, parent_id: form.parent_id || null, sort_order: form.sort_order, is_active: form.is_active };
+    const payload: any = { name: form.name, parent_id: form.parent_id || null, sort_order: form.sort_order, is_active: form.is_active, type: form.type };
     if (editId) {
       const { error } = await supabase.from("regions").update(payload).eq("id", editId);
       if (error) { toast({ title: "Xəta", description: error.message, variant: "destructive" }); return; }
