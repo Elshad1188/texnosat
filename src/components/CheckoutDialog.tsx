@@ -13,6 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, CreditCard, Truck, MapPin, ShoppingCart, CheckCircle, Wallet } from "lucide-react";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
+import { usePlatformMode } from "@/hooks/usePlatformMode";
 
 interface CheckoutDialogProps {
   open: boolean;
@@ -33,7 +34,8 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [step, setStep] = useState<"shipping" | "payment" | "confirm" | "success">("shipping");
+  const platform = usePlatformMode();
+  const [step, setStep] = useState<"shipping" | "payment" | "confirm" | "success">(platform.showShipping ? "shipping" : "payment");
   const [selectedShipping, setSelectedShipping] = useState<string>("");
   const [shippingAddress, setShippingAddress] = useState("");
   const [buyerNote, setBuyerNote] = useState("");
@@ -179,7 +181,7 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
   };
 
   const resetDialog = () => {
-    setStep("shipping");
+    setStep(platform.showShipping ? "shipping" : "payment");
     setSelectedShipping("");
     setShippingAddress("");
     setBuyerNote("");
@@ -223,7 +225,7 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
         )}
 
         {/* Step 1: Shipping */}
-        {step === "shipping" && (
+        {step === "shipping" && platform.showShipping && (
           <div className="space-y-4">
             {shippingMethods.length > 0 ? (
               <RadioGroup value={selectedShipping} onValueChange={setSelectedShipping}>
@@ -327,7 +329,9 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
             )}
 
             <div className="flex gap-2">
-              <Button variant="outline" className="flex-1" onClick={() => setStep("shipping")}>Geri</Button>
+              {platform.showShipping && (
+                <Button variant="outline" className="flex-1" onClick={() => setStep("shipping")}>Geri</Button>
+              )}
               <Button className="flex-1" onClick={() => setStep("confirm")}>
                 Davam et
               </Button>
@@ -351,7 +355,7 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
             <div className="rounded-lg bg-muted/50 p-3 space-y-1.5 text-xs text-muted-foreground">
               <p><strong>Ödəniş:</strong> {paymentMethod === "balance" ? "Balans ilə" : "Kart ilə (Epoint)"}</p>
               {selectedShippingMethod && <p><strong>Çatdırılma:</strong> {selectedShippingMethod.name}</p>}
-              <p><strong>Ünvan:</strong> {shippingAddress}</p>
+              {shippingAddress && <p><strong>Ünvan:</strong> {shippingAddress}</p>}
               {buyerNote && <p><strong>Qeyd:</strong> {buyerNote}</p>}
             </div>
 

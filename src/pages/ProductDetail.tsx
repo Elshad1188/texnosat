@@ -497,7 +497,7 @@ const ProductDetail = () => {
                     <Zap className="h-4 w-4 text-white fill-white" />
                   </div>
                 )}
-                {(listing.custom_fields as any)?._shipping_methods?.length > 0 ? (
+                {platform.showShipping && ((listing.custom_fields as any)?._shipping_methods?.length > 0 ? (
                   <div className="flex items-center gap-1 rounded-full bg-emerald-500/90 px-2.5 py-1 shadow-lg backdrop-blur-sm">
                     <Truck className="h-3.5 w-3.5 text-white" />
                     <span className="text-[11px] font-bold text-white">{t("detail.delivery_available")}</span>
@@ -507,7 +507,7 @@ const ProductDetail = () => {
                     <Truck className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="text-[11px] font-medium text-muted-foreground">{t("detail.delivery_unavailable")}</span>
                   </div>
-                )}
+                ))}
                 <Badge variant="secondary">{listing.condition}</Badge>
               </div>
               <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded-lg bg-card/80 px-2 py-1 text-xs backdrop-blur-sm z-10 pointer-events-none">
@@ -655,7 +655,7 @@ const ProductDetail = () => {
             </div>
 
             {/* Shipping Methods */}
-            {(listing.custom_fields as any)?._shipping_methods?.length > 0 && (
+            {platform.showShipping && (listing.custom_fields as any)?._shipping_methods?.length > 0 && (
               <div className="mt-4 rounded-xl border border-border bg-card p-4">
                 <h3 className="mb-3 flex items-center gap-2 font-display text-sm font-semibold text-foreground">
                   <Truck className="h-4 w-4 text-emerald-600" />

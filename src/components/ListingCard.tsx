@@ -9,6 +9,7 @@ import CheckoutDialog from "@/components/CheckoutDialog";
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "@/contexts/LanguageContext";
+import { usePlatformMode } from "@/hooks/usePlatformMode";
 
 interface ListingCardProps {
   id: string;
@@ -35,6 +36,7 @@ interface ListingCardProps {
 const ListingCard = ({ id, title, price, numericPrice, currency, userId, customFields, location, time, image, images, condition, isPremium, isUrgent, isBuyable, storeId, storeName, storeLogo, imageSlider }: ListingCardProps) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const platform = usePlatformMode();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toggle, has } = useCompare();
@@ -153,7 +155,7 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
               <span className="text-[10px] font-bold text-primary-foreground">{t("card.for_sale")}</span>
             </div>
           )}
-          {customFields?._shipping_methods?.length > 0 ? (
+          {platform.showShipping && (customFields?._shipping_methods?.length > 0 ? (
             <div
               title={t("card.delivery_available")}
               className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/90 shadow-lg shadow-emerald-500/30 backdrop-blur-sm"
@@ -167,7 +169,7 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
             >
               <Truck className="h-3.5 w-3.5 text-muted-foreground" />
             </div>
-          )}
+          ))}
           {isPremium && (
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500/90 shadow-lg shadow-amber-500/30 backdrop-blur-sm">
               <Crown className="h-3.5 w-3.5 text-white" />

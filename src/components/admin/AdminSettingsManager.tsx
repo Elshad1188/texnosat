@@ -42,6 +42,7 @@ interface SiteSettings {
   store_listing_limit: number;
   telegram_bot_daily_limit: number;
   ai_autofill_daily_limit: number;
+  disable_shipping: boolean;
 }
 
 const defaults: SiteSettings = {
@@ -72,6 +73,7 @@ const defaults: SiteSettings = {
   store_listing_limit: 20,
   telegram_bot_daily_limit: 5,
   ai_autofill_daily_limit: 3,
+  disable_shipping: false,
 };
 
 const watermarkPositions = [
@@ -232,6 +234,16 @@ const AdminSettingsManager = () => {
             ℹ️ Elan rejimində satış funksiyaları, sifarişlər və çatdırılma bölmələri gizlədiləcək.
           </div>
         )}
+        <div className="flex items-center justify-between pt-3 border-t border-border/50">
+          <div>
+            <p className="text-sm text-foreground">🚚 Çatdırılmanı tam söndür</p>
+            <p className="text-xs text-muted-foreground">Daşınmaz əmlak platforması üçün uyğundur. Çatdırılma seçimləri, bölmələri və ikonları hər yerdən gizlədiləcək.</p>
+          </div>
+          <Switch
+            checked={settings.disable_shipping}
+            onCheckedChange={(v) => setSettings({ ...settings, disable_shipping: v })}
+          />
+        </div>
       </div>
 
       {/* General */}
