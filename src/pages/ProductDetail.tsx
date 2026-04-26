@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Share2, MapPin, Grid, Phone, MessageSquare, MessageCircle, ChevronLeft, Flag, Send, Heart, X, Trash2, Clock, Star, Shield, Eye, Loader2, Store, ExternalLink, Edit2, Crown, Zap, Gem, Play, UserPlus, UserCheck, ShoppingCart, Facebook, Twitter, Link as LinkIcon, Copy, Truck } from "lucide-react";
+import { ArrowLeft, Share2, MapPin, Grid, Phone, MessageSquare, MessageCircle, ChevronLeft, Flag, Send, Heart, X, Trash2, Clock, Star, Shield, Eye, Loader2, Store, ExternalLink, Edit2, Crown, Zap, Gem, Play, UserPlus, UserCheck, ShoppingCart, Facebook, Twitter, Link as LinkIcon, Copy, Truck, Tag, CircleDollarSign, Calendar, Sparkles, FileText, Info, BedDouble, Maximize2, Building2, Landmark, FileCheck2, Layers, Car as CarIcon, Palette, Gauge, Fuel, Settings2, Wrench, KeyRound, Home as HomeIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -624,32 +624,50 @@ const ProductDetail = () => {
 
             {/* Description */}
             {listing.description && (
-              <div className="mt-6">
-                <h3 className="font-display text-sm font-semibold text-foreground">{t("detail.description")}</h3>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{listing.description}</p>
+              <div className="mt-6 rounded-2xl border border-border bg-gradient-to-br from-card to-muted/30 p-5 shadow-sm">
+                <div className="mb-3 flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <h3 className="font-display text-base font-semibold text-foreground">{t("detail.description")}</h3>
+                </div>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{listing.description}</p>
               </div>
             )}
 
-            {/* Details Table */}
-            <div className="mt-6 rounded-xl border border-border bg-card p-4">
-              <h3 className="mb-3 font-display text-sm font-semibold text-foreground">{t("detail.product_info")}</h3>
-              <div className="space-y-2 text-sm">
-                <DetailRow label={t("detail.category")} value={listing.category} />
-                <DetailRow label={t("products.condition")} value={listing.condition} />
-                <DetailRow label={t("detail.city")} value={listing.location} />
-                <DetailRow label={t("detail.currency")} value={listing.currency} />
-                <DetailRow label={t("detail.views_count")} value={String(listing.views_count)} />
-                <DetailRow label={t("detail.created_date")} value={new Date(listing.created_at).toLocaleDateString(language)} />
+            {/* Details — modern icon grid */}
+            <div className="mt-4 rounded-2xl border border-border bg-card p-5 shadow-sm">
+              <div className="mb-4 flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Info className="h-4 w-4" />
+                </div>
+                <h3 className="font-display text-base font-semibold text-foreground">{t("detail.product_info")}</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                <SpecChip icon={Tag} label={t("detail.category")} value={listing.category} />
+                <SpecChip icon={Sparkles} label={t("products.condition")} value={listing.condition} />
+                <SpecChip icon={MapPin} label={t("detail.city")} value={listing.location} />
+                <SpecChip icon={CircleDollarSign} label={t("detail.currency")} value={listing.currency} />
+                <SpecChip icon={Eye} label={t("detail.views_count")} value={String(listing.views_count)} />
+                <SpecChip icon={Calendar} label={t("detail.created_date")} value={new Date(listing.created_at).toLocaleDateString(language)} />
                 {listing.is_buyable && (
-                  <DetailRow label={t("detail.sale")} value={t("detail.direct_purchase_available")} />
+                  <SpecChip icon={ShoppingCart} label={t("detail.sale")} value={t("detail.direct_purchase_available")} accent="emerald" />
                 )}
-                {/* Custom fields - skip internal underscore-prefixed keys and complex objects */}
                 {(listing as any).custom_fields && Object.entries((listing as any).custom_fields).map(([key, val]) => {
                   if (!val) return null;
                   if (key.startsWith("_")) return null;
                   if (typeof val === "object") return null;
                   const fieldDef = categoryFieldDefs.find((f: any) => f.field_name === key);
-                  return <DetailRow key={key} label={fieldDef?.field_label || key} value={String(val)} />;
+                  const { icon, accent } = getFieldVisual(key);
+                  return (
+                    <SpecChip
+                      key={key}
+                      icon={icon}
+                      label={fieldDef?.field_label || key}
+                      value={String(val)}
+                      accent={accent}
+                    />
+                  );
                 })}
               </div>
             </div>
@@ -1179,5 +1197,63 @@ const DetailRow = ({ label, value }: { label: string; value: string }) => (
     <span className="font-medium text-foreground">{value}</span>
   </div>
 );
+
+type AccentKey = "primary" | "emerald" | "blue" | "amber" | "rose" | "violet";
+const accentMap: Record<AccentKey, string> = {
+  primary: "bg-primary/10 text-primary",
+  emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  blue: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+  amber: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  rose: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+  violet: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
+};
+
+const SpecChip = ({
+  icon: Icon,
+  label,
+  value,
+  accent = "primary",
+}: {
+  icon: any;
+  label: string;
+  value: string;
+  accent?: AccentKey;
+}) => (
+  <div className="group flex items-center gap-2.5 rounded-xl border border-border/60 bg-background/60 px-3 py-2.5 transition-colors hover:border-primary/30 hover:bg-muted/40">
+    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${accentMap[accent]}`}>
+      <Icon className="h-4 w-4" />
+    </div>
+    <div className="min-w-0 flex-1">
+      <p className="truncate text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="truncate text-sm font-semibold text-foreground" title={value}>{value}</p>
+    </div>
+  </div>
+);
+
+function getFieldVisual(key: string): { icon: any; accent: AccentKey } {
+  const k = key.toLowerCase();
+  // Real estate
+  if (k.includes("room")) return { icon: BedDouble, accent: "violet" };
+  if (k.includes("area") || k === "area_m2" || k.includes("sahə")) return { icon: Maximize2, accent: "blue" };
+  if (k.includes("floor") || k.includes("mərtəbə")) return { icon: Layers, accent: "amber" };
+  if (k.includes("building") || k.includes("bina")) return { icon: Building2, accent: "primary" };
+  if (k.includes("document") || k.includes("kupça") || k.includes("çıxarış")) return { icon: FileCheck2, accent: "blue" };
+  if (k.includes("mortgage") || k.includes("ipoteka") || k.includes("kredit")) return { icon: Landmark, accent: "emerald" };
+  if (k.includes("deal") || k.includes("əməliyyat")) return { icon: KeyRound, accent: "primary" };
+  if (k.includes("repair") || k.includes("təmir")) return { icon: Wrench, accent: "amber" };
+  // Auto
+  if (k.includes("brand") || k.includes("marka")) return { icon: CarIcon, accent: "primary" };
+  if (k.includes("model")) return { icon: CarIcon, accent: "violet" };
+  if (k.includes("year") || k.includes("il")) return { icon: Calendar, accent: "amber" };
+  if (k.includes("color") || k.includes("rəng")) return { icon: Palette, accent: "rose" };
+  if (k.includes("mileage") || k.includes("km") || k.includes("yürüş")) return { icon: Gauge, accent: "blue" };
+  if (k.includes("fuel") || k.includes("yanacaq")) return { icon: Fuel, accent: "emerald" };
+  if (k.includes("transmission") || k.includes("ötür")) return { icon: Settings2, accent: "primary" };
+  if (k.includes("engine") || k.includes("mühərrik")) return { icon: Settings2, accent: "rose" };
+  // Generic
+  if (k.includes("price") || k.includes("qiymət")) return { icon: CircleDollarSign, accent: "emerald" };
+  if (k.includes("home") || k.includes("ev")) return { icon: HomeIcon, accent: "primary" };
+  return { icon: Tag, accent: "primary" };
+}
 
 export default ProductDetail;
