@@ -363,10 +363,21 @@ const CreateListing = () => {
         resolvedCustomFields._shipping_methods = selectedShippingMethods as any;
       }
 
+      // Auto-generate listing title from category + key real-estate fields
+      const catName = (categories.find((c: any) => c.slug === finalCategory) as any)?.name || "Elan";
+      const titleParts: string[] = [];
+      if (resolvedCustomFields.deal_type) titleParts.push(resolvedCustomFields.deal_type);
+      titleParts.push(catName);
+      if (resolvedCustomFields.rooms) titleParts.push(`${resolvedCustomFields.rooms} otaq`);
+      if (resolvedCustomFields.area_m2) titleParts.push(`${resolvedCustomFields.area_m2} m²`);
+      if (form.location) titleParts.push(form.location);
+      const generatedTitle = titleParts.join(" · ");
+
       const listingData: any = {
-        title: form.title, description: form.description,
+        title: generatedTitle,
+        description: form.description,
         price: parseFloat(form.price), category: finalCategory,
-        condition: form.condition, location: form.location || "Bakı",
+        condition: "Yeni", location: form.location || "Bakı",
         image_urls: allImages,
         video_url: finalVideoUrl,
         store_id: selectedStoreId || null,
