@@ -43,6 +43,10 @@ interface SiteSettings {
   telegram_bot_daily_limit: number;
   ai_autofill_daily_limit: number;
   disable_shipping: boolean;
+  disable_visual_search: boolean;
+  disable_warehouse: boolean;
+  disable_ai_autofill: boolean;
+  disable_telegram_bot: boolean;
 }
 
 const defaults: SiteSettings = {
@@ -74,6 +78,10 @@ const defaults: SiteSettings = {
   telegram_bot_daily_limit: 5,
   ai_autofill_daily_limit: 3,
   disable_shipping: false,
+  disable_visual_search: false,
+  disable_warehouse: false,
+  disable_ai_autofill: false,
+  disable_telegram_bot: false,
 };
 
 const watermarkPositions = [
