@@ -351,18 +351,6 @@ const Products = () => {
                     </div>
                   </FilterSection>
 
-                  {/* Condition */}
-                  <FilterSection icon={Sparkles} title={t("products.condition")}>
-                    <div className="flex flex-wrap gap-1.5">
-                      {conditions.map((c) => (
-                        <button key={c.value} onClick={() => setSelectedCondition(c.value)}
-                          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${selectedCondition === c.value ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
-                          {t(c.labelKey)}
-                        </button>
-                      ))}
-                    </div>
-                  </FilterSection>
-
                   {/* Custom category fields */}
                   {categoryFields.length > 0 && (
                     <FilterSection icon={Layers} title={t("products.category_filters")}>
@@ -402,7 +390,6 @@ const Products = () => {
               category={selectedCategory}
               subcategory={selectedSubcategory}
               region={selectedRegion ? (regions.find((r: any) => r.id === selectedRegion) as any)?.name : ""}
-              condition={selectedCondition === "all" ? "" : conditionDbMap[selectedCondition]}
               priceMin={priceMin}
               priceMax={priceMax}
             />
@@ -420,7 +407,7 @@ const Products = () => {
             {selectedCategory && <FilterChip label={parentCategories.find((c: any) => c.slug === selectedCategory)?.name || selectedCategory} onClear={() => { setSelectedCategory(""); setSelectedSubcategory(""); }} />}
             {selectedSubcategory && <FilterChip label={subcategories.find((s: any) => s.slug === selectedSubcategory)?.name || selectedSubcategory} onClear={() => setSelectedSubcategory("")} />}
             {selectedRegion && <FilterChip label={(regions.find((r: any) => r.id === selectedRegion) as any)?.name} onClear={() => setSelectedRegion("")} />}
-            {selectedCondition !== "all" && <FilterChip label={t(conditions.find((c) => c.value === selectedCondition)!.labelKey)} onClear={() => setSelectedCondition("all")} />}
+            
             {(priceMin || priceMax) && <FilterChip label={`${priceMin || 0} — ${priceMax || "∞"} ₼`} onClear={() => { setPriceMin(""); setPriceMax(""); }} />}
             {dateRange !== "all" && <FilterChip label={dateRange === "24h" ? "Son 24 saat" : dateRange === "week" ? "Son 7 gün" : "Son 30 gün"} onClear={() => setDateRange("all")} />}
             {Object.entries(customFilters).filter(([, v]) => v).map(([k, v]) => (
