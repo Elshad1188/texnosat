@@ -191,6 +191,14 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
           )}
         </div>
 
+        {/* Region & sub-region under price */}
+        {location && (
+          <p className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-foreground/80 truncate">
+            <MapPin className="h-3 w-3 text-primary flex-shrink-0" />
+            <span className="truncate">{location}</span>
+          </p>
+        )}
+
         {/* Real estate parameters */}
         {(customFields?.rooms || customFields?.area_m2 || customFields?.floor) && (
           <div className="mt-1.5 flex flex-wrap items-center gap-1">
