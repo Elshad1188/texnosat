@@ -17,6 +17,7 @@ import { useLanguage, useTranslation } from "@/contexts/LanguageContext";
 import { getListingCoords } from "@/components/ListingsMap";
 const ListingsMap = lazy(() => import("@/components/ListingsMap"));
 import DealTypeTabs from "@/components/DealTypeTabs";
+import RegionPicker from "@/components/RegionPicker";
 
 type MapBounds = { north: number; south: number; east: number; west: number };
 
