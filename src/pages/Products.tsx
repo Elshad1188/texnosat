@@ -172,7 +172,19 @@ const Products = () => {
     if (selectedRegion) {
       const region = regions.find((r: any) => r.id === selectedRegion);
       if (region) {
-        result = result.filter((p: any) => p.location === (region as any).name);
+        const acceptable = new Set<string>();
+        acceptable.add((region as any).name);
+        // If a child region is selected, also accept the parent's name (legacy listings only store parent city)
+        if ((region as any).parent_id) {
+          const parent = regions.find((r: any) => r.id === (region as any).parent_id);
+          if (parent) acceptable.add((parent as any).name);
+        } else {
+          // If a parent is selected, also accept any of its children's names
+          regions
+            .filter((r: any) => r.parent_id === (region as any).id)
+            .forEach((c: any) => acceptable.add(c.name));
+        }
+        result = result.filter((p: any) => acceptable.has(p.location));
       }
     }
 
