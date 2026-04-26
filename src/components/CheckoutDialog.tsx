@@ -225,7 +225,7 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
         )}
 
         {/* Step 1: Shipping */}
-        {step === "shipping" && (
+        {step === "shipping" && platform.showShipping && (
           <div className="space-y-4">
             {shippingMethods.length > 0 ? (
               <RadioGroup value={selectedShipping} onValueChange={setSelectedShipping}>
