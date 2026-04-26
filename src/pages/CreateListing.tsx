@@ -90,8 +90,16 @@ const CreateListing = () => {
   const { data: regions = [] } = useQuery({
     queryKey: ["regions-parent"],
     queryFn: async () => {
-      const { data } = await supabase.from("regions").select("*").is("parent_id", null).eq("is_active", true).order("sort_order");
+      const { data } = await supabase.from("regions").select("*").is("parent_id", null).eq("is_active", true).eq("type", "region").order("sort_order");
       return data || [];
+    },
+  });
+
+  const { data: metroOptions = [] } = useQuery({
+    queryKey: ["regions-metro"],
+    queryFn: async () => {
+      const { data } = await supabase.from("regions").select("name").eq("type", "metro").eq("is_active", true).order("sort_order").order("name");
+      return (data || []).map((r: any) => r.name as string);
     },
   });
 
