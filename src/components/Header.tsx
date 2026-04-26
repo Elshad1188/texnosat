@@ -13,12 +13,14 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { iconMap } from "@/lib/icons";
 import { useTranslation } from "react-i18next";
+import { usePlatformMode } from "@/hooks/usePlatformMode";
 
 const Header = () => {
   const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const { theme } = useTheme();
   const { isAdmin } = useIsAdmin();
+  const { showReels, showSpinWin, showOrders, showCompare } = usePlatformMode();
   const queryClient = useQueryClient();
   const [sheetOpen, setSheetOpen] = useState(false);
 
