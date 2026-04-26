@@ -88,9 +88,9 @@ const CreateListing = () => {
   });
 
   const { data: regions = [] } = useQuery({
-    queryKey: ["regions-parent"],
+    queryKey: ["regions-all-tree"],
     queryFn: async () => {
-      const { data } = await supabase.from("regions").select("*").is("parent_id", null).eq("is_active", true).eq("type", "region").order("sort_order");
+      const { data } = await supabase.from("regions").select("*").eq("is_active", true).eq("type", "region").order("sort_order");
       return data || [];
     },
   });
