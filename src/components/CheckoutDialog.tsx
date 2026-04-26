@@ -34,7 +34,8 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [step, setStep] = useState<"shipping" | "payment" | "confirm" | "success">("shipping");
+  const platform = usePlatformMode();
+  const [step, setStep] = useState<"shipping" | "payment" | "confirm" | "success">(platform.showShipping ? "shipping" : "payment");
   const [selectedShipping, setSelectedShipping] = useState<string>("");
   const [shippingAddress, setShippingAddress] = useState("");
   const [buyerNote, setBuyerNote] = useState("");
