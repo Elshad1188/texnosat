@@ -36,6 +36,7 @@ interface ListingCardProps {
 const ListingCard = ({ id, title, price, numericPrice, currency, userId, customFields, location, time, image, images, condition, isPremium, isUrgent, isBuyable, storeId, storeName, storeLogo, imageSlider }: ListingCardProps) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const platform = usePlatformMode();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toggle, has } = useCompare();
