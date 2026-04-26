@@ -16,6 +16,7 @@ import SaveSearchButton from "@/components/SaveSearchButton";
 import { useLanguage, useTranslation } from "@/contexts/LanguageContext";
 import { getListingCoords } from "@/components/ListingsMap";
 const ListingsMap = lazy(() => import("@/components/ListingsMap"));
+import DealTypeTabs from "@/components/DealTypeTabs";
 
 type MapBounds = { north: number; south: number; east: number; west: number };
 
@@ -239,6 +240,11 @@ const Products = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-6">
+        {/* Deal type tabs (bina.az style) */}
+        <div className="mb-5">
+          <DealTypeTabs value={selectedDeal} onChange={setSelectedDeal} variant="controlled" />
+        </div>
+
         {/* Search */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
           <form onSubmit={(e) => e.preventDefault()} className="relative flex-1">
