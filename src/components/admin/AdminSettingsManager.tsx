@@ -86,6 +86,10 @@ const defaults: SiteSettings = {
   disable_warehouse: false,
   disable_ai_autofill: false,
   disable_telegram_bot: false,
+  disable_reels: false,
+  disable_spin_win: false,
+  disable_orders: false,
+  disable_compare: false,
 };
 
 const watermarkPositions = [
