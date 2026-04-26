@@ -555,12 +555,17 @@ const CreateListing = () => {
 
             <div className="space-y-2">
               <Label>{t("products.region")}</Label>
-              <Select value={form.location} onValueChange={(v) => setForm({ ...form, location: v })}>
-                <SelectTrigger><SelectValue placeholder={t("products.select_region")} /></SelectTrigger>
-                <SelectContent>
-                  {regions.map((r: any) => <SelectItem key={r.id} value={r.name}>{r.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <RegionPicker
+                regions={regions as any}
+                value={(regions as any[]).find((r: any) => r.name === form.location)?.id || ""}
+                onChange={(id) => {
+                  const r = (regions as any[]).find((x: any) => x.id === id);
+                  setForm({ ...form, location: r?.name || "" });
+                }}
+                placeholder={t("products.select_region")}
+                showAll={false}
+                required
+              />
             </div>
 
             {/* Identity switcher - personal vs store */}
