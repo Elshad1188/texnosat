@@ -1,0 +1,18 @@
+UPDATE public.translations SET az='Agentlik panelindən', ru='Из панели агентства' WHERE key='create_listing.from_store_panel';
+UPDATE public.translations SET az='Elan seçilmiş agentlik adından yerləşdiriləcək', ru='Объявление будет размещено от имени выбранного агентства' WHERE key='create_listing.store_identity_hint';
+UPDATE public.translations SET az='Agentlik ilə əlaqə', ru='Связаться с агентством' WHERE key='detail.contact_store';
+UPDATE public.translations SET az='Premium və seçilmiş agentliklər', ru='Премиум и избранные агентства' WHERE key='home.stores_subtitle';
+UPDATE public.translations SET az='Agentliklər', ru='Агентства' WHERE key='home.stores_title';
+UPDATE public.translations SET az='Agentlik yarat', ru='Создать агентство' WHERE key='profile.create_store';
+UPDATE public.translations SET az='Yeni agentlik', ru='Новое агентство' WHERE key='profile.new_store';
+UPDATE public.translations SET az='Hələ agentlik yaratmamısınız.', ru='Вы еще не создали агентство.' WHERE key='profile.no_stores';
+UPDATE public.translations SET az='Agentliklər', ru='Агентства' WHERE key='profile.stores';
+UPDATE public.translations SET az='Agentliklərə qayıt', ru='Вернуться к агентствам' WHERE key='store_detail.back_to_stores';
+UPDATE public.translations SET az='Agentlik elanları ({{count}})', ru='Объявления агентства ({{count}})' WHERE key='store_detail.listings';
+UPDATE public.translations SET az='Agentliyə mesaj yaz', ru='Написать агентству' WHERE key='store_detail.message_store';
+UPDATE public.translations SET az='Bu agentlikdə hələ elan yoxdur', ru='В этом агентстве пока нет объявлений' WHERE key='store_detail.no_listings';
+UPDATE public.translations SET az='Agentlik tapılmadı', ru='Агентство не найдено' WHERE key='store_detail.not_found';
+UPDATE public.translations SET az='Agentlik haqqında rəyiniz...', ru='Ваш отзыв об агентстве...' WHERE key='store_detail.review_placeholder';
+UPDATE public.translations SET az='Agentlik rəyləri ({{count}})', ru='Отзывы агентства ({{count}})' WHERE key='store_detail.reviews';
+UPDATE public.translations SET az='Agentlik haqqında rəy yazın', ru='Оставьте отзыв об агентстве' WHERE key='store_detail.write_review';
+UPDATE public.translations SET az='Agentliyə keç', ru='Перейти в агентство' WHERE key='stores.open_store';
