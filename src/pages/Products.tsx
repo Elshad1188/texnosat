@@ -178,17 +178,27 @@ const Products = () => {
     else if (sortBy === "views") result.sort((a: any, b: any) => (b.views_count || 0) - (a.views_count || 0));
 
     return result;
-  }, [query, selectedCategory, selectedSubcategory, selectedCondition, sortBy, priceMin, priceMax, allListings, selectedRegion, regions, customFilters]);
+  }, [query, selectedCategory, selectedSubcategory, selectedCondition, sortBy, priceMin, priceMax, allListings, selectedRegion, regions, customFilters, dateRange]);
 
   const clearFilters = () => {
     setQuery(""); setSelectedCategory(""); setSelectedSubcategory("");
     setSelectedRegion(""); setSelectedCondition("all");
     setPriceMin(""); setPriceMax(""); setSortBy("newest");
+    setDateRange("all");
     setCustomFilters({});
     setSearchParams({});
   };
 
-  const hasActiveFilters = query || selectedCategory || selectedCondition !== "all" || priceMin || priceMax || selectedRegion || Object.values(customFilters).some(v => v !== "");
+  const activeFilterCount =
+    (query ? 1 : 0) +
+    (selectedCategory ? 1 : 0) +
+    (selectedSubcategory ? 1 : 0) +
+    (selectedCondition !== "all" ? 1 : 0) +
+    (selectedRegion ? 1 : 0) +
+    (priceMin || priceMax ? 1 : 0) +
+    (dateRange !== "all" ? 1 : 0) +
+    Object.values(customFilters).filter((v) => v).length;
+  const hasActiveFilters = activeFilterCount > 0;
 
   return (
     <div className="min-h-screen bg-background">
