@@ -1,7 +1,7 @@
 import { useState, useMemo, lazy, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, SlidersHorizontal, X, Loader2, MapPin, Tag, CircleDollarSign, Calendar, Sparkles, Layers, Filter, Map as MapIcon, LayoutGrid } from "lucide-react";
+import { Search, SlidersHorizontal, X, Loader2, MapPin, Tag, CircleDollarSign, Calendar, Layers, Filter, Map as MapIcon, LayoutGrid } from "lucide-react";
 import { CircuitBoard, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,19 +21,12 @@ import RegionPicker from "@/components/RegionPicker";
 
 type MapBounds = { north: number; south: number; east: number; west: number };
 
-const conditions = [
-  { value: "all", dbValue: "", labelKey: "common.all" },
-  { value: "new", dbValue: "Yeni", labelKey: "products.condition_new" },
-  { value: "like_new", dbValue: "Yeni kimi", labelKey: "products.condition_like_new" },
-  { value: "used", dbValue: "İşlənmiş", labelKey: "products.condition_used" },
-];
 const sortOptions = [
   { value: "newest", labelKey: "products.sort_newest" },
   { value: "price-asc", labelKey: "products.sort_price_asc" },
   { value: "price-desc", labelKey: "products.sort_price_desc" },
   { value: "views", labelKey: "products.sort_views" },
 ];
-const conditionDbMap = Object.fromEntries(conditions.map((c) => [c.value, c.dbValue]));
 
 function formatTime(dateStr: string, t: (key: string, options?: any) => string, language: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -58,7 +51,6 @@ const Products = () => {
   const [selectedDeal, setSelectedDeal] = useState(initialDeal);
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("");
-  const [selectedCondition, setSelectedCondition] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const [showFilters, setShowFilters] = useState(false);
   const [priceMin, setPriceMin] = useState("");
@@ -165,9 +157,6 @@ const Products = () => {
       result = result.filter((p: any) => p.subcategory === selectedSubcategory);
     }
 
-    if (selectedCondition !== "all") {
-      result = result.filter((p: any) => p.condition === conditionDbMap[selectedCondition]);
-    }
 
     if (selectedRegion) {
       const region = regions.find((r: any) => r.id === selectedRegion);
@@ -214,7 +203,7 @@ const Products = () => {
     else if (sortBy === "views") result.sort((a: any, b: any) => (b.views_count || 0) - (a.views_count || 0));
 
     return result;
-  }, [query, selectedCategory, selectedSubcategory, selectedCondition, sortBy, priceMin, priceMax, allListings, selectedRegion, regions, customFilters, dateRange, selectedDeal]);
+  }, [query, selectedCategory, selectedSubcategory, sortBy, priceMin, priceMax, allListings, selectedRegion, regions, customFilters, dateRange, selectedDeal]);
 
   // Apply map-bounds filter on top of standard filters when in map view
   const visibleProducts = useMemo(() => {
@@ -229,7 +218,7 @@ const Products = () => {
 
   const clearFilters = () => {
     setQuery(""); setSelectedCategory(""); setSelectedSubcategory("");
-    setSelectedRegion(""); setSelectedCondition("all");
+    setSelectedRegion("");
     setPriceMin(""); setPriceMax(""); setSortBy("newest");
     setDateRange("all");
     setCustomFilters({});
@@ -241,7 +230,7 @@ const Products = () => {
     (query ? 1 : 0) +
     (selectedCategory ? 1 : 0) +
     (selectedSubcategory ? 1 : 0) +
-    (selectedCondition !== "all" ? 1 : 0) +
+    
     (selectedRegion ? 1 : 0) +
     (priceMin || priceMax ? 1 : 0) +
     (dateRange !== "all" ? 1 : 0) +
@@ -362,18 +351,6 @@ const Products = () => {
                     </div>
                   </FilterSection>
 
-                  {/* Condition */}
-                  <FilterSection icon={Sparkles} title={t("products.condition")}>
-                    <div className="flex flex-wrap gap-1.5">
-                      {conditions.map((c) => (
-                        <button key={c.value} onClick={() => setSelectedCondition(c.value)}
-                          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${selectedCondition === c.value ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
-                          {t(c.labelKey)}
-                        </button>
-                      ))}
-                    </div>
-                  </FilterSection>
-
                   {/* Custom category fields */}
                   {categoryFields.length > 0 && (
                     <FilterSection icon={Layers} title={t("products.category_filters")}>
@@ -413,7 +390,6 @@ const Products = () => {
               category={selectedCategory}
               subcategory={selectedSubcategory}
               region={selectedRegion ? (regions.find((r: any) => r.id === selectedRegion) as any)?.name : ""}
-              condition={selectedCondition === "all" ? "" : conditionDbMap[selectedCondition]}
               priceMin={priceMin}
               priceMax={priceMax}
             />
@@ -431,7 +407,7 @@ const Products = () => {
             {selectedCategory && <FilterChip label={parentCategories.find((c: any) => c.slug === selectedCategory)?.name || selectedCategory} onClear={() => { setSelectedCategory(""); setSelectedSubcategory(""); }} />}
             {selectedSubcategory && <FilterChip label={subcategories.find((s: any) => s.slug === selectedSubcategory)?.name || selectedSubcategory} onClear={() => setSelectedSubcategory("")} />}
             {selectedRegion && <FilterChip label={(regions.find((r: any) => r.id === selectedRegion) as any)?.name} onClear={() => setSelectedRegion("")} />}
-            {selectedCondition !== "all" && <FilterChip label={t(conditions.find((c) => c.value === selectedCondition)!.labelKey)} onClear={() => setSelectedCondition("all")} />}
+            
             {(priceMin || priceMax) && <FilterChip label={`${priceMin || 0} — ${priceMax || "∞"} ₼`} onClear={() => { setPriceMin(""); setPriceMax(""); }} />}
             {dateRange !== "all" && <FilterChip label={dateRange === "24h" ? "Son 24 saat" : dateRange === "week" ? "Son 7 gün" : "Son 30 gün"} onClear={() => setDateRange("all")} />}
             {Object.entries(customFilters).filter(([, v]) => v).map(([k, v]) => (

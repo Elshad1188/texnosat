@@ -12,7 +12,6 @@ import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import SellerProfile from "./pages/SellerProfile";
 import CreateListing from "./pages/CreateListing";
-import Reels from "./pages/Reels";
 import CreateStore from "./pages/CreateStore";
 import Stores from "./pages/Stores";
 import StoreDashboard from "./pages/StoreDashboard";
@@ -25,21 +24,16 @@ import Profile from "./pages/Profile";
 import Favorites from "./pages/Favorites";
 import StaticPage from "./pages/StaticPage";
 import Balance from "./pages/Balance";
-import SpinWin from "./pages/SpinWin";
 import NotFound from "./pages/NotFound";
 import ModeratorPanel from "./pages/ModeratorPanel";
-import Orders from "./pages/Orders";
 import Support from "./pages/Support";
 import MobileBottomNav from "./components/MobileBottomNav";
 import MobileTopSearch from "./components/MobileTopSearch";
 import AppDownloadBanner from "./components/AppDownloadBanner";
 import FirebaseInit from "./components/FirebaseInit";
-import { CompareProvider } from "@/contexts/CompareContext";
-import CompareBar from "./components/CompareBar";
-import ComparePage from "./pages/ComparePage";
 import PaymentResult from "./pages/PaymentResult";
+import { CompareProvider } from "@/contexts/CompareContext";
 import ChatBot from "./components/ChatBot";
-import SpinWheelPopup from "./components/SpinWheelPopup";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 
@@ -73,7 +67,6 @@ const AppWrapper = () => {
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/seller/:id" element={<SellerProfile />} />
         <Route path="/create-listing" element={<CreateListing />} />
-        <Route path="/reels" element={<Reels />} />
         <Route path="/create-store" element={<CreateStore />} />
         <Route path="/stores" element={<Stores />} />
         <Route path="/store/:id" element={<StoreDetail />} />
@@ -86,11 +79,8 @@ const AppWrapper = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/favorites" element={<Favorites />} />
         <Route path="/balance" element={<Balance />} />
-        <Route path="/spin-win" element={<SpinWin />} />
-        <Route path="/orders" element={<Orders />} />
         <Route path="/support" element={<Support />} />
         <Route path="/page/:slug" element={<StaticPage />} />
-        <Route path="/compare" element={<ComparePage />} />
         <Route path="/payment-result" element={<PaymentResult />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
@@ -112,11 +102,9 @@ const App = () => (
               <ThemeProvider>
                 <ScrollToTop />
                 <AppWrapper />
-                <CompareBar />
                 <MobileBottomNav />
                 <MobileTopSearch />
                 <ChatBot />
-                <SpinWheelPopup />
                 <AppDownloadBanner />
                 <FirebaseInit />
               </ThemeProvider>
