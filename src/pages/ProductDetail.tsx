@@ -655,7 +655,7 @@ const ProductDetail = () => {
             </div>
 
             {/* Shipping Methods */}
-            {(listing.custom_fields as any)?._shipping_methods?.length > 0 && (
+            {platform.showShipping && (listing.custom_fields as any)?._shipping_methods?.length > 0 && (
               <div className="mt-4 rounded-xl border border-border bg-card p-4">
                 <h3 className="mb-3 flex items-center gap-2 font-display text-sm font-semibold text-foreground">
                   <Truck className="h-4 w-4 text-emerald-600" />
