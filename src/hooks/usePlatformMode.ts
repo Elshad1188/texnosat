@@ -108,5 +108,12 @@ export function usePlatformMode(): PlatformConfig & { isLoading: boolean } {
   if (data?.disableWarehouse) cfg.showWarehouse = false;
   if (data?.disableAiAutofill) cfg.showAiAutofill = false;
   if (data?.disableTelegramBot) cfg.showTelegramBot = false;
+  // Real-estate-only platform: disable all non-realestate user-facing features
+  cfg.showSales = false;
+  cfg.showStock = false;
+  cfg.showOrders = false;
+  cfg.showShipping = false;
+  cfg.showCheckout = false;
+  cfg.showVisualSearch = false;
   return { ...cfg, isLoading };
 }
