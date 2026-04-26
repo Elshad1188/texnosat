@@ -55,6 +55,7 @@ const Products = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
+  const [dateRange, setDateRange] = useState("all");
   const [customFilters, setCustomFilters] = useState<Record<string, string>>({});
 
   // Fetch categories
