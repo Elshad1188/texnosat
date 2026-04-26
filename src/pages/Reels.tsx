@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useIsAdminOrMod } from "@/hooks/useIsAdmin";
-import { Heart, MessageCircle, Share2, Eye, ShoppingBag, X, Send, Play, Image as ImageIcon, UserPlus, UserCheck, Trash2, Crown, Zap } from "lucide-react";
+import { Heart, MessageCircle, Share2, Eye, ShoppingBag, X, Send, Play, Image as ImageIcon, UserPlus, UserCheck, Trash2, Crown, Zap, BedDouble, Maximize2, Building2, Landmark, FileCheck2 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -123,7 +123,7 @@ const Reels = () => {
     queryFn: async () => {
       const { data: allListings } = await supabase
         .from("listings")
-        .select("id, title, price, currency, video_url, image_urls, user_id, store_id, created_at, category, views_count, is_premium, is_urgent, reel_comments(count)")
+        .select("id, title, price, currency, video_url, image_urls, user_id, store_id, created_at, category, views_count, is_premium, is_urgent, custom_fields, reel_comments(count)")
         .eq("is_active", true);
 
       if (!allListings || allListings.length === 0) return [];
@@ -587,10 +587,66 @@ const Reels = () => {
 
       {/* Price - top right corner */}
       {currentReel && (
-        <div className="absolute top-14 right-4 z-30 flex flex-col items-end gap-2">
+        <div className="absolute top-14 right-4 z-30 flex flex-col items-end gap-2 max-w-[55%]">
           <span className="inline-block rounded-lg bg-primary px-3 py-1.5 text-primary-foreground font-bold text-base shadow-lg">
             {currentReel.price} {currentReel.currency}
           </span>
+
+          {/* Real estate / listing specs */}
+          {(() => {
+            const cf: any = (currentReel as any).custom_fields || {};
+            const hasSpecs = cf.rooms || cf.area_m2 || cf.floor;
+            const hasFlags = cf.mortgage === "Var" || (cf.document && cf.document !== "Sənədsiz");
+            if (!hasSpecs && !hasFlags && !cf.deal_type) return null;
+            return (
+              <div className="flex flex-col items-end gap-1">
+                {cf.deal_type && (
+                  <span className="rounded-md bg-black/50 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
+                    {cf.deal_type}
+                  </span>
+                )}
+                {hasSpecs && (
+                  <div className="flex flex-wrap items-center justify-end gap-1">
+                    {cf.rooms && (
+                      <span className="inline-flex items-center gap-0.5 rounded bg-black/50 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+                        <BedDouble className="h-2.5 w-2.5" />
+                        {cf.rooms}
+                      </span>
+                    )}
+                    {cf.area_m2 && (
+                      <span className="inline-flex items-center gap-0.5 rounded bg-black/50 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+                        <Maximize2 className="h-2.5 w-2.5" />
+                        {cf.area_m2}m²
+                      </span>
+                    )}
+                    {cf.floor && (
+                      <span className="inline-flex items-center gap-0.5 rounded bg-black/50 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+                        <Building2 className="h-2.5 w-2.5" />
+                        {cf.floor}{cf.total_floors ? `/${cf.total_floors}` : ""}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {hasFlags && (
+                  <div className="flex flex-wrap items-center justify-end gap-1">
+                    {cf.mortgage === "Var" && (
+                      <span className="inline-flex items-center gap-0.5 rounded bg-emerald-500/90 px-1.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
+                        <Landmark className="h-2.5 w-2.5" />
+                        İpoteka
+                      </span>
+                    )}
+                    {cf.document && cf.document !== "Sənədsiz" && (
+                      <span className="inline-flex items-center gap-0.5 rounded bg-blue-500/90 px-1.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
+                        <FileCheck2 className="h-2.5 w-2.5" />
+                        {cf.document}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {isVip && (
             <div className="flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 px-2.5 py-1 text-[10px] font-bold text-white shadow-lg ring-1 ring-white/20">
               <Crown className="h-3 w-3" /> VIP
