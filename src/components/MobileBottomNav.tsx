@@ -1,4 +1,4 @@
-import { Home, Heart, Plus, MessageCircle, User } from "lucide-react";
+import { Home, Heart, Plus, MessageCircle, User, Play } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -6,11 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useEffect, useRef, useState } from "react";
+import { usePlatformMode } from "@/hooks/usePlatformMode";
 
 const MobileBottomNav = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const { user } = useAuth();
+  const { showReels } = usePlatformMode();
   const [hidden, setHidden] = useState(false);
   const lastY = useRef(0);
 
@@ -53,7 +55,9 @@ const MobileBottomNav = () => {
 
   const navItems = [
     { path: "/", icon: Home, label: t("mobilenav.home") },
-    { path: "/favorites", icon: Heart, label: t("mobilenav.favorites") },
+    showReels
+      ? { path: "/reels", icon: Play, label: "Reels" }
+      : { path: "/favorites", icon: Heart, label: t("mobilenav.favorites") },
     { path: "/create-listing", icon: Plus, label: t("mobilenav.add"), isCenter: true },
     { path: "/messages", icon: MessageCircle, label: t("mobilenav.messages"), badge: unreadCount },
     { path: user ? "/profile" : "/auth", icon: User, label: t("mobilenav.profile") },

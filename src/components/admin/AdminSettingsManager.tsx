@@ -47,6 +47,10 @@ interface SiteSettings {
   disable_warehouse: boolean;
   disable_ai_autofill: boolean;
   disable_telegram_bot: boolean;
+  disable_reels: boolean;
+  disable_spin_win: boolean;
+  disable_orders: boolean;
+  disable_compare: boolean;
 }
 
 const defaults: SiteSettings = {
@@ -82,6 +86,10 @@ const defaults: SiteSettings = {
   disable_warehouse: false,
   disable_ai_autofill: false,
   disable_telegram_bot: false,
+  disable_reels: false,
+  disable_spin_win: false,
+  disable_orders: false,
+  disable_compare: false,
 };
 
 const watermarkPositions = [
@@ -300,6 +308,50 @@ const AdminSettingsManager = () => {
           <Switch
             checked={settings.disable_telegram_bot}
             onCheckedChange={(v) => setSettings({ ...settings, disable_telegram_bot: v })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between pt-2 border-t border-border/50">
+          <div className="flex-1 pr-3">
+            <p className="text-sm text-foreground">🎬 Reels-i söndür</p>
+            <p className="text-xs text-muted-foreground">Şaquli video lenti (/reels), naviqasiya linkləri və mobil alt panel ikonu gizlədilir.</p>
+          </div>
+          <Switch
+            checked={settings.disable_reels}
+            onCheckedChange={(v) => setSettings({ ...settings, disable_reels: v })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between pt-2 border-t border-border/50">
+          <div className="flex-1 pr-3">
+            <p className="text-sm text-foreground">🎡 Hədiyyə çarxını (Spin Win) söndür</p>
+            <p className="text-xs text-muted-foreground">/spin-win səhifəsi, popup və naviqasiya linkləri gizlədilir.</p>
+          </div>
+          <Switch
+            checked={settings.disable_spin_win}
+            onCheckedChange={(v) => setSettings({ ...settings, disable_spin_win: v })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between pt-2 border-t border-border/50">
+          <div className="flex-1 pr-3">
+            <p className="text-sm text-foreground">📋 Sifarişləri söndür</p>
+            <p className="text-xs text-muted-foreground">/orders səhifəsi və naviqasiya linki gizlədilir.</p>
+          </div>
+          <Switch
+            checked={settings.disable_orders}
+            onCheckedChange={(v) => setSettings({ ...settings, disable_orders: v })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between pt-2 border-t border-border/50">
+          <div className="flex-1 pr-3">
+            <p className="text-sm text-foreground">⚖️ Müqayisəni (Compare) söndür</p>
+            <p className="text-xs text-muted-foreground">/compare səhifəsi, alt müqayisə paneli və naviqasiya linkləri gizlədilir.</p>
+          </div>
+          <Switch
+            checked={settings.disable_compare}
+            onCheckedChange={(v) => setSettings({ ...settings, disable_compare: v })}
           />
         </div>
       </div>

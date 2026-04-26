@@ -13,12 +13,14 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { iconMap } from "@/lib/icons";
 import { useTranslation } from "react-i18next";
+import { usePlatformMode } from "@/hooks/usePlatformMode";
 
 const Header = () => {
   const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const { theme } = useTheme();
   const { isAdmin } = useIsAdmin();
+  const { showReels, showSpinWin, showOrders, showCompare } = usePlatformMode();
   const queryClient = useQueryClient();
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -215,6 +217,10 @@ const Header = () => {
           <Link to="/products" className="whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.products")}</Link>
           <Link to="/stores" className="whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.stores")}</Link>
           <Link to="/blog" className="whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.blog")}</Link>
+          {showReels && <Link to="/reels" className="flex items-center gap-1 whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"><Play className="h-3.5 w-3.5" />Reels</Link>}
+          {showSpinWin && <Link to="/spin-win" className="flex items-center gap-1 whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"><Trophy className="h-3.5 w-3.5" />Çarx</Link>}
+          {showOrders && user && <Link to="/orders" className="whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Sifarişlər</Link>}
+          {showCompare && <Link to="/compare" className="whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Müqayisə</Link>}
           <Link to="/create-store" className="whitespace-nowrap text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("nav.create_store")}</Link>
           {isAdmin && (
             <Link to="/admin" className="flex items-center gap-1 whitespace-nowrap text-sm font-medium text-primary transition-colors hover:text-primary/80">

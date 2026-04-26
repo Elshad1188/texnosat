@@ -36,6 +36,13 @@ import { CompareProvider } from "@/contexts/CompareContext";
 import ChatBot from "./components/ChatBot";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import Reels from "./pages/Reels";
+import SpinWin from "./pages/SpinWin";
+import Orders from "./pages/Orders";
+import ComparePage from "./pages/ComparePage";
+import CompareBar from "./components/CompareBar";
+import SpinWheelPopup from "./components/SpinWheelPopup";
+import { usePlatformMode } from "@/hooks/usePlatformMode";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +60,7 @@ const ScrollToTop = () => {
 
 const AppWrapper = () => {
   const { isLoaded } = useTheme();
+  const { showReels, showSpinWin, showOrders, showCompare } = usePlatformMode();
   useChatPresence();
 
   if (!isLoaded) {
@@ -84,8 +92,14 @@ const AppWrapper = () => {
         <Route path="/payment-result" element={<PaymentResult />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
+        {showReels && <Route path="/reels" element={<Reels />} />}
+        {showSpinWin && <Route path="/spin-win" element={<SpinWin />} />}
+        {showOrders && <Route path="/orders" element={<Orders />} />}
+        {showCompare && <Route path="/compare" element={<ComparePage />} />}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      {showCompare && <CompareBar />}
+      {showSpinWin && <SpinWheelPopup />}
     </div>
   );
 };

@@ -27,6 +27,12 @@ export interface PlatformConfig {
   showAiAutofill: boolean;
   /** Mağaza panelində Telegram bot inteqrasiyası mövcuddur */
   showTelegramBot: boolean;
+  /** Reels (şaquli video lenti) mövcuddur */
+  showReels: boolean;
+  /** Hədiyyə çarxı (Spin Win) mövcuddur */
+  showSpinWin: boolean;
+  /** Müqayisə (Compare) funksiyası mövcuddur */
+  showCompare: boolean;
 }
 
 function getConfig(mode: PlatformMode): PlatformConfig {
@@ -45,6 +51,9 @@ function getConfig(mode: PlatformMode): PlatformConfig {
         showWarehouse: false,
         showAiAutofill: true,
         showTelegramBot: true,
+        showReels: true,
+        showSpinWin: true,
+        showCompare: true,
       };
     case "marketplace":
       return {
@@ -60,6 +69,9 @@ function getConfig(mode: PlatformMode): PlatformConfig {
         showWarehouse: true,
         showAiAutofill: true,
         showTelegramBot: true,
+        showReels: true,
+        showSpinWin: true,
+        showCompare: true,
       };
     case "both":
     default:
@@ -76,6 +88,9 @@ function getConfig(mode: PlatformMode): PlatformConfig {
         showWarehouse: true,
         showAiAutofill: true,
         showTelegramBot: true,
+        showReels: true,
+        showSpinWin: true,
+        showCompare: true,
       };
   }
 }
@@ -97,6 +112,10 @@ export function usePlatformMode(): PlatformConfig & { isLoading: boolean } {
         disableWarehouse: !!general.disable_warehouse,
         disableAiAutofill: !!general.disable_ai_autofill,
         disableTelegramBot: !!general.disable_telegram_bot,
+        disableReels: !!general.disable_reels,
+        disableSpinWin: !!general.disable_spin_win,
+        disableOrders: !!general.disable_orders,
+        disableCompare: !!general.disable_compare,
       };
     },
     staleTime: 5 * 60 * 1000,
@@ -108,12 +127,9 @@ export function usePlatformMode(): PlatformConfig & { isLoading: boolean } {
   if (data?.disableWarehouse) cfg.showWarehouse = false;
   if (data?.disableAiAutofill) cfg.showAiAutofill = false;
   if (data?.disableTelegramBot) cfg.showTelegramBot = false;
-  // Real-estate-only platform: disable all non-realestate user-facing features
-  cfg.showSales = false;
-  cfg.showStock = false;
-  cfg.showOrders = false;
-  cfg.showShipping = false;
-  cfg.showCheckout = false;
-  cfg.showVisualSearch = false;
+  if (data?.disableReels) cfg.showReels = false;
+  if (data?.disableSpinWin) cfg.showSpinWin = false;
+  if (data?.disableOrders) cfg.showOrders = false;
+  if (data?.disableCompare) cfg.showCompare = false;
   return { ...cfg, isLoading };
 }
