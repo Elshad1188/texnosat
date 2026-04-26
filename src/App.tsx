@@ -36,6 +36,13 @@ import { CompareProvider } from "@/contexts/CompareContext";
 import ChatBot from "./components/ChatBot";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import Reels from "./pages/Reels";
+import SpinWin from "./pages/SpinWin";
+import Orders from "./pages/Orders";
+import ComparePage from "./pages/ComparePage";
+import CompareBar from "./components/CompareBar";
+import SpinWheelPopup from "./components/SpinWheelPopup";
+import { usePlatformMode } from "@/hooks/usePlatformMode";
 
 const queryClient = new QueryClient();
 
