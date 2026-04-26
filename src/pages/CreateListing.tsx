@@ -22,7 +22,7 @@ import { getModelsByCategory } from "@/data/brandModels";
 import { useTranslation } from "@/contexts/LanguageContext";
 import RegionCascader from "@/components/RegionCascader";
 
-const conditions = ["Yeni", "Yeni kimi", "İşlənmiş"];
+
 
 const CreateListing = () => {
   const { user } = useAuth();
