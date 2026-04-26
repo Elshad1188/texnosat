@@ -181,7 +181,7 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
   };
 
   const resetDialog = () => {
-    setStep("shipping");
+    setStep(platform.showShipping ? "shipping" : "payment");
     setSelectedShipping("");
     setShippingAddress("");
     setBuyerNote("");
