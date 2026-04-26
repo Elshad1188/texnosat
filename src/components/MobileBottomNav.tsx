@@ -1,4 +1,4 @@
-import { Home, Heart, Plus, MessageCircle, User } from "lucide-react";
+import { Home, Heart, Plus, MessageCircle, User, Play } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useEffect, useRef, useState } from "react";
+import { usePlatformMode } from "@/hooks/usePlatformMode";
 
 const MobileBottomNav = () => {
   const { t } = useTranslation();
