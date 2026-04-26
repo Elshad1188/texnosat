@@ -212,9 +212,129 @@ const Products = () => {
               className="h-11 w-full rounded-xl border border-border bg-card pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary" />
           </form>
           <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" onClick={() => setShowFilters(!showFilters)} className="gap-2">
-              <SlidersHorizontal className="h-4 w-4" /> {t("products.filters")}
-            </Button>
+            <Sheet open={showFilters} onOpenChange={setShowFilters}>
+              <SheetTrigger asChild>
+                <Button variant="outline" className="relative gap-2">
+                  <SlidersHorizontal className="h-4 w-4" /> {t("products.filters")}
+                  {activeFilterCount > 0 && (
+                    <Badge className="ml-1 h-5 min-w-5 rounded-full px-1.5 text-[10px]">{activeFilterCount}</Badge>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-primary" />
+                    {t("products.filters")}
+                  </SheetTitle>
+                </SheetHeader>
+
+                <div className="mt-6 space-y-6">
+                  {/* Category */}
+                  <FilterSection icon={Tag} title={t("categories.title") || "Kateqoriya"}>
+                    <Select value={selectedCategory || "all"} onValueChange={(v) => { setSelectedCategory(v === "all" ? "" : v); setSelectedSubcategory(""); }}>
+                      <SelectTrigger><SelectValue placeholder={t("common.all")} /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("common.all")}</SelectItem>
+                        {parentCategories.map((c: any) => <SelectItem key={c.id} value={c.slug}>{c.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    {subcategories.length > 0 && (
+                      <Select value={selectedSubcategory || "all"} onValueChange={(v) => setSelectedSubcategory(v === "all" ? "" : v)}>
+                        <SelectTrigger className="mt-2"><SelectValue placeholder={t("common.all")} /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{t("common.all")}</SelectItem>
+                          {subcategories.map((s: any) => <SelectItem key={s.id} value={s.slug}>{s.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </FilterSection>
+
+                  {/* Region */}
+                  <FilterSection icon={MapPin} title={t("products.region")}>
+                    <Select value={selectedRegion || "all"} onValueChange={(v) => setSelectedRegion(v === "all" ? "" : v)}>
+                      <SelectTrigger><SelectValue placeholder={t("products.select_region")} /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("common.all")}</SelectItem>
+                        {parentRegions.map((r: any) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </FilterSection>
+
+                  {/* Price */}
+                  <FilterSection icon={CircleDollarSign} title={t("products.price_range")}>
+                    <div className="flex items-center gap-2">
+                      <input type="number" placeholder={t("products.min")} value={priceMin} onChange={(e) => setPriceMin(e.target.value)}
+                        className="h-10 flex-1 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+                      <span className="text-muted-foreground">—</span>
+                      <input type="number" placeholder={t("products.max")} value={priceMax} onChange={(e) => setPriceMax(e.target.value)}
+                        className="h-10 flex-1 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+                    </div>
+                  </FilterSection>
+
+                  {/* Date */}
+                  <FilterSection icon={Calendar} title="Tarix">
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {[
+                        { v: "all", l: t("common.all") },
+                        { v: "24h", l: "Son 24 saat" },
+                        { v: "week", l: "Son 7 gün" },
+                        { v: "month", l: "Son 30 gün" },
+                      ].map((o) => (
+                        <button key={o.v} onClick={() => setDateRange(o.v)}
+                          className={`rounded-lg px-3 py-2 text-xs font-medium transition-colors ${dateRange === o.v ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
+                          {o.l}
+                        </button>
+                      ))}
+                    </div>
+                  </FilterSection>
+
+                  {/* Condition */}
+                  <FilterSection icon={Sparkles} title={t("products.condition")}>
+                    <div className="flex flex-wrap gap-1.5">
+                      {conditions.map((c) => (
+                        <button key={c.value} onClick={() => setSelectedCondition(c.value)}
+                          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${selectedCondition === c.value ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
+                          {t(c.labelKey)}
+                        </button>
+                      ))}
+                    </div>
+                  </FilterSection>
+
+                  {/* Custom category fields */}
+                  {categoryFields.length > 0 && (
+                    <FilterSection icon={Layers} title={t("products.category_filters")}>
+                      <div className="space-y-3">
+                        {categoryFields.map((field: any) => (
+                          <div key={field.id}>
+                            <label className="mb-1 block text-xs font-medium text-muted-foreground">{field.field_label}</label>
+                            <Select value={customFilters[field.field_name] || "all"} onValueChange={(v) => setCustomFilters(prev => ({ ...prev, [field.field_name]: v === "all" ? "" : v }))}>
+                              <SelectTrigger><SelectValue placeholder={t("products.select")} /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">{t("common.all")}</SelectItem>
+                                {Array.isArray(field.options) && field.options.map((opt: string) => (
+                                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        ))}
+                      </div>
+                    </FilterSection>
+                  )}
+                </div>
+
+                <SheetFooter className="mt-6 flex-row gap-2 sm:flex-row">
+                  <Button variant="outline" onClick={clearFilters} className="flex-1" disabled={!hasActiveFilters}>
+                    <X className="h-4 w-4 mr-1" /> {t("products.clear_filters")}
+                  </Button>
+                  <Button onClick={() => setShowFilters(false)} className="flex-1">
+                    {t("products.results_count", { count: filteredProducts.length })}
+                  </Button>
+                </SheetFooter>
+              </SheetContent>
+            </Sheet>
+
             <SaveSearchButton
               query={query}
               category={selectedCategory}
@@ -231,71 +351,22 @@ const Products = () => {
           </div>
         </div>
 
-        {/* Filters Panel */}
-        {showFilters && (
-          <div className="mb-6 animate-fade-in rounded-xl border border-border bg-card p-4 shadow-card">
-            <div className="flex flex-wrap gap-4">
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{t("products.condition")}</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {conditions.map((c) => (
-                    <button key={c.value} onClick={() => setSelectedCondition(c.value)}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${selectedCondition === c.value ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
-                      {t(c.labelKey)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{t("products.region")}</label>
-                <Select value={selectedRegion || "all"} onValueChange={(v) => setSelectedRegion(v === "all" ? "" : v)}>
-                  <SelectTrigger className="w-40"><SelectValue placeholder={t("products.select_region")} /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("common.all")}</SelectItem>
-                    {parentRegions.map((r: any) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{t("products.price_range")}</label>
-                <div className="flex items-center gap-2">
-                  <input type="number" placeholder={t("products.min")} value={priceMin} onChange={(e) => setPriceMin(e.target.value)}
-                    className="h-9 w-24 rounded-lg border border-border bg-muted px-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-                  <span className="text-muted-foreground">—</span>
-                  <input type="number" placeholder={t("products.max")} value={priceMax} onChange={(e) => setPriceMax(e.target.value)}
-                    className="h-9 w-24 rounded-lg border border-border bg-muted px-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-                </div>
-              </div>
-              {/* Custom fields filters */}
-              {categoryFields.length > 0 && (
-                <div className="flex flex-wrap gap-4 pt-4 mt-4 border-t border-border w-full">
-                  <div className="w-full">
-                    <h4 className="text-[10px] font-bold text-primary uppercase tracking-wider mb-3">{t("products.category_filters")}</h4>
-                    <div className="flex flex-wrap gap-4">
-                      {categoryFields.map((field: any) => (
-                        <div key={field.id}>
-                          <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{field.field_label}</label>
-                          <Select value={customFilters[field.field_name] || "all"} onValueChange={(v) => setCustomFilters(prev => ({ ...prev, [field.field_name]: v === "all" ? "" : v }))}>
-                            <SelectTrigger className="w-44 bg-muted/30"><SelectValue placeholder={t("products.select")} /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">{t("common.all")}</SelectItem>
-                              {Array.isArray(field.options) && field.options.map((opt: string) => (
-                                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-            {hasActiveFilters && (
-              <button onClick={clearFilters} className="mt-3 flex items-center gap-1 text-xs text-primary hover:underline">
-                <X className="h-3 w-3" /> {t("products.clear_filters")}
-              </button>
-            )}
+        {/* Active filter chips */}
+        {hasActiveFilters && (
+          <div className="mb-4 flex flex-wrap items-center gap-1.5">
+            {query && <FilterChip label={`"${query}"`} onClear={() => setQuery("")} />}
+            {selectedCategory && <FilterChip label={parentCategories.find((c: any) => c.slug === selectedCategory)?.name || selectedCategory} onClear={() => { setSelectedCategory(""); setSelectedSubcategory(""); }} />}
+            {selectedSubcategory && <FilterChip label={subcategories.find((s: any) => s.slug === selectedSubcategory)?.name || selectedSubcategory} onClear={() => setSelectedSubcategory("")} />}
+            {selectedRegion && <FilterChip label={(regions.find((r: any) => r.id === selectedRegion) as any)?.name} onClear={() => setSelectedRegion("")} />}
+            {selectedCondition !== "all" && <FilterChip label={t(conditions.find((c) => c.value === selectedCondition)!.labelKey)} onClear={() => setSelectedCondition("all")} />}
+            {(priceMin || priceMax) && <FilterChip label={`${priceMin || 0} — ${priceMax || "∞"} ₼`} onClear={() => { setPriceMin(""); setPriceMax(""); }} />}
+            {dateRange !== "all" && <FilterChip label={dateRange === "24h" ? "Son 24 saat" : dateRange === "week" ? "Son 7 gün" : "Son 30 gün"} onClear={() => setDateRange("all")} />}
+            {Object.entries(customFilters).filter(([, v]) => v).map(([k, v]) => (
+              <FilterChip key={k} label={`${k}: ${v}`} onClear={() => setCustomFilters((p) => ({ ...p, [k]: "" }))} />
+            ))}
+            <button onClick={clearFilters} className="ml-1 text-xs text-primary hover:underline">
+              {t("products.clear_filters")}
+            </button>
           </div>
         )}
 
