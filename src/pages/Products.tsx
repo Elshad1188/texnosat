@@ -428,12 +428,52 @@ const Products = () => {
         )}
 
         {/* Results */}
-        <div className="mb-4 text-sm text-muted-foreground">
-          {isLoading ? t("common.loading") : t("products.results_count", { count: filteredProducts.length })}
+        <div className="mb-4 flex items-center justify-between gap-2 text-sm text-muted-foreground">
+          <span>
+            {isLoading
+              ? t("common.loading")
+              : t("products.results_count", { count: viewMode === "map" ? visibleProducts.length : filteredProducts.length })}
+            {viewMode === "map" && useMapBoundsFilter && mapBounds && (
+              <span className="ml-1 text-xs text-primary">(görünən sahədə)</span>
+            )}
+          </span>
+          {viewMode === "map" && (
+            <label className="flex items-center gap-1.5 text-xs">
+              <input type="checkbox" checked={useMapBoundsFilter} onChange={(e) => setUseMapBoundsFilter(e.target.checked)} className="accent-primary" />
+              Xəritə sahəsi üzrə filtrlə
+            </label>
+          )}
         </div>
 
         {isLoading ? (
           <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+        ) : viewMode === "map" ? (
+          <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+            <ListingsMap
+              listings={filteredProducts as any}
+              height="600px"
+              onBoundsChange={setMapBounds}
+            />
+            {visibleProducts.length > 0 && (
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+                {visibleProducts.slice(0, 24).map((product: any) => {
+                  const st = product.store_id ? storesMap[product.store_id] : undefined;
+                  return (
+                    <ListingCard
+                      key={product.id} id={product.id} title={product.title}
+                      price={`${Number(product.price).toLocaleString()} ${product.currency}`}
+                      location={product.location} time={formatTime(product.created_at, t, language)}
+                      image={product.image_urls?.[0] || "/placeholder.svg"}
+                      condition={product.condition} isPremium={product.is_premium} isUrgent={product.is_urgent}
+                      isBuyable={product.is_buyable}
+                      numericPrice={Number(product.price)} currency={product.currency} userId={product.user_id} customFields={product.custom_fields}
+                      storeId={product.store_id} storeName={st?.name} storeLogo={st?.logo_url}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </Suspense>
         ) : filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
             {filteredProducts.map((product: any) => {
