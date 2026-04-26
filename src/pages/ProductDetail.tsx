@@ -633,40 +633,98 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* Details — minimalist icon list */}
-            <div className="mt-6">
-              <div className="mb-3 flex items-center gap-2">
-                <Info className="h-4 w-4 text-primary" />
-                <h3 className="font-display text-sm font-semibold text-foreground">{t("detail.product_info")}</h3>
-              </div>
-              <div className="divide-y divide-border/60 rounded-xl border border-border/60 bg-card/50">
-                <SpecRow icon={Tag} accent="primary" label={t("detail.category")} value={listing.category} />
-                <SpecRow icon={Sparkles} accent="amber" label={t("products.condition")} value={listing.condition} />
-                <SpecRow icon={MapPin} accent="rose" label={t("detail.city")} value={listing.location} />
-                <SpecRow icon={CircleDollarSign} accent="emerald" label={t("detail.currency")} value={listing.currency} />
-                <SpecRow icon={Eye} accent="blue" label={t("detail.views_count")} value={String(listing.views_count)} />
-                <SpecRow icon={Calendar} accent="violet" label={t("detail.created_date")} value={new Date(listing.created_at).toLocaleDateString(language)} />
-                {listing.is_buyable && (
-                  <SpecRow icon={ShoppingCart} accent="emerald" label={t("detail.sale")} value={t("detail.direct_purchase_available")} />
-                )}
-                {(listing as any).custom_fields && Object.entries((listing as any).custom_fields).map(([key, val]) => {
-                  if (!val) return null;
-                  if (key.startsWith("_")) return null;
-                  if (typeof val === "object") return null;
-                  const fieldDef = categoryFieldDefs.find((f: any) => f.field_name === key);
-                  const { icon, accent } = getFieldVisual(key);
-                  return (
-                    <SpecRow
-                      key={key}
-                      icon={icon}
-                      accent={accent}
-                      label={fieldDef?.field_label || key}
-                      value={String(val)}
-                    />
-                  );
-                })}
-              </div>
-            </div>
+            {/* Details — grouped, logically ordered icon list */}
+            {(() => {
+              // Build custom field rows in a logical order based on field definitions
+              const customEntries = (listing as any).custom_fields
+                ? Object.entries((listing as any).custom_fields).filter(
+                    ([k, v]) => v && !k.startsWith("_") && typeof v !== "object"
+                  )
+                : [];
+
+              // Logical priority order for common fields (lower = shown first)
+              const FIELD_PRIORITY: Record<string, number> = {
+                brand: 10, model: 11, year: 12, color: 13,
+                mileage: 14, fuel: 15, transmission: 16, engine: 17,
+                rooms: 20, area_m2: 21, area: 21,
+                floor: 22, total_floors: 23, building_floors: 24,
+                repair: 25, document: 26, mortgage: 27, deal_type: 28,
+              };
+
+              const orderedCustom = customEntries
+                .map(([key, val]) => {
+                  const def = categoryFieldDefs.find((f: any) => f.field_name === key);
+                  return {
+                    key,
+                    val,
+                    label: def?.field_label || key,
+                    order: FIELD_PRIORITY[key] ?? 500,
+                  };
+                })
+                .sort((a, b) => {
+                  // Keep related pairs together: floor / total_floors
+                  const pairs = [
+                    ["floor", "total_floors"],
+                    ["building_floors", "floor"],
+                  ];
+                  for (const [first, second] of pairs) {
+                    if (a.key === first && b.key === second) return -1;
+                    if (a.key === second && b.key === first) return 1;
+                  }
+                  return a.order - b.order;
+                });
+
+              return (
+                <div className="mt-6 space-y-5">
+                  {/* Group 1: Əsas məlumatlar */}
+                  <div>
+                    <div className="mb-3 flex items-center gap-2">
+                      <Info className="h-4 w-4 text-primary" />
+                      <h3 className="font-display text-sm font-semibold text-foreground">{t("detail.product_info")}</h3>
+                    </div>
+                    <div className="divide-y divide-border/60 rounded-xl border border-border/60 bg-card/50">
+                      <SpecRow icon={Tag} accent="primary" label={t("detail.category")} value={listing.category} />
+                      <SpecRow icon={Sparkles} accent="amber" label={t("products.condition")} value={listing.condition} />
+                      <SpecRow icon={MapPin} accent="rose" label={t("detail.city")} value={listing.location} />
+                      {listing.is_buyable && (
+                        <SpecRow icon={ShoppingCart} accent="emerald" label={t("detail.sale")} value={t("detail.direct_purchase_available")} />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Group 2: Xüsusiyyətlər (custom fields, məntiqi sıra) */}
+                  {orderedCustom.length > 0 && (
+                    <div>
+                      <div className="mb-3 flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-primary" />
+                        <h3 className="font-display text-sm font-semibold text-foreground">{t("detail.specifications") || "Xüsusiyyətlər"}</h3>
+                      </div>
+                      <div className="divide-y divide-border/60 rounded-xl border border-border/60 bg-card/50">
+                        {orderedCustom.map(({ key, val, label }) => {
+                          const { icon, accent } = getFieldVisual(key);
+                          return (
+                            <SpecRow key={key} icon={icon} accent={accent} label={label} value={String(val)} />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Group 3: Statistika */}
+                  <div>
+                    <div className="mb-3 flex items-center gap-2">
+                      <Eye className="h-4 w-4 text-primary" />
+                      <h3 className="font-display text-sm font-semibold text-foreground">{t("detail.statistics") || "Statistika"}</h3>
+                    </div>
+                    <div className="divide-y divide-border/60 rounded-xl border border-border/60 bg-card/50">
+                      <SpecRow icon={Calendar} accent="violet" label={t("detail.created_date")} value={new Date(listing.created_at).toLocaleDateString(language)} />
+                      <SpecRow icon={Eye} accent="blue" label={t("detail.views_count")} value={String(listing.views_count)} />
+                      <SpecRow icon={CircleDollarSign} accent="emerald" label={t("detail.currency")} value={listing.currency} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Shipping Methods */}
             {platform.showShipping && (listing.custom_fields as any)?._shipping_methods?.length > 0 && (
