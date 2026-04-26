@@ -381,6 +381,13 @@ const CreateListing = () => {
       if (form.location) titleParts.push(form.location);
       const generatedTitle = titleParts.join(" · ");
 
+      // Map custom_fields.deal_type label -> deal_type column value
+      const dealLabel = String(resolvedCustomFields.deal_type || "").toLowerCase();
+      let dealCol: "sale" | "rent" | "daily" | "roommate" = "sale";
+      if (dealLabel.includes("kirayə") || dealLabel.includes("kiraye") || dealLabel === "rent") dealCol = "rent";
+      else if (dealLabel.includes("günlük") || dealLabel.includes("gunluk") || dealLabel === "daily") dealCol = "daily";
+      else if (dealLabel.includes("otaq yold") || dealLabel === "roommate") dealCol = "roommate";
+
       const listingData: any = {
         title: generatedTitle,
         description: form.description,
@@ -390,6 +397,7 @@ const CreateListing = () => {
         video_url: finalVideoUrl,
         store_id: selectedStoreId || null,
         custom_fields: Object.keys(resolvedCustomFields).length > 0 ? resolvedCustomFields : null,
+        deal_type: dealCol,
         is_buyable: selectedStoreId ? isBuyable : false,
         stock: selectedStoreId && isBuyable ? Math.max(parseInt(stock) || 1, 1) : (parseInt(stock) || 0),
         status: "pending",
