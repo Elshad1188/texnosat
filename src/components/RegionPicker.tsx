@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronDown, ChevronRight, MapPin, Search, X, ArrowLeft } from "lucide-react";
+import { Check, ChevronDown, MapPin, Search, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,8 +44,8 @@ const RegionPicker = ({
 }: RegionPickerProps) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  /** Stack of parent IDs being navigated. Empty = root level. */
-  const [stack, setStack] = useState<string[]>([]);
+  /** Path of expanded parent IDs (level 0 = root city, level 1 = district, ...) */
+  const [path, setPath] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const onlyRegions = useMemo(
@@ -78,30 +78,31 @@ const RegionPicker = ({
   const selected = value ? byId.get(value) || null : null;
   const selectedLabel = useMemo(() => {
     if (!selected) return "";
-    // Build breadcrumb path
-    const path: string[] = [];
+    const parts: string[] = [];
     let cur: RegionItem | null = selected;
     while (cur) {
-      path.unshift(cur.name);
+      parts.unshift(cur.name);
       cur = cur.parent_id ? byId.get(cur.parent_id) || null : null;
     }
-    return path.join(" • ");
+    return parts.join(" • ");
   }, [selected, byId]);
 
-  // When opening: focus search; if a value is set, navigate stack to its parent so it's visible
+  // When opening: focus search; if a value is set, auto-expand path to its ancestors
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 50);
       if (selected) {
-        const path: string[] = [];
-        let cur = selected.parent_id ? byId.get(selected.parent_id) || null : null;
+        const ancestors: string[] = [];
+        let cur: RegionItem | null = selected.parent_id ? byId.get(selected.parent_id) || null : null;
         while (cur) {
-          path.unshift(cur.id);
+          ancestors.unshift(cur.id);
           cur = cur.parent_id ? byId.get(cur.parent_id) || null : null;
         }
-        setStack(path);
+        // If selected itself has children (parent selected), also expand it
+        if (hasChildren(selected.id)) ancestors.push(selected.id);
+        setPath(ancestors);
       } else {
-        setStack([]);
+        setPath([]);
       }
     } else {
       setSearch("");
@@ -111,22 +112,7 @@ const RegionPicker = ({
 
   const q = normalize(search.trim());
 
-  // Search mode: flat list of all matches (any depth)
-  const searchResults = useMemo(() => {
-    if (!q) return [];
-    return onlyRegions
-      .filter((r) => normalize(r.name).includes(q))
-      .slice(0, 100)
-      .sort((a, b) => {
-        // Parents first, then by name
-        const ad = a.parent_id ? 1 : 0;
-        const bd = b.parent_id ? 1 : 0;
-        if (ad !== bd) return ad - bd;
-        return a.name.localeCompare(b.name, "az");
-      });
-  }, [q, onlyRegions]);
-
-  const buildPath = (r: RegionItem) => {
+  const buildPathLabel = (r: RegionItem) => {
     const out: string[] = [];
     let cur: RegionItem | null = r;
     while (cur) {
@@ -136,47 +122,51 @@ const RegionPicker = ({
     return out.join(" › ");
   };
 
-  const currentParentId = stack.length > 0 ? stack[stack.length - 1] : null;
-  const currentList = currentParentId
-    ? childrenByParent[currentParentId] || []
-    : childrenByParent["__root__"] || [];
-  const currentParent = currentParentId ? byId.get(currentParentId) : null;
+  // Search mode
+  const searchResults = useMemo(() => {
+    if (!q) return [];
+    return onlyRegions
+      .filter((r) => normalize(r.name).includes(q))
+      .slice(0, 100)
+      .sort((a, b) => {
+        const ad = a.parent_id ? 1 : 0;
+        const bd = b.parent_id ? 1 : 0;
+        if (ad !== bd) return ad - bd;
+        return a.name.localeCompare(b.name, "az");
+      });
+  }, [q, onlyRegions]);
 
-  const breadcrumbs = useMemo(() => stack.map((id) => byId.get(id)).filter(Boolean) as RegionItem[], [stack, byId]);
-
-  const handleItemClick = (r: RegionItem) => {
+  /** Handle click on a row in level N. */
+  const handlePick = (r: RegionItem, level: number) => {
+    onChange(r.id);
     if (hasChildren(r.id)) {
-      // Has children → drill down (do NOT select yet)
-      setStack((s) => [...s, r.id]);
-      setSearch("");
+      // Expand a new level below, replacing any deeper levels
+      setPath((p) => [...p.slice(0, level), r.id]);
     } else {
-      // Leaf → select and close
-      onChange(r.id);
+      // Leaf — select and close
+      setPath((p) => p.slice(0, level));
       setOpen(false);
     }
-  };
-
-  const selectCurrentParent = () => {
-    if (currentParentId) {
-      onChange(currentParentId);
-      setOpen(false);
-    }
-  };
-
-  const goBack = () => {
-    setStack((s) => s.slice(0, -1));
-    setSearch("");
-  };
-
-  const goRoot = () => {
-    setStack([]);
-    setSearch("");
   };
 
   const clear = (e: React.MouseEvent) => {
     e.stopPropagation();
     onChange("");
+    setPath([]);
   };
+
+  // Build the columns to render: root, then one per expanded path entry
+  const columns = useMemo(() => {
+    const cols: { parentId: string | null; items: RegionItem[]; parent: RegionItem | null }[] = [
+      { parentId: null, items: childrenByParent["__root__"] || [], parent: null },
+    ];
+    for (const pid of path) {
+      const kids = childrenByParent[pid] || [];
+      if (kids.length === 0) break;
+      cols.push({ parentId: pid, items: kids, parent: byId.get(pid) || null });
+    }
+    return cols;
+  }, [path, childrenByParent, byId]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -207,7 +197,7 @@ const RegionPicker = ({
           </span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] min-w-[280px] p-0" align="start">
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] min-w-[300px] p-0" align="start">
         {/* Search */}
         <div className="p-2 border-b border-border">
           <div className="relative">
@@ -222,65 +212,10 @@ const RegionPicker = ({
           </div>
         </div>
 
-        {/* Breadcrumb / back nav (hidden during search) */}
-        {!q && stack.length > 0 && (
-          <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border bg-muted/30 text-xs">
-            <button
-              type="button"
-              onClick={goBack}
-              className="flex items-center gap-1 px-1.5 py-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Geri
-            </button>
-            <span className="text-muted-foreground/60">|</span>
-            <button
-              type="button"
-              onClick={goRoot}
-              className="px-1.5 py-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground"
-            >
-              Şəhərlər
-            </button>
-            {breadcrumbs.map((b, i) => (
-              <div key={b.id} className="flex items-center gap-1 min-w-0">
-                <ChevronRight className="h-3 w-3 text-muted-foreground/60 flex-shrink-0" />
-                <button
-                  type="button"
-                  onClick={() => setStack((s) => s.slice(0, i + 1))}
-                  className={cn(
-                    "px-1.5 py-1 rounded hover:bg-accent truncate",
-                    i === breadcrumbs.length - 1 ? "text-foreground font-medium" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {b.name}
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* "Use this region" shortcut when drilled into a parent */}
-        {!q && currentParent && (
-          <button
-            type="button"
-            onClick={selectCurrentParent}
-            className={cn(
-              "w-full flex items-center justify-between px-3 py-2 text-sm border-b border-border hover:bg-accent",
-              value === currentParent.id && "bg-accent"
-            )}
-          >
-            <span className="flex items-center gap-2">
-              <MapPin className="h-3.5 w-3.5 text-primary" />
-              <span>Bütün <span className="font-medium">{currentParent.name}</span></span>
-            </span>
-            {value === currentParent.id && <Check className="h-4 w-4" />}
-          </button>
-        )}
-
-        <ScrollArea className="max-h-72">
+        <ScrollArea className="max-h-[420px]">
           <div className="p-1">
-            {/* Search results */}
             {q ? (
+              // ===== Search results =====
               searchResults.length === 0 ? (
                 <div className="px-2 py-6 text-center text-sm text-muted-foreground">
                   Heç nə tapılmadı
@@ -291,20 +226,18 @@ const RegionPicker = ({
                     key={r.id}
                     type="button"
                     onClick={() => {
-                      if (hasChildren(r.id)) {
-                        // Drill into it
-                        const path: string[] = [];
-                        let cur: RegionItem | null = r;
-                        while (cur) {
-                          path.unshift(cur.id);
-                          cur = cur.parent_id ? byId.get(cur.parent_id) || null : null;
-                        }
-                        setStack(path);
-                        setSearch("");
-                      } else {
-                        onChange(r.id);
-                        setOpen(false);
+                      onChange(r.id);
+                      // Expand path to include this and its ancestors
+                      const ancestors: string[] = [];
+                      let cur: RegionItem | null = r.parent_id ? byId.get(r.parent_id) || null : null;
+                      while (cur) {
+                        ancestors.unshift(cur.id);
+                        cur = cur.parent_id ? byId.get(cur.parent_id) || null : null;
                       }
+                      if (hasChildren(r.id)) ancestors.push(r.id);
+                      setPath(ancestors);
+                      setSearch("");
+                      if (!hasChildren(r.id)) setOpen(false);
                     }}
                     className={cn(
                       "w-full text-left px-2 py-2 rounded-md text-sm hover:bg-accent flex items-center justify-between gap-2",
@@ -315,27 +248,24 @@ const RegionPicker = ({
                       <span className="truncate">{r.name}</span>
                       {r.parent_id && (
                         <span className="text-[11px] text-muted-foreground truncate">
-                          {buildPath(r)}
+                          {buildPathLabel(r)}
                         </span>
                       )}
                     </div>
-                    <span className="flex items-center gap-1 flex-shrink-0">
-                      {hasChildren(r.id) && (
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                      )}
-                      {value === r.id && <Check className="h-4 w-4" />}
-                    </span>
+                    {value === r.id && <Check className="h-4 w-4 flex-shrink-0" />}
                   </button>
                 ))
               )
             ) : (
-              <>
-                {/* "All" option only at root level */}
-                {showAll && stack.length === 0 && (
+              // ===== Stacked levels =====
+              <div className="space-y-2">
+                {/* "All" only at top */}
+                {showAll && (
                   <button
                     type="button"
                     onClick={() => {
                       onChange("");
+                      setPath([]);
                       setOpen(false);
                     }}
                     className={cn(
@@ -348,40 +278,73 @@ const RegionPicker = ({
                   </button>
                 )}
 
-                {currentList.length === 0 ? (
-                  <div className="px-2 py-6 text-center text-sm text-muted-foreground">
-                    Alt bölgə yoxdur
-                  </div>
-                ) : (
-                  currentList.map((r) => {
-                    const drillable = hasChildren(r.id);
-                    return (
-                      <button
-                        key={r.id}
-                        type="button"
-                        onClick={() => handleItemClick(r)}
-                        className={cn(
-                          "w-full text-left px-2 py-2 rounded-md text-sm hover:bg-accent flex items-center justify-between gap-2",
-                          value === r.id && "bg-accent"
-                        )}
-                      >
-                        <span className="truncate">{r.name}</span>
-                        <span className="flex items-center gap-1.5 flex-shrink-0">
-                          {drillable && (
-                            <>
-                              <span className="text-[10px] text-muted-foreground">
-                                {childrenByParent[r.id].length}
-                              </span>
-                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                            </>
-                          )}
-                          {value === r.id && !drillable && <Check className="h-4 w-4" />}
+                {columns.map((col, level) => (
+                  <div
+                    key={col.parentId ?? "root"}
+                    className={cn(
+                      "rounded-md",
+                      level > 0 && "border border-border bg-muted/20"
+                    )}
+                  >
+                    {col.parent && (
+                      <div className="flex items-center justify-between px-2 py-1.5 border-b border-border bg-muted/40 rounded-t-md">
+                        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground truncate">
+                          {col.parent.name} • alt bölgələr
                         </span>
-                      </button>
-                    );
-                  })
-                )}
-              </>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            // Select the parent itself (e.g. "all of Baku") and close
+                            onChange(col.parent!.id);
+                            setPath((p) => p.slice(0, level));
+                            setOpen(false);
+                          }}
+                          className="text-[11px] text-primary hover:underline flex-shrink-0 ml-2"
+                        >
+                          Bütün {col.parent.name}
+                        </button>
+                      </div>
+                    )}
+                    <div className="p-1">
+                      {col.items.map((r) => {
+                        const drillable = hasChildren(r.id);
+                        const isExpanded = path[level] === r.id;
+                        const isSelected = value === r.id;
+                        return (
+                          <button
+                            key={r.id}
+                            type="button"
+                            onClick={() => handlePick(r, level)}
+                            className={cn(
+                              "w-full text-left px-2 py-2 rounded-md text-sm hover:bg-accent flex items-center justify-between gap-2",
+                              isExpanded && "bg-accent/70",
+                              isSelected && "bg-accent font-medium"
+                            )}
+                          >
+                            <span className="truncate">{r.name}</span>
+                            <span className="flex items-center gap-1.5 flex-shrink-0">
+                              {drillable && (
+                                <span className="text-[10px] text-muted-foreground">
+                                  {childrenByParent[r.id].length}
+                                </span>
+                              )}
+                              {isSelected && <Check className="h-4 w-4" />}
+                              {drillable && !isSelected && (
+                                <ChevronDown
+                                  className={cn(
+                                    "h-3.5 w-3.5 text-muted-foreground transition-transform",
+                                    isExpanded && "rotate-180"
+                                  )}
+                                />
+                              )}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </ScrollArea>
