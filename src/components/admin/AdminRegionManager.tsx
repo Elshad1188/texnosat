@@ -130,29 +130,59 @@ const AdminRegionManager = () => {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-display text-lg font-semibold text-foreground">Bölgələr ({parents.length})</h3>
-        <Button size="sm" onClick={() => openAdd()} className="gap-1.5"><Plus className="h-4 w-4" /> Yeni bölgə</Button>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <h3 className="font-display text-lg font-semibold text-foreground">
+            {activeTab === "region" ? "Bölgələr" : "Metro stansiyaları"} ({parents.length})
+          </h3>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="inline-flex rounded-lg border border-border p-0.5">
+            <button
+              onClick={() => setActiveTab("region")}
+              className={`px-3 py-1 text-xs font-medium rounded-md ${activeTab === "region" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >Bölgələr</button>
+            <button
+              onClick={() => setActiveTab("metro")}
+              className={`px-3 py-1 text-xs font-medium rounded-md ${activeTab === "metro" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            >Metro</button>
+          </div>
+          <Button size="sm" onClick={() => openAdd()} className="gap-1.5">
+            <Plus className="h-4 w-4" /> {activeTab === "metro" ? "Yeni metro" : "Yeni bölgə"}
+          </Button>
+        </div>
       </div>
       <div className="space-y-2">{parents.map((r) => renderRegion(r))}</div>
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{editId ? "Bölgəni redaktə et" : "Yeni bölgə"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editId ? (form.type === "metro" ? "Metronu redaktə et" : "Bölgəni redaktə et") : (form.type === "metro" ? "Yeni metro" : "Yeni bölgə")}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Ad</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Bölgə adı" />
-            </div>
-            <div className="space-y-2">
-              <Label>Əsas bölgə</Label>
-              <Select value={form.parent_id || "none"} onValueChange={(v) => setForm({ ...form, parent_id: v === "none" ? "" : v })}>
+              <Label>Növ</Label>
+              <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v as "region" | "metro", parent_id: "" })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Yoxdur (əsas bölgə)</SelectItem>
-                  {parents.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                  <SelectItem value="region">Bölgə</SelectItem>
+                  <SelectItem value="metro">Metro stansiyası</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label>Ad</Label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={form.type === "metro" ? "Metro stansiyası" : "Bölgə adı"} />
+            </div>
+            {form.type === "region" && (
+              <div className="space-y-2">
+                <Label>Əsas bölgə</Label>
+                <Select value={form.parent_id || "none"} onValueChange={(v) => setForm({ ...form, parent_id: v === "none" ? "" : v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Yoxdur (əsas bölgə)</SelectItem>
+                    {regions.filter((p) => !p.parent_id && (p.type || "region") === "region").map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Sıra nömrəsi</Label>
               <Input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })} />
