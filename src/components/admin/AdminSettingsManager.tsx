@@ -47,6 +47,10 @@ interface SiteSettings {
   disable_warehouse: boolean;
   disable_ai_autofill: boolean;
   disable_telegram_bot: boolean;
+  disable_reels: boolean;
+  disable_spin_win: boolean;
+  disable_orders: boolean;
+  disable_compare: boolean;
 }
 
 const defaults: SiteSettings = {
