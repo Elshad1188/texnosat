@@ -49,9 +49,11 @@ const Products = () => {
   const { language } = useLanguage();
   const initialSearch = searchParams.get("search") || "";
   const initialCategory = searchParams.get("category") || "";
+  const initialDeal = searchParams.get("deal") || "";
 
   const [query, setQuery] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+  const [selectedDeal, setSelectedDeal] = useState(initialDeal);
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("");
   const [selectedCondition, setSelectedCondition] = useState("all");
