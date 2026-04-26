@@ -33,6 +33,7 @@ const CreateStore = () => {
   const [coverPreview, setCoverPreview] = useState("");
   const [form, setForm] = useState({
     name: "", description: "", address: "", city: "", phone: "", working_hours: "", instagram_url: "",
+    license_number: "", agent_count: "", specialization: "", established_year: "", website_url: "",
   });
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [startTime, setStartTime] = useState("09:00");
@@ -104,6 +105,11 @@ const CreateStore = () => {
         address: editStore.address || "", city: editStore.city || "",
         phone: editStore.phone || "", working_hours: editStore.working_hours || "",
         instagram_url: (editStore as any).instagram_url || "",
+        license_number: (editStore as any).license_number || "",
+        agent_count: (editStore as any).agent_count ? String((editStore as any).agent_count) : "",
+        specialization: (editStore as any).specialization || "",
+        established_year: (editStore as any).established_year ? String((editStore as any).established_year) : "",
+        website_url: (editStore as any).website_url || "",
       });
       if (editStore.logo_url) setLogoPreview(editStore.logo_url);
       if (editStore.cover_url) setCoverPreview(editStore.cover_url);
@@ -145,6 +151,11 @@ const CreateStore = () => {
       address: editStore.address || "", city: editStore.city || "",
       phone: editStore.phone || "", working_hours: editStore.working_hours || "",
       instagram_url: (editStore as any).instagram_url || "",
+      license_number: (editStore as any).license_number || "",
+      agent_count: (editStore as any).agent_count ? String((editStore as any).agent_count) : "",
+      specialization: (editStore as any).specialization || "",
+      established_year: (editStore as any).established_year ? String((editStore as any).established_year) : "",
+      website_url: (editStore as any).website_url || "",
     });
     if (editStore.logo_url) setLogoPreview(editStore.logo_url);
     if (editStore.cover_url) setCoverPreview(editStore.cover_url);
@@ -181,15 +192,17 @@ const CreateStore = () => {
       if (logoFile) logoUrl = await uploadFile(logoFile, "logo", "store-logos");
       if (coverFile) coverUrl = await uploadFile(coverFile, "cover", "store-logos");
 
-      const payload = { 
-        ...form, 
+      const { agent_count, established_year, ...rest } = form;
+      const payload: any = { 
+        ...rest, 
         logo_url: logoUrl, 
         cover_url: coverUrl,
+        agent_count: agent_count ? Number(agent_count) : null,
+        established_year: established_year ? Number(established_year) : null,
         working_hours: selectedDays.length > 0 ? formattedWorkingHours : form.working_hours 
       };
 
       if (editId) {
-        // Always submit change request for admin approval when editing
         const { error } = await supabase.from("store_change_requests").insert({
           store_id: editId,
           user_id: user!.id,
@@ -199,7 +212,7 @@ const CreateStore = () => {
         if (error) throw error;
         toast({ title: t("create_store.edit_request_sent", "Redaktə sorğusu göndərildi! Admin təsdiqi gözlənilir.") });
       } else {
-        const { error } = await supabase.from("stores").insert({ user_id: user!.id, ...payload, status: "pending" });
+        const { error } = await supabase.from("stores").insert({ user_id: user!.id, ...payload, status: "pending" } as any);
         if (error) throw error;
         toast({ title: t("create_store.created_success", "Agentlik yaradıldı! Admin təsdiqi gözlənilir.") });
       }
@@ -333,6 +346,52 @@ const CreateStore = () => {
           <div className="space-y-2">
             <Label htmlFor="instagram">{t("create_store.instagram")}</Label>
             <Input id="instagram" placeholder="@magazaadi və ya https://instagram.com/magazaadi" value={form.instagram_url} onChange={(e) => setForm({ ...form, instagram_url: e.target.value })} />
+          </div>
+
+          {/* Agency-specific fields */}
+          <div className="space-y-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+            <div className="flex items-center gap-2">
+              <span className="text-base">🏢</span>
+              <Label className="text-sm font-semibold">Agentlik məlumatları</Label>
+            </div>
+            <p className="text-xs text-muted-foreground">Bu məlumatlar müştərilərdə etimad yaradır və axtarış nəticələrində agentliyinizi vurğulayır.</p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="license" className="text-xs">Lisenziya nömrəsi</Label>
+                <Input id="license" placeholder="LIC-123456" value={form.license_number} onChange={(e) => setForm({ ...form, license_number: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="agents" className="text-xs">Agent sayı</Label>
+                <Input id="agents" type="number" min={1} placeholder="5" value={form.agent_count} onChange={(e) => setForm({ ...form, agent_count: e.target.value })} />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">İxtisaslaşma</Label>
+              <Select value={form.specialization || "none"} onValueChange={(v) => setForm({ ...form, specialization: v === "none" ? "" : v })}>
+                <SelectTrigger><SelectValue placeholder="Seçin" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Seçilməyib</SelectItem>
+                  <SelectItem value="Yaşayış">Yaşayış obyektləri</SelectItem>
+                  <SelectItem value="Kommersiya">Kommersiya obyektləri</SelectItem>
+                  <SelectItem value="Lüks">Lüks daşınmaz əmlak</SelectItem>
+                  <SelectItem value="Kirayə">Kirayə xidmətləri</SelectItem>
+                  <SelectItem value="Universal">Universal (hamısı)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="year" className="text-xs">Qurulma ili</Label>
+                <Input id="year" type="number" min={1990} max={new Date().getFullYear()} placeholder="2018" value={form.established_year} onChange={(e) => setForm({ ...form, established_year: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="website" className="text-xs">Vebsayt</Label>
+                <Input id="website" type="url" placeholder="https://..." value={form.website_url} onChange={(e) => setForm({ ...form, website_url: e.target.value })} />
+              </div>
+            </div>
           </div>
 
           <div className="space-y-4 rounded-xl border border-border p-4 bg-muted/30">

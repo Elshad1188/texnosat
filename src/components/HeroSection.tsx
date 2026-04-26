@@ -4,9 +4,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import VisualSearchButton from "@/components/VisualSearchButton";
 import { useTranslation } from "react-i18next";
+import { usePlatformMode } from "@/hooks/usePlatformMode";
 
 const HeroSection = () => {
   const { t } = useTranslation();
+  const platform = usePlatformMode();
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
 
@@ -28,7 +30,7 @@ const HeroSection = () => {
               className="h-12 w-full rounded-2xl border border-border bg-card pl-12 pr-32 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-              <VisualSearchButton />
+              {platform.showVisualSearch && <VisualSearchButton />}
               <Button 
                 type="submit" 
                 size="sm"

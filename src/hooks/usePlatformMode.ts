@@ -19,6 +19,14 @@ export interface PlatformConfig {
   showShipping: boolean;
   /** Checkout mövcuddur */
   showCheckout: boolean;
+  /** Vizual axtarış (şəkillə axtarış) mövcuddur */
+  showVisualSearch: boolean;
+  /** Anbar (warehouse) tabı mövcuddur */
+  showWarehouse: boolean;
+  /** AI ilə avtomatik elan doldurma mövcuddur */
+  showAiAutofill: boolean;
+  /** Mağaza panelində Telegram bot inteqrasiyası mövcuddur */
+  showTelegramBot: boolean;
 }
 
 function getConfig(mode: PlatformMode): PlatformConfig {
@@ -33,6 +41,10 @@ function getConfig(mode: PlatformMode): PlatformConfig {
         showOrders: false,
         showShipping: false,
         showCheckout: false,
+        showVisualSearch: true,
+        showWarehouse: false,
+        showAiAutofill: true,
+        showTelegramBot: true,
       };
     case "marketplace":
       return {
@@ -44,6 +56,10 @@ function getConfig(mode: PlatformMode): PlatformConfig {
         showOrders: true,
         showShipping: true,
         showCheckout: true,
+        showVisualSearch: true,
+        showWarehouse: true,
+        showAiAutofill: true,
+        showTelegramBot: true,
       };
     case "both":
     default:
@@ -56,6 +72,10 @@ function getConfig(mode: PlatformMode): PlatformConfig {
         showOrders: true,
         showShipping: true,
         showCheckout: true,
+        showVisualSearch: true,
+        showWarehouse: true,
+        showAiAutofill: true,
+        showTelegramBot: true,
       };
   }
 }
@@ -69,15 +89,24 @@ export function usePlatformMode(): PlatformConfig & { isLoading: boolean } {
         supabase.from("site_settings").select("value").eq("key", "general").maybeSingle(),
       ]);
       const mode = ((modeRow?.value as any)?.mode as PlatformMode) || "both";
-      const disableShipping = !!(generalRow?.value as any)?.disable_shipping;
-      return { mode, disableShipping };
+      const general = (generalRow?.value as any) || {};
+      return {
+        mode,
+        disableShipping: !!general.disable_shipping,
+        disableVisualSearch: !!general.disable_visual_search,
+        disableWarehouse: !!general.disable_warehouse,
+        disableAiAutofill: !!general.disable_ai_autofill,
+        disableTelegramBot: !!general.disable_telegram_bot,
+      };
     },
     staleTime: 5 * 60 * 1000,
   });
 
   const cfg = getConfig(data?.mode || "both");
-  if (data?.disableShipping) {
-    cfg.showShipping = false;
-  }
+  if (data?.disableShipping) cfg.showShipping = false;
+  if (data?.disableVisualSearch) cfg.showVisualSearch = false;
+  if (data?.disableWarehouse) cfg.showWarehouse = false;
+  if (data?.disableAiAutofill) cfg.showAiAutofill = false;
+  if (data?.disableTelegramBot) cfg.showTelegramBot = false;
   return { ...cfg, isLoading };
 }

@@ -43,6 +43,10 @@ interface SiteSettings {
   telegram_bot_daily_limit: number;
   ai_autofill_daily_limit: number;
   disable_shipping: boolean;
+  disable_visual_search: boolean;
+  disable_warehouse: boolean;
+  disable_ai_autofill: boolean;
+  disable_telegram_bot: boolean;
 }
 
 const defaults: SiteSettings = {
@@ -74,6 +78,10 @@ const defaults: SiteSettings = {
   telegram_bot_daily_limit: 5,
   ai_autofill_daily_limit: 3,
   disable_shipping: false,
+  disable_visual_search: false,
+  disable_warehouse: false,
+  disable_ai_autofill: false,
+  disable_telegram_bot: false,
 };
 
 const watermarkPositions = [
@@ -242,6 +250,56 @@ const AdminSettingsManager = () => {
           <Switch
             checked={settings.disable_shipping}
             onCheckedChange={(v) => setSettings({ ...settings, disable_shipping: v })}
+          />
+        </div>
+      </div>
+
+      {/* Feature Toggles — disable platform-wide features */}
+      <div className="rounded-xl border-2 border-amber-500/30 bg-card p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">🧩 Funksiya açarları</h3>
+        <p className="text-xs text-muted-foreground">Daşınmaz əmlak platforması üçün uyğun olmayan funksiyaları söndürün. Söndürülən funksiyalar hər yerdən gizlənəcək.</p>
+
+        <div className="flex items-center justify-between pt-2 border-t border-border/50">
+          <div className="flex-1 pr-3">
+            <p className="text-sm text-foreground">🔍 Vizual axtarışı söndür</p>
+            <p className="text-xs text-muted-foreground">Şəkillə oxşar elan tapma düyməsi (axtarış sahəsindəki kamera ikonası) gizlədilir.</p>
+          </div>
+          <Switch
+            checked={settings.disable_visual_search}
+            onCheckedChange={(v) => setSettings({ ...settings, disable_visual_search: v })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between pt-2 border-t border-border/50">
+          <div className="flex-1 pr-3">
+            <p className="text-sm text-foreground">📦 Anbar sistemini söndür</p>
+            <p className="text-xs text-muted-foreground">Mağaza/agentlik panelindəki "Anbar" tabı və barkod skan funksiyası gizlədilir.</p>
+          </div>
+          <Switch
+            checked={settings.disable_warehouse}
+            onCheckedChange={(v) => setSettings({ ...settings, disable_warehouse: v })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between pt-2 border-t border-border/50">
+          <div className="flex-1 pr-3">
+            <p className="text-sm text-foreground">🤖 AI ilə avtomatik doldurmanı söndür</p>
+            <p className="text-xs text-muted-foreground">Elan yaradılarkən AI Vision ilə şəkildən məlumat çıxarma düyməsi gizlədilir.</p>
+          </div>
+          <Switch
+            checked={settings.disable_ai_autofill}
+            onCheckedChange={(v) => setSettings({ ...settings, disable_ai_autofill: v })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between pt-2 border-t border-border/50">
+          <div className="flex-1 pr-3">
+            <p className="text-sm text-foreground">💬 Telegram botunu söndür</p>
+            <p className="text-xs text-muted-foreground">Mağaza/agentlik panelindəki "Bot" tabı və avtomatik elan yaratma inteqrasiyası gizlədilir.</p>
+          </div>
+          <Switch
+            checked={settings.disable_telegram_bot}
+            onCheckedChange={(v) => setSettings({ ...settings, disable_telegram_bot: v })}
           />
         </div>
       </div>

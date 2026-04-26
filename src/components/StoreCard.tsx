@@ -13,6 +13,9 @@ interface StoreCardProps {
   is_premium?: boolean;
   listingCount?: number;
   className?: string;
+  licenseNumber?: string | null;
+  agentCount?: number | null;
+  specialization?: string | null;
 }
 
 const StoreCard = ({
@@ -24,6 +27,9 @@ const StoreCard = ({
   is_premium,
   listingCount,
   className,
+  licenseNumber,
+  agentCount,
+  specialization,
 }: StoreCardProps) => {
   const { t } = useTranslation();
   return (
@@ -92,6 +98,26 @@ const StoreCard = ({
             </div>
           )}
         </div>
+
+        {(licenseNumber || agentCount || specialization) && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {licenseNumber && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+                ✓ Lisenziyalı
+              </span>
+            )}
+            {agentCount ? (
+              <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                {agentCount} agent
+              </span>
+            ) : null}
+            {specialization && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                {specialization}
+              </span>
+            )}
+          </div>
+        )}
 
         <div className="mt-6 flex items-center justify-between">
           <span className="text-[11px] font-bold uppercase tracking-widest text-primary/70 group-hover:text-primary transition-colors flex items-center gap-1">
