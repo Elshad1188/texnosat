@@ -155,6 +155,14 @@ const Products = () => {
     if (priceMin) result = result.filter((p: any) => Number(p.price) >= Number(priceMin));
     if (priceMax) result = result.filter((p: any) => Number(p.price) <= Number(priceMax));
 
+    if (dateRange !== "all") {
+      const days = dateRange === "24h" ? 1 : dateRange === "week" ? 7 : dateRange === "month" ? 30 : 0;
+      if (days > 0) {
+        const cutoff = Date.now() - days * 86400000;
+        result = result.filter((p: any) => new Date(p.created_at).getTime() >= cutoff);
+      }
+    }
+
     // Custom fields filtering
     Object.entries(customFilters).forEach(([fieldName, selectedValue]) => {
       if (selectedValue) {
