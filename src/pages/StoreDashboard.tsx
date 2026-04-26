@@ -97,10 +97,10 @@ const StoreDashboard = () => {
         <Header />
         <div className="container mx-auto flex flex-col items-center py-32 text-center px-4">
           <Store className="h-16 w-16 text-muted-foreground/50" />
-          <h1 className="mt-4 text-xl font-bold text-foreground">Hələ mağazanız yoxdur</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Mağaza yaradın və elanlarınızı idarə edin</p>
+          <h1 className="mt-4 text-xl font-bold text-foreground">Hələ agentliyiniz yoxdur</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Daşınmaz əmlak agentliyi yaradın və elanlarınızı idarə edin</p>
           <Button className="mt-6 bg-gradient-primary text-primary-foreground" asChild>
-            <Link to="/create-store">Mağaza yarat</Link>
+            <Link to="/create-store">Agentlik yarat</Link>
           </Button>
         </div>
         <Footer />

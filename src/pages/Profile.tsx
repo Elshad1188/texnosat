@@ -243,7 +243,7 @@ const Profile = () => {
         <Tabs defaultValue="listings" className="space-y-4">
           <TabsList className="w-full overflow-x-auto justify-start">
             <TabsTrigger value="listings" className="gap-1 text-xs sm:text-sm"><Package className="h-3.5 w-3.5" />Elanlarım</TabsTrigger>
-            <TabsTrigger value="stores" className="gap-1 text-xs sm:text-sm"><Store className="h-3.5 w-3.5" />Mağazalar</TabsTrigger>
+            <TabsTrigger value="stores" className="gap-1 text-xs sm:text-sm"><Store className="h-3.5 w-3.5" />Agentliklər</TabsTrigger>
             <TabsTrigger value="reviews" className="gap-1 text-xs sm:text-sm"><Star className="h-3.5 w-3.5" />Rəylər</TabsTrigger>
             <TabsTrigger value="saved-searches" className="gap-1 text-xs sm:text-sm"><Bell className="h-3.5 w-3.5" />Axtarışlar</TabsTrigger>
             <TabsTrigger value="settings" className="gap-1 text-xs sm:text-sm"><Edit2 className="h-3.5 w-3.5" />Tənzimləmələr</TabsTrigger>
@@ -337,14 +337,14 @@ const Profile = () => {
           <TabsContent value="stores">
             <div className="mb-3 flex justify-end">
               <Button size="sm" className="gap-1 bg-gradient-primary text-primary-foreground" asChild>
-                <Link to="/create-store"><Plus className="h-3.5 w-3.5" />Yeni mağaza</Link>
+                <Link to="/create-store"><Plus className="h-3.5 w-3.5" />Yeni agentlik</Link>
               </Button>
             </div>
             {stores.length === 0 ? (
               <Card><CardContent className="py-10 text-center text-muted-foreground">
                 <Store className="mx-auto mb-3 h-10 w-10 opacity-40" />
-                <p className="text-sm">Hələ mağaza yaratmamısınız.</p>
-                <Button className="mt-4 bg-gradient-primary text-primary-foreground text-sm" asChild><Link to="/create-store">Mağaza yarat</Link></Button>
+                <p className="text-sm">Hələ daşınmaz əmlak agentliyi yaratmamısınız.</p>
+                <Button className="mt-4 bg-gradient-primary text-primary-foreground text-sm" asChild><Link to="/create-store">Agentlik yarat</Link></Button>
               </CardContent></Card>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
