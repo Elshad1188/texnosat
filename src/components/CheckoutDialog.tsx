@@ -13,6 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, CreditCard, Truck, MapPin, ShoppingCart, CheckCircle, Wallet } from "lucide-react";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
+import { usePlatformMode } from "@/hooks/usePlatformMode";
 
 interface CheckoutDialogProps {
   open: boolean;
