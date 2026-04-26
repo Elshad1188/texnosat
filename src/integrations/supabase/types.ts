@@ -1546,6 +1546,131 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_campaigns: {
+        Row: {
+          category_filter: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          failed_count: number
+          id: string
+          message: string
+          region_filter: string | null
+          sent_count: number
+          source_filter: string
+          status: string
+          title: string
+          total_recipients: number
+        }
+        Insert: {
+          category_filter?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          failed_count?: number
+          id?: string
+          message: string
+          region_filter?: string | null
+          sent_count?: number
+          source_filter?: string
+          status?: string
+          title: string
+          total_recipients?: number
+        }
+        Update: {
+          category_filter?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          failed_count?: number
+          id?: string
+          message?: string
+          region_filter?: string | null
+          sent_count?: number
+          source_filter?: string
+          status?: string
+          title?: string
+          total_recipients?: number
+        }
+        Relationships: []
+      }
+      sms_logs: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          phone: string
+          provider_message_id: string | null
+          sent_at: string | null
+          source: string | null
+          status: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          phone: string
+          provider_message_id?: string | null
+          sent_at?: string | null
+          source?: string | null
+          status?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          phone?: string
+          provider_message_id?: string | null
+          sent_at?: string | null
+          source?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_logs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "sms_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_settings: {
+        Row: {
+          api_login: string | null
+          api_password_secret_hint: string | null
+          id: number
+          is_enabled: boolean
+          provider: string
+          rate_limit_per_minute: number
+          sender_name: string
+          updated_at: string
+        }
+        Insert: {
+          api_login?: string | null
+          api_password_secret_hint?: string | null
+          id?: number
+          is_enabled?: boolean
+          provider?: string
+          rate_limit_per_minute?: number
+          sender_name?: string
+          updated_at?: string
+        }
+        Update: {
+          api_login?: string | null
+          api_password_secret_hint?: string | null
+          id?: number
+          is_enabled?: boolean
+          provider?: string
+          rate_limit_per_minute?: number
+          sender_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       spin_history: {
         Row: {
           amount: number
