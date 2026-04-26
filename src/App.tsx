@@ -60,6 +60,7 @@ const ScrollToTop = () => {
 
 const AppWrapper = () => {
   const { isLoaded } = useTheme();
+  const { showReels, showSpinWin, showOrders, showCompare } = usePlatformMode();
   useChatPresence();
 
   if (!isLoaded) {
@@ -91,8 +92,14 @@ const AppWrapper = () => {
         <Route path="/payment-result" element={<PaymentResult />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
+        {showReels && <Route path="/reels" element={<Reels />} />}
+        {showSpinWin && <Route path="/spin-win" element={<SpinWin />} />}
+        {showOrders && <Route path="/orders" element={<Orders />} />}
+        {showCompare && <Route path="/compare" element={<ComparePage />} />}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      {showCompare && <CompareBar />}
+      {showSpinWin && <SpinWheelPopup />}
     </div>
   );
 };
