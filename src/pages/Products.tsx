@@ -14,6 +14,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { iconMap } from "@/lib/icons";
 import SaveSearchButton from "@/components/SaveSearchButton";
 import { useLanguage, useTranslation } from "@/contexts/LanguageContext";
+import { getListingCoords } from "@/components/ListingsMap";
+const ListingsMap = lazy(() => import("@/components/ListingsMap"));
+
+type MapBounds = { north: number; south: number; east: number; west: number };
 
 const conditions = [
   { value: "all", dbValue: "", labelKey: "common.all" },
