@@ -146,6 +146,19 @@ const Products = () => {
       result = result.filter((p: any) => p.category === selectedCategory);
     }
 
+    if (selectedDeal) {
+      result = result.filter((p: any) => {
+        const dt = (p as any).deal_type || (p as any).custom_fields?.deal_type;
+        if (!dt) return selectedDeal === "sale"; // köhnə elanlar default alqı-satqı
+        const norm = String(dt).toLowerCase();
+        if (selectedDeal === "sale") return norm === "sale" || norm.includes("alqı") || norm.includes("satış");
+        if (selectedDeal === "rent") return norm === "rent" || norm.includes("kirayə") || norm.includes("kiraye");
+        if (selectedDeal === "daily") return norm === "daily" || norm.includes("günlük") || norm.includes("gunluk");
+        if (selectedDeal === "roommate") return norm === "roommate" || norm.includes("otaq yold");
+        return true;
+      });
+    }
+
     if (selectedSubcategory) {
       result = result.filter((p: any) => p.subcategory === selectedSubcategory);
     }
