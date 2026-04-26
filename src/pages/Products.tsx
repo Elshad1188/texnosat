@@ -16,6 +16,7 @@ import SaveSearchButton from "@/components/SaveSearchButton";
 import { useLanguage, useTranslation } from "@/contexts/LanguageContext";
 import { getListingCoords } from "@/components/ListingsMap";
 const ListingsMap = lazy(() => import("@/components/ListingsMap"));
+import DealTypeTabs from "@/components/DealTypeTabs";
 
 type MapBounds = { north: number; south: number; east: number; west: number };
 
@@ -49,9 +50,11 @@ const Products = () => {
   const { language } = useLanguage();
   const initialSearch = searchParams.get("search") || "";
   const initialCategory = searchParams.get("category") || "";
+  const initialDeal = searchParams.get("deal") || "";
 
   const [query, setQuery] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+  const [selectedDeal, setSelectedDeal] = useState(initialDeal);
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("");
   const [selectedCondition, setSelectedCondition] = useState("all");
@@ -144,6 +147,19 @@ const Products = () => {
       result = result.filter((p: any) => p.category === selectedCategory);
     }
 
+    if (selectedDeal) {
+      result = result.filter((p: any) => {
+        const dt = (p as any).deal_type || (p as any).custom_fields?.deal_type;
+        if (!dt) return selectedDeal === "sale"; // köhnə elanlar default alqı-satqı
+        const norm = String(dt).toLowerCase();
+        if (selectedDeal === "sale") return norm === "sale" || norm.includes("alqı") || norm.includes("satış");
+        if (selectedDeal === "rent") return norm === "rent" || norm.includes("kirayə") || norm.includes("kiraye");
+        if (selectedDeal === "daily") return norm === "daily" || norm.includes("günlük") || norm.includes("gunluk");
+        if (selectedDeal === "roommate") return norm === "roommate" || norm.includes("otaq yold");
+        return true;
+      });
+    }
+
     if (selectedSubcategory) {
       result = result.filter((p: any) => p.subcategory === selectedSubcategory);
     }
@@ -185,7 +201,7 @@ const Products = () => {
     else if (sortBy === "views") result.sort((a: any, b: any) => (b.views_count || 0) - (a.views_count || 0));
 
     return result;
-  }, [query, selectedCategory, selectedSubcategory, selectedCondition, sortBy, priceMin, priceMax, allListings, selectedRegion, regions, customFilters, dateRange]);
+  }, [query, selectedCategory, selectedSubcategory, selectedCondition, sortBy, priceMin, priceMax, allListings, selectedRegion, regions, customFilters, dateRange, selectedDeal]);
 
   // Apply map-bounds filter on top of standard filters when in map view
   const visibleProducts = useMemo(() => {
@@ -204,6 +220,7 @@ const Products = () => {
     setPriceMin(""); setPriceMax(""); setSortBy("newest");
     setDateRange("all");
     setCustomFilters({});
+    setSelectedDeal("");
     setSearchParams({});
   };
 
@@ -215,6 +232,7 @@ const Products = () => {
     (selectedRegion ? 1 : 0) +
     (priceMin || priceMax ? 1 : 0) +
     (dateRange !== "all" ? 1 : 0) +
+    (selectedDeal ? 1 : 0) +
     Object.values(customFilters).filter((v) => v).length;
   const hasActiveFilters = activeFilterCount > 0;
 
@@ -222,6 +240,20 @@ const Products = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-6">
+        {/* Deal type tabs (bina.az style) */}
+        <div className="mb-5">
+          <DealTypeTabs
+            value={selectedDeal}
+            onChange={(v) => {
+              setSelectedDeal(v);
+              const params = new URLSearchParams(searchParams);
+              if (v) params.set("deal", v); else params.delete("deal");
+              setSearchParams(params);
+            }}
+            variant="controlled"
+          />
+        </div>
+
         {/* Search */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
           <form onSubmit={(e) => e.preventDefault()} className="relative flex-1">

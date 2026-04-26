@@ -697,7 +697,7 @@ const ProductDetail = () => {
                     <div>
                       <div className="mb-3 flex items-center gap-2">
                         <Sparkles className="h-4 w-4 text-primary" />
-                        <h3 className="font-display text-sm font-semibold text-foreground">{t("detail.specifications") || "Xüsusiyyətlər"}</h3>
+                        <h3 className="font-display text-sm font-semibold text-foreground">Xüsusiyyətlər</h3>
                       </div>
                       <div className="divide-y divide-border/60 rounded-xl border border-border/60 bg-card/50">
                         {orderedCustom.map(({ key, val, label }) => {
@@ -714,7 +714,7 @@ const ProductDetail = () => {
                   <div>
                     <div className="mb-3 flex items-center gap-2">
                       <Eye className="h-4 w-4 text-primary" />
-                      <h3 className="font-display text-sm font-semibold text-foreground">{t("detail.statistics") || "Statistika"}</h3>
+                      <h3 className="font-display text-sm font-semibold text-foreground">Statistika</h3>
                     </div>
                     <div className="divide-y divide-border/60 rounded-xl border border-border/60 bg-card/50">
                       <SpecRow icon={Calendar} accent="violet" label={t("detail.created_date")} value={new Date(listing.created_at).toLocaleDateString(language)} />

@@ -6,6 +6,7 @@ import FeaturedListings from "@/components/FeaturedListings";
 import BannerDisplay from "@/components/BannerDisplay";
 import LatestBlogPosts from "@/components/LatestBlogPosts";
 import Footer from "@/components/Footer";
+import DealTypeTabs from "@/components/DealTypeTabs";
 
 const Index = () => {
   return (
@@ -13,6 +14,9 @@ const Index = () => {
       <Header />
       <main>
         <HeroSection />
+        <section className="container mx-auto px-4 -mt-2 mb-4">
+          <DealTypeTabs variant="navigate" />
+        </section>
         <Categories />
         <div className="container mx-auto px-4">
           <BannerDisplay position="home_top" />
