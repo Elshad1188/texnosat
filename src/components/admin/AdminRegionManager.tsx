@@ -27,7 +27,8 @@ const AdminRegionManager = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const [form, setForm] = useState({ name: "", parent_id: "", sort_order: 0, is_active: true });
+  const [activeTab, setActiveTab] = useState<"region" | "metro">("region");
+  const [form, setForm] = useState({ name: "", parent_id: "", sort_order: 0, is_active: true, type: "region" as "region" | "metro" });
 
   const fetchRegions = async () => {
     const { data } = await supabase.from("regions").select("*").order("sort_order");
@@ -37,10 +38,11 @@ const AdminRegionManager = () => {
 
   useEffect(() => { fetchRegions(); }, []);
 
-  const parents = regions.filter((r) => !r.parent_id);
-  const getChildren = (parentId: string) => regions.filter((r) => r.parent_id === parentId);
+  const scopedRegions = regions.filter((r) => (r.type || "region") === activeTab);
+  const parents = scopedRegions.filter((r) => !r.parent_id);
+  const getChildren = (parentId: string) => scopedRegions.filter((r) => r.parent_id === parentId);
 
-  const resetForm = () => { setForm({ name: "", parent_id: "", sort_order: 0, is_active: true }); setEditId(null); };
+  const resetForm = () => { setForm({ name: "", parent_id: "", sort_order: 0, is_active: true, type: activeTab }); setEditId(null); };
 
   const openAdd = (parentId?: string) => {
     resetForm();
@@ -50,7 +52,7 @@ const AdminRegionManager = () => {
 
   const openEdit = (reg: Region) => {
     setEditId(reg.id);
-    setForm({ name: reg.name, parent_id: reg.parent_id || "", sort_order: reg.sort_order, is_active: reg.is_active });
+    setForm({ name: reg.name, parent_id: reg.parent_id || "", sort_order: reg.sort_order, is_active: reg.is_active, type: ((reg.type as any) || "region") });
     setDialogOpen(true);
   };
 
