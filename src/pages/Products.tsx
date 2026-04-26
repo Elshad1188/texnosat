@@ -187,6 +187,17 @@ const Products = () => {
     return result;
   }, [query, selectedCategory, selectedSubcategory, selectedCondition, sortBy, priceMin, priceMax, allListings, selectedRegion, regions, customFilters, dateRange]);
 
+  // Apply map-bounds filter on top of standard filters when in map view
+  const visibleProducts = useMemo(() => {
+    if (viewMode !== "map" || !mapBounds || !useMapBoundsFilter) return filteredProducts;
+    return filteredProducts.filter((p: any) => {
+      const c = getListingCoords(p);
+      if (!c) return false;
+      const [lat, lng] = c;
+      return lat <= mapBounds.north && lat >= mapBounds.south && lng <= mapBounds.east && lng >= mapBounds.west;
+    });
+  }, [filteredProducts, mapBounds, viewMode, useMapBoundsFilter]);
+
   const clearFilters = () => {
     setQuery(""); setSelectedCategory(""); setSelectedSubcategory("");
     setSelectedRegion(""); setSelectedCondition("all");
