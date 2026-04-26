@@ -492,11 +492,6 @@ const CreateListing = () => {
 
 
             <div className="space-y-2">
-              <Label htmlFor="title">{t("create_listing.title_field")}</Label>
-              <Input id="title" placeholder="Məs: iPhone 15 Pro Max 256GB" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="desc">{t("create_listing.desc_field")}</Label>
               <Textarea id="desc" placeholder={t("create_listing.desc_placeholder")} rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </div>
@@ -530,25 +525,14 @@ const CreateListing = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>{t("products.condition")}</Label>
-                <Select value={form.condition} onValueChange={(v) => setForm({ ...form, condition: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {conditions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>{t("products.region")}</Label>
-                <Select value={form.location} onValueChange={(v) => setForm({ ...form, location: v })}>
-                  <SelectTrigger><SelectValue placeholder={t("products.select_region")} /></SelectTrigger>
-                  <SelectContent>
-                    {regions.map((r: any) => <SelectItem key={r.id} value={r.name}>{r.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <Label>{t("products.region")}</Label>
+              <Select value={form.location} onValueChange={(v) => setForm({ ...form, location: v })}>
+                <SelectTrigger><SelectValue placeholder={t("products.select_region")} /></SelectTrigger>
+                <SelectContent>
+                  {regions.map((r: any) => <SelectItem key={r.id} value={r.name}>{r.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Identity switcher - personal vs store */}
