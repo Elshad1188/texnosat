@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, User, ArrowLeft, Gift } from "lucide-react";
+import { Mail, Lock, User, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useTranslation } from "react-i18next";
@@ -20,21 +20,22 @@ const Auth = () => {
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState("");
-  const [referralCode, setReferralCode] = useState("");
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { theme } = useTheme();
 
+  // Referal kodu URL-də olarsa avtomatik tətbiq olunur (link paylaşımı üçün), amma input göstərilmir
+  const autoReferralCode = searchParams.get("ref") || "";
+
   useEffect(() => {
-    const ref = searchParams.get("ref");
-    if (ref) {
-      setReferralCode(ref);
+    if (autoReferralCode) {
       setMode("register");
     }
-  }, [searchParams]);
+  }, [autoReferralCode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +55,7 @@ const Auth = () => {
       } else {
         await signUp(email, password, fullName);
         toast({ title: "Hesab yaradıldı!", description: "Xoş gəldiniz!" });
-        if (referralCode) {
+        if (autoReferralCode) {
           setTimeout(async () => {
             const { data: refSettings } = await supabase
               .from("site_settings").select("value").eq("key", "referral").maybeSingle();
@@ -63,7 +64,7 @@ const Auth = () => {
             const { data: { user: newUser } } = await supabase.auth.getUser();
             if (newUser) {
               await supabase.rpc("process_referral", {
-                _referral_code: referralCode.toUpperCase(),
+                _referral_code: autoReferralCode.toUpperCase(),
                 _new_user_id: newUser.id,
               });
             }
@@ -128,15 +129,6 @@ const Auth = () => {
                   </div>
                 </div>
               )}
-              {mode === "register" && (
-                <div className="space-y-2">
-                  <Label htmlFor="referral">{t("auth.referral_code")}</Label>
-                  <div className="relative">
-                    <Gift className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="referral" placeholder="XXXXXXXX" value={referralCode} onChange={(e) => setReferralCode(e.target.value)} className="pl-10 uppercase font-mono" />
-                  </div>
-                </div>
-              )}
               <div className="space-y-2">
                 <Label htmlFor="email">{t("common.email")}</Label>
                 <div className="relative">
@@ -149,7 +141,25 @@ const Auth = () => {
                   <Label htmlFor="password">{t("common.password")}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" minLength={6} required />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10 pr-10"
+                      minLength={6}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label={showPassword ? "Şifrəni gizlət" : "Şifrəni göstər"}
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                 </div>
               )}
