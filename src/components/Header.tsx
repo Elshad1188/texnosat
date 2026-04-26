@@ -116,7 +116,6 @@ const Header = () => {
                   { to: "/", label: t("nav.home"), icon: Home },
                   { to: "/products", label: t("nav.products"), icon: FolderTree },
                   { to: "/stores", label: t("nav.stores"), icon: Store },
-                  { to: "/reels", label: t("nav.reels"), icon: Play },
                   { to: "/blog", label: t("nav.blog"), icon: BookOpen },
                   { to: "/create-store", label: t("nav.create_store"), icon: Store },
                 ].map(item => (
@@ -158,20 +157,6 @@ const Header = () => {
               </div>
 
               <Separator />
-
-              {/* Spin & Win Link */}
-              <div className="p-4">
-                <Link
-                  to="/spin-win"
-                  onClick={() => setSheetOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-100 text-orange-600">
-                    <Trophy className="h-4 w-4" />
-                  </div>
-                  {t("nav.spin")}
-                </Link>
-              </div>
 
               <Separator />
 
