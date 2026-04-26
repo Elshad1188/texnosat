@@ -90,8 +90,16 @@ const CreateListing = () => {
   const { data: regions = [] } = useQuery({
     queryKey: ["regions-parent"],
     queryFn: async () => {
-      const { data } = await supabase.from("regions").select("*").is("parent_id", null).eq("is_active", true).order("sort_order");
+      const { data } = await supabase.from("regions").select("*").is("parent_id", null).eq("is_active", true).eq("type", "region").order("sort_order");
       return data || [];
+    },
+  });
+
+  const { data: metroOptions = [] } = useQuery({
+    queryKey: ["regions-metro"],
+    queryFn: async () => {
+      const { data } = await supabase.from("regions").select("name").eq("type", "metro").eq("is_active", true).order("sort_order").order("name");
+      return (data || []).map((r: any) => r.name as string);
     },
   });
 
@@ -586,11 +594,24 @@ const CreateListing = () => {
                       {categoryFields.map((field: any) => {
                         // If this is the "model" field and we have brand-model mappings, show dynamic dropdown
                         const isDependentModel = field.field_name === "model" && brandModelMap && selectedBrand && selectedBrand !== "__other__" && modelOptions.length > 0;
+                        const isMetroField = field.field_name === "metro" && metroOptions.length > 0;
 
                         return (
                           <div key={field.id} className="space-y-2">
                             <Label>{field.field_label}</Label>
-                            {isDependentModel ? (
+                            {isMetroField ? (
+                              <Select
+                                value={customFields[field.field_name] || ""}
+                                onValueChange={v => setCustomFields(prev => ({ ...prev, [field.field_name]: v }))}
+                              >
+                                <SelectTrigger><SelectValue placeholder={t("products.select")} /></SelectTrigger>
+                                <SelectContent className="max-h-72">
+                                  {metroOptions.map((m: string) => (
+                                    <SelectItem key={m} value={m}>{m}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : isDependentModel ? (
                               <>
                                 <Select
                                   value={customFields[field.field_name] || ""}
