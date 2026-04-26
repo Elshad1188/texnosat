@@ -183,40 +183,60 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
         </div>
       </div>
 
-      <div className="p-3">
-        <p className="font-display text-lg font-bold text-foreground">{price}</p>
-        {customFields?.deal_type && (
-          <p className="mt-0.5 text-[11px] font-medium text-primary">{customFields.deal_type}</p>
-        )}
+      <div className="p-2 sm:p-2.5">
+        <div className="flex items-baseline justify-between gap-1">
+          <p className="font-display text-[15px] sm:text-base font-bold text-foreground leading-tight truncate">{price}</p>
+          {customFields?.deal_type && (
+            <span className="shrink-0 text-[10px] font-medium text-primary">{customFields.deal_type}</span>
+          )}
+        </div>
 
         {/* Real estate parameters */}
         {(customFields?.rooms || customFields?.area_m2 || customFields?.floor) && (
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <div className="mt-1.5 flex flex-wrap items-center gap-1">
             {customFields?.rooms && (
-              <span className="inline-flex items-center gap-1 rounded-md bg-muted/70 px-1.5 py-0.5 text-[11px] font-medium text-foreground">
-                <BedDouble className="h-3 w-3 text-primary" />
-                {customFields.rooms} otaq
+              <span className="inline-flex items-center gap-0.5 rounded bg-muted/70 px-1 py-0.5 text-[10px] font-medium text-foreground">
+                <BedDouble className="h-2.5 w-2.5 text-primary" />
+                {customFields.rooms}
               </span>
             )}
             {customFields?.area_m2 && (
-              <span className="inline-flex items-center gap-1 rounded-md bg-muted/70 px-1.5 py-0.5 text-[11px] font-medium text-foreground">
-                <Maximize2 className="h-3 w-3 text-primary" />
-                {customFields.area_m2} m²
+              <span className="inline-flex items-center gap-0.5 rounded bg-muted/70 px-1 py-0.5 text-[10px] font-medium text-foreground">
+                <Maximize2 className="h-2.5 w-2.5 text-primary" />
+                {customFields.area_m2}m²
               </span>
             )}
             {customFields?.floor && (
-              <span className="inline-flex items-center gap-1 rounded-md bg-muted/70 px-1.5 py-0.5 text-[11px] font-medium text-foreground">
-                <Building2 className="h-3 w-3 text-primary" />
+              <span className="inline-flex items-center gap-0.5 rounded bg-muted/70 px-1 py-0.5 text-[10px] font-medium text-foreground">
+                <Building2 className="h-2.5 w-2.5 text-primary" />
                 {customFields.floor}{customFields?.total_floors ? `/${customFields.total_floors}` : ""}
               </span>
             )}
           </div>
         )}
 
-        {title && (
-          <h3 className="mt-2 line-clamp-2 text-xs text-muted-foreground group-hover:text-primary transition-colors">
-            {title}
-          </h3>
+        {/* Mortgage / Document indicators */}
+        {(customFields?.mortgage === "Var" || (customFields?.document && customFields.document !== "Sənədsiz")) && (
+          <div className="mt-1.5 flex flex-wrap items-center gap-1">
+            {customFields?.mortgage === "Var" && (
+              <span
+                title="İpoteka ilə alına bilər"
+                className="inline-flex items-center gap-0.5 rounded bg-emerald-500/10 px-1 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400"
+              >
+                <Landmark className="h-2.5 w-2.5" />
+                İpoteka
+              </span>
+            )}
+            {customFields?.document && customFields.document !== "Sənədsiz" && (
+              <span
+                title={`Sənəd: ${customFields.document}`}
+                className="inline-flex items-center gap-0.5 rounded bg-blue-500/10 px-1 py-0.5 text-[10px] font-semibold text-blue-600 dark:text-blue-400"
+              >
+                <FileCheck2 className="h-2.5 w-2.5" />
+                {customFields.document}
+              </span>
+            )}
+          </div>
         )}
 
         {/* Store Badge */}
@@ -226,29 +246,29 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
               e.stopPropagation();
               navigate(`/store/${storeId}`);
             }}
-            className="mt-2 flex items-center gap-1.5 rounded-md bg-muted/80 px-2 py-1 transition-colors hover:bg-muted"
+            className="mt-1.5 flex items-center gap-1 rounded bg-muted/80 px-1.5 py-0.5 transition-colors hover:bg-muted max-w-full"
           >
-            <div className="flex h-4 w-4 shrink-0 items-center justify-center overflow-hidden rounded bg-card">
+            <div className="flex h-3.5 w-3.5 shrink-0 items-center justify-center overflow-hidden rounded bg-card">
               {storeLogo ? (
                 <img src={storeLogo} alt="" className="h-full w-full object-cover" />
               ) : (
-                <Store className="h-2.5 w-2.5 text-muted-foreground" />
+                <Store className="h-2 w-2 text-muted-foreground" />
               )}
             </div>
-            <span className="truncate text-[11px] font-medium text-muted-foreground">{storeName}</span>
+            <span className="truncate text-[10px] font-medium text-muted-foreground">{storeName}</span>
           </button>
         )}
 
-        <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <MapPin className="h-3 w-3" /> {location}
+        <div className="mt-1.5 flex items-center justify-between gap-1 text-[10px] text-muted-foreground">
+          <span className="flex items-center gap-0.5 truncate">
+            <MapPin className="h-2.5 w-2.5 shrink-0" /> <span className="truncate">{location}</span>
           </span>
-          <span className="flex items-center gap-1">
-            <Clock className="h-3 w-3" /> {time}
+          <span className="flex items-center gap-0.5 shrink-0">
+            <Clock className="h-2.5 w-2.5" /> {time}
           </span>
         </div>
 
-        {/* Buy / Compare buttons */}
+        {/* Buy button */}
         {isBuyable && (
           <button
             onClick={(e) => {
@@ -256,26 +276,12 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
               if (!user) { navigate("/auth"); return; }
               setCheckoutOpen(true);
             }}
-            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-[11px] font-bold text-primary-foreground transition-colors hover:bg-primary/90"
+            className="mt-1.5 flex w-full items-center justify-center gap-1 rounded-md bg-primary py-1.5 text-[10px] font-bold text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            <ShoppingCart className="h-3.5 w-3.5" />
+            <ShoppingCart className="h-3 w-3" />
             {t("card.buy")}
           </button>
         )}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            toggle({ id, title, price, image, location, condition });
-          }}
-          className={`mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border py-1.5 text-[11px] font-medium transition-colors ${
-            isComparing
-              ? "border-primary bg-primary/10 text-primary"
-              : "border-border text-muted-foreground hover:border-primary/40 hover:text-primary"
-          }`}
-        >
-          <GitCompareArrows className="h-3.5 w-3.5" />
-          {isComparing ? t("card.comparing") : t("card.compare")}
-        </button>
       </div>
 
       {isBuyable && numericPrice != null && userId && createPortal(
