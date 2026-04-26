@@ -329,7 +329,9 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
             )}
 
             <div className="flex gap-2">
-              <Button variant="outline" className="flex-1" onClick={() => setStep("shipping")}>Geri</Button>
+              {platform.showShipping && (
+                <Button variant="outline" className="flex-1" onClick={() => setStep("shipping")}>Geri</Button>
+              )}
               <Button className="flex-1" onClick={() => setStep("confirm")}>
                 Davam et
               </Button>
