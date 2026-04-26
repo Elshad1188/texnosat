@@ -33,6 +33,7 @@ const CreateStore = () => {
   const [coverPreview, setCoverPreview] = useState("");
   const [form, setForm] = useState({
     name: "", description: "", address: "", city: "", phone: "", working_hours: "", instagram_url: "",
+    license_number: "", agent_count: "", specialization: "", established_year: "", website_url: "",
   });
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [startTime, setStartTime] = useState("09:00");
@@ -104,6 +105,11 @@ const CreateStore = () => {
         address: editStore.address || "", city: editStore.city || "",
         phone: editStore.phone || "", working_hours: editStore.working_hours || "",
         instagram_url: (editStore as any).instagram_url || "",
+        license_number: (editStore as any).license_number || "",
+        agent_count: (editStore as any).agent_count ? String((editStore as any).agent_count) : "",
+        specialization: (editStore as any).specialization || "",
+        established_year: (editStore as any).established_year ? String((editStore as any).established_year) : "",
+        website_url: (editStore as any).website_url || "",
       });
       if (editStore.logo_url) setLogoPreview(editStore.logo_url);
       if (editStore.cover_url) setCoverPreview(editStore.cover_url);
@@ -145,6 +151,11 @@ const CreateStore = () => {
       address: editStore.address || "", city: editStore.city || "",
       phone: editStore.phone || "", working_hours: editStore.working_hours || "",
       instagram_url: (editStore as any).instagram_url || "",
+      license_number: (editStore as any).license_number || "",
+      agent_count: (editStore as any).agent_count ? String((editStore as any).agent_count) : "",
+      specialization: (editStore as any).specialization || "",
+      established_year: (editStore as any).established_year ? String((editStore as any).established_year) : "",
+      website_url: (editStore as any).website_url || "",
     });
     if (editStore.logo_url) setLogoPreview(editStore.logo_url);
     if (editStore.cover_url) setCoverPreview(editStore.cover_url);
