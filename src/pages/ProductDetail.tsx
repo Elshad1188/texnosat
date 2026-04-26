@@ -624,32 +624,50 @@ const ProductDetail = () => {
 
             {/* Description */}
             {listing.description && (
-              <div className="mt-6">
-                <h3 className="font-display text-sm font-semibold text-foreground">{t("detail.description")}</h3>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{listing.description}</p>
+              <div className="mt-6 rounded-2xl border border-border bg-gradient-to-br from-card to-muted/30 p-5 shadow-sm">
+                <div className="mb-3 flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <h3 className="font-display text-base font-semibold text-foreground">{t("detail.description")}</h3>
+                </div>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{listing.description}</p>
               </div>
             )}
 
-            {/* Details Table */}
-            <div className="mt-6 rounded-xl border border-border bg-card p-4">
-              <h3 className="mb-3 font-display text-sm font-semibold text-foreground">{t("detail.product_info")}</h3>
-              <div className="space-y-2 text-sm">
-                <DetailRow label={t("detail.category")} value={listing.category} />
-                <DetailRow label={t("products.condition")} value={listing.condition} />
-                <DetailRow label={t("detail.city")} value={listing.location} />
-                <DetailRow label={t("detail.currency")} value={listing.currency} />
-                <DetailRow label={t("detail.views_count")} value={String(listing.views_count)} />
-                <DetailRow label={t("detail.created_date")} value={new Date(listing.created_at).toLocaleDateString(language)} />
+            {/* Details — modern icon grid */}
+            <div className="mt-4 rounded-2xl border border-border bg-card p-5 shadow-sm">
+              <div className="mb-4 flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Info className="h-4 w-4" />
+                </div>
+                <h3 className="font-display text-base font-semibold text-foreground">{t("detail.product_info")}</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                <SpecChip icon={Tag} label={t("detail.category")} value={listing.category} />
+                <SpecChip icon={Sparkles} label={t("products.condition")} value={listing.condition} />
+                <SpecChip icon={MapPin} label={t("detail.city")} value={listing.location} />
+                <SpecChip icon={CircleDollarSign} label={t("detail.currency")} value={listing.currency} />
+                <SpecChip icon={Eye} label={t("detail.views_count")} value={String(listing.views_count)} />
+                <SpecChip icon={Calendar} label={t("detail.created_date")} value={new Date(listing.created_at).toLocaleDateString(language)} />
                 {listing.is_buyable && (
-                  <DetailRow label={t("detail.sale")} value={t("detail.direct_purchase_available")} />
+                  <SpecChip icon={ShoppingCart} label={t("detail.sale")} value={t("detail.direct_purchase_available")} accent="emerald" />
                 )}
-                {/* Custom fields - skip internal underscore-prefixed keys and complex objects */}
                 {(listing as any).custom_fields && Object.entries((listing as any).custom_fields).map(([key, val]) => {
                   if (!val) return null;
                   if (key.startsWith("_")) return null;
                   if (typeof val === "object") return null;
                   const fieldDef = categoryFieldDefs.find((f: any) => f.field_name === key);
-                  return <DetailRow key={key} label={fieldDef?.field_label || key} value={String(val)} />;
+                  const { icon, accent } = getFieldVisual(key);
+                  return (
+                    <SpecChip
+                      key={key}
+                      icon={icon}
+                      label={fieldDef?.field_label || key}
+                      value={String(val)}
+                      accent={accent}
+                    />
+                  );
                 })}
               </div>
             </div>
