@@ -355,7 +355,7 @@ const CheckoutDialog = ({ open, onOpenChange, listing }: CheckoutDialogProps) =>
             <div className="rounded-lg bg-muted/50 p-3 space-y-1.5 text-xs text-muted-foreground">
               <p><strong>Ödəniş:</strong> {paymentMethod === "balance" ? "Balans ilə" : "Kart ilə (Epoint)"}</p>
               {selectedShippingMethod && <p><strong>Çatdırılma:</strong> {selectedShippingMethod.name}</p>}
-              <p><strong>Ünvan:</strong> {shippingAddress}</p>
+              {shippingAddress && <p><strong>Ünvan:</strong> {shippingAddress}</p>}
               {buyerNote && <p><strong>Qeyd:</strong> {buyerNote}</p>}
             </div>
 
