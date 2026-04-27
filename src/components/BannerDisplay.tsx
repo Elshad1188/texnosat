@@ -83,7 +83,9 @@ const BannerDisplay = ({ position, interval = 5000 }: BannerDisplayProps) => {
               src={banner.image_url}
               alt={banner.title}
               className="h-full w-full object-cover"
-              loading={idx === 0 ? "eager" : "lazy"}
+              loading="eager"
+              decoding="async"
+              draggable={false}
             />
           );
           return (
