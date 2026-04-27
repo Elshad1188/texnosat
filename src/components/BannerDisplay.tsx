@@ -11,8 +11,6 @@ interface BannerDisplayProps {
 
 const BannerDisplay = ({ position, interval = 5000 }: BannerDisplayProps) => {
   const [current, setCurrent] = useState(0);
-  const [direction, setDirection] = useState<"left" | "right">("right");
-  const [isAnimating, setIsAnimating] = useState(false);
 
   const { data: banners = [] } = useQuery({
     queryKey: ["banners", position],
@@ -32,26 +30,15 @@ const BannerDisplay = ({ position, interval = 5000 }: BannerDisplayProps) => {
     },
   });
 
-  const goTo = useCallback(
-    (index: number, dir: "left" | "right") => {
-      if (isAnimating || index === current) return;
-      setDirection(dir);
-      setIsAnimating(true);
-      setCurrent(index);
-      setTimeout(() => setIsAnimating(false), 500);
-    },
-    [current, isAnimating]
-  );
-
   const next = useCallback(() => {
     if (banners.length <= 1) return;
-    goTo((current + 1) % banners.length, "right");
-  }, [current, banners.length, goTo]);
+    setCurrent((c) => (c + 1) % banners.length);
+  }, [banners.length]);
 
   const prev = useCallback(() => {
     if (banners.length <= 1) return;
-    goTo((current - 1 + banners.length) % banners.length, "left");
-  }, [current, banners.length, goTo]);
+    setCurrent((c) => (c - 1 + banners.length) % banners.length);
+  }, [banners.length]);
 
   useEffect(() => {
     if (banners.length <= 1) return;
@@ -59,52 +46,63 @@ const BannerDisplay = ({ position, interval = 5000 }: BannerDisplayProps) => {
     return () => clearInterval(timer);
   }, [banners.length, interval, next]);
 
-  // Reset current if banners change
   useEffect(() => {
     if (current >= banners.length) setCurrent(0);
   }, [banners.length, current]);
 
+  // Preload images to avoid flicker on transition
+  useEffect(() => {
+    banners.forEach((b: any) => {
+      if (b.image_url) {
+        const img = new window.Image();
+        img.src = b.image_url;
+      }
+    });
+  }, [banners]);
+
   if (banners.length === 0) return null;
-
-  const banner = banners[current] as any;
-
-  const mediaEl = banner.video_url ? (
-    <video
-      key={banner.id}
-      src={banner.video_url}
-      poster={banner.image_url}
-      autoPlay
-      muted
-      loop
-      playsInline
-      className={`w-full rounded-xl object-cover max-h-48 shadow-card transition-all duration-500 ease-in-out ${
-        isAnimating
-          ? direction === "right"
-            ? "animate-slide-in-from-right"
-            : "animate-slide-in-from-left"
-          : ""
-      }`}
-    />
-  ) : (
-    <img
-      key={banner.id}
-      src={banner.image_url}
-      alt={banner.title}
-      className={`w-full rounded-xl object-cover max-h-48 shadow-card transition-all duration-500 ease-in-out ${
-        isAnimating
-          ? direction === "right"
-            ? "animate-slide-in-from-right"
-            : "animate-slide-in-from-left"
-          : ""
-      }`}
-    />
-  );
 
   return (
     <div className="relative w-full max-w-3xl mx-auto group">
-      {/* Banner */}
-      <div className="overflow-hidden rounded-xl">
-        {banner.link ? <Link to={banner.link}>{mediaEl}</Link> : mediaEl}
+      {/* Stacked layers with cross-fade — eliminates flicker */}
+      <div className="relative overflow-hidden rounded-xl" style={{ aspectRatio: "16 / 5" }}>
+        {banners.map((banner: any, idx: number) => {
+          const isActive = idx === current;
+          const inner = banner.video_url ? (
+            <video
+              src={banner.video_url}
+              poster={banner.image_url}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <img
+              src={banner.image_url}
+              alt={banner.title}
+              className="h-full w-full object-cover"
+              loading={idx === 0 ? "eager" : "lazy"}
+            />
+          );
+          return (
+            <div
+              key={banner.id}
+              className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+              }`}
+            >
+              {banner.link ? (
+                <Link to={banner.link} className="block h-full w-full">
+                  {inner}
+                </Link>
+              ) : (
+                inner
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Arrows */}
@@ -112,13 +110,13 @@ const BannerDisplay = ({ position, interval = 5000 }: BannerDisplayProps) => {
         <>
           <button
             onClick={prev}
-            className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-background/70 text-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-background/70 text-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             onClick={next}
-            className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-background/70 text-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-background/70 text-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -131,7 +129,7 @@ const BannerDisplay = ({ position, interval = 5000 }: BannerDisplayProps) => {
           {banners.map((_: any, i: number) => (
             <button
               key={i}
-              onClick={() => goTo(i, i > current ? "right" : "left")}
+              onClick={() => setCurrent(i)}
               className={`h-2 rounded-full transition-all duration-300 ${
                 i === current
                   ? "w-5 bg-primary"
