@@ -40,6 +40,34 @@ const AdminBannerManager = () => {
   const fileRef = useRef<HTMLInputElement>(null);
   const videoFileRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({ title: "", image_url: "", video_url: "", link: "", position: "home_top", starts_at: "", ends_at: "" });
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const toLocalDT = (iso: string | null) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const startEdit = (b: Banner) => {
+    setEditingId(b.id);
+    setAdding(true);
+    setForm({
+      title: b.title || "",
+      image_url: b.image_url || "",
+      video_url: b.video_url || "",
+      link: b.link || "",
+      position: b.position || "home_top",
+      starts_at: toLocalDT(b.starts_at),
+      ends_at: toLocalDT(b.ends_at),
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setAdding(false);
+    setForm({ title: "", image_url: "", video_url: "", link: "", position: "home_top", starts_at: "", ends_at: "" });
+  };
 
   const fetchBanners = async () => {
     setLoading(true);
