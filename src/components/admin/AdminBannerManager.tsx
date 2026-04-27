@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Image, Loader2, Upload, Link as LinkIcon, Video } from "lucide-react";
+import { Plus, Trash2, Image, Loader2, Upload, Link as LinkIcon, Video, Pencil, X } from "lucide-react";
 
 interface Banner {
   id: string;
@@ -40,6 +40,34 @@ const AdminBannerManager = () => {
   const fileRef = useRef<HTMLInputElement>(null);
   const videoFileRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({ title: "", image_url: "", video_url: "", link: "", position: "home_top", starts_at: "", ends_at: "" });
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const toLocalDT = (iso: string | null) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const startEdit = (b: Banner) => {
+    setEditingId(b.id);
+    setAdding(true);
+    setForm({
+      title: b.title || "",
+      image_url: b.image_url || "",
+      video_url: b.video_url || "",
+      link: b.link || "",
+      position: b.position || "home_top",
+      starts_at: toLocalDT(b.starts_at),
+      ends_at: toLocalDT(b.ends_at),
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setAdding(false);
+    setForm({ title: "", image_url: "", video_url: "", link: "", position: "home_top", starts_at: "", ends_at: "" });
+  };
 
   const fetchBanners = async () => {
     setLoading(true);
@@ -92,20 +120,25 @@ const AdminBannerManager = () => {
       toast({ title: "Başlıq və şəkil tələb olunur", variant: "destructive" });
       return;
     }
-    const { error } = await supabase.from("banners").insert({
+    const payload = {
       title: form.title,
       image_url: form.image_url,
       video_url: form.video_url || null,
       link: form.link || null,
       position: form.position,
-      sort_order: banners.length,
       starts_at: form.starts_at || null,
       ends_at: form.ends_at || null,
-    });
-    if (error) { toast({ title: "Xəta", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Banner əlavə edildi" });
-    setForm({ title: "", image_url: "", video_url: "", link: "", position: "home_top", starts_at: "", ends_at: "" });
-    setAdding(false);
+    };
+    if (editingId) {
+      const { error } = await supabase.from("banners").update(payload).eq("id", editingId);
+      if (error) { toast({ title: "Xəta", description: error.message, variant: "destructive" }); return; }
+      toast({ title: "Banner yeniləndi" });
+    } else {
+      const { error } = await supabase.from("banners").insert({ ...payload, sort_order: banners.length });
+      if (error) { toast({ title: "Xəta", description: error.message, variant: "destructive" }); return; }
+      toast({ title: "Banner əlavə edildi" });
+    }
+    cancelEdit();
     fetchBanners();
   };
 
@@ -126,8 +159,8 @@ const AdminBannerManager = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">Bannerlər ({banners.length})</h3>
-        <Button size="sm" onClick={() => setAdding(!adding)} className="gap-1.5">
-          <Plus className="h-3.5 w-3.5" /> Yeni banner
+        <Button size="sm" onClick={() => { if (adding) cancelEdit(); else setAdding(true); }} className="gap-1.5">
+          <Plus className="h-3.5 w-3.5" /> {adding ? "Bağla" : "Yeni banner"}
         </Button>
       </div>
 
@@ -262,8 +295,8 @@ const AdminBannerManager = () => {
             <img src={form.image_url} alt="Preview" className="h-24 w-full rounded-lg object-cover" />
           )}
           <div className="flex gap-2">
-            <Button size="sm" onClick={addBanner}>Əlavə et</Button>
-            <Button size="sm" variant="outline" onClick={() => setAdding(false)}>Ləğv et</Button>
+            <Button size="sm" onClick={addBanner}>{editingId ? "Yadda saxla" : "Əlavə et"}</Button>
+            <Button size="sm" variant="outline" onClick={cancelEdit}>Ləğv et</Button>
           </div>
         </div>
       )}
@@ -288,6 +321,9 @@ const AdminBannerManager = () => {
                 </p>
               </div>
               <Switch checked={b.is_active} onCheckedChange={() => toggleActive(b.id, b.is_active)} />
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEdit(b)}>
+                <Pencil className="h-4 w-4 text-foreground" />
+              </Button>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteBanner(b.id)}>
                 <Trash2 className="h-4 w-4 text-destructive" />
               </Button>
