@@ -161,19 +161,24 @@ const Products = () => {
     if (selectedRegion) {
       const region = regions.find((r: any) => r.id === selectedRegion);
       if (region) {
-        const acceptable = new Set<string>();
-        acceptable.add((region as any).name);
-        // If a child region is selected, also accept the parent's name (legacy listings only store parent city)
-        if ((region as any).parent_id) {
-          const parent = regions.find((r: any) => r.id === (region as any).parent_id);
-          if (parent) acceptable.add((parent as any).name);
-        } else {
-          // If a parent is selected, also accept any of its children's names
-          regions
-            .filter((r: any) => r.parent_id === (region as any).id)
-            .forEach((c: any) => acceptable.add(c.name));
-        }
-        result = result.filter((p: any) => acceptable.has(p.location));
+        // Build full path of the selected region (e.g. "Bakı, Nəsimi r.")
+        const byId = new Map(regions.map((r: any) => [r.id, r]));
+        const pathOf = (r: any): string[] => {
+          const parts: string[] = [];
+          let cur: any = r;
+          while (cur) { parts.unshift(cur.name); cur = cur.parent_id ? byId.get(cur.parent_id) : null; }
+          return parts;
+        };
+        const selectedPath = pathOf(region as any).join(", ");
+        const selectedName = (region as any).name;
+        result = result.filter((p: any) => {
+          const loc = String(p.location || "");
+          return loc === selectedPath
+            || loc.startsWith(selectedPath + ",")
+            || loc === selectedName
+            || loc.startsWith(selectedName + ",")
+            || loc.endsWith(", " + selectedName);
+        });
       }
     }
 
