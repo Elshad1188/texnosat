@@ -12,7 +12,7 @@ interface BannerDisplayProps {
 const BannerDisplay = ({ position, interval = 5000 }: BannerDisplayProps) => {
   const [current, setCurrent] = useState(0);
 
-  const { data: banners = [] } = useQuery({
+  const { data: banners = [], isLoading, isFetched } = useQuery({
     queryKey: ["banners", position],
     queryFn: async () => {
       const now = new Date().toISOString();
@@ -28,6 +28,7 @@ const BannerDisplay = ({ position, interval = 5000 }: BannerDisplayProps) => {
         return true;
       });
     },
+    staleTime: 5 * 60 * 1000,
   });
 
   const next = useCallback(() => {
