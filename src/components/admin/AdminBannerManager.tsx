@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Image, Loader2, Upload, Link as LinkIcon, Video } from "lucide-react";
+import { Plus, Trash2, Image, Loader2, Upload, Link as LinkIcon, Video, Pencil, X } from "lucide-react";
 
 interface Banner {
   id: string;
