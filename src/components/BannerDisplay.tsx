@@ -61,6 +61,16 @@ const BannerDisplay = ({ position, interval = 5000 }: BannerDisplayProps) => {
     });
   }, [banners]);
 
+  // While loading, reserve space to prevent layout shift
+  if (isLoading) {
+    return (
+      <div className="relative w-full max-w-3xl mx-auto">
+        <div className="rounded-xl bg-muted/30 animate-pulse" style={{ aspectRatio: "16 / 5" }} />
+      </div>
+    );
+  }
+
+  if (isFetched && banners.length === 0) return null;
   if (banners.length === 0) return null;
 
   return (
