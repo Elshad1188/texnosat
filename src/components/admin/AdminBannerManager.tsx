@@ -295,8 +295,8 @@ const AdminBannerManager = () => {
             <img src={form.image_url} alt="Preview" className="h-24 w-full rounded-lg object-cover" />
           )}
           <div className="flex gap-2">
-            <Button size="sm" onClick={addBanner}>Əlavə et</Button>
-            <Button size="sm" variant="outline" onClick={() => setAdding(false)}>Ləğv et</Button>
+            <Button size="sm" onClick={addBanner}>{editingId ? "Yadda saxla" : "Əlavə et"}</Button>
+            <Button size="sm" variant="outline" onClick={cancelEdit}>Ləğv et</Button>
           </div>
         </div>
       )}
