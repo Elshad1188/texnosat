@@ -557,10 +557,29 @@ const CreateListing = () => {
               <Label>{t("products.region")}</Label>
               <RegionCascader
                 regions={regions as any}
-                value={(regions as any[]).find((r: any) => r.name === form.location)?.id || ""}
+                value={(() => {
+                  // Find region whose full path matches form.location
+                  const list = regions as any[];
+                  const byId = new Map(list.map((r: any) => [r.id, r]));
+                  const pathOf = (r: any): string => {
+                    const parts: string[] = [];
+                    let cur: any = r;
+                    while (cur) { parts.unshift(cur.name); cur = cur.parent_id ? byId.get(cur.parent_id) : null; }
+                    return parts.join(", ");
+                  };
+                  const match = list.find((r: any) => pathOf(r) === form.location)
+                    || list.find((r: any) => r.name === form.location);
+                  return match?.id || "";
+                })()}
                 onChange={(id) => {
-                  const r = (regions as any[]).find((x: any) => x.id === id);
-                  setForm({ ...form, location: r?.name || "" });
+                  const list = regions as any[];
+                  const byId = new Map(list.map((r: any) => [r.id, r]));
+                  const r: any = byId.get(id);
+                  if (!r) { setForm({ ...form, location: "" }); return; }
+                  const parts: string[] = [];
+                  let cur: any = r;
+                  while (cur) { parts.unshift(cur.name); cur = cur.parent_id ? byId.get(cur.parent_id) : null; }
+                  setForm({ ...form, location: parts.join(", ") });
                 }}
               />
             </div>
