@@ -120,20 +120,25 @@ const AdminBannerManager = () => {
       toast({ title: "Başlıq və şəkil tələb olunur", variant: "destructive" });
       return;
     }
-    const { error } = await supabase.from("banners").insert({
+    const payload = {
       title: form.title,
       image_url: form.image_url,
       video_url: form.video_url || null,
       link: form.link || null,
       position: form.position,
-      sort_order: banners.length,
       starts_at: form.starts_at || null,
       ends_at: form.ends_at || null,
-    });
-    if (error) { toast({ title: "Xəta", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Banner əlavə edildi" });
-    setForm({ title: "", image_url: "", video_url: "", link: "", position: "home_top", starts_at: "", ends_at: "" });
-    setAdding(false);
+    };
+    if (editingId) {
+      const { error } = await supabase.from("banners").update(payload).eq("id", editingId);
+      if (error) { toast({ title: "Xəta", description: error.message, variant: "destructive" }); return; }
+      toast({ title: "Banner yeniləndi" });
+    } else {
+      const { error } = await supabase.from("banners").insert({ ...payload, sort_order: banners.length });
+      if (error) { toast({ title: "Xəta", description: error.message, variant: "destructive" }); return; }
+      toast({ title: "Banner əlavə edildi" });
+    }
+    cancelEdit();
     fetchBanners();
   };
 
@@ -154,8 +159,8 @@ const AdminBannerManager = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">Bannerlər ({banners.length})</h3>
-        <Button size="sm" onClick={() => setAdding(!adding)} className="gap-1.5">
-          <Plus className="h-3.5 w-3.5" /> Yeni banner
+        <Button size="sm" onClick={() => { if (adding) cancelEdit(); else setAdding(true); }} className="gap-1.5">
+          <Plus className="h-3.5 w-3.5" /> {adding ? "Bağla" : "Yeni banner"}
         </Button>
       </div>
 
