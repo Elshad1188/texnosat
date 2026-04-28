@@ -53,6 +53,7 @@ const CreateListing = () => {
   const [form, setForm] = useState({
     title: "", description: "", price: "", category: "", subcategory: "", condition: "Yeni", location: "",
   });
+  const [priceNegotiable, setPriceNegotiable] = useState(false);
 
   const { data: videoSettings } = useQuery({
     queryKey: ["video-settings"],
