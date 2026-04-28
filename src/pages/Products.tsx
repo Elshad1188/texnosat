@@ -1,7 +1,7 @@
 import { useState, useMemo, lazy, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, SlidersHorizontal, X, Loader2, MapPin, Tag, CircleDollarSign, Calendar, Layers, Filter, Map as MapIcon, LayoutGrid } from "lucide-react";
+import { Search, SlidersHorizontal, X, Loader2, MapPin, Tag, CircleDollarSign, Calendar, Layers, Filter, Map as MapIcon, LayoutGrid, TrainFront } from "lucide-react";
 import { CircuitBoard, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
