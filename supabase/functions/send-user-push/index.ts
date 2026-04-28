@@ -133,10 +133,12 @@ serve(async (req) => {
           sent++;
         } else {
           const err = await res.json();
-          // Token expired or invalid - mark for cleanup
-          if (err?.error?.details?.some((d: any) =>
-            d.errorCode === "UNREGISTERED" || d.errorCode === "INVALID_ARGUMENT"
-          )) {
+          const codes: string[] = (err?.error?.details || []).map((d: any) => d.errorCode).filter(Boolean);
+          const staleSet = new Set([
+            "UNREGISTERED", "INVALID_ARGUMENT", "NOT_FOUND",
+            "SENDER_ID_MISMATCH", "INVALID_REGISTRATION", "MISMATCHED_CREDENTIAL",
+          ]);
+          if (codes.some((c) => staleSet.has(c))) {
             staleTokens.push(token);
           }
           failed++;
