@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { initFirebaseMessaging, requestNotificationPermission } from "@/lib/firebase";
+import { initFirebaseMessaging, isInPreviewOrIframe, isPushSupported } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -11,6 +11,7 @@ const FirebaseInit = () => {
   // Listen for notification clicks coming from the service worker
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
+    if (isInPreviewOrIframe()) return;
 
     const handler = (event: MessageEvent) => {
       if (event.data?.type === "NOTIFICATION_NAVIGATE" && event.data.link) {
@@ -36,26 +37,28 @@ const FirebaseInit = () => {
     return () => navigator.serviceWorker.removeEventListener("message", handler);
   }, [navigate]);
 
+  // Refresh the FCM token only if permission was already granted earlier.
+  // Never auto-prompt — that must come from a user gesture (see enablePushNotifications).
   useEffect(() => {
     if (!user) return;
+    if (!isPushSupported()) return;
+    if (isInPreviewOrIframe()) return;
+    if (Notification.permission !== "granted") return;
 
-    const init = async () => {
-      const granted = await requestNotificationPermission();
-      if (!granted) return;
-
+    const refresh = async () => {
       const token = await initFirebaseMessaging();
       if (!token) return;
 
-      console.log("[Firebase] FCM token obtained");
-
-      // Save token to database (upsert)
-      await supabase.from("fcm_tokens").upsert(
-        { user_id: user.id, token, updated_at: new Date().toISOString() },
-        { onConflict: "user_id,token" }
-      );
+      const { error } = await supabase
+        .from("fcm_tokens")
+        .upsert(
+          { user_id: user.id, token, updated_at: new Date().toISOString(), last_seen_at: new Date().toISOString() },
+          { onConflict: "user_id,token" }
+        );
+      if (error) console.error("[Firebase] token upsert error:", error);
     };
 
-    const timer = setTimeout(init, 3000);
+    const timer = setTimeout(refresh, 3000);
     return () => clearTimeout(timer);
   }, [user]);
 
