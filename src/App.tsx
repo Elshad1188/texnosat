@@ -119,7 +119,6 @@ const App = () => (
                 <MobileBottomNav />
                 <MobileTopSearch />
                 <ChatBot />
-                <AppDownloadBanner />
                 <FirebaseInit />
               </ThemeProvider>
             </LanguageProvider>
