@@ -384,10 +384,10 @@ const CreateListing = () => {
 
       // Map custom_fields.deal_type label -> deal_type column value
       const dealLabel = String(resolvedCustomFields.deal_type || "").toLowerCase();
-      let dealCol: "sale" | "rent" | "daily" | "roommate" = "sale";
-      if (dealLabel.includes("kirayə") || dealLabel.includes("kiraye") || dealLabel === "rent") dealCol = "rent";
+      let dealCol: "sale" | "rent" | "daily" | "business" = "sale";
+      if (finalCategory === "hazir-biznes" || String(finalCategory).startsWith("hazir-biznes")) dealCol = "business";
+      else if (dealLabel.includes("kirayə") || dealLabel.includes("kiraye") || dealLabel === "rent") dealCol = "rent";
       else if (dealLabel.includes("günlük") || dealLabel.includes("gunluk") || dealLabel === "daily") dealCol = "daily";
-      else if (dealLabel.includes("otaq yold") || dealLabel === "roommate") dealCol = "roommate";
 
       const listingData: any = {
         title: generatedTitle,
