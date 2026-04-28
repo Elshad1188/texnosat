@@ -397,7 +397,7 @@ const CreateListing = () => {
       const listingData: any = {
         title: generatedTitle,
         description: form.description,
-        price: parseFloat(form.price), category: finalCategory,
+        price: priceNegotiable ? 0 : parseFloat(form.price), category: finalCategory,
         condition: "Yeni", location: form.location || "Bakı",
         image_urls: allImages,
         video_url: finalVideoUrl,
