@@ -1,13 +1,21 @@
 /* eslint-disable no-undef */
 // Firebase Messaging Service Worker for background push notifications
+// Version: 3 (Elan24)
 
 importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js");
 
-// Firebase config will be injected via message from the main app
-let firebaseConfig = null;
+const SW_VERSION = "elan24-v3";
 let firebaseMessaging = null;
 let firebaseReady = false;
+
+// Activate immediately on update so devices pick up new SW without page reload
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
+});
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
 
 function startBackgroundNotifications() {
   if (!firebaseMessaging) return;
@@ -17,7 +25,7 @@ function startBackgroundNotifications() {
     const { title, body, icon } = payload.notification || {};
     const link = payload?.data?.link || "/";
 
-    self.registration.showNotification(title || "Texnosat", {
+    self.registration.showNotification(title || "Elan24", {
       body: body || "",
       icon: icon || "/pwa-192.png",
       badge: "/pwa-192.png",
@@ -29,22 +37,24 @@ function startBackgroundNotifications() {
 function initFirebase(config) {
   if (firebaseReady || !config?.apiKey || !config?.projectId) return;
 
-  firebaseConfig = config;
-  firebase.initializeApp(firebaseConfig);
+  firebase.initializeApp(config);
   firebaseMessaging = firebase.messaging();
   firebaseReady = true;
   startBackgroundNotifications();
 }
 
+// Initial config from URL params (kept for backwards compatibility)
 const searchParams = new URL(self.location.href).searchParams;
-initFirebase({
-  apiKey: searchParams.get("apiKey") || "",
-  authDomain: searchParams.get("authDomain") || "",
-  projectId: searchParams.get("projectId") || "",
-  storageBucket: searchParams.get("storageBucket") || "",
-  messagingSenderId: searchParams.get("messagingSenderId") || "",
-  appId: searchParams.get("appId") || "",
-});
+if (searchParams.get("apiKey")) {
+  initFirebase({
+    apiKey: searchParams.get("apiKey") || "",
+    authDomain: searchParams.get("authDomain") || "",
+    projectId: searchParams.get("projectId") || "",
+    storageBucket: searchParams.get("storageBucket") || "",
+    messagingSenderId: searchParams.get("messagingSenderId") || "",
+    appId: searchParams.get("appId") || "",
+  });
+}
 
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "FIREBASE_CONFIG") {
@@ -62,22 +72,19 @@ self.addEventListener("notificationclick", (event) => {
       const allClients = await clients.matchAll({ type: "window", includeUncontrolled: true });
       const targetUrl = new URL(link, self.location.origin).href;
 
-      // Try to find an already-open tab on our origin
       for (const client of allClients) {
         try {
           const clientUrl = new URL(client.url);
           if (clientUrl.origin === self.location.origin) {
             await client.focus();
-            // Ask the page to navigate to the link (SPA-friendly)
             client.postMessage({ type: "NOTIFICATION_NAVIGATE", link });
             return;
           }
         } catch (_) {
-          // ignore parse errors
+          // ignore
         }
       }
 
-      // No matching tab — open a new window directly to the link
       if (clients.openWindow) {
         await clients.openWindow(targetUrl);
       }
