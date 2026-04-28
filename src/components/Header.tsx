@@ -24,14 +24,29 @@ const Header = () => {
   const queryClient = useQueryClient();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
+      console.log("[PWA] beforeinstallprompt captured");
+    };
+    const installedHandler = () => {
+      setDeferredPrompt(null);
+      setIsStandalone(true);
     };
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    window.addEventListener("appinstalled", installedHandler);
+    setIsStandalone(
+      window.matchMedia("(display-mode: standalone)").matches ||
+        // @ts-ignore — iOS Safari
+        window.navigator.standalone === true
+    );
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("appinstalled", installedHandler);
+    };
   }, []);
 
   const { data: integrations } = useQuery({
