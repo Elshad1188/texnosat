@@ -17,7 +17,7 @@ import { useLanguage, useTranslation } from "@/contexts/LanguageContext";
 import { getListingCoords } from "@/components/ListingsMap";
 const ListingsMap = lazy(() => import("@/components/ListingsMap"));
 import DealTypeTabs from "@/components/DealTypeTabs";
-import RegionPicker from "@/components/RegionPicker";
+import RegionCascader from "@/components/RegionCascader";
 
 type MapBounds = { north: number; south: number; east: number; west: number };
 
@@ -319,13 +319,20 @@ const Products = () => {
 
                   {/* Region */}
                   <FilterSection icon={MapPin} title={t("products.region")}>
-                    <RegionPicker
+                    <RegionCascader
                       regions={regions as any}
                       value={selectedRegion}
                       onChange={setSelectedRegion}
-                      placeholder={t("products.select_region")}
-                      allLabel={t("common.all")}
                     />
+                    {selectedRegion && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedRegion("")}
+                        className="mt-2 text-xs text-muted-foreground hover:text-foreground underline"
+                      >
+                        Bölgəni təmizlə
+                      </button>
+                    )}
                   </FilterSection>
 
                   {/* Price */}
