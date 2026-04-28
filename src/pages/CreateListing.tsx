@@ -158,6 +158,7 @@ const CreateListing = () => {
       
       const cf = (editListing as any).custom_fields || {};
       setCustomFields(cf);
+      setPriceNegotiable(cf?.price_negotiable === true);
       if (Object.keys(cf).length > 0) {
         setShowCustomFields(true);
       }
