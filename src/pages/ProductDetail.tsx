@@ -362,7 +362,7 @@ const ProductDetail = () => {
   const avgRating = sellerReviews.length > 0 ? sellerReviews.reduce((s: number, r: any) => s + r.rating, 0) / sellerReviews.length : 0;
   const level = getUserLevel(sellerReviews.length, avgRating, sellerListingsCount, seller?.created_at);
   const formatSharePrice = (price: number, currency: string) => `${price.toLocaleString("az-AZ")} ${currency}`;
-  const shareText = `${listing.title} — ${formatSharePrice(Number(listing.price), listing.currency || "AZN")}`;
+  const shareText = `${listing.title} — ${(listing as any).custom_fields?.price_negotiable ? "Razılaşma yolu ilə" : formatSharePrice(Number(listing.price), listing.currency || "AZN")}`;
   const productUrl = `https://elan24.az/product/${listing.id}`;
   const shareImageUrl = (() => {
     const imageUrl = images[0];
