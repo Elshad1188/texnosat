@@ -1,11 +1,11 @@
-import { Home, Key, CalendarDays, Users } from "lucide-react";
+import { Home, Key, CalendarDays, Briefcase } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export const DEAL_TYPES = [
   { value: "sale", label: "Alqı-satqı", icon: Home },
   { value: "rent", label: "Kirayə", icon: Key },
   { value: "daily", label: "Günlük", icon: CalendarDays },
-  { value: "roommate", label: "Otaq yoldaşı", icon: Users },
+  { value: "business", label: "Hazır biznes", icon: Briefcase },
 ] as const;
 
 export type DealValue = typeof DEAL_TYPES[number]["value"];
