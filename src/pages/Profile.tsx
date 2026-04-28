@@ -26,6 +26,7 @@ import {
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import PushEnableButton from "@/components/PushEnableButton";
 
 const Profile = () => {
   const { user, signOut, loading: authLoading } = useAuth();
@@ -486,6 +487,9 @@ const Profile = () => {
                     }}
                   />
                 </div>
+
+                {/* Push notification enable button */}
+                <PushEnableButton userId={user!.id} />
 
                 <Separator />
                 {isAdmin && (
