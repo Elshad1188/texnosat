@@ -315,7 +315,7 @@ const CreateListing = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.price || !form.category) {
+    if ((!form.price && !priceNegotiable) || !form.category) {
       toast({ title: t("create_listing.required_fields", "Zəhmət olmasa bütün sahələri doldurun"), variant: "destructive" });
       return;
     }
