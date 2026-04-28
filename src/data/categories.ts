@@ -98,4 +98,20 @@ export const CATEGORIES: Category[] = [
       { id: "soyuducu", name: "Soyuducu kamera", slug: "qeyri-yasayis-soyuducu", icon: "Snowflake" },
     ],
   },
+  {
+    id: "hazir-biznes",
+    name: "Hazır biznes",
+    slug: "hazir-biznes",
+    icon: "Briefcase",
+    color: "bg-fuchsia-500",
+    subCategories: [
+      { id: "kafe-restoran", name: "Kafe / Restoran", slug: "hazir-biznes-kafe", icon: "UtensilsCrossed" },
+      { id: "market", name: "Market / Mağaza", slug: "hazir-biznes-market", icon: "Store" },
+      { id: "gozellik", name: "Gözəllik salonu", slug: "hazir-biznes-gozellik", icon: "Scissors" },
+      { id: "istehsalat", name: "İstehsalat", slug: "hazir-biznes-istehsalat", icon: "Factory" },
+      { id: "xidmet", name: "Xidmət sahəsi", slug: "hazir-biznes-xidmet", icon: "Briefcase" },
+      { id: "online", name: "Onlayn biznes", slug: "hazir-biznes-online" },
+      { id: "diger", name: "Digər", slug: "hazir-biznes-diger" },
+    ],
+  },
 ];
