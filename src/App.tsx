@@ -49,6 +49,7 @@ const queryClient = new QueryClient();
 import SplashScreen from "./components/SplashScreen";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useChatPresence } from "@/hooks/useChatPresence";
+import { usePresence } from "@/hooks/usePresence";
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -62,6 +63,7 @@ const AppWrapper = () => {
   const { isLoaded } = useTheme();
   const { showReels, showSpinWin, showOrders, showCompare } = usePlatformMode();
   useChatPresence();
+  usePresence();
 
   if (!isLoaded) {
     return <SplashScreen />;

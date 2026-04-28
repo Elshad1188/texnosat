@@ -1107,6 +1107,7 @@ export type Database = {
           last_seen: string | null
           last_spin_at: string | null
           phone: string | null
+          presence_state: string
           referral_code: string | null
           referred_by: string | null
           updated_at: string
@@ -1123,6 +1124,7 @@ export type Database = {
           last_seen?: string | null
           last_spin_at?: string | null
           phone?: string | null
+          presence_state?: string
           referral_code?: string | null
           referred_by?: string | null
           updated_at?: string
@@ -1139,6 +1141,7 @@ export type Database = {
           last_seen?: string | null
           last_spin_at?: string | null
           phone?: string | null
+          presence_state?: string
           referral_code?: string | null
           referred_by?: string | null
           updated_at?: string

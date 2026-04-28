@@ -3,19 +3,23 @@ import { useNavigate } from "react-router-dom";
 import { initFirebaseMessaging, isInPreviewOrIframe, isPushSupported } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const FirebaseInit = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Listen for notification clicks coming from the service worker
+  // Listen for notification clicks + in-app notifications from the service worker
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
     if (isInPreviewOrIframe()) return;
 
     const handler = (event: MessageEvent) => {
-      if (event.data?.type === "NOTIFICATION_NAVIGATE" && event.data.link) {
-        const link: string = event.data.link;
+      const data = event.data;
+      if (!data) return;
+
+      if (data.type === "NOTIFICATION_NAVIGATE" && data.link) {
+        const link: string = data.link;
         if (link.startsWith("http://") || link.startsWith("https://")) {
           try {
             const url = new URL(link);
@@ -30,6 +34,17 @@ const FirebaseInit = () => {
         } else {
           navigate(link.startsWith("/") ? link : `/${link}`);
         }
+      }
+
+      // App is open & visible — show in-app toast instead of system push
+      if (data.type === "INAPP_NOTIFICATION" && data.payload) {
+        const { title, body, link } = data.payload;
+        toast(title || "Yeni bildiriş", {
+          description: body || undefined,
+          action: link
+            ? { label: "Aç", onClick: () => navigate(link) }
+            : undefined,
+        });
       }
     };
 

@@ -20,10 +20,28 @@ self.addEventListener("activate", (event) => {
 function startBackgroundNotifications() {
   if (!firebaseMessaging) return;
 
-  firebaseMessaging.onBackgroundMessage((payload) => {
+  firebaseMessaging.onBackgroundMessage(async (payload) => {
     console.log("[firebase-messaging-sw] Background message:", payload);
     const { title, body, icon } = payload.notification || {};
     const link = payload?.data?.link || "/";
+
+    // Suppress system notification if any client window is currently visible/focused
+    try {
+      const allClients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const visibleClient = allClients.find(
+        (c) => c.visibilityState === "visible" || c.focused
+      );
+      if (visibleClient) {
+        // App is open & visible — forward to in-app handler instead of showing OS notif
+        visibleClient.postMessage({
+          type: "INAPP_NOTIFICATION",
+          payload: { title, body, link, data: payload.data || {} },
+        });
+        return;
+      }
+    } catch (e) {
+      // fall through to show notification
+    }
 
     self.registration.showNotification(title || "Elan24", {
       body: body || "",
