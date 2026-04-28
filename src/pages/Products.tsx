@@ -233,6 +233,17 @@ const Products = () => {
     });
   }, [filteredProducts, mapBounds, viewMode, useMapBoundsFilter]);
 
+  // Metro filter: match listing location/address against selected metro station name
+  const metroProducts = useMemo(() => {
+    if (viewMode !== "metro" || !selectedMetro) return filteredProducts;
+    const needle = selectedMetro.toLocaleLowerCase("az");
+    return filteredProducts.filter((p: any) => {
+      const hay = [p.location, (p.custom_fields as any)?.metro, (p.custom_fields as any)?.address]
+        .filter(Boolean).join(" ").toLocaleLowerCase("az");
+      return hay.includes(needle);
+    });
+  }, [filteredProducts, viewMode, selectedMetro]);
+
   const clearFilters = () => {
     setQuery(""); setSelectedCategory(""); setSelectedSubcategory("");
     setSelectedRegion("");
