@@ -160,7 +160,7 @@ const Products = () => {
         if (selectedDeal === "sale") return norm === "sale" || norm.includes("alqı") || norm.includes("satış");
         if (selectedDeal === "rent") return norm === "rent" || norm.includes("kirayə") || norm.includes("kiraye");
         if (selectedDeal === "daily") return norm === "daily" || norm.includes("günlük") || norm.includes("gunluk");
-        if (selectedDeal === "roommate") return norm === "roommate" || norm.includes("otaq yold");
+        if (selectedDeal === "business") return norm === "business" || norm.includes("biznes") || String(p.category || "").startsWith("hazir-biznes");
         return true;
       });
     }
