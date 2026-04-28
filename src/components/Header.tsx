@@ -1,4 +1,4 @@
-import { Plus, User, Heart, Menu, X, LogOut, Store, ShieldCheck, MessageCircle, Wallet, Phone, Mail, MapPin, FileText, FolderTree, Play, Home, CircuitBoard, Trophy, BookOpen } from "lucide-react";
+import { Plus, User, Heart, Menu, X, LogOut, Store, ShieldCheck, MessageCircle, Wallet, Phone, Mail, MapPin, FileText, FolderTree, Play, Home, CircuitBoard, Trophy, BookOpen, Smartphone, Apple, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
