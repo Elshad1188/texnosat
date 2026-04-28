@@ -23,6 +23,47 @@ const Header = () => {
   const { showReels, showSpinWin, showOrders, showCompare } = usePlatformMode();
   const queryClient = useQueryClient();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const { data: integrations } = useQuery({
+    queryKey: ["integrations-header"],
+    queryFn: async () => {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "integrations").maybeSingle();
+      return (data?.value as any) || {};
+    },
+  });
+
+  const installAndroid = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      setDeferredPrompt(null);
+      setSheetOpen(false);
+      return;
+    }
+    if (integrations?.play_store_url) {
+      window.open(integrations.play_store_url, "_blank");
+      return;
+    }
+    alert("Android-də yükləmək üçün:\n1. Brauzer menyusunu açın (⋮)\n2. \"Tətbiqi yüklə\" və ya \"Ana ekrana əlavə et\" seçimini seçin\n3. Təsdiq edin");
+  };
+
+  const installIOS = () => {
+    if (integrations?.app_store_url) {
+      window.open(integrations.app_store_url, "_blank");
+      return;
+    }
+    alert("iPhone/iPad-də yükləmək üçün:\n1. Safari brauzerində saytı açın\n2. Aşağıdakı \"Paylaş\" düyməsinə (⬆️) toxunun\n3. \"Ana ekrana əlavə et\" seçimini seçin\n4. \"Əlavə et\" düyməsinə basın");
+  };
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ["unread-messages", user?.id],
