@@ -534,6 +534,58 @@ const Products = () => {
               </div>
             )}
           </Suspense>
+        ) : viewMode === "metro" ? (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-border bg-card p-3">
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+                <TrainFront className="h-4 w-4 text-primary" />
+                Bakı metro stansiyaları
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setSelectedMetro("")}
+                  className={`rounded-full border px-3 py-1 text-xs transition-colors ${selectedMetro === "" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"}`}
+                >
+                  Hamısı
+                </button>
+                {BAKU_METRO_STATIONS.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setSelectedMetro(s)}
+                    className={`rounded-full border px-3 py-1 text-xs transition-colors ${selectedMetro === s ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"}`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {metroProducts.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+                {metroProducts.map((product: any) => {
+                  const st = product.store_id ? storesMap[product.store_id] : undefined;
+                  return (
+                    <ListingCard
+                      key={product.id} id={product.id} title={product.title}
+                      price={`${Number(product.price).toLocaleString()} ${product.currency}`}
+                      location={product.location} time={formatTime(product.created_at, t, language)}
+                      image={product.image_urls?.[0] || "/placeholder.svg"}
+                      condition={product.condition} isPremium={product.is_premium} isUrgent={product.is_urgent}
+                      isBuyable={product.is_buyable}
+                      numericPrice={Number(product.price)} currency={product.currency} userId={product.user_id} customFields={product.custom_fields}
+                      storeId={product.store_id} storeName={st?.name} storeLogo={st?.logo_url}
+                    />
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <TrainFront className="mb-3 h-10 w-10 text-muted-foreground/30" />
+                <p className="text-sm text-muted-foreground">
+                  {selectedMetro ? `"${selectedMetro}" stansiyası üzrə elan tapılmadı` : "Stansiya seçin"}
+                </p>
+              </div>
+            )}
+          </div>
         ) : filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
             {filteredProducts.map((product: any) => {
