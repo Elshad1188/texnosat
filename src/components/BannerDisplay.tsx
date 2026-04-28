@@ -65,7 +65,7 @@ const BannerDisplay = ({ position, interval = 5000 }: BannerDisplayProps) => {
   if (isLoading) {
     return (
       <div className="relative w-full max-w-3xl mx-auto">
-        <div className="rounded-xl bg-muted/30 animate-pulse" style={{ aspectRatio: "16 / 5" }} />
+        <div className="rounded-xl bg-muted/30 animate-pulse aspect-[16/9] sm:aspect-[16/7] md:aspect-[16/5]" />
       </div>
     );
   }
@@ -76,7 +76,7 @@ const BannerDisplay = ({ position, interval = 5000 }: BannerDisplayProps) => {
   return (
     <div className="relative w-full max-w-3xl mx-auto group">
       {/* Stacked layers with cross-fade — eliminates flicker */}
-      <div className="relative overflow-hidden rounded-xl" style={{ aspectRatio: "16 / 5" }}>
+      <div className="relative overflow-hidden rounded-xl aspect-[16/9] sm:aspect-[16/7] md:aspect-[16/5]">
         {banners.map((banner: any, idx: number) => {
           const isActive = idx === current;
           const inner = banner.video_url ? (

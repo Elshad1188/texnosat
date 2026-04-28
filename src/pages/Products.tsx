@@ -17,7 +17,7 @@ import { useLanguage, useTranslation } from "@/contexts/LanguageContext";
 import { getListingCoords } from "@/components/ListingsMap";
 const ListingsMap = lazy(() => import("@/components/ListingsMap"));
 import DealTypeTabs from "@/components/DealTypeTabs";
-import RegionPicker from "@/components/RegionPicker";
+import RegionCascader from "@/components/RegionCascader";
 
 type MapBounds = { north: number; south: number; east: number; west: number };
 
@@ -319,23 +319,30 @@ const Products = () => {
 
                   {/* Region */}
                   <FilterSection icon={MapPin} title={t("products.region")}>
-                    <RegionPicker
+                    <RegionCascader
                       regions={regions as any}
                       value={selectedRegion}
                       onChange={setSelectedRegion}
-                      placeholder={t("products.select_region")}
-                      allLabel={t("common.all")}
                     />
+                    {selectedRegion && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedRegion("")}
+                        className="mt-2 text-xs text-muted-foreground hover:text-foreground underline"
+                      >
+                        Bölgəni təmizlə
+                      </button>
+                    )}
                   </FilterSection>
 
                   {/* Price */}
                   <FilterSection icon={CircleDollarSign} title={t("products.price_range")}>
-                    <div className="flex items-center gap-2">
-                      <input type="number" placeholder={t("products.min")} value={priceMin} onChange={(e) => setPriceMin(e.target.value)}
-                        className="h-10 flex-1 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-                      <span className="text-muted-foreground">—</span>
-                      <input type="number" placeholder={t("products.max")} value={priceMax} onChange={(e) => setPriceMax(e.target.value)}
-                        className="h-10 flex-1 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <div className="flex items-center gap-2 w-full min-w-0">
+                      <input type="number" inputMode="numeric" placeholder={t("products.min")} value={priceMin} onChange={(e) => setPriceMin(e.target.value)}
+                        className="h-10 w-full min-w-0 flex-1 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+                      <span className="text-muted-foreground flex-shrink-0">—</span>
+                      <input type="number" inputMode="numeric" placeholder={t("products.max")} value={priceMax} onChange={(e) => setPriceMax(e.target.value)}
+                        className="h-10 w-full min-w-0 flex-1 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
                     </div>
                   </FilterSection>
 
