@@ -234,6 +234,29 @@ const Header = () => {
                 </div>
               </div>
 
+              <Separator />
+
+              {/* App downloads */}
+              <div className="p-4">
+                <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tətbiqi yüklə</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={installAndroid}
+                    className="flex items-center justify-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                  >
+                    <Smartphone className="h-4 w-4 text-primary" />
+                    Android
+                  </button>
+                  <button
+                    onClick={installIOS}
+                    className="flex items-center justify-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                  >
+                    <Apple className="h-4 w-4 text-primary" />
+                    iOS
+                  </button>
+                </div>
+              </div>
+
               {/* Footer text */}
               <div className="p-4 pt-0">
                 <p className="text-[10px] text-muted-foreground/50">
