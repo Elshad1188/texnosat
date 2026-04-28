@@ -1,7 +1,7 @@
 import { useState, useMemo, lazy, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, SlidersHorizontal, X, Loader2, MapPin, Tag, CircleDollarSign, Calendar, Layers, Filter, Map as MapIcon, LayoutGrid } from "lucide-react";
+import { Search, SlidersHorizontal, X, Loader2, MapPin, Tag, CircleDollarSign, Calendar, Layers, Filter, Map as MapIcon, LayoutGrid, TrainFront } from "lucide-react";
 import { CircuitBoard, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,17 @@ import DealTypeTabs from "@/components/DealTypeTabs";
 import RegionCascader from "@/components/RegionCascader";
 
 type MapBounds = { north: number; south: number; east: number; west: number };
+
+// Bakı metro stansiyaları (3 xətt)
+const BAKU_METRO_STATIONS: string[] = [
+  "İçərişəhər", "Sahil", "28 May", "Gənclik", "Nəriman Nərimanov", "Bakmil",
+  "Ulduz", "Koroğlu", "Qara Qarayev", "Neftçilər", "Xalqlar Dostluğu",
+  "Əhmədli", "Həzi Aslanov",
+  "Cəfər Cabbarlı", "Nizami", "Elmlər Akademiyası", "İnşaatçılar",
+  "20 Yanvar", "Memar Əcəmi", "Nəsimi", "Azadlıq prospekti", "Dərnəgül",
+  "Avtovağzal",
+  "Xocəsən",
+];
 
 const sortOptions = [
   { value: "newest", labelKey: "products.sort_newest" },
@@ -57,9 +68,10 @@ const Products = () => {
   const [priceMax, setPriceMax] = useState("");
   const [dateRange, setDateRange] = useState("all");
   const [customFilters, setCustomFilters] = useState<Record<string, string>>({});
-  const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "map" | "metro">("grid");
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
   const [useMapBoundsFilter, setUseMapBoundsFilter] = useState(true);
+  const [selectedMetro, setSelectedMetro] = useState<string>("");
 
   // Fetch categories
   const { data: categories = [] } = useQuery({
@@ -221,6 +233,17 @@ const Products = () => {
     });
   }, [filteredProducts, mapBounds, viewMode, useMapBoundsFilter]);
 
+  // Metro filter: match listing location/address against selected metro station name
+  const metroProducts = useMemo(() => {
+    if (viewMode !== "metro" || !selectedMetro) return filteredProducts;
+    const needle = selectedMetro.toLocaleLowerCase("az");
+    return filteredProducts.filter((p: any) => {
+      const hay = [p.location, (p.custom_fields as any)?.metro, (p.custom_fields as any)?.address]
+        .filter(Boolean).join(" ").toLocaleLowerCase("az");
+      return hay.includes(needle);
+    });
+  }, [filteredProducts, viewMode, selectedMetro]);
+
   const clearFilters = () => {
     setQuery(""); setSelectedCategory(""); setSelectedSubcategory("");
     setSelectedRegion("");
@@ -277,6 +300,10 @@ const Products = () => {
               <button onClick={() => setViewMode("map")}
                 className={`flex items-center gap-1 rounded-lg px-3 text-xs font-medium transition-colors ${viewMode === "map" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}>
                 <MapIcon className="h-4 w-4" /> Xəritə
+              </button>
+              <button onClick={() => setViewMode("metro")}
+                className={`flex items-center gap-1 rounded-lg px-3 text-xs font-medium transition-colors ${viewMode === "metro" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}>
+                <TrainFront className="h-4 w-4" /> Metro
               </button>
             </div>
             <Sheet open={showFilters} onOpenChange={setShowFilters}>
@@ -465,7 +492,7 @@ const Products = () => {
           <span>
             {isLoading
               ? t("common.loading")
-              : t("products.results_count", { count: viewMode === "map" ? visibleProducts.length : filteredProducts.length })}
+              : t("products.results_count", { count: viewMode === "map" ? visibleProducts.length : viewMode === "metro" ? metroProducts.length : filteredProducts.length })}
             {viewMode === "map" && useMapBoundsFilter && mapBounds && (
               <span className="ml-1 text-xs text-primary">(görünən sahədə)</span>
             )}
@@ -507,6 +534,58 @@ const Products = () => {
               </div>
             )}
           </Suspense>
+        ) : viewMode === "metro" ? (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-border bg-card p-3">
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+                <TrainFront className="h-4 w-4 text-primary" />
+                Bakı metro stansiyaları
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setSelectedMetro("")}
+                  className={`rounded-full border px-3 py-1 text-xs transition-colors ${selectedMetro === "" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"}`}
+                >
+                  Hamısı
+                </button>
+                {BAKU_METRO_STATIONS.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setSelectedMetro(s)}
+                    className={`rounded-full border px-3 py-1 text-xs transition-colors ${selectedMetro === s ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"}`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {metroProducts.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+                {metroProducts.map((product: any) => {
+                  const st = product.store_id ? storesMap[product.store_id] : undefined;
+                  return (
+                    <ListingCard
+                      key={product.id} id={product.id} title={product.title}
+                      price={`${Number(product.price).toLocaleString()} ${product.currency}`}
+                      location={product.location} time={formatTime(product.created_at, t, language)}
+                      image={product.image_urls?.[0] || "/placeholder.svg"}
+                      condition={product.condition} isPremium={product.is_premium} isUrgent={product.is_urgent}
+                      isBuyable={product.is_buyable}
+                      numericPrice={Number(product.price)} currency={product.currency} userId={product.user_id} customFields={product.custom_fields}
+                      storeId={product.store_id} storeName={st?.name} storeLogo={st?.logo_url}
+                    />
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <TrainFront className="mb-3 h-10 w-10 text-muted-foreground/30" />
+                <p className="text-sm text-muted-foreground">
+                  {selectedMetro ? `"${selectedMetro}" stansiyası üzrə elan tapılmadı` : "Stansiya seçin"}
+                </p>
+              </div>
+            )}
+          </div>
         ) : filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
             {filteredProducts.map((product: any) => {
