@@ -373,6 +373,9 @@ const CreateListing = () => {
       if (selectedShippingMethods.length > 0) {
         resolvedCustomFields._shipping_methods = selectedShippingMethods as any;
       }
+      if (priceNegotiable) {
+        (resolvedCustomFields as any).price_negotiable = true as any;
+      }
 
       // Auto-generate listing title from category + key real-estate fields
       const catName = (categories.find((c: any) => c.slug === finalCategory) as any)?.name || "Elan";
