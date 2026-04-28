@@ -529,7 +529,11 @@ const CreateListing = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="price">{t("create_listing.price")}</Label>
-                <Input id="price" type="number" min="0" placeholder="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+                <Input id="price" type="number" min="0" placeholder="0" value={priceNegotiable ? "" : form.price} disabled={priceNegotiable} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                  <Checkbox checked={priceNegotiable} onCheckedChange={(v) => { setPriceNegotiable(!!v); if (v) setForm((f) => ({ ...f, price: "0" })); }} />
+                  Qiymət razılaşma yolu ilədir
+                </label>
               </div>
               <div className="space-y-2">
                 <Label>{t("create_listing.category")}</Label>
