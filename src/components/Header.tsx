@@ -58,26 +58,54 @@ const Header = () => {
   });
 
   const installAndroid = async () => {
+    if (isStandalone) {
+      alert("Tətbiq artıq qurğunuzda quraşdırılıb. Ana ekranınızdan açın.");
+      return;
+    }
     if (deferredPrompt) {
-      deferredPrompt.prompt();
-      await deferredPrompt.userChoice;
-      setDeferredPrompt(null);
-      setSheetOpen(false);
+      try {
+        deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+        console.log("[PWA] userChoice:", choice);
+        setDeferredPrompt(null);
+        if (choice?.outcome === "accepted") setSheetOpen(false);
+      } catch (err) {
+        console.error("[PWA] prompt error", err);
+      }
       return;
     }
     if (integrations?.play_store_url) {
       window.open(integrations.play_store_url, "_blank");
       return;
     }
-    alert("Android-də yükləmək üçün:\n1. Brauzer menyusunu açın (⋮)\n2. \"Tətbiqi yüklə\" və ya \"Ana ekrana əlavə et\" seçimini seçin\n3. Təsdiq edin");
+    const ua = navigator.userAgent;
+    const isChrome = /Chrome/i.test(ua) && !/Edg|OPR|SamsungBrowser/i.test(ua);
+    if (isChrome) {
+      alert(
+        "Yükləmə üçün:\n\n1. Sağ üstdəki ⋮ (üç nöqtə) menyusunu açın\n2. \"Tətbiqi yüklə\" və ya \"Ana ekrana əlavə et\" seçin\n3. Təsdiq edin\n\nƏgər seçim görünmürsə, səhifəni 1-2 dəfə yeniləyin və bir neçə saniyə gözləyin."
+      );
+    } else {
+      alert(
+        "Tətbiqi yükləmək üçün Chrome brauzerini istifadə edin:\n\n1. Saytı Chrome-da açın\n2. ⋮ menyusunu açın\n3. \"Tətbiqi yüklə\" seçin"
+      );
+    }
   };
 
   const installIOS = () => {
+    if (isStandalone) {
+      alert("Tətbiq artıq qurğunuzda quraşdırılıb.");
+      return;
+    }
     if (integrations?.app_store_url) {
       window.open(integrations.app_store_url, "_blank");
       return;
     }
-    alert("iPhone/iPad-də yükləmək üçün:\n1. Safari brauzerində saytı açın\n2. Aşağıdakı \"Paylaş\" düyməsinə (⬆️) toxunun\n3. \"Ana ekrana əlavə et\" seçimini seçin\n4. \"Əlavə et\" düyməsinə basın");
+    const isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
+    if (!isSafari && /iPad|iPhone|iPod/.test(navigator.userAgent)) {
+      alert("iPhone/iPad-də yükləmək üçün saytı Safari brauzerində açın, sonra:\n1. Aşağıdakı \"Paylaş\" düyməsi (⬆️)\n2. \"Ana ekrana əlavə et\"\n3. \"Əlavə et\"");
+      return;
+    }
+    alert("iPhone/iPad-də yükləmək üçün:\n\n1. Safari brauzerində saytı açın\n2. Aşağıdakı \"Paylaş\" düyməsinə (⬆️) toxunun\n3. \"Ana ekrana əlavə et\" seçimini seçin\n4. \"Əlavə et\" düyməsinə basın");
   };
 
   const { data: unreadCount = 0 } = useQuery({
