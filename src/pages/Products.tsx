@@ -492,7 +492,7 @@ const Products = () => {
           <span>
             {isLoading
               ? t("common.loading")
-              : t("products.results_count", { count: viewMode === "map" ? visibleProducts.length : filteredProducts.length })}
+              : t("products.results_count", { count: viewMode === "map" ? visibleProducts.length : viewMode === "metro" ? metroProducts.length : filteredProducts.length })}
             {viewMode === "map" && useMapBoundsFilter && mapBounds && (
               <span className="ml-1 text-xs text-primary">(görünən sahədə)</span>
             )}
