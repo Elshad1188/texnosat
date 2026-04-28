@@ -53,6 +53,7 @@ const CreateListing = () => {
   const [form, setForm] = useState({
     title: "", description: "", price: "", category: "", subcategory: "", condition: "Yeni", location: "",
   });
+  const [priceNegotiable, setPriceNegotiable] = useState(false);
 
   const { data: videoSettings } = useQuery({
     queryKey: ["video-settings"],
@@ -157,6 +158,7 @@ const CreateListing = () => {
       
       const cf = (editListing as any).custom_fields || {};
       setCustomFields(cf);
+      setPriceNegotiable(cf?.price_negotiable === true);
       if (Object.keys(cf).length > 0) {
         setShowCustomFields(true);
       }
@@ -313,7 +315,7 @@ const CreateListing = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.price || !form.category) {
+    if ((!form.price && !priceNegotiable) || !form.category) {
       toast({ title: t("create_listing.required_fields", "Zəhmət olmasa bütün sahələri doldurun"), variant: "destructive" });
       return;
     }
@@ -371,6 +373,9 @@ const CreateListing = () => {
       if (selectedShippingMethods.length > 0) {
         resolvedCustomFields._shipping_methods = selectedShippingMethods as any;
       }
+      if (priceNegotiable) {
+        (resolvedCustomFields as any).price_negotiable = true as any;
+      }
 
       // Auto-generate listing title from category + key real-estate fields
       const catName = (categories.find((c: any) => c.slug === finalCategory) as any)?.name || "Elan";
@@ -384,15 +389,15 @@ const CreateListing = () => {
 
       // Map custom_fields.deal_type label -> deal_type column value
       const dealLabel = String(resolvedCustomFields.deal_type || "").toLowerCase();
-      let dealCol: "sale" | "rent" | "daily" | "roommate" = "sale";
-      if (dealLabel.includes("kirayə") || dealLabel.includes("kiraye") || dealLabel === "rent") dealCol = "rent";
+      let dealCol: "sale" | "rent" | "daily" | "business" = "sale";
+      if (finalCategory === "hazir-biznes" || String(finalCategory).startsWith("hazir-biznes")) dealCol = "business";
+      else if (dealLabel.includes("kirayə") || dealLabel.includes("kiraye") || dealLabel === "rent") dealCol = "rent";
       else if (dealLabel.includes("günlük") || dealLabel.includes("gunluk") || dealLabel === "daily") dealCol = "daily";
-      else if (dealLabel.includes("otaq yold") || dealLabel === "roommate") dealCol = "roommate";
 
       const listingData: any = {
         title: generatedTitle,
         description: form.description,
-        price: parseFloat(form.price), category: finalCategory,
+        price: priceNegotiable ? 0 : parseFloat(form.price), category: finalCategory,
         condition: "Yeni", location: form.location || "Bakı",
         image_urls: allImages,
         video_url: finalVideoUrl,
@@ -527,7 +532,11 @@ const CreateListing = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="price">{t("create_listing.price")}</Label>
-                <Input id="price" type="number" min="0" placeholder="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+                <Input id="price" type="number" min="0" placeholder="0" value={priceNegotiable ? "" : form.price} disabled={priceNegotiable} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+                  <Checkbox checked={priceNegotiable} onCheckedChange={(v) => { setPriceNegotiable(!!v); if (v) setForm((f) => ({ ...f, price: "0" })); }} />
+                  Qiymət razılaşma yolu ilədir
+                </label>
               </div>
               <div className="space-y-2">
                 <Label>{t("create_listing.category")}</Label>

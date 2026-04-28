@@ -362,7 +362,7 @@ const ProductDetail = () => {
   const avgRating = sellerReviews.length > 0 ? sellerReviews.reduce((s: number, r: any) => s + r.rating, 0) / sellerReviews.length : 0;
   const level = getUserLevel(sellerReviews.length, avgRating, sellerListingsCount, seller?.created_at);
   const formatSharePrice = (price: number, currency: string) => `${price.toLocaleString("az-AZ")} ${currency}`;
-  const shareText = `${listing.title} — ${formatSharePrice(Number(listing.price), listing.currency || "AZN")}`;
+  const shareText = `${listing.title} — ${(listing as any).custom_fields?.price_negotiable ? "Razılaşma yolu ilə" : formatSharePrice(Number(listing.price), listing.currency || "AZN")}`;
   const productUrl = `https://elan24.az/product/${listing.id}`;
   const shareImageUrl = (() => {
     const imageUrl = images[0];
@@ -568,7 +568,9 @@ const ProductDetail = () => {
           <div className="lg:col-span-2">
             <h1 className="font-display text-xl font-bold text-foreground md:text-2xl">{listing.title}</h1>
             <p className="mt-3 font-display text-3xl font-bold text-primary">
-              {Number(listing.price).toLocaleString()} {listing.currency}
+              {(listing as any).custom_fields?.price_negotiable
+                ? "Razılaşma yolu ilə"
+                : `${Number(listing.price).toLocaleString()} ${listing.currency}`}
             </p>
 
             <div className="mt-4 flex flex-wrap gap-3 text-sm text-muted-foreground">

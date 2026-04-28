@@ -1,107 +1,89 @@
 ## Məqsəd
 
-Saytda yaranan bütün bildirişləri (notifications) avtomatik olaraq push notification kimi telefona göndərmək. Admin paneldən hər bildiriş növü üçün ayrıca push aç/söndür imkanı. **Tətbiq açıq olduqda push göndərilməsin** — yalnız offline və ya arxa fonda olan istifadəçilər push alsın.
+Ana səhifədə deal-type tabs içindəki **"Otaq yoldaşı"** seçimini ləğv edib onun yerinə **"Hazır biznes"** kateqoriyası gətirmək. Hazır biznes — daşınmaz əmlakdan fərqli olaraq tam fəaliyyətdə olan biznes obyektinin (kafe, market, salon, istehsalat və s.) avadanlıqları + müştəri bazası + lokasiyası ilə birgə satışı/icarəsidir, ona görə öz xüsusi sahələri olmalıdır. Həmçinin bütün kateqoriyalarda **"Razılaşma yolu ilə"** qiymət seçimi əlavə olunacaq.
 
----
+## 1) Deal-type tabs dəyişikliyi
 
-## Necə işləyəcək (axın)
-
-```text
-Trigger (yeni elan/mesaj/sifariş…)
-   ↓
-notifications cədvəlinə INSERT (DB-də saxlanılır → zəng/badge üçün)
-   ↓
-on_notification_push trigger işə düşür
-   ↓
-yeni yoxlama: 
-   1) Admin paneldə bu növ üçün "push" açıqdırmı?
-   2) İstifadəçi hazırda online deyilmi (last_seen > 30s öncə)?
-   ↓ hər ikisi true → send-user-push edge function
-   ↓
-FCM v1 → telefonda bildiriş
+`src/components/DealTypeTabs.tsx` — `roommate` sətrini silib yerinə əlavə edirik:
+```ts
+{ value: "business", label: "Hazır biznes", icon: Briefcase }
 ```
 
-Tətbiq açıq olduqda göndərməmək üçün iki qat qoruma:
-- **Server tərəf:** `profiles.last_seen` son 30 saniyə içindədirsə push atılmır (DB triggeri yoxlayır).
-- **Client tərəf:** `firebase-messaging-sw.js` `clients.matchAll()` ilə pəncərələrə baxır — əgər hər hansı tab açıq və `visibilityState === "visible"` isə system bildirişini göstərmir (yalnız in-app toast).
+Tab ikonu `Briefcase` (lucide). Beləliklə tabs sırası: **Alqı-satqı · Kirayə · Günlük · Hazır biznes** (yenə də 4 sütun).
 
----
+## 2) "Hazır biznes" kateqoriyasını yaratmaq
 
-## Dəyişikliklər
-
-### 1. DB migrasiyası
-
-**`site_settings.admin_notifications`** strukturunu genişləndirmək. İndi belədir:
-```json
-{ "new_listing": "true", "new_message": "true", ... }
-```
-Yenidən belə olacaq (hər növ üçün 2 açar):
-```json
+`src/data/categories.ts` faylına yeni root kateqoriya əlavə (`obyektler`-dən sonra):
+```ts
 {
-  "new_listing": { "inapp": true, "push": true },
-  "new_message": { "inapp": true, "push": true },
-  "new_store":   { "inapp": true, "push": false },
-  ...
-}
+  id: "hazir-biznes",
+  name: "Hazır biznes",
+  slug: "hazir-biznes",
+  icon: "Briefcase",
+  color: "bg-fuchsia-500",
+  subCategories: [
+    { id: "kafe-restoran",   name: "Kafe / Restoran",     slug: "hazir-biznes-kafe" },
+    { id: "market",          name: "Market / Mağaza",     slug: "hazir-biznes-market" },
+    { id: "gozellik",        name: "Gözəllik salonu",     slug: "hazir-biznes-gozellik" },
+    { id: "istehsalat",      name: "İstehsalat",          slug: "hazir-biznes-istehsalat" },
+    { id: "xidmet",          name: "Xidmət sahəsi",       slug: "hazir-biznes-xidmet" },
+    { id: "online",          name: "Onlayn biznes",       slug: "hazir-biznes-online" },
+    { id: "diger",           name: "Digər",               slug: "hazir-biznes-diger" },
+  ],
+},
 ```
-+ Geriyə uyğunluq: köhnə `"true"/"false"` dəyərləri `inapp` kimi oxunacaq, `push` default = `true`.
 
-**`profiles`-ə yeni sütun:** `presence_state text default 'offline'` (`active` | `background` | `offline`) — heartbeat üçün last_seen ilə birgə.
+## 3) Hazır biznes üçün xüsusi sahələr (category_fields)
 
-**`on_notification_push` trigger-ni yenilə:**
-- Bildirişin tipinə uyğun `push` aç/söndür açarını yoxlasın.
-- `last_seen > now() - interval '30 seconds'` AND `presence_state = 'active'` → push atma.
+Yeni migrasiya `hazir-biznes` (root + 7 alt slug) üçün aşağıdakı sahələri yaradır:
 
-### 2. Admin panel
+| field_name | label | type | options |
+|---|---|---|---|
+| deal_type | Əməliyyat növü | select | Satılır, Kirayəyə verilir, Pay satılır |
+| business_area_m2 | Sahə (m²) | number | — |
+| monthly_revenue | Aylıq dövriyyə (AZN) | number | — |
+| monthly_profit | Aylıq xalis gəlir (AZN) | number | — |
+| staff_count | İşçi sayı | number | — |
+| operating_years | Neçə ildir fəaliyyətdədir | number | — |
+| rent_included | İcarə daxildir | select | Bəli, Xeyr, Əmlak özümüzdür |
+| equipment_included | Avadanlıq daxildir | select | Bəli, Xeyr, Qismən |
+| license_status | Lisenziya / icazə | select | Var, Yoxdur, Tələb olunmur |
+| reason_for_sale | Satış səbəbi | text | — |
 
-**`AdminNotificationSettings.tsx`** — hər kateqoriya üçün 2 switch:
-- "Daxili bildiriş" (in-app: zəng/badge)  
-- "Push bildirişi" (telefona göndər)
+Bütün bu sahələr üçün `is_active=true`, `sort_order` ardıcıl. Admin **Kateqoriya sahələri** panelindən sonradan redaktə edə biləcək (mövcud `AdminCategoryFieldsManager` ilə).
 
-| Kateqoriya | İn-app | Push |
-|---|---|---|
-| Yeni elan | [✓] | [✓] |
-| Yeni mesaj | [✓] | [✓] |
-| … | … | … |
+## 4) "Razılaşma yolu ilə" qiymət seçimi (bütün kateqoriyalar üçün)
 
-### 3. Client – online/visible aşkarlama
+CreateListing formuna qiymət bloku yanında **checkbox** əlavə olunur:
+- Label: **"Qiymət razılaşma yolu ilədir"**
+- Aktivləşəndə: qiymət inputu disabled olur, `price = 0` saxlanılır, `custom_fields.price_negotiable = true`.
 
-- **`AuthContext` / yeni `usePresence` hook:**
-  - Hər 20 saniyədə `profiles.last_seen` + `presence_state` yenilə (`active` əgər `document.visibilityState === "visible"`, əks halda `background`).
-  - `visibilitychange` və `beforeunload` hadisələrində `presence_state = 'offline'`.
+Göstərilmə (ListingCard, ProductDetail, share text):
+- `custom_fields?.price_negotiable === true` olanda qiymət əvəzinə **"Razılaşma yolu ilə"** yazısı çıxır (üç yerdə də).
 
-- **`firebase-messaging-sw.js`:**
-  - `onBackgroundMessage` daxilində `clients.matchAll({ type: 'window' })` — əgər açıq və `focused` pəncərə varsa `self.registration.showNotification` çağırma; əvəzinə `client.postMessage({ type: 'inapp-notif', payload })` göndər.
-  - Client tərəfdə bu mesajı dinləyib mövcud toast/zəng sistemi ilə göstər.
+Bu yalnız front-end + custom_fields istifadə edir, sxem dəyişmir.
 
-### 4. Edge function – `send-user-push`
+## 5) Mövcud kodu təmizləmək
 
-- Çağırışdan əvvəl son qoruma: yenidən `profiles.last_seen / presence_state` yoxlanışı (DB trigger artıq yoxlayır, bu ikinci xətt).
-- `notification_type` parametri əlavə et ki, log-larda hansı növ olduğu görünsün.
+- `src/pages/CreateListing.tsx` (sətir 387-390): `roommate` mappinqini silib yerinə `business` (label "Hazır biznes" / "biznes") mappinqi əlavə.
+- `src/pages/Products.tsx` (sətir 163): `roommate` filterini `business` filterinə dəyişmək (`norm === "business" || norm.includes("biznes")`).
+- DB-də `validate_listing_deal_type` triggerini yeniləyirik: icazəli dəyərlər `('sale','rent','daily','business')`. Migrasiya əvvəlcə mövcud `roommate` qeydlərini `sale`-ə migrasiya edir (bina.az-da real istifadə yoxdur).
 
-### 5. Manual göndərmə (admin → istifadəçilər)
+## 6) Texniki addımlar yekun
 
-`AdminNotificationSender.tsx` (mövcuddur) — bu axın "manual broadcast" sayılır və admin tənzimləməsindən asılı olmayaraq həmişə işləyir (admin özü göndərir).
+1. **DB migrasiyası**:
+   - `validate_listing_deal_type` funksiyasını yeniləmək (`roommate` → `business`).
+   - Mövcud `listings.deal_type='roommate'` qeydlərini `'sale'`-ə UPDATE.
+   - `category_fields`-ə `hazir-biznes` üçün 10 sətir INSERT (root slug üçün).
+2. **Front-end**:
+   - `DealTypeTabs.tsx` — tab dəyişdir.
+   - `categories.ts` — yeni root kateqoriya.
+   - `CreateListing.tsx` — deal mapping + negotiable checkbox.
+   - `Products.tsx` — filter mapping.
+   - `ListingCard.tsx` + `ProductDetail.tsx` — "Razılaşma yolu ilə" göstəricisi.
 
----
+## Qeyd
 
-## Texniki qeydlər
+`DEAL_TYPES` icon `Users` artıq istifadə olunmadığı üçün importdan silinəcək. Hazır biznes elanları üçün `category` sütunu `hazir-biznes` slug-u alacaq, root kateqoriya kartları yığını avtomatik yenilənəcək.
 
-- DB tərəfdə "online" həddi: **30 saniyə** (heartbeat 20s, tolerans 10s).
-- iOS Safari: yalnız PWA standalone rejimdə işləyir (artıq həll olunub).
-- Mövcud `email_notifications` (offline > 2 dəqiqə) məntiqi qalır, sadəcə push üçün ayrıca daha qısa hədd istifadə olunur.
-- Migrasiya geriyə uyğun — köhnə settings format-ı pozulmayacaq.
-
----
-
-## Fayllar
-
-**Yenilənəcək:**
-- `supabase/migrations/...` (yeni) — `profiles.presence_state`, `on_notification_push` yenilənməsi
-- `src/components/admin/AdminNotificationSettings.tsx` — 2 switch struktur
-- `src/contexts/AuthContext.tsx` və ya yeni `src/hooks/usePresence.ts`
-- `public/firebase-messaging-sw.js` — açıq pəncərə yoxlaması
-- `src/components/FirebaseInit.tsx` — SW-dən gələn `inapp-notif` mesajını dinlə
-- `supabase/functions/send-user-push/index.ts` — son qat presence yoxlaması
-
-Təsdiq verin, dərhal implementasiyaya başlayım.
+Təsdiq edin — implementasiyaya başlayım.
