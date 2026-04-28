@@ -290,6 +290,10 @@ const Products = () => {
                 className={`flex items-center gap-1 rounded-lg px-3 text-xs font-medium transition-colors ${viewMode === "map" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}>
                 <MapIcon className="h-4 w-4" /> Xəritə
               </button>
+              <button onClick={() => setViewMode("metro")}
+                className={`flex items-center gap-1 rounded-lg px-3 text-xs font-medium transition-colors ${viewMode === "metro" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent"}`}>
+                <TrainFront className="h-4 w-4" /> Metro
+              </button>
             </div>
             <Sheet open={showFilters} onOpenChange={setShowFilters}>
               <SheetTrigger asChild>
