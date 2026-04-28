@@ -21,6 +21,17 @@ import RegionCascader from "@/components/RegionCascader";
 
 type MapBounds = { north: number; south: number; east: number; west: number };
 
+// Bakı metro stansiyaları (3 xətt)
+const BAKU_METRO_STATIONS: string[] = [
+  "İçərişəhər", "Sahil", "28 May", "Gənclik", "Nəriman Nərimanov", "Bakmil",
+  "Ulduz", "Koroğlu", "Qara Qarayev", "Neftçilər", "Xalqlar Dostluğu",
+  "Əhmədli", "Həzi Aslanov",
+  "Cəfər Cabbarlı", "Nizami", "Elmlər Akademiyası", "İnşaatçılar",
+  "20 Yanvar", "Memar Əcəmi", "Nəsimi", "Azadlıq prospekti", "Dərnəgül",
+  "Avtovağzal",
+  "Xocəsən",
+];
+
 const sortOptions = [
   { value: "newest", labelKey: "products.sort_newest" },
   { value: "price-asc", labelKey: "products.sort_price_asc" },
