@@ -61,7 +61,7 @@ serve(async (req) => {
   }
 
   try {
-    const { user_id, title, body, link } = await req.json();
+    const { user_id, title, body, link, notification_type, force } = await req.json();
     if (!user_id || !title) {
       return new Response(JSON.stringify({ error: "user_id and title required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -78,6 +78,26 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
+
+    // Second-line presence guard: skip if user is currently active (app open & visible)
+    if (!force) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("presence_state, last_seen")
+        .eq("user_id", user_id)
+        .maybeSingle();
+
+      if (profile?.presence_state === "active" && profile.last_seen) {
+        const lastSeen = new Date(profile.last_seen).getTime();
+        if (Date.now() - lastSeen < 30_000) {
+          return new Response(JSON.stringify({
+            skipped: true,
+            reason: "user_active",
+            notification_type: notification_type || null,
+          }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+      }
+    }
 
     // Get user's FCM tokens
     const { data: tokens } = await supabase
