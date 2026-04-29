@@ -11,6 +11,8 @@ interface Message {
   content: string;
 }
 
+import { useLocation } from "react-router-dom";
+
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chatbot`;
 
 const ChatBot = () => {
@@ -20,6 +22,11 @@ const ChatBot = () => {
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Hide on open conversation (chat needs the bottom-right space)
+  const isInChat = location.pathname === "/messages" && location.search.includes("c=");
+  if (isInChat) return null;
 
   useEffect(() => {
     if (scrollRef.current) {
