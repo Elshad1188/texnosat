@@ -1149,19 +1149,17 @@ const Messages = () => {
                         </div>
                       ) : (
                         <>
-                        <div className="flex gap-1">
-                          <Button
-                            type="button"
-                            size="icon"
-                            variant="ghost"
-                            className="h-10 w-10 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={uploadingMedia}
-                          >
-                            {uploadingMedia ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
-                          </Button>
-                        </div>
-                        <div className="flex-1 relative">
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-10 w-10 shrink-0 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadingMedia}
+                        >
+                          {uploadingMedia ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
+                        </Button>
+                        <div className="flex-1 min-w-0 relative">
                           <textarea
                             ref={inputRef}
                             value={messageText}
@@ -1169,8 +1167,8 @@ const Messages = () => {
                             onKeyDown={handleKeyDown}
                             placeholder="Mesaj yazın..."
                             rows={1}
-                            className="w-full resize-none rounded-xl border border-border/50 bg-muted/30 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
-                            style={{ maxHeight: 120 }}
+                            className="w-full resize-none rounded-xl border border-border/50 bg-muted/30 px-3 py-2.5 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all leading-tight"
+                            style={{ maxHeight: 120, fontSize: '16px' }}
                           />
                           {slideY < -20 && !recordLocked && (
                             <div
@@ -1182,6 +1180,32 @@ const Messages = () => {
                             </div>
                           )}
                         </div>
+                        </>
+                      )}
+                        {messageText.trim() || imagePreviewFile ? (
+                          <Button
+                            type="submit"
+                            size="icon"
+                            disabled={sendMessage.isPending}
+                            className="h-10 w-10 shrink-0 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-all disabled:opacity-40"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <button
+                            type="button"
+                            onPointerDown={handleMicPointerDown}
+                            onPointerMove={handleMicPointerMove}
+                            onPointerUp={handleMicPointerUp}
+                            onPointerCancel={handleMicPointerUp}
+                            onContextMenu={(e) => e.preventDefault()}
+                            className="h-10 w-10 shrink-0 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-all touch-none select-none flex items-center justify-center active:scale-110"
+                            title="Basıb saxlayın və danışın"
+                            aria-label="Səsli mesaj"
+                          >
+                            <Mic className="h-5 w-5" />
+                          </button>
+                        )}
                         </>
                       )}
                         {messageText.trim() || imagePreviewFile ? (
