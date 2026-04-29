@@ -654,11 +654,24 @@ const Messages = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Header />
+    <div className="min-h-[100dvh] bg-background flex flex-col">
+      {/* Hide site header on mobile when a chat is open */}
+      <div className={activeConvoId ? "hidden md:block" : "block"}>
+        <Header />
+      </div>
       <TooltipProvider>
-        <main className="container mx-auto flex-1 px-2 sm:px-4 py-2 sm:py-4">
-          <div className="flex h-[calc(100vh-140px)] sm:h-[calc(100vh-180px)] overflow-hidden rounded-2xl border border-border/50 bg-card shadow-lg">
+        <main
+          className={`flex-1 w-full md:container md:mx-auto md:px-4 md:py-4 ${
+            activeConvoId ? "px-0 py-0" : "px-0 py-0 sm:px-4 sm:py-4"
+          }`}
+        >
+          <div
+            className={`flex overflow-hidden bg-card md:rounded-2xl md:border md:border-border/50 md:shadow-lg ${
+              activeConvoId
+                ? "h-[100dvh] md:h-[calc(100vh-180px)]"
+                : "h-[calc(100dvh-128px)] sm:h-[calc(100dvh-160px)] md:h-[calc(100vh-180px)]"
+            }`}
+          >
             {/* Sidebar */}
             <div className={`w-full md:w-[340px] flex-shrink-0 flex flex-col bg-card ${activeConvoId ? "hidden md:flex" : "flex"}`}>
               <div className="p-4 pb-3">
@@ -799,7 +812,10 @@ const Messages = () => {
               {activeConvoId && activeConvo ? (
                 <>
                   {/* Chat header */}
-                  <div className="flex items-center gap-3 border-b border-border/50 px-4 py-3 bg-card/80 backdrop-blur-sm">
+                  <div
+                    className="flex items-center gap-2 sm:gap-3 border-b border-border/50 px-3 sm:px-4 py-2.5 sm:py-3 bg-card/80 backdrop-blur-sm"
+                    style={{ paddingTop: "max(0.625rem, env(safe-area-inset-top))" }}
+                  >
                     <button onClick={() => navigate("/messages")} className="md:hidden p-1 -ml-1 rounded-lg hover:bg-muted transition-colors">
                       <ArrowLeft className="h-5 w-5 text-foreground" />
                     </button>
@@ -1089,7 +1105,10 @@ const Messages = () => {
                   )}
 
                   {/* Input area */}
-                  <div className="border-t border-border/50 p-3 sm:p-4 bg-card">
+                  <div
+                    className="border-t border-border/50 px-2.5 py-2.5 sm:p-4 bg-card"
+                    style={{ paddingBottom: "max(0.625rem, env(safe-area-inset-bottom))" }}
+                  >
                     <div className="mb-2">
                       <IdentitySwitcher
                         selectedStoreId={selectedStoreId}
@@ -1222,7 +1241,9 @@ const Messages = () => {
           </div>
         </main>
       </TooltipProvider>
-      <Footer />
+      <div className={activeConvoId ? "hidden md:block" : "block"}>
+        <Footer />
+      </div>
 
       {/* Image lightbox */}
       <Dialog open={!!lightboxImage} onOpenChange={() => setLightboxImage(null)}>
