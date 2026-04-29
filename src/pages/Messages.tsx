@@ -1099,7 +1099,7 @@ const Messages = () => {
                     </div>
 
                     {/* Recording overlay (WhatsApp-like) */}
-                    <form onSubmit={handleSubmit} className="flex items-end gap-2">
+                    <form onSubmit={handleSubmit} className="flex items-end gap-1.5 sm:gap-2">
                       <input
                         type="file"
                         ref={fileInputRef}
