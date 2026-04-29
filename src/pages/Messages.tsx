@@ -808,7 +808,7 @@ const Messages = () => {
             </div>
 
             {/* Chat area */}
-            <div className={`flex-1 flex flex-col border-l border-border/30 ${!activeConvoId ? "hidden md:flex" : "flex"}`}>
+            <div className={`flex-1 min-w-0 flex flex-col md:border-l md:border-border/30 overflow-hidden ${!activeConvoId ? "hidden md:flex" : "flex"}`}>
               {activeConvoId && activeConvo ? (
                 <>
                   {/* Chat header */}
