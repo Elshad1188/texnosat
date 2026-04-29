@@ -1235,7 +1235,9 @@ const Messages = () => {
           </div>
         </main>
       </TooltipProvider>
-      <Footer />
+      <div className={activeConvoId ? "hidden md:block" : "block"}>
+        <Footer />
+      </div>
 
       {/* Image lightbox */}
       <Dialog open={!!lightboxImage} onOpenChange={() => setLightboxImage(null)}>
