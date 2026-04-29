@@ -812,7 +812,10 @@ const Messages = () => {
               {activeConvoId && activeConvo ? (
                 <>
                   {/* Chat header */}
-                  <div className="flex items-center gap-3 border-b border-border/50 px-4 py-3 bg-card/80 backdrop-blur-sm">
+                  <div
+                    className="flex items-center gap-2 sm:gap-3 border-b border-border/50 px-3 sm:px-4 py-2.5 sm:py-3 bg-card/80 backdrop-blur-sm"
+                    style={{ paddingTop: "max(0.625rem, env(safe-area-inset-top))" }}
+                  >
                     <button onClick={() => navigate("/messages")} className="md:hidden p-1 -ml-1 rounded-lg hover:bg-muted transition-colors">
                       <ArrowLeft className="h-5 w-5 text-foreground" />
                     </button>
