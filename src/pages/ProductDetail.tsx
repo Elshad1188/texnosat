@@ -572,6 +572,20 @@ const ProductDetail = () => {
                 ? "Razılaşma yolu ilə"
                 : `${Number(listing.price).toLocaleString()} ${listing.currency}`}
             </p>
+            {(() => {
+              const cf = (listing as any).custom_fields || {};
+              const area = parseFloat(String(cf.area_m2 ?? cf.area ?? "").replace(",", "."));
+              const priceNum = Number(listing.price);
+              if (!cf.price_negotiable && area > 0 && priceNum > 0) {
+                const perM2 = Math.round(priceNum / area);
+                return (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    1 m² — {perM2.toLocaleString()} {listing.currency}
+                  </p>
+                );
+              }
+              return null;
+            })()}
 
             <div className="mt-4 flex flex-wrap gap-3 text-sm text-muted-foreground">
               <span className="flex items-center gap-1"><MapPin className="h-4 w-4" /> {listing.location}</span>
