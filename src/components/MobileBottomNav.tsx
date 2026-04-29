@@ -63,6 +63,10 @@ const MobileBottomNav = () => {
     { path: user ? "/profile" : "/auth", icon: User, label: t("mobilenav.profile") },
   ];
 
+  // Hide bottom nav when inside an open conversation (chat needs full screen)
+  const isInChat = location.pathname === "/messages" && location.search.includes("c=");
+  if (isInChat) return null;
+
   return (
     <nav
       className={cn(
