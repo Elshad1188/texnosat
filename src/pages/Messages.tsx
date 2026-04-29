@@ -1102,7 +1102,10 @@ const Messages = () => {
                   )}
 
                   {/* Input area */}
-                  <div className="border-t border-border/50 p-3 sm:p-4 bg-card">
+                  <div
+                    className="border-t border-border/50 px-2.5 py-2.5 sm:p-4 bg-card"
+                    style={{ paddingBottom: "max(0.625rem, env(safe-area-inset-bottom))" }}
+                  >
                     <div className="mb-2">
                       <IdentitySwitcher
                         selectedStoreId={selectedStoreId}
