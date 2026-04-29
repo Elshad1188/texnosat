@@ -808,7 +808,7 @@ const Messages = () => {
             </div>
 
             {/* Chat area */}
-            <div className={`flex-1 flex flex-col border-l border-border/30 ${!activeConvoId ? "hidden md:flex" : "flex"}`}>
+            <div className={`flex-1 min-w-0 flex flex-col md:border-l md:border-border/30 overflow-hidden ${!activeConvoId ? "hidden md:flex" : "flex"}`}>
               {activeConvoId && activeConvo ? (
                 <>
                   {/* Chat header */}
@@ -1106,10 +1106,10 @@ const Messages = () => {
 
                   {/* Input area */}
                   <div
-                    className="border-t border-border/50 px-2.5 py-2.5 sm:p-4 bg-card"
+                    className="border-t border-border/50 px-2.5 py-2.5 sm:p-4 bg-card w-full overflow-hidden"
                     style={{ paddingBottom: "max(0.625rem, env(safe-area-inset-bottom))" }}
                   >
-                    <div className="mb-2">
+                    <div className="mb-2 max-w-full overflow-x-auto scrollbar-hide">
                       <IdentitySwitcher
                         selectedStoreId={selectedStoreId}
                         onSelect={setSelectedStoreId}
@@ -1118,7 +1118,7 @@ const Messages = () => {
                     </div>
 
                     {/* Recording overlay (WhatsApp-like) */}
-                    <form onSubmit={handleSubmit} className="flex items-end gap-1.5 sm:gap-2">
+                    <form onSubmit={handleSubmit} className="flex items-end gap-1.5 sm:gap-2 w-full min-w-0">
                       <input
                         type="file"
                         ref={fileInputRef}
