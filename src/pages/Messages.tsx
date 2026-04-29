@@ -1206,32 +1206,6 @@ const Messages = () => {
                             <Mic className="h-5 w-5" />
                           </button>
                         )}
-                        </>
-                      )}
-                        {messageText.trim() || imagePreviewFile ? (
-                          <Button
-                            type="submit"
-                            size="icon"
-                            disabled={sendMessage.isPending}
-                            className="h-10 w-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-all disabled:opacity-40"
-                          >
-                            <Send className="h-4 w-4" />
-                          </Button>
-                        ) : (
-                          <button
-                            type="button"
-                            onPointerDown={handleMicPointerDown}
-                            onPointerMove={handleMicPointerMove}
-                            onPointerUp={handleMicPointerUp}
-                            onPointerCancel={handleMicPointerUp}
-                            onContextMenu={(e) => e.preventDefault()}
-                            className="h-10 w-10 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-all touch-none select-none flex items-center justify-center active:scale-110"
-                            title="Basıb saxlayın və danışın"
-                            aria-label="Səsli mesaj"
-                          >
-                            <Mic className="h-5 w-5" />
-                          </button>
-                        )}
                       </form>
                   </div>
                 </>
