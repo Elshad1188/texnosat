@@ -654,7 +654,10 @@ const Messages = () => {
   });
 
   return (
-    <div className="min-h-[100dvh] bg-background flex flex-col">
+    <div
+      className="min-h-screen bg-background flex flex-col"
+      style={{ minHeight: "100dvh" }}
+    >
       {/* Hide site header on mobile when a chat is open */}
       <div className={activeConvoId ? "hidden md:block" : "block"}>
         <Header />
@@ -668,10 +671,16 @@ const Messages = () => {
           <div
             className={`flex overflow-hidden bg-card md:rounded-2xl md:border md:border-border/50 md:shadow-lg ${
               activeConvoId
-                ? "h-[100dvh] md:h-[calc(100vh-180px)]"
-                : "h-[calc(100dvh-128px)] sm:h-[calc(100dvh-160px)] md:h-[calc(100vh-180px)]"
+                ? "h-screen md:h-[calc(100vh-180px)]"
+                : "h-[calc(100vh-128px)] sm:h-[calc(100vh-160px)] md:h-[calc(100vh-180px)]"
             }`}
+            style={
+              activeConvoId
+                ? { height: "100dvh" }
+                : { height: "calc(100dvh - 128px)" }
+            }
           >
+
             {/* Sidebar */}
             <div className={`w-full md:w-[340px] flex-shrink-0 flex flex-col bg-card ${activeConvoId ? "hidden md:flex" : "flex"}`}>
               <div className="p-4 pb-3">
