@@ -34,6 +34,7 @@ import FirebaseInit from "./components/FirebaseInit";
 import PaymentResult from "./pages/PaymentResult";
 import { CompareProvider } from "@/contexts/CompareContext";
 import ChatBot from "./components/ChatBot";
+import PushPermissionPrompt from "./components/PushPermissionPrompt";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import Reels from "./pages/Reels";
@@ -121,6 +122,7 @@ const App = () => (
                 <MobileBottomNav />
                 <MobileTopSearch />
                 <ChatBot />
+                <PushPermissionPrompt />
                 <FirebaseInit />
               </ThemeProvider>
             </LanguageProvider>
