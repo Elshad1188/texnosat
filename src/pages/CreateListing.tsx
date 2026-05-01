@@ -727,27 +727,7 @@ const CreateListing = () => {
               );
             })()}
 
-            {/* Buyable toggle - show in marketplace/both modes when e-commerce is enabled */}
-            {platform.showSales && ecomSettings?.enabled && (
-              <div className="rounded-xl border border-border bg-card p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-sm font-medium flex items-center gap-2">
-                      <ShoppingBag className="h-4 w-4 text-primary" /> {t("create_listing.direct_sale")}
-                    </Label>
-                    <p className="text-xs text-muted-foreground mt-0.5">{t("create_listing.direct_sale_desc")}</p>
-                  </div>
-                  <Switch checked={isBuyable} onCheckedChange={setIsBuyable} />
-                </div>
-                {isBuyable && (
-                  <div className="space-y-1">
-                    <Label className="text-xs">{t("create_listing.stock")}</Label>
-                    <Input type="number" min="1" value={stock} onChange={(e) => setStock(e.target.value)}
-                      className="h-9 w-32" />
-                  </div>
-                )}
-              </div>
-            )}
+            {/* "Birbaşa satış" bloku daşınmaz əmlak platforması üçün gizlədilib */}
 
             {/* Shipping methods - always show when store is selected */}
             {selectedStoreId && platform.showShipping && (
