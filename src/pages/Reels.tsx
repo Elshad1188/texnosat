@@ -277,11 +277,11 @@ const Reels = () => {
     enabled: !!currentReel,
   });
 
-  // Record view
+  // Record view (atomic increment via RPC)
   useEffect(() => {
     if (!currentReel) return;
     supabase.from("reel_views").insert({ listing_id: currentReel.id, user_id: user?.id || null });
-    supabase.from("listings").update({ views_count: (currentReel.views_count || 0) + 1 }).eq("id", currentReel.id);
+    supabase.rpc("increment_listing_views", { _listing_id: currentReel.id });
     queryClient.invalidateQueries({ queryKey: ["reel-views", currentReel.id] });
   }, [currentReel?.id]);
 
