@@ -113,12 +113,16 @@ const Balance = () => {
       });
       if (error) throw error;
       if (data) {
-        toast({ title: "Referal kodu uğurla tətbiq edildi! +1₼ bonus" });
+        toast({ title: `Referal kodu uğurla tətbiq edildi! +${referredBonus}₼ bonus` });
         queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
         queryClient.invalidateQueries({ queryKey: ["balance-transactions", user.id] });
         setReferralInput("");
       } else {
-        toast({ title: "Kod etibarsızdır və ya artıq istifadə edilib", variant: "destructive" });
+        toast({
+          title: "Kod tətbiq edilmədi",
+          description: "Kod etibarsızdır, artıq istifadə edilib və ya hesab şərtlərə uyğun deyil (yeni hesab olmalı, fəaliyyət olmamalı).",
+          variant: "destructive",
+        });
       }
     } catch (err: any) {
       toast({ title: "Xəta", description: err.message, variant: "destructive" });
