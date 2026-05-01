@@ -2199,6 +2199,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_listing_views: {
+        Args: { _listing_id: string }
+        Returns: undefined
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
