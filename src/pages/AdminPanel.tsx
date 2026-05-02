@@ -807,28 +807,82 @@ const AdminPanel = () => {
                         </div>
                       </SheetHeader>
                       <Separator className="mb-4" />
-                      <div className="space-y-3 text-sm">
+                      <div className="space-y-2.5 text-sm">
+                        <div className="flex justify-between gap-2">
+                          <span className="text-muted-foreground flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> User ID</span>
+                          <span className="font-mono text-[11px] truncate max-w-[180px]" title={selectedUser.user_id}>{selectedUser.user_id.slice(0, 8)}…</span>
+                        </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Şəhər</span>
+                          <span className="text-muted-foreground flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> Şəhər</span>
                           <span className="font-medium">{selectedUser.city || "—"}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Telefon</span>
+                          <span className="text-muted-foreground flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" /> Telefon</span>
                           <span className="font-medium">{selectedUser.phone || "—"}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Qeydiyyat tarixi</span>
+                          <span className="text-muted-foreground flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> Qeydiyyat</span>
                           <span className="font-medium">{new Date(selectedUser.created_at).toLocaleDateString("az")}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Elan sayı</span>
-                          <span className="font-medium">{userListings.length}</span>
+                          <span className="text-muted-foreground">Onlayn statusu</span>
+                          <span className="font-medium">
+                            {selectedUser.last_seen ? new Date(selectedUser.last_seen).toLocaleString("az") : "—"}
+                          </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Rəy sayı</span>
-                          <span className="font-medium">{userReviews.length}</span>
+                          <span className="text-muted-foreground flex items-center gap-1.5"><CircleDollarSign className="h-3.5 w-3.5" /> Balans</span>
+                          <span className="font-bold text-primary">{Number(selectedUser.balance || 0).toFixed(2)} ₼</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Referal kodu</span>
+                          <span className="font-mono font-medium">{selectedUser.referral_code || "—"}</span>
+                        </div>
+                        <Separator />
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="rounded-lg border p-2">
+                            <p className="text-[10px] text-muted-foreground uppercase">Elan</p>
+                            <p className="font-bold text-sm">{userListings.length}</p>
+                          </div>
+                          <div className="rounded-lg border p-2">
+                            <p className="text-[10px] text-muted-foreground uppercase">Rəy</p>
+                            <p className="font-bold text-sm">{userReviews.length}</p>
+                          </div>
+                          <div className="rounded-lg border p-2">
+                            <p className="text-[10px] text-muted-foreground uppercase">Sifariş</p>
+                            <p className="font-bold text-sm">{userDetails.ordersCount ?? "…"}</p>
+                          </div>
+                          <div className="rounded-lg border p-2">
+                            <p className="text-[10px] text-muted-foreground uppercase">Mağaza</p>
+                            <p className="font-bold text-sm">{userDetails.storesCount ?? "…"}</p>
+                          </div>
+                          <div className="rounded-lg border p-2">
+                            <p className="text-[10px] text-muted-foreground uppercase">Seçilmiş</p>
+                            <p className="font-bold text-sm">{userDetails.favoritesCount ?? "…"}</p>
+                          </div>
+                          <div className="rounded-lg border p-2">
+                            <p className="text-[10px] text-muted-foreground uppercase">Dəvətlər</p>
+                            <p className="font-bold text-sm">{userDetails.referralsCount ?? "…"}</p>
+                          </div>
                         </div>
                       </div>
+                      {!isSelf && (
+                        <>
+                          <Separator className="my-4" />
+                          <Button
+                            size="sm"
+                            className="w-full gap-1.5 bg-amber-500 hover:bg-amber-600 text-white"
+                            disabled={impersonating}
+                            onClick={() => impersonateUser(selectedUser.user_id)}
+                          >
+                            {impersonating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LogIn className="h-3.5 w-3.5" />}
+                            Bu hesab ilə daxil ol
+                          </Button>
+                          <p className="text-[10px] text-muted-foreground mt-1.5 text-center">
+                            ⚠ Cari sessiyanız bağlanacaq və istifadəçinin emailinə bildiriş göndəriləcək.
+                          </p>
+                        </>
+                      )}
                       {!isSelf && (
                         <>
                           <Separator className="my-4" />
