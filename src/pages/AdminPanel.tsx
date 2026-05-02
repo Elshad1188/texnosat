@@ -314,7 +314,51 @@ const AdminPanel = () => {
     toast({ title: "İstifadəçi silindi" });
   };
 
-  const getUserLevel = (userId: string) => {
+  // Fetch extra details when a user is selected
+  useEffect(() => {
+    if (!selectedUser) {
+      setUserDetails({});
+      return;
+    }
+    const uid = selectedUser.user_id;
+    (async () => {
+      const [ordersRes, favRes, storeRes, txRes, refRes] = await Promise.all([
+        supabase.from("orders").select("id", { count: "exact", head: true }).eq("buyer_id", uid),
+        supabase.from("favorites").select("id", { count: "exact", head: true }).eq("user_id", uid),
+        supabase.from("stores").select("id", { count: "exact", head: true }).eq("user_id", uid),
+        supabase.from("balance_transactions").select("amount").eq("user_id", uid),
+        supabase.from("referrals").select("id", { count: "exact", head: true }).eq("referrer_id", uid),
+      ]);
+      const txTotal = (txRes.data || []).reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+      setUserDetails({
+        ordersCount: ordersRes.count || 0,
+        favoritesCount: favRes.count || 0,
+        storesCount: storeRes.count || 0,
+        transactionsTotal: txTotal,
+        referralsCount: refRes.count || 0,
+      });
+    })();
+  }, [selectedUser?.user_id]);
+
+  const impersonateUser = async (targetUserId: string) => {
+    if (!confirm("Bu istifadəçinin hesabına daxil olmaq istədiyinizdən əminsiniz? Cari sessiyanız bağlanacaq.")) return;
+    setImpersonating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-impersonate", {
+        body: { target_user_id: targetUserId, redirect_to: window.location.origin + "/" },
+      });
+      if (error || !data?.action_link) {
+        throw new Error(error?.message || data?.error || "Link yaradıla bilmədi");
+      }
+      // Sign out current admin then redirect to magic link
+      await supabase.auth.signOut();
+      window.location.href = data.action_link;
+    } catch (e: any) {
+      toast({ title: "Xəta", description: e.message, variant: "destructive" });
+      setImpersonating(false);
+    }
+  };
+
     const userReviews = reviews.filter((r) => r.reviewed_user_id === userId);
     const count = userReviews.length;
     const avg = count > 0 ? userReviews.reduce((s, r) => s + r.rating, 0) / count : 0;
