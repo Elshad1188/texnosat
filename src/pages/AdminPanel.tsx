@@ -83,6 +83,13 @@ import {
   CreditCard,
   BookOpen,
   Languages,
+  LogIn,
+  Mail,
+  Phone,
+  Calendar,
+  CircleDollarSign,
+  Package,
+  Heart,
 } from "lucide-react";
 
 interface Listing {
@@ -121,6 +128,12 @@ interface Profile {
   city: string | null;
   phone: string | null;
   created_at: string;
+  balance?: number | null;
+  avatar_url?: string | null;
+  referral_code?: string | null;
+  referred_by?: string | null;
+  last_seen?: string | null;
+  presence_state?: string | null;
 }
 
 interface UserRole {
@@ -155,6 +168,15 @@ const AdminPanel = () => {
   const [pendingReports, setPendingReports] = useState(0);
   const [regions, setRegions] = useState<{ id: string; name: string }[]>([]);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
+  const [userDetails, setUserDetails] = useState<{
+    email?: string | null;
+    ordersCount?: number;
+    favoritesCount?: number;
+    storesCount?: number;
+    transactionsTotal?: number;
+    referralsCount?: number;
+  }>({});
+  const [impersonating, setImpersonating] = useState(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [editForm, setEditForm] = useState({ title: "", description: "", price: 0, location: "" });
   const tabsScrollRef = useRef<HTMLDivElement>(null);
@@ -290,6 +312,51 @@ const AdminPanel = () => {
     setProfiles((prev) => prev.filter((p) => p.user_id !== userId));
     setSelectedUser(null);
     toast({ title: "İstifadəçi silindi" });
+  };
+
+  // Fetch extra details when a user is selected
+  useEffect(() => {
+    if (!selectedUser) {
+      setUserDetails({});
+      return;
+    }
+    const uid = selectedUser.user_id;
+    (async () => {
+      const [ordersRes, favRes, storeRes, txRes, refRes] = await Promise.all([
+        supabase.from("orders").select("id", { count: "exact", head: true }).eq("buyer_id", uid),
+        supabase.from("favorites").select("id", { count: "exact", head: true }).eq("user_id", uid),
+        supabase.from("stores").select("id", { count: "exact", head: true }).eq("user_id", uid),
+        supabase.from("balance_transactions").select("amount").eq("user_id", uid),
+        supabase.from("referrals").select("id", { count: "exact", head: true }).eq("referrer_id", uid),
+      ]);
+      const txTotal = (txRes.data || []).reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+      setUserDetails({
+        ordersCount: ordersRes.count || 0,
+        favoritesCount: favRes.count || 0,
+        storesCount: storeRes.count || 0,
+        transactionsTotal: txTotal,
+        referralsCount: refRes.count || 0,
+      });
+    })();
+  }, [selectedUser?.user_id]);
+
+  const impersonateUser = async (targetUserId: string) => {
+    if (!confirm("Bu istifadəçinin hesabına daxil olmaq istədiyinizdən əminsiniz? Cari sessiyanız bağlanacaq.")) return;
+    setImpersonating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-impersonate", {
+        body: { target_user_id: targetUserId, redirect_to: window.location.origin + "/" },
+      });
+      if (error || !data?.action_link) {
+        throw new Error(error?.message || data?.error || "Link yaradıla bilmədi");
+      }
+      // Sign out current admin then redirect to magic link
+      await supabase.auth.signOut();
+      window.location.href = data.action_link;
+    } catch (e: any) {
+      toast({ title: "Xəta", description: e.message, variant: "destructive" });
+      setImpersonating(false);
+    }
   };
 
   const getUserLevel = (userId: string) => {
@@ -740,28 +807,82 @@ const AdminPanel = () => {
                         </div>
                       </SheetHeader>
                       <Separator className="mb-4" />
-                      <div className="space-y-3 text-sm">
+                      <div className="space-y-2.5 text-sm">
+                        <div className="flex justify-between gap-2">
+                          <span className="text-muted-foreground flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> User ID</span>
+                          <span className="font-mono text-[11px] truncate max-w-[180px]" title={selectedUser.user_id}>{selectedUser.user_id.slice(0, 8)}…</span>
+                        </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Şəhər</span>
+                          <span className="text-muted-foreground flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> Şəhər</span>
                           <span className="font-medium">{selectedUser.city || "—"}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Telefon</span>
+                          <span className="text-muted-foreground flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" /> Telefon</span>
                           <span className="font-medium">{selectedUser.phone || "—"}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Qeydiyyat tarixi</span>
+                          <span className="text-muted-foreground flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> Qeydiyyat</span>
                           <span className="font-medium">{new Date(selectedUser.created_at).toLocaleDateString("az")}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Elan sayı</span>
-                          <span className="font-medium">{userListings.length}</span>
+                          <span className="text-muted-foreground">Onlayn statusu</span>
+                          <span className="font-medium">
+                            {selectedUser.last_seen ? new Date(selectedUser.last_seen).toLocaleString("az") : "—"}
+                          </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Rəy sayı</span>
-                          <span className="font-medium">{userReviews.length}</span>
+                          <span className="text-muted-foreground flex items-center gap-1.5"><CircleDollarSign className="h-3.5 w-3.5" /> Balans</span>
+                          <span className="font-bold text-primary">{Number(selectedUser.balance || 0).toFixed(2)} ₼</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Referal kodu</span>
+                          <span className="font-mono font-medium">{selectedUser.referral_code || "—"}</span>
+                        </div>
+                        <Separator />
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="rounded-lg border p-2">
+                            <p className="text-[10px] text-muted-foreground uppercase">Elan</p>
+                            <p className="font-bold text-sm">{userListings.length}</p>
+                          </div>
+                          <div className="rounded-lg border p-2">
+                            <p className="text-[10px] text-muted-foreground uppercase">Rəy</p>
+                            <p className="font-bold text-sm">{userReviews.length}</p>
+                          </div>
+                          <div className="rounded-lg border p-2">
+                            <p className="text-[10px] text-muted-foreground uppercase">Sifariş</p>
+                            <p className="font-bold text-sm">{userDetails.ordersCount ?? "…"}</p>
+                          </div>
+                          <div className="rounded-lg border p-2">
+                            <p className="text-[10px] text-muted-foreground uppercase">Mağaza</p>
+                            <p className="font-bold text-sm">{userDetails.storesCount ?? "…"}</p>
+                          </div>
+                          <div className="rounded-lg border p-2">
+                            <p className="text-[10px] text-muted-foreground uppercase">Seçilmiş</p>
+                            <p className="font-bold text-sm">{userDetails.favoritesCount ?? "…"}</p>
+                          </div>
+                          <div className="rounded-lg border p-2">
+                            <p className="text-[10px] text-muted-foreground uppercase">Dəvətlər</p>
+                            <p className="font-bold text-sm">{userDetails.referralsCount ?? "…"}</p>
+                          </div>
                         </div>
                       </div>
+                      {!isSelf && (
+                        <>
+                          <Separator className="my-4" />
+                          <Button
+                            size="sm"
+                            className="w-full gap-1.5 bg-amber-500 hover:bg-amber-600 text-white"
+                            disabled={impersonating}
+                            onClick={() => impersonateUser(selectedUser.user_id)}
+                          >
+                            {impersonating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LogIn className="h-3.5 w-3.5" />}
+                            Bu hesab ilə daxil ol
+                          </Button>
+                          <p className="text-[10px] text-muted-foreground mt-1.5 text-center">
+                            ⚠ Cari sessiyanız bağlanacaq və istifadəçinin emailinə bildiriş göndəriləcək.
+                          </p>
+                        </>
+                      )}
                       {!isSelf && (
                         <>
                           <Separator className="my-4" />
