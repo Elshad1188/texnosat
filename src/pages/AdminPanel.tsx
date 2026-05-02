@@ -83,6 +83,13 @@ import {
   CreditCard,
   BookOpen,
   Languages,
+  LogIn,
+  Mail,
+  Phone,
+  Calendar,
+  CircleDollarSign,
+  Package,
+  Heart,
 } from "lucide-react";
 
 interface Listing {
