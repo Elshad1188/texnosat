@@ -168,6 +168,15 @@ const AdminPanel = () => {
   const [pendingReports, setPendingReports] = useState(0);
   const [regions, setRegions] = useState<{ id: string; name: string }[]>([]);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
+  const [userDetails, setUserDetails] = useState<{
+    email?: string | null;
+    ordersCount?: number;
+    favoritesCount?: number;
+    storesCount?: number;
+    transactionsTotal?: number;
+    referralsCount?: number;
+  }>({});
+  const [impersonating, setImpersonating] = useState(false);
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [editForm, setEditForm] = useState({ title: "", description: "", price: 0, location: "" });
   const tabsScrollRef = useRef<HTMLDivElement>(null);
