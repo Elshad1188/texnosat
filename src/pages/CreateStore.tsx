@@ -265,7 +265,7 @@ const CreateStore = () => {
             </div>
             <div className="flex items-start gap-2 rounded-xl bg-card/80 p-3 border border-border/50">
               <Store className="mt-0.5 h-4 w-4 text-primary shrink-0" />
-              <div><p className="text-xs font-semibold text-foreground">{t("create_listing.direct_sale")}</p><p className="text-[10px] text-muted-foreground">{t("create_store.direct_sales_desc")}</p></div>
+              <div><p className="text-xs font-semibold text-foreground">Daşınmaz əmlak agentliyi</p><p className="text-[10px] text-muted-foreground">Mənzil, ev, ofis və digər obyektləri peşəkar agentlik kimi yerləşdirin</p></div>
             </div>
           </div>
         </div>
