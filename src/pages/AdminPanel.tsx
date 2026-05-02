@@ -359,6 +359,7 @@ const AdminPanel = () => {
     }
   };
 
+  const getUserLevel = (userId: string) => {
     const userReviews = reviews.filter((r) => r.reviewed_user_id === userId);
     const count = userReviews.length;
     const avg = count > 0 ? userReviews.reduce((s, r) => s + r.rating, 0) / count : 0;
