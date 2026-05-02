@@ -121,6 +121,12 @@ interface Profile {
   city: string | null;
   phone: string | null;
   created_at: string;
+  balance?: number | null;
+  avatar_url?: string | null;
+  referral_code?: string | null;
+  referred_by?: string | null;
+  last_seen?: string | null;
+  presence_state?: string | null;
 }
 
 interface UserRole {
