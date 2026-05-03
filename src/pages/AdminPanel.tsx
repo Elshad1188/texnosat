@@ -885,7 +885,7 @@ const AdminPanel = () => {
                             Bu hesab ilə daxil ol
                           </Button>
                           <p className="text-[10px] text-muted-foreground mt-1.5 text-center">
-                            ⚠ Cari sessiyanız bağlanacaq və istifadəçinin emailinə bildiriş göndəriləcək.
+                            ⚠ Cari sessiyanız bağlanacaq.
                           </p>
                         </>
                       )}
