@@ -811,7 +811,11 @@ const AdminPanel = () => {
                       <Separator className="mb-4" />
                       <div className="space-y-2.5 text-sm">
                         <div className="flex justify-between gap-2">
-                          <span className="text-muted-foreground flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> User ID</span>
+                          <span className="text-muted-foreground flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> Email</span>
+                          <span className="font-medium text-[12px] truncate max-w-[200px]" title={userDetails.email || ""}>{userDetails.email || "—"}</span>
+                        </div>
+                        <div className="flex justify-between gap-2">
+                          <span className="text-muted-foreground flex items-center gap-1.5">User ID</span>
                           <span className="font-mono text-[11px] truncate max-w-[180px]" title={selectedUser.user_id}>{selectedUser.user_id.slice(0, 8)}…</span>
                         </div>
                         <div className="flex justify-between">
