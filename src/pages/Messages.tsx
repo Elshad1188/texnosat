@@ -500,9 +500,6 @@ const Messages = () => {
       if (convo) {
         const recipientId = convo.buyer_id === user.id ? convo.seller_id : convo.buyer_id;
         const senderName = user.user_metadata?.full_name || "İstifadəçi";
-        const recipientProfile = convo.profile;
-        const isOffline = !recipientProfile?.last_seen || 
-          (Date.now() - new Date(recipientProfile.last_seen).getTime() > 120000);
 
         supabase.functions.invoke("send-user-push", {
           body: {
