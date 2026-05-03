@@ -2179,6 +2179,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_get_user_email: { Args: { _user_id: string }; Returns: string }
       delete_conversation_for_user: {
         Args: { _conversation_id: string }
         Returns: boolean
