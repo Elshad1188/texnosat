@@ -322,15 +322,17 @@ const AdminPanel = () => {
     }
     const uid = selectedUser.user_id;
     (async () => {
-      const [ordersRes, favRes, storeRes, txRes, refRes] = await Promise.all([
+      const [ordersRes, favRes, storeRes, txRes, refRes, emailRes] = await Promise.all([
         supabase.from("orders").select("id", { count: "exact", head: true }).eq("buyer_id", uid),
         supabase.from("favorites").select("id", { count: "exact", head: true }).eq("user_id", uid),
         supabase.from("stores").select("id", { count: "exact", head: true }).eq("user_id", uid),
         supabase.from("balance_transactions").select("amount").eq("user_id", uid),
         supabase.from("referrals").select("id", { count: "exact", head: true }).eq("referrer_id", uid),
+        supabase.rpc("admin_get_user_email", { _user_id: uid }),
       ]);
       const txTotal = (txRes.data || []).reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
       setUserDetails({
+        email: (emailRes.data as any) || null,
         ordersCount: ordersRes.count || 0,
         favoritesCount: favRes.count || 0,
         storesCount: storeRes.count || 0,
