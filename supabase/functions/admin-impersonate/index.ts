@@ -72,14 +72,6 @@ serve(async (req) => {
       });
     }
 
-    // Log impersonation
-    await admin.from("notifications").insert({
-      user_id: target_user_id,
-      title: "Admin hesabınıza daxil oldu",
-      message: `Admin (${userData.user.email}) sizin hesabınıza yoxlama məqsədi ilə daxil oldu.`,
-      type: "admin",
-    });
-
     return new Response(
       JSON.stringify({
         action_link: (linkData as any).properties?.action_link || (linkData as any).action_link,
