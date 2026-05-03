@@ -73,7 +73,46 @@ const ProductDetail = () => {
   const [replyingTo, setReplyingTo] = useState<{ id: string, name: string } | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [startingConversation, setStartingConversation] = useState(false);
   const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const openConversation = async () => {
+    if (!user) { navigate("/auth"); return; }
+    if (!listing || startingConversation) return;
+    if (user.id === listing.user_id) {
+      toast({ title: "Öz elanınıza mesaj yaza bilməzsiniz" });
+      return;
+    }
+
+    try {
+      setStartingConversation(true);
+      const { data: existing, error: existingError } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("listing_id", listing.id)
+        .eq("buyer_id", user.id)
+        .eq("seller_id", listing.user_id)
+        .maybeSingle();
+      if (existingError) throw existingError;
+
+      if (existing?.id) {
+        navigate(`/messages?c=${existing.id}`);
+        return;
+      }
+
+      const { data: newConvo, error: createError } = await supabase
+        .from("conversations")
+        .insert({ listing_id: listing.id, buyer_id: user.id, seller_id: listing.user_id })
+        .select("id")
+        .single();
+      if (createError) throw createError;
+      if (newConvo?.id) navigate(`/messages?c=${newConvo.id}`);
+    } catch (err: any) {
+      toast({ title: "Mesajlaşma açılmadı", description: err?.message || "Yenidən cəhd edin", variant: "destructive" });
+    } finally {
+      setStartingConversation(false);
+    }
+  };
 
   useEffect(() => {
     thumbnailRefs.current[selectedImage]?.scrollIntoView({
@@ -822,11 +861,10 @@ const ProductDetail = () => {
                   <Button 
                     variant={listing.is_buyable ? "outline" : "default"}
                     className={`w-full gap-2 h-12 text-lg font-bold ${!listing.is_buyable ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-600/20' : ''}`}
-                    onClick={() => {
-                      if (!user) { navigate("/auth"); return; }
-                    }}
+                    onClick={openConversation}
+                    disabled={startingConversation}
                   >
-                    <MessageSquare className="h-5 w-5" /> {t("detail.contact_store")}
+                    {startingConversation ? <Loader2 className="h-5 w-5 animate-spin" /> : <MessageSquare className="h-5 w-5" />} {t("detail.contact_store")}
                   </Button>
                 )}
                 <div className="flex flex-col gap-2 sm:flex-row">
@@ -846,28 +884,10 @@ const ProductDetail = () => {
                   <Button
                     variant="outline"
                     className="flex-1 gap-2"
-                    onClick={async () => {
-                      if (!user) { navigate("/auth"); return; }
-                      const { data: existing } = await supabase
-                        .from("conversations")
-                        .select("id")
-                        .eq("listing_id", listing.id)
-                        .eq("buyer_id", user.id)
-                        .eq("seller_id", listing.user_id)
-                        .maybeSingle();
-                      if (existing) {
-                        navigate(`/messages?c=${existing.id}`);
-                      } else {
-                        const { data: newConvo } = await supabase
-                          .from("conversations")
-                          .insert({ listing_id: listing.id, buyer_id: user.id, seller_id: listing.user_id })
-                          .select("id")
-                          .single();
-                        if (newConvo) navigate(`/messages?c=${newConvo.id}`);
-                      }
-                    }}
+                    onClick={openConversation}
+                    disabled={startingConversation}
                   >
-                    <MessageCircle className="h-4 w-4" /> {t("detail.send_message")}
+                    {startingConversation ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />} {t("detail.send_message")}
                   </Button>
                 </div>
               </div>
@@ -940,28 +960,10 @@ const ProductDetail = () => {
                 <Button
                   variant="outline"
                   className="flex-1 gap-2"
-                  onClick={async () => {
-                    if (!user) { navigate("/auth"); return; }
-                    const { data: existing } = await supabase
-                      .from("conversations")
-                      .select("id")
-                      .eq("listing_id", listing.id)
-                      .eq("buyer_id", user.id)
-                      .eq("seller_id", listing.user_id)
-                      .maybeSingle();
-                    if (existing) {
-                      navigate(`/messages?c=${existing.id}`);
-                    } else {
-                      const { data: newConvo } = await supabase
-                        .from("conversations")
-                        .insert({ listing_id: listing.id, buyer_id: user.id, seller_id: listing.user_id })
-                        .select("id")
-                        .single();
-                      if (newConvo) navigate(`/messages?c=${newConvo.id}`);
-                    }
-                  }}
+                  onClick={openConversation}
+                  disabled={startingConversation}
                 >
-                  <MessageCircle className="h-4 w-4" /> {t("detail.send_message")}
+                  {startingConversation ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />} {t("detail.send_message")}
                 </Button>
               </div>
             </>
