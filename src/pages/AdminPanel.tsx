@@ -322,15 +322,17 @@ const AdminPanel = () => {
     }
     const uid = selectedUser.user_id;
     (async () => {
-      const [ordersRes, favRes, storeRes, txRes, refRes] = await Promise.all([
+      const [ordersRes, favRes, storeRes, txRes, refRes, emailRes] = await Promise.all([
         supabase.from("orders").select("id", { count: "exact", head: true }).eq("buyer_id", uid),
         supabase.from("favorites").select("id", { count: "exact", head: true }).eq("user_id", uid),
         supabase.from("stores").select("id", { count: "exact", head: true }).eq("user_id", uid),
         supabase.from("balance_transactions").select("amount").eq("user_id", uid),
         supabase.from("referrals").select("id", { count: "exact", head: true }).eq("referrer_id", uid),
+        supabase.rpc("admin_get_user_email", { _user_id: uid }),
       ]);
       const txTotal = (txRes.data || []).reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
       setUserDetails({
+        email: (emailRes.data as any) || null,
         ordersCount: ordersRes.count || 0,
         favoritesCount: favRes.count || 0,
         storesCount: storeRes.count || 0,
@@ -809,7 +811,11 @@ const AdminPanel = () => {
                       <Separator className="mb-4" />
                       <div className="space-y-2.5 text-sm">
                         <div className="flex justify-between gap-2">
-                          <span className="text-muted-foreground flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> User ID</span>
+                          <span className="text-muted-foreground flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> Email</span>
+                          <span className="font-medium text-[12px] truncate max-w-[200px]" title={userDetails.email || ""}>{userDetails.email || "—"}</span>
+                        </div>
+                        <div className="flex justify-between gap-2">
+                          <span className="text-muted-foreground flex items-center gap-1.5">User ID</span>
                           <span className="font-mono text-[11px] truncate max-w-[180px]" title={selectedUser.user_id}>{selectedUser.user_id.slice(0, 8)}…</span>
                         </div>
                         <div className="flex justify-between">
@@ -879,7 +885,7 @@ const AdminPanel = () => {
                             Bu hesab ilə daxil ol
                           </Button>
                           <p className="text-[10px] text-muted-foreground mt-1.5 text-center">
-                            ⚠ Cari sessiyanız bağlanacaq və istifadəçinin emailinə bildiriş göndəriləcək.
+                            ⚠ Cari sessiyanız bağlanacaq.
                           </p>
                         </>
                       )}
