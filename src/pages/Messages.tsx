@@ -504,16 +504,6 @@ const Messages = () => {
         const isOffline = !recipientProfile?.last_seen || 
           (Date.now() - new Date(recipientProfile.last_seen).getTime() > 120000);
 
-        if (isOffline && recipientProfile?.email_notifications !== false) {
-          supabase.functions.invoke("send-email", {
-            body: {
-              to_user_id: recipientId,
-              subject: `${senderName} sizə mesaj göndərdi`,
-              body: `Salam,\n\n${senderName} sizə yeni mesaj göndərdi:\n\n"${content.length > 200 ? content.substring(0, 200) + '...' : content}"\n\nMesajı oxumaq üçün daxil olun.`,
-            },
-          }).catch(() => {});
-        }
-
         supabase.functions.invoke("send-user-push", {
           body: {
             user_id: recipientId,
@@ -818,7 +808,32 @@ const Messages = () => {
 
             {/* Chat area */}
             <div className={`flex-1 min-w-0 flex flex-col md:border-l md:border-border/30 overflow-hidden ${!activeConvoId ? "hidden md:flex" : "flex"}`}>
-              {activeConvoId && activeConvo ? (
+              {activeConvoId && convosLoading ? (
+                <div className="flex flex-1 flex-col items-center justify-center gap-3 bg-background text-center px-8">
+                  <Loader2 className="h-7 w-7 animate-spin text-primary" />
+                  <p className="text-sm font-medium text-foreground">Söhbət açılır...</p>
+                </div>
+              ) : activeConvoId && !activeConvo ? (
+                <div className="flex flex-1 flex-col bg-background">
+                  <div
+                    className="flex items-center gap-2 border-b border-border/50 px-3 py-2.5 bg-card"
+                    style={{ paddingTop: "max(0.625rem, env(safe-area-inset-top))" }}
+                  >
+                    <button onClick={() => navigate("/messages")} className="p-1 -ml-1 rounded-lg hover:bg-muted transition-colors">
+                      <ArrowLeft className="h-5 w-5 text-foreground" />
+                    </button>
+                    <p className="text-sm font-semibold text-foreground">Mesajlar</p>
+                  </div>
+                  <div className="flex flex-1 flex-col items-center justify-center text-center px-8">
+                    <div className="rounded-3xl bg-muted p-7 mb-5">
+                      <MessageCircle className="h-14 w-14 text-muted-foreground" />
+                    </div>
+                    <p className="text-base font-semibold text-foreground mb-2">Söhbət tapılmadı</p>
+                    <p className="text-sm text-muted-foreground mb-5 max-w-xs">Bu söhbət silinmiş ola bilər və ya sizə aid deyil.</p>
+                    <Button onClick={() => navigate("/messages")} className="bg-primary text-primary-foreground">Mesaj siyahısına qayıt</Button>
+                  </div>
+                </div>
+              ) : activeConvoId && activeConvo ? (
                 <>
                   {/* Chat header */}
                   <div
