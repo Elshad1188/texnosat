@@ -53,7 +53,22 @@ const CreateListing = () => {
   const [form, setForm] = useState({
     title: "", description: "", price: "", category: "", subcategory: "", condition: "Yeni", location: "",
   });
+  const [contactPhone, setContactPhone] = useState("");
   const [priceNegotiable, setPriceNegotiable] = useState(false);
+
+  // Load user profile phone as default contact
+  const { data: userProfile } = useQuery({
+    queryKey: ["my-profile-phone", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("phone").eq("user_id", user!.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  useEffect(() => {
+    if (userProfile?.phone && !contactPhone && !editId) setContactPhone(userProfile.phone);
+  }, [userProfile, editId]);
 
   const { data: videoSettings } = useQuery({
     queryKey: ["video-settings"],
@@ -159,6 +174,7 @@ const CreateListing = () => {
       const cf = (editListing as any).custom_fields || {};
       setCustomFields(cf);
       setPriceNegotiable(cf?.price_negotiable === true);
+      if (cf?.contact_phone) setContactPhone(cf.contact_phone);
       if (Object.keys(cf).length > 0) {
         setShowCustomFields(true);
       }
@@ -375,6 +391,14 @@ const CreateListing = () => {
       }
       if (priceNegotiable) {
         (resolvedCustomFields as any).price_negotiable = true as any;
+      }
+      const phoneTrim = contactPhone.trim();
+      if (phoneTrim) {
+        (resolvedCustomFields as any).contact_phone = phoneTrim;
+        // Update profile phone too if empty/different
+        if (userProfile && userProfile.phone !== phoneTrim) {
+          await supabase.from("profiles").update({ phone: phoneTrim }).eq("user_id", user.id);
+        }
       }
 
       // Auto-generate listing title from category + key real-estate fields
@@ -593,7 +617,18 @@ const CreateListing = () => {
               />
             </div>
 
-            {/* Identity switcher - personal vs store */}
+            <div className="space-y-2">
+              <Label htmlFor="contactPhone">Əlaqə nömrəsi</Label>
+              <Input
+                id="contactPhone"
+                type="tel"
+                placeholder="+994 50 123 45 67"
+                value={contactPhone}
+                onChange={(e) => setContactPhone(e.target.value)}
+                required
+              />
+              <p className="text-xs text-muted-foreground">Bu nömrə elan səhifəsində göstəriləcək. İstədiyiniz vaxt dəyişə bilərsiniz.</p>
+            </div>
             {approvedStores.length > 0 && (
               <div className="space-y-2">
                 <Label className="flex items-center gap-2"><Store className="h-4 w-4 text-primary" /> {t("create_listing.identity_label")}</Label>

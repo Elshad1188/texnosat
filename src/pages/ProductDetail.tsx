@@ -869,10 +869,10 @@ const ProductDetail = () => {
                 )}
                 <div className="flex flex-col gap-2 sm:flex-row">
                   {showPhone ? (
-                    <a href={`tel:${store.phone || seller?.phone || ''}`} className="flex-1">
+                    <a href={`tel:${(listing as any)?.custom_fields?.contact_phone || store.phone || seller?.phone || ''}`} className="flex-1">
                       <Button className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2">
                         <Phone className="h-4 w-4" />
-                        {store.phone || seller?.phone || t("detail.no_number")}
+                        {(listing as any)?.custom_fields?.contact_phone || store.phone || seller?.phone || t("detail.no_number")}
                       </Button>
                     </a>
                   ) : (
@@ -945,10 +945,10 @@ const ProductDetail = () => {
 
               <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                 {showPhone ? (
-                  <a href={`tel:${seller?.phone || ''}`} className="flex-1">
+                  <a href={`tel:${(listing as any)?.custom_fields?.contact_phone || seller?.phone || ''}`} className="flex-1">
                     <Button className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90 gap-2">
                       <Phone className="h-4 w-4" />
-                      {seller?.phone || t("detail.no_number")}
+                      {(listing as any)?.custom_fields?.contact_phone || seller?.phone || t("detail.no_number")}
                     </Button>
                   </a>
                 ) : (
