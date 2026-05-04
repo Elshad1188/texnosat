@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, User, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, User, ArrowLeft, Eye, EyeOff, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useTranslation } from "react-i18next";
@@ -24,6 +24,7 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
@@ -60,7 +61,13 @@ const Auth = () => {
           setLoading(false);
           return;
         }
-        await signUp(email, password, fullName);
+        const phoneTrimmed = phone.trim();
+        if (!phoneTrimmed || phoneTrimmed.replace(/\D/g, "").length < 7) {
+          toast({ title: "Xəta", description: "Mobil nömrəni düzgün daxil edin", variant: "destructive" });
+          setLoading(false);
+          return;
+        }
+        await signUp(email, password, fullName, phoneTrimmed);
         toast({ title: "Hesab yaradıldı!", description: "Xoş gəldiniz!" });
         if (autoReferralCode) {
           setTimeout(async () => {
