@@ -174,6 +174,7 @@ const CreateListing = () => {
       const cf = (editListing as any).custom_fields || {};
       setCustomFields(cf);
       setPriceNegotiable(cf?.price_negotiable === true);
+      if (cf?.contact_phone) setContactPhone(cf.contact_phone);
       if (Object.keys(cf).length > 0) {
         setShowCustomFields(true);
       }
