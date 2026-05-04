@@ -53,7 +53,22 @@ const CreateListing = () => {
   const [form, setForm] = useState({
     title: "", description: "", price: "", category: "", subcategory: "", condition: "Yeni", location: "",
   });
+  const [contactPhone, setContactPhone] = useState("");
   const [priceNegotiable, setPriceNegotiable] = useState(false);
+
+  // Load user profile phone as default contact
+  const { data: userProfile } = useQuery({
+    queryKey: ["my-profile-phone", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("phone").eq("user_id", user!.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  useEffect(() => {
+    if (userProfile?.phone && !contactPhone && !editId) setContactPhone(userProfile.phone);
+  }, [userProfile, editId]);
 
   const { data: videoSettings } = useQuery({
     queryKey: ["video-settings"],
