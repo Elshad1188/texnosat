@@ -617,7 +617,18 @@ const CreateListing = () => {
               />
             </div>
 
-            {/* Identity switcher - personal vs store */}
+            <div className="space-y-2">
+              <Label htmlFor="contactPhone">Əlaqə nömrəsi</Label>
+              <Input
+                id="contactPhone"
+                type="tel"
+                placeholder="+994 50 123 45 67"
+                value={contactPhone}
+                onChange={(e) => setContactPhone(e.target.value)}
+                required
+              />
+              <p className="text-xs text-muted-foreground">Bu nömrə elan səhifəsində göstəriləcək. İstədiyiniz vaxt dəyişə bilərsiniz.</p>
+            </div>
             {approvedStores.length > 0 && (
               <div className="space-y-2">
                 <Label className="flex items-center gap-2"><Store className="h-4 w-4 text-primary" /> {t("create_listing.identity_label")}</Label>
