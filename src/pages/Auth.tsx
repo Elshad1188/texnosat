@@ -143,6 +143,15 @@ const Auth = () => {
                   </div>
                 </div>
               )}
+              {mode === "register" && (
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Mobil nömrə</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input id="phone" type="tel" placeholder="+994 50 123 45 67" value={phone} onChange={(e) => setPhone(e.target.value)} className="pl-10" required />
+                  </div>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="email">{t("common.email")}</Label>
                 <div className="relative">
