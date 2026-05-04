@@ -392,6 +392,14 @@ const CreateListing = () => {
       if (priceNegotiable) {
         (resolvedCustomFields as any).price_negotiable = true as any;
       }
+      const phoneTrim = contactPhone.trim();
+      if (phoneTrim) {
+        (resolvedCustomFields as any).contact_phone = phoneTrim;
+        // Update profile phone too if empty/different
+        if (userProfile && userProfile.phone !== phoneTrim) {
+          await supabase.from("profiles").update({ phone: phoneTrim }).eq("user_id", user.id);
+        }
+      }
 
       // Auto-generate listing title from category + key real-estate fields
       const catName = (categories.find((c: any) => c.slug === finalCategory) as any)?.name || "Elan";
