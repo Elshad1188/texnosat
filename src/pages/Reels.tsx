@@ -277,12 +277,16 @@ const Reels = () => {
     enabled: !!currentReel,
   });
 
-  // Record view (atomic increment via RPC)
+  // Record view (debounced — only fires if user stays >1.5s; prevents lag during fast swipes)
   useEffect(() => {
     if (!currentReel) return;
-    supabase.from("reel_views").insert({ listing_id: currentReel.id, user_id: user?.id || null });
-    supabase.rpc("increment_listing_views", { _listing_id: currentReel.id });
-    queryClient.invalidateQueries({ queryKey: ["reel-views", currentReel.id] });
+    const reelId = currentReel.id;
+    const timer = setTimeout(() => {
+      supabase.from("reel_views").insert({ listing_id: reelId, user_id: user?.id || null });
+      supabase.rpc("increment_listing_views", { _listing_id: reelId });
+      queryClient.invalidateQueries({ queryKey: ["reel-views", reelId] });
+    }, 1500);
+    return () => clearTimeout(timer);
   }, [currentReel?.id]);
 
   // Keep the latest comment visible when drawer is open
