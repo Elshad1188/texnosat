@@ -550,6 +550,15 @@ const ProductDetail = () => {
                 ))}
                 <Badge variant="secondary">{listing.condition}</Badge>
               </div>
+              {images.length > 1 && (
+                <button
+                  onClick={() => setAllImagesOpen(true)}
+                  className="absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-lg bg-card/90 px-2.5 py-1.5 text-xs font-semibold text-foreground shadow-lg backdrop-blur-sm hover:bg-card transition-colors"
+                >
+                  <Grid className="h-3.5 w-3.5" />
+                  Bütün şəkillər ({images.length})
+                </button>
+              )}
               <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded-lg bg-card/80 px-2 py-1 text-xs backdrop-blur-sm z-10 pointer-events-none">
                 <Eye className="h-3 w-3" /> {t("detail.views", { count: listing.views_count })}
               </div>
