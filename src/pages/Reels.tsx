@@ -757,10 +757,28 @@ const Reels = () => {
           </button>
 
           <button
-            onClick={(e) => {
+            onClick={async (e) => {
               e.stopPropagation();
-              navigator.clipboard.writeText(window.location.origin + `/reels?id=${currentReel.id}`);
-              toast({ title: "Link kopyalandı!" });
+              const shareUrl = `${window.location.origin}/reels?id=${currentReel.id}`;
+              const shareData = {
+                title: currentReel.title || "Elan24",
+                text: currentReel.title || "Elan24-də bu elana baxın",
+                url: shareUrl,
+              };
+              try {
+                if (navigator.share && navigator.canShare?.(shareData)) {
+                  await navigator.share(shareData);
+                  return;
+                }
+              } catch (err: any) {
+                if (err?.name === "AbortError") return;
+              }
+              try {
+                await navigator.clipboard.writeText(shareUrl);
+                toast({ title: "Link kopyalandı!" });
+              } catch {
+                toast({ title: "Paylaşmaq mümkün olmadı", variant: "destructive" });
+              }
             }}
             className="flex flex-col items-center gap-0.5"
           >
