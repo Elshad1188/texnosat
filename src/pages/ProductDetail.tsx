@@ -68,6 +68,7 @@ const ProductDetail = () => {
   const [showPhone, setShowPhone] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [allImagesOpen, setAllImagesOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [commentText, setCommentText] = useState("");
   const [replyingTo, setReplyingTo] = useState<{ id: string, name: string } | null>(null);
