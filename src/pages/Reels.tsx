@@ -558,6 +558,7 @@ const Reels = () => {
                 loop
                 playsInline
                 muted={idx !== currentIndex}
+                preload={idx === currentIndex ? "auto" : "metadata"}
               />
             ) : hasMultipleImages ? (
               <ImageSlideshow images={images} title={reel.title} />
