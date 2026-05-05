@@ -277,12 +277,16 @@ const Reels = () => {
     enabled: !!currentReel,
   });
 
-  // Record view (atomic increment via RPC)
+  // Record view (debounced — only fires if user stays >1.5s; prevents lag during fast swipes)
   useEffect(() => {
     if (!currentReel) return;
-    supabase.from("reel_views").insert({ listing_id: currentReel.id, user_id: user?.id || null });
-    supabase.rpc("increment_listing_views", { _listing_id: currentReel.id });
-    queryClient.invalidateQueries({ queryKey: ["reel-views", currentReel.id] });
+    const reelId = currentReel.id;
+    const timer = setTimeout(() => {
+      supabase.from("reel_views").insert({ listing_id: reelId, user_id: user?.id || null });
+      supabase.rpc("increment_listing_views", { _listing_id: reelId });
+      queryClient.invalidateQueries({ queryKey: ["reel-views", reelId] });
+    }, 1500);
+    return () => clearTimeout(timer);
   }, [currentReel?.id]);
 
   // Keep the latest comment visible when drawer is open
@@ -554,6 +558,7 @@ const Reels = () => {
                 loop
                 playsInline
                 muted={idx !== currentIndex}
+                preload={idx === currentIndex ? "auto" : "metadata"}
               />
             ) : hasMultipleImages ? (
               <ImageSlideshow images={images} title={reel.title} />
@@ -757,10 +762,28 @@ const Reels = () => {
           </button>
 
           <button
-            onClick={(e) => {
+            onClick={async (e) => {
               e.stopPropagation();
-              navigator.clipboard.writeText(window.location.origin + `/reels?id=${currentReel.id}`);
-              toast({ title: "Link kopyalandı!" });
+              const shareUrl = `${window.location.origin}/reels?id=${currentReel.id}`;
+              const shareData = {
+                title: currentReel.title || "Elan24",
+                text: currentReel.title || "Elan24-də bu elana baxın",
+                url: shareUrl,
+              };
+              try {
+                if (navigator.share && navigator.canShare?.(shareData)) {
+                  await navigator.share(shareData);
+                  return;
+                }
+              } catch (err: any) {
+                if (err?.name === "AbortError") return;
+              }
+              try {
+                await navigator.clipboard.writeText(shareUrl);
+                toast({ title: "Link kopyalandı!" });
+              } catch {
+                toast({ title: "Paylaşmaq mümkün olmadı", variant: "destructive" });
+              }
             }}
             className="flex flex-col items-center gap-0.5"
           >
