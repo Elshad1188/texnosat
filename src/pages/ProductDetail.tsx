@@ -655,17 +655,17 @@ const ProductDetail = () => {
             </p>
             {(() => {
               const cf = (listing as any).custom_fields || {};
+              if (cf.price_negotiable) return null;
               const area = parseFloat(String(cf.area_m2 ?? cf.area ?? "").replace(",", "."));
               const priceNum = Number(listing.price);
-              if (!cf.price_negotiable && area > 0 && priceNum > 0) {
-                const perM2 = Math.round(priceNum / area);
-                return (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    1 m² — {perM2.toLocaleString()} {listing.currency}
-                  </p>
-                );
-              }
-              return null;
+              if (!Number.isFinite(area) || !Number.isFinite(priceNum) || area <= 0 || priceNum <= 0) return null;
+              const perM2 = Math.round(priceNum / area);
+              if (!Number.isFinite(perM2) || perM2 <= 0) return null;
+              return (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  1 m² — {perM2.toLocaleString()} {listing.currency}
+                </p>
+              );
             })()}
 
             <div className="mt-4 flex flex-wrap gap-3 text-sm text-muted-foreground">
