@@ -68,6 +68,7 @@ const ProductDetail = () => {
   const [showPhone, setShowPhone] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [allImagesOpen, setAllImagesOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [commentText, setCommentText] = useState("");
   const [replyingTo, setReplyingTo] = useState<{ id: string, name: string } | null>(null);
@@ -549,6 +550,15 @@ const ProductDetail = () => {
                 ))}
                 <Badge variant="secondary">{listing.condition}</Badge>
               </div>
+              {images.length > 1 && (
+                <button
+                  onClick={() => setAllImagesOpen(true)}
+                  className="absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-lg bg-card/90 px-2.5 py-1.5 text-xs font-semibold text-foreground shadow-lg backdrop-blur-sm hover:bg-card transition-colors"
+                >
+                  <Grid className="h-3.5 w-3.5" />
+                  Bütün şəkillər ({images.length})
+                </button>
+              )}
               <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded-lg bg-card/80 px-2 py-1 text-xs backdrop-blur-sm z-10 pointer-events-none">
                 <Eye className="h-3 w-3" /> {t("detail.views", { count: listing.views_count })}
               </div>
@@ -601,6 +611,38 @@ const ProductDetail = () => {
               open={viewerOpen}
               onOpenChange={setViewerOpen}
             />
+
+            <Dialog open={allImagesOpen} onOpenChange={setAllImagesOpen}>
+              <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+                <DialogHeader>
+                  <DialogTitle>Bütün şəkillər ({images.length})</DialogTitle>
+                  <DialogDescription className="sr-only">Elanın bütün şəkilləri</DialogDescription>
+                </DialogHeader>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
+                  {images.map((img: string, i: number) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setAllImagesOpen(false);
+                        setViewerIndex(i);
+                        setViewerOpen(true);
+                      }}
+                      className="relative aspect-square overflow-hidden rounded-lg bg-muted group"
+                    >
+                      <img
+                        src={img}
+                        alt={`${listing.title} ${i + 1}`}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      />
+                      <div className="absolute bottom-1 right-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                        {i + 1}/{images.length}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
 
           {/* Details */}
