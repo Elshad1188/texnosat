@@ -618,29 +618,32 @@ const ProductDetail = () => {
                   <DialogTitle>Bütün şəkillər ({images.length})</DialogTitle>
                   <DialogDescription className="sr-only">Elanın bütün şəkilləri</DialogDescription>
                 </DialogHeader>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
-                  {images.map((img: string, i: number) => (
-                    <button
-                      key={i}
-                      onClick={() => {
-                        setAllImagesOpen(false);
-                        setViewerIndex(i);
-                        setViewerOpen(true);
-                      }}
-                      className="relative aspect-square overflow-hidden rounded-lg bg-muted group"
-                    >
-                      <img
-                        src={img}
-                        alt={`${listing.title} ${i + 1}`}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                      />
-                      <div className="absolute bottom-1 right-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">
-                        {i + 1}/{images.length}
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                {allImagesOpen && (
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
+                    {images.map((img: string, i: number) => (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          setAllImagesOpen(false);
+                          setViewerIndex(i);
+                          setViewerOpen(true);
+                        }}
+                        className="relative aspect-square overflow-hidden rounded-lg bg-muted group"
+                      >
+                        <img
+                          src={img}
+                          alt={`${listing.title} ${i + 1}`}
+                          loading="lazy"
+                          decoding="async"
+                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                        />
+                        <div className="absolute bottom-1 right-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                          {i + 1}/{images.length}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </DialogContent>
             </Dialog>
           </div>
@@ -655,17 +658,17 @@ const ProductDetail = () => {
             </p>
             {(() => {
               const cf = (listing as any).custom_fields || {};
+              if (cf.price_negotiable) return null;
               const area = parseFloat(String(cf.area_m2 ?? cf.area ?? "").replace(",", "."));
               const priceNum = Number(listing.price);
-              if (!cf.price_negotiable && area > 0 && priceNum > 0) {
-                const perM2 = Math.round(priceNum / area);
-                return (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    1 m² — {perM2.toLocaleString()} {listing.currency}
-                  </p>
-                );
-              }
-              return null;
+              if (!Number.isFinite(area) || !Number.isFinite(priceNum) || area <= 0 || priceNum <= 0) return null;
+              const perM2 = Math.round(priceNum / area);
+              if (!Number.isFinite(perM2) || perM2 <= 0) return null;
+              return (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  1 m² — {perM2.toLocaleString()} {listing.currency}
+                </p>
+              );
             })()}
 
             <div className="mt-4 flex flex-wrap gap-3 text-sm text-muted-foreground">
