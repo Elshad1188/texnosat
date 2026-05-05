@@ -611,6 +611,38 @@ const ProductDetail = () => {
               open={viewerOpen}
               onOpenChange={setViewerOpen}
             />
+
+            <Dialog open={allImagesOpen} onOpenChange={setAllImagesOpen}>
+              <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+                <DialogHeader>
+                  <DialogTitle>Bütün şəkillər ({images.length})</DialogTitle>
+                  <DialogDescription className="sr-only">Elanın bütün şəkilləri</DialogDescription>
+                </DialogHeader>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
+                  {images.map((img: string, i: number) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setAllImagesOpen(false);
+                        setViewerIndex(i);
+                        setViewerOpen(true);
+                      }}
+                      className="relative aspect-square overflow-hidden rounded-lg bg-muted group"
+                    >
+                      <img
+                        src={img}
+                        alt={`${listing.title} ${i + 1}`}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      />
+                      <div className="absolute bottom-1 right-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                        {i + 1}/{images.length}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
 
           {/* Details */}
