@@ -69,6 +69,7 @@ const ProductDetail = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [allImagesOpen, setAllImagesOpen] = useState(false);
+  const [galleryPage, setGalleryPage] = useState(1);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [commentText, setCommentText] = useState("");
   const [replyingTo, setReplyingTo] = useState<{ id: string, name: string } | null>(null);
@@ -107,7 +108,11 @@ const ProductDetail = () => {
         .select("id")
         .single();
       if (createError) throw createError;
-      if (newConvo?.id) navigate(`/messages?c=${newConvo.id}`);
+      if (newConvo?.id) {
+        await queryClient.invalidateQueries({ queryKey: ["conversations", user.id] });
+        await queryClient.refetchQueries({ queryKey: ["conversations", user.id] });
+        navigate(`/messages?c=${newConvo.id}`);
+      }
     } catch (err: any) {
       toast({ title: "Mesajlaşma açılmadı", description: err?.message || "Yenidən cəhd edin", variant: "destructive" });
     } finally {
@@ -612,38 +617,52 @@ const ProductDetail = () => {
               onOpenChange={setViewerOpen}
             />
 
-            <Dialog open={allImagesOpen} onOpenChange={setAllImagesOpen}>
+            <Dialog open={allImagesOpen} onOpenChange={(v) => { setAllImagesOpen(v); if (!v) setGalleryPage(1); }}>
               <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
                 <DialogHeader>
                   <DialogTitle>Bütün şəkillər ({images.length})</DialogTitle>
                   <DialogDescription className="sr-only">Elanın bütün şəkilləri</DialogDescription>
                 </DialogHeader>
-                {allImagesOpen && (
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
-                    {images.map((img: string, i: number) => (
-                      <button
-                        key={i}
-                        onClick={() => {
-                          setAllImagesOpen(false);
-                          setViewerIndex(i);
-                          setViewerOpen(true);
-                        }}
-                        className="relative aspect-square overflow-hidden rounded-lg bg-muted group"
-                      >
-                        <img
-                          src={img}
-                          alt={`${listing.title} ${i + 1}`}
-                          loading="lazy"
-                          decoding="async"
-                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                        />
-                        <div className="absolute bottom-1 right-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">
-                          {i + 1}/{images.length}
+                {allImagesOpen && (() => {
+                  const PAGE_SIZE = 24;
+                  const visible = images.slice(0, galleryPage * PAGE_SIZE);
+                  const hasMore = visible.length < images.length;
+                  return (
+                    <>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
+                        {visible.map((img: string, i: number) => (
+                          <button
+                            key={i}
+                            onClick={() => {
+                              setAllImagesOpen(false);
+                              setViewerIndex(i);
+                              setViewerOpen(true);
+                            }}
+                            className="relative aspect-square overflow-hidden rounded-lg bg-muted group"
+                          >
+                            <img
+                              src={img}
+                              alt={`${listing.title} ${i + 1}`}
+                              loading="lazy"
+                              decoding="async"
+                              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                            />
+                            <div className="absolute bottom-1 right-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                              {i + 1}/{images.length}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                      {hasMore && (
+                        <div className="mt-4 flex justify-center">
+                          <Button variant="outline" onClick={() => setGalleryPage((p) => p + 1)}>
+                            Daha çox göstər ({images.length - visible.length})
+                          </Button>
                         </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                      )}
+                    </>
+                  );
+                })()}
               </DialogContent>
             </Dialog>
           </div>
@@ -676,6 +695,34 @@ const ProductDetail = () => {
               <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {formatTime(listing.created_at, t, language)}</span>
               <Badge variant="outline">{listing.category}</Badge>
             </div>
+
+            {/* Prominent contact CTA - top of details */}
+            {user?.id !== listing.user_id && (() => {
+              const phone = (listing as any)?.custom_fields?.contact_phone || (store as any)?.phone || (seller as any)?.phone || "";
+              return (
+                <div className="mt-5 grid grid-cols-2 gap-2.5 sm:gap-3">
+                  {phone ? (
+                    <a href={`tel:${phone}`} className="flex">
+                      <Button className="w-full h-14 gap-2 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/25 text-base font-bold border-0">
+                        <Phone className="h-5 w-5" /> Zəng et
+                      </Button>
+                    </a>
+                  ) : (
+                    <Button disabled className="w-full h-14 gap-2 rounded-2xl text-base font-bold">
+                      <Phone className="h-5 w-5" /> Nömrə yoxdur
+                    </Button>
+                  )}
+                  <Button
+                    onClick={openConversation}
+                    disabled={startingConversation}
+                    className="w-full h-14 gap-2 rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground hover:opacity-95 shadow-lg shadow-primary/25 text-base font-bold border-0"
+                  >
+                    {startingConversation ? <Loader2 className="h-5 w-5 animate-spin" /> : <MessageCircle className="h-5 w-5" />}
+                    Mesaj yaz
+                  </Button>
+                </div>
+              );
+            })()}
 
             <div className="mt-4 flex flex-wrap gap-2">
               <Button 
@@ -736,9 +783,10 @@ const ProductDetail = () => {
             {/* Details — grouped, logically ordered icon list */}
             {(() => {
               // Build custom field rows in a logical order based on field definitions
+              const HIDDEN_FIELDS = new Set(["price_negotiable", "contact_phone"]);
               const customEntries = (listing as any).custom_fields
                 ? Object.entries((listing as any).custom_fields).filter(
-                    ([k, v]) => v && !k.startsWith("_") && typeof v !== "object"
+                    ([k, v]) => v !== null && v !== undefined && v !== "" && v !== false && !k.startsWith("_") && !HIDDEN_FIELDS.has(k) && typeof v !== "object"
                   )
                 : [];
 
@@ -1013,7 +1061,7 @@ const ProductDetail = () => {
               </div>
             </>
           )}
-        </div>
+            </div>
 
 
         {/* Comments */}
