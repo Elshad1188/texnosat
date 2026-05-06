@@ -113,6 +113,8 @@ const ChatBot = () => {
     }
   };
 
+  if (isInChat) return null;
+
   return (
     <>
       {!open && (
