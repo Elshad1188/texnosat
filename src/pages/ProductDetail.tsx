@@ -107,7 +107,11 @@ const ProductDetail = () => {
         .select("id")
         .single();
       if (createError) throw createError;
-      if (newConvo?.id) navigate(`/messages?c=${newConvo.id}`);
+      if (newConvo?.id) {
+        await queryClient.invalidateQueries({ queryKey: ["conversations", user.id] });
+        await queryClient.refetchQueries({ queryKey: ["conversations", user.id] });
+        navigate(`/messages?c=${newConvo.id}`);
+      }
     } catch (err: any) {
       toast({ title: "Mesajlaşma açılmadı", description: err?.message || "Yenidən cəhd edin", variant: "destructive" });
     } finally {
