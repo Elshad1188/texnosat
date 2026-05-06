@@ -740,9 +740,10 @@ const ProductDetail = () => {
             {/* Details — grouped, logically ordered icon list */}
             {(() => {
               // Build custom field rows in a logical order based on field definitions
+              const HIDDEN_FIELDS = new Set(["price_negotiable", "contact_phone"]);
               const customEntries = (listing as any).custom_fields
                 ? Object.entries((listing as any).custom_fields).filter(
-                    ([k, v]) => v && !k.startsWith("_") && typeof v !== "object"
+                    ([k, v]) => v !== null && v !== undefined && v !== "" && v !== false && !k.startsWith("_") && !HIDDEN_FIELDS.has(k) && typeof v !== "object"
                   )
                 : [];
 
