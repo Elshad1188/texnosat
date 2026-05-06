@@ -26,7 +26,6 @@ const ChatBot = () => {
 
   // Hide on open conversation (chat needs the bottom-right space)
   const isInChat = location.pathname === "/messages" && location.search.includes("c=");
-  if (isInChat) return null;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -113,6 +112,8 @@ const ChatBot = () => {
       sendMessage();
     }
   };
+
+  if (isInChat) return null;
 
   return (
     <>
