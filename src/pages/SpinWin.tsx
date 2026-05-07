@@ -34,6 +34,73 @@ const SpinWin = () => {
   const [result, setResult] = useState<SpinPrize | null>(null);
   const [showResultModal, setShowResultModal] = useState(false);
   const [canSpinAgain, setCanSpinAgain] = useState(false);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const tickIntervalRef = useRef<number | null>(null);
+
+  const getCtx = () => {
+    if (!audioCtxRef.current) {
+      const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (Ctx) audioCtxRef.current = new Ctx();
+    }
+    return audioCtxRef.current;
+  };
+
+  const playTick = () => {
+    const ctx = getCtx();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "square";
+    osc.frequency.value = 1200;
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.05);
+  };
+
+  const playWin = () => {
+    const ctx = getCtx();
+    if (!ctx) return;
+    const notes = [523.25, 659.25, 783.99, 1046.5]; // C E G C
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = freq;
+      const t = ctx.currentTime + i * 0.12;
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.42);
+    });
+  };
+
+  const playLose = () => {
+    const ctx = getCtx();
+    if (!ctx) return;
+    [400, 300, 200].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      const t = ctx.currentTime + i * 0.18;
+      gain.gain.setValueAtTime(0.2, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.27);
+    });
+  };
+
+  useEffect(() => {
+    return () => {
+      if (tickIntervalRef.current) clearInterval(tickIntervalRef.current);
+    };
+  }, []);
+
   
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
