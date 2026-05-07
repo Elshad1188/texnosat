@@ -7,10 +7,12 @@ import BannerDisplay from "@/components/BannerDisplay";
 import LatestBlogPosts from "@/components/LatestBlogPosts";
 import Footer from "@/components/Footer";
 import DealTypeTabs from "@/components/DealTypeTabs";
+import SEOHead from "@/components/SEOHead";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead />
       <Header />
       <main>
         <HeroSection />

@@ -23,6 +23,7 @@ import ListingCard from "@/components/ListingCard";
 import WatermarkOverlay from "@/components/WatermarkOverlay";
 import ReportButton from "@/components/ReportButton";
 import ModerationToolbar from "@/components/admin/ModerationToolbar";
+import SEOHead from "@/components/SEOHead";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -480,8 +481,32 @@ const ProductDetail = () => {
     }
   };
 
+  const seoImage = Array.isArray(listing.image_urls) && listing.image_urls.length > 0 ? listing.image_urls[0] : undefined;
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: listing.title,
+    description: (listing.description || "").slice(0, 5000),
+    image: Array.isArray(listing.image_urls) ? listing.image_urls.slice(0, 6) : [],
+    sku: listing.id,
+    offers: {
+      "@type": "Offer",
+      price: Number(listing.price) || 0,
+      priceCurrency: listing.currency || "AZN",
+      availability: "https://schema.org/InStock",
+      url: typeof window !== "undefined" ? window.location.href : undefined,
+    },
+  };
+
   return (
     <div className={`min-h-screen bg-background ${showModerationBar ? "pt-14" : ""}`}>
+      <SEOHead
+        title={listing.title}
+        description={(listing.description || listing.title || "").slice(0, 160)}
+        image={seoImage}
+        type="product"
+        jsonLd={productJsonLd}
+      />
       {showModerationBar && (
         <ModerationToolbar 
           id={listing.id} 
