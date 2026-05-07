@@ -439,17 +439,99 @@ const AdminSettingsManager = () => {
       </div>
 
       {/* SEO */}
-      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
-        <h3 className="text-sm font-semibold text-foreground">🔍 SEO</h3>
+      <div className="rounded-xl border-2 border-primary/30 bg-card p-4 space-y-4">
+        <h3 className="text-sm font-semibold text-foreground">🔍 SEO & Google Sıralaması</h3>
+        <p className="text-xs text-muted-foreground">Saytın Google, Bing və Yandex axtarışlarında daha üst sıralarda çıxması üçün tənzimləmələr.</p>
+
         <div className="space-y-1.5">
-          <Label className="text-xs">Meta başlıq</Label>
-          <Input value={settings.meta_title} onChange={(e) => setSettings({ ...settings, meta_title: e.target.value })} className="h-9" />
-          <p className="text-[10px] text-muted-foreground">{settings.meta_title.length}/60 simvol</p>
+          <Label className="text-xs">Meta başlıq (Title)</Label>
+          <Input value={settings.meta_title} onChange={(e) => setSettings({ ...settings, meta_title: e.target.value })} className="h-9" placeholder="Elan24 - Pulsuz Elan Saytı" />
+          <p className="text-[10px] text-muted-foreground">{settings.meta_title.length}/60 simvol — açar sözlərlə zəngin olsun</p>
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs">Meta açıqlama</Label>
-          <Textarea value={settings.meta_description} onChange={(e) => setSettings({ ...settings, meta_description: e.target.value })} rows={2} />
+          <Label className="text-xs">Meta açıqlama (Description)</Label>
+          <Textarea value={settings.meta_description} onChange={(e) => setSettings({ ...settings, meta_description: e.target.value })} rows={2} placeholder="Azərbaycanın ən böyük pulsuz elan platforması..." />
           <p className="text-[10px] text-muted-foreground">{settings.meta_description.length}/160 simvol</p>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Açar sözlər (Keywords)</Label>
+          <Textarea value={seoSettings.keywords || ""} onChange={(e) => setSeoSettings({ ...seoSettings, keywords: e.target.value })} rows={2} placeholder="elan, daşınmaz əmlak, kirayə, satış, Bakı, mənzil, ev, ofis" />
+          <p className="text-[10px] text-muted-foreground">Vergüllə ayrılmış açar sözlər</p>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs">OG / Paylaşma şəkli (URL)</Label>
+          <Input value={seoSettings.og_image || ""} onChange={(e) => setSeoSettings({ ...seoSettings, og_image: e.target.value })} className="h-9" placeholder="https://elan24.az/og.png" />
+          <p className="text-[10px] text-muted-foreground">Facebook, WhatsApp, Telegram və Twitter-də paylaşıldıqda görünən şəkil (1200×630 px tövsiyə olunur).</p>
+        </div>
+
+        <div className="pt-3 border-t border-border/50 space-y-3">
+          <h4 className="text-xs font-semibold text-foreground">🔐 Axtarış sistemləri təsdiqi</h4>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Google Search Console</Label>
+              <Input value={seoSettings.google_site_verification || ""} onChange={(e) => setSeoSettings({ ...seoSettings, google_site_verification: e.target.value })} className="h-9" placeholder="content dəyəri" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Yandex Webmaster</Label>
+              <Input value={seoSettings.yandex_verification || ""} onChange={(e) => setSeoSettings({ ...seoSettings, yandex_verification: e.target.value })} className="h-9" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Bing Webmaster</Label>
+              <Input value={seoSettings.bing_verification || ""} onChange={(e) => setSeoSettings({ ...seoSettings, bing_verification: e.target.value })} className="h-9" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Facebook Domain</Label>
+              <Input value={seoSettings.facebook_domain_verification || ""} onChange={(e) => setSeoSettings({ ...seoSettings, facebook_domain_verification: e.target.value })} className="h-9" />
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-3 border-t border-border/50 space-y-3">
+          <h4 className="text-xs font-semibold text-foreground">📊 Analitika</h4>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Google Analytics ID (G-XXXX)</Label>
+              <Input value={seoSettings.google_analytics_id || ""} onChange={(e) => setSeoSettings({ ...seoSettings, google_analytics_id: e.target.value })} className="h-9" placeholder="G-XXXXXXXXXX" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Google Tag Manager ID</Label>
+              <Input value={seoSettings.google_tag_manager_id || ""} onChange={(e) => setSeoSettings({ ...seoSettings, google_tag_manager_id: e.target.value })} className="h-9" placeholder="GTM-XXXXXXX" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Facebook Pixel ID</Label>
+              <Input value={seoSettings.facebook_pixel_id || ""} onChange={(e) => setSeoSettings({ ...seoSettings, facebook_pixel_id: e.target.value })} className="h-9" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Yandex Metrica ID</Label>
+              <Input value={seoSettings.yandex_metrica_id || ""} onChange={(e) => setSeoSettings({ ...seoSettings, yandex_metrica_id: e.target.value })} className="h-9" />
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-3 border-t border-border/50 space-y-3">
+          <h4 className="text-xs font-semibold text-foreground">🌐 Sosial Şəbəkə Linkləri</h4>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(["facebook", "instagram", "twitter", "youtube", "linkedin"] as const).map((k) => (
+              <div key={k} className="space-y-1.5">
+                <Label className="text-xs capitalize">{k}</Label>
+                <Input
+                  value={seoSettings.social_links?.[k] || ""}
+                  onChange={(e) => setSeoSettings({ ...seoSettings, social_links: { ...(seoSettings.social_links || {}), [k]: e.target.value } })}
+                  className="h-9"
+                  placeholder={`https://${k}.com/elan24`}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="pt-3 border-t border-border/50 rounded-lg bg-muted/40 p-3 text-[11px] text-muted-foreground space-y-1">
+          <p className="font-semibold text-foreground">✅ Aktiv SEO funksiyaları:</p>
+          <p>• Hər səhifədə dinamik title, description, OG və Twitter Cards</p>
+          <p>• Hər elan üçün Product schema.org JSON-LD strukturu</p>
+          <p>• Organization və WebSite (sitelinks search) JSON-LD</p>
+          <p>• Canonical URL, robots meta, hreflang dəstəyi</p>
+          <p>• Sitemap: <code>/functions/v1/sitemap</code> ünvanından əldə olunur</p>
         </div>
       </div>
 
