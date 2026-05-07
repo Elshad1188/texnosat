@@ -181,19 +181,43 @@ const SpinWin = () => {
     
     setRotation(targetRotation);
 
+    // Resume audio context (mobile autoplay) and start ticking sounds
+    const ctx = getCtx();
+    if (ctx && ctx.state === "suspended") ctx.resume();
+
+    const startMs = Date.now();
+    const totalMs = 5000;
+    const scheduleTick = () => {
+      const elapsed = Date.now() - startMs;
+      if (elapsed >= totalMs) {
+        if (tickIntervalRef.current) {
+          clearTimeout(tickIntervalRef.current);
+          tickIntervalRef.current = null;
+        }
+        return;
+      }
+      playTick();
+      // Ease-out: ticks slow down over time
+      const progress = elapsed / totalMs;
+      const delay = 60 + progress * progress * 600;
+      tickIntervalRef.current = window.setTimeout(scheduleTick, delay);
+    };
+    scheduleTick();
+
     // Call RPC to process win after animation
     setTimeout(async () => {
       try {
         const { data, error } = await supabase.rpc("process_spin_win", {
           _prize_id: selectedPrize.id
         });
-        
+
         if (error) throw error;
-        
+
         const res = data as any;
         if (res.success) {
           if (res.can_spin_again) {
             setCanSpinAgain(true);
+            playLose();
             toast({
               title: "Yenidən cəhd edin!",
               description: "Bu dəfə bəxtiniz gətirmədi, amma dərhal yenidən fırlada bilərsiniz.",
@@ -203,6 +227,7 @@ const SpinWin = () => {
           } else {
             setResult(selectedPrize);
             setShowResultModal(true);
+            playWin();
             queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
           }
         } else {
