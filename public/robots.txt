@@ -1,14 +1,12 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /mod
+Disallow: /messages
+Disallow: /profile
+Disallow: /balance
+Disallow: /auth
+Disallow: /reset-password
+
+Sitemap: https://elan24.az/sitemap.xml
+Sitemap: https://qkeymzkgymmceclilaot.supabase.co/functions/v1/sitemap

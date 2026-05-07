@@ -5,3 +5,5 @@ verify_jwt = true
 
 [functions.listing-share]
 verify_jwt = false
+[functions.sitemap]
+verify_jwt = false
