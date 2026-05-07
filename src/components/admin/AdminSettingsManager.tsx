@@ -124,6 +124,20 @@ const AdminSettingsManager = () => {
   const [uploadingWm, setUploadingWm] = useState(false);
   const [themeSettings, setThemeSettings] = useState<any>(DEFAULT_THEME);
   const [platformMode, setPlatformMode] = useState<PlatformMode>("both");
+  const [seoSettings, setSeoSettings] = useState<any>({
+    keywords: "elan, pulsuz elan, daşınmaz əmlak, kirayə, satış, bina, mənzil, ev, ofis, torpaq, Bakı",
+    og_image: "",
+    google_site_verification: "",
+    yandex_verification: "",
+    bing_verification: "",
+    facebook_domain_verification: "",
+    google_analytics_id: "",
+    google_tag_manager_id: "",
+    facebook_pixel_id: "",
+    yandex_metrica_id: "",
+    robots_txt: "User-agent: *\nAllow: /\nSitemap: https://elan24.az/sitemap.xml",
+    social_links: { facebook: "", instagram: "", twitter: "", youtube: "", linkedin: "" },
+  });
   const wmFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -143,7 +157,12 @@ const AdminSettingsManager = () => {
       if (modeData?.value) {
         setPlatformMode((modeData.value as any).mode || "both");
       }
-      
+
+      const { data: seoData } = await supabase.from("site_settings").select("value").eq("key", "seo").maybeSingle();
+      if (seoData?.value) {
+        setSeoSettings((prev: any) => ({ ...prev, ...(seoData.value as any) }));
+      }
+
       setLoading(false);
     };
     fetch();
