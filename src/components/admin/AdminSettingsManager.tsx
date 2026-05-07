@@ -210,10 +210,19 @@ const AdminSettingsManager = () => {
       }
     }
 
+    // Save SEO settings
+    const { data: existingSeo } = await supabase.from("site_settings").select("id").eq("key", "seo").maybeSingle();
+    if (existingSeo) {
+      await supabase.from("site_settings").update({ value: seoSettings, updated_by: user?.id }).eq("key", "seo");
+    } else {
+      await supabase.from("site_settings").insert({ key: "seo", value: seoSettings, updated_by: user?.id });
+    }
+
     await refreshTheme();
     queryClient.invalidateQueries({ queryKey: ["watermark-settings"] });
     queryClient.invalidateQueries({ queryKey: ["platform-mode"] });
     queryClient.invalidateQueries({ queryKey: ["ecommerce-settings"] });
+    queryClient.invalidateQueries({ queryKey: ["site-settings-seo"] });
     toast({ title: "Tənzimləmələr saxlanıldı" });
     setSaving(false);
   };
