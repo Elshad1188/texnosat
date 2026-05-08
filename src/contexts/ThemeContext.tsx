@@ -71,6 +71,24 @@ function applyTheme(t: ThemeColors) {
   // Update gradients
   root.style.setProperty("--gradient-hero", `linear-gradient(135deg, hsl(${t.secondary_h}, ${t.secondary_s}%, ${t.secondary_l}%) 0%, hsl(${t.secondary_h}, ${t.secondary_s - 10}%, ${t.secondary_l + 10}%) 50%, hsl(${t.primary_h}, 70%, 40%) 100%)`);
   root.style.setProperty("--gradient-primary", `linear-gradient(135deg, hsl(${t.primary_h}, ${t.primary_s}%, ${t.primary_l}%) 0%, hsl(${t.primary_h + 8}, ${t.primary_s}%, ${t.primary_l + 2}%) 100%)`);
+
+  // Favicon
+  if (t.favicon_url) {
+    const setLink = (rel: string, href: string, sizes?: string) => {
+      const sel = sizes ? `link[rel="${rel}"][sizes="${sizes}"]` : `link[rel="${rel}"]`;
+      let el = document.head.querySelector<HTMLLinkElement>(sel);
+      if (!el) {
+        el = document.createElement("link");
+        el.rel = rel;
+        if (sizes) el.setAttribute("sizes", sizes);
+        document.head.appendChild(el);
+      }
+      el.href = href;
+    };
+    setLink("icon", t.favicon_url);
+    setLink("shortcut icon", t.favicon_url);
+    setLink("apple-touch-icon", t.favicon_apple_url || t.favicon_url);
+  }
 }
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
