@@ -41,6 +41,7 @@ const NotificationBell = () => {
     const channel = supabase
       .channel("notifications-bell")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, () => {
+        try { playNotificationSound(); } catch {}
         queryClient.invalidateQueries({ queryKey: ["notifications", user.id] });
       })
       .subscribe();
