@@ -1,0 +1,1 @@
+UPDATE public.site_settings SET value = jsonb_set(jsonb_set(value::jsonb, '{host}', '"smtp.gmail.com"'), '{secure}', 'false') WHERE key='smtp';
