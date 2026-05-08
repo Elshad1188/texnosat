@@ -20,6 +20,8 @@ interface ThemeColors {
   logo_icon?: string;
   logo_color?: string;
   logo_url?: string;
+  favicon_url?: string;
+  favicon_apple_url?: string;
 }
 
 const defaultTheme: ThemeColors = {
@@ -254,7 +256,106 @@ const AdminThemeManager = () => {
                 <img src={colors.logo_url} alt="Logo preview" className="h-full w-auto object-contain" />
               </div>
             )}
+      </div>
+
+      {/* Favicon Settings */}
+      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+        <div>
+          <Label className="text-sm font-semibold">Favicon (Brauzer ikonu)</Label>
+          <p className="text-xs text-muted-foreground mt-1">
+            Tələb olunan ölçülər: <strong>32×32px</strong> və ya <strong>192×192px</strong> (PNG/ICO/SVG). Apple Touch üçün: <strong>180×180px</strong> (PNG). Kvadrat şəkil yükləyin, fon şəffaf və ya sadə olsun. Maks. 500KB.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Əsas Favicon (32×32 / 192×192)</Label>
+            <div className="flex gap-2">
+              <Input
+                value={colors.favicon_url ?? ""}
+                onChange={(e) => setColors({ ...colors, favicon_url: e.target.value })}
+                className="h-9 flex-1"
+                placeholder="https://... və ya yüklə"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9"
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = 'image/png,image/x-icon,image/svg+xml,image/vnd.microsoft.icon';
+                  input.onchange = async (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (!file) return;
+                    if (file.size > 500 * 1024) {
+                      toast({ title: "Fayl çox böyükdür", description: "Maksimum 500KB", variant: "destructive" });
+                      return;
+                    }
+                    const fileName = `favicons/${Date.now()}-${file.name}`;
+                    const { error } = await supabase.storage.from("banners").upload(fileName, file);
+                    if (error) { toast({ title: "Yükləmə xətası", description: error.message, variant: "destructive" }); return; }
+                    const { data: urlData } = supabase.storage.from("banners").getPublicUrl(fileName);
+                    setColors({ ...colors, favicon_url: urlData.publicUrl });
+                    toast({ title: "Favicon yükləndi ✓" });
+                  };
+                  input.click();
+                }}
+              >
+                Yüklə
+              </Button>
+            </div>
+            {colors.favicon_url && (
+              <div className="mt-2 flex items-center gap-2">
+                <img src={colors.favicon_url} alt="Favicon" className="h-8 w-8 border border-border rounded bg-muted/30 object-contain" />
+                <img src={colors.favicon_url} alt="Favicon" className="h-4 w-4 border border-border rounded bg-muted/30 object-contain" />
+              </div>
+            )}
           </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Apple Touch İkonu (180×180)</Label>
+            <div className="flex gap-2">
+              <Input
+                value={colors.favicon_apple_url ?? ""}
+                onChange={(e) => setColors({ ...colors, favicon_apple_url: e.target.value })}
+                className="h-9 flex-1"
+                placeholder="İstəyə bağlı"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9"
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = 'image/png';
+                  input.onchange = async (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (!file) return;
+                    if (file.size > 500 * 1024) {
+                      toast({ title: "Fayl çox böyükdür", description: "Maksimum 500KB", variant: "destructive" });
+                      return;
+                    }
+                    const fileName = `favicons/${Date.now()}-${file.name}`;
+                    const { error } = await supabase.storage.from("banners").upload(fileName, file);
+                    if (error) { toast({ title: "Yükləmə xətası", description: error.message, variant: "destructive" }); return; }
+                    const { data: urlData } = supabase.storage.from("banners").getPublicUrl(fileName);
+                    setColors({ ...colors, favicon_apple_url: urlData.publicUrl });
+                    toast({ title: "Apple ikon yükləndi ✓" });
+                  };
+                  input.click();
+                }}
+              >
+                Yüklə
+              </Button>
+            </div>
+            {colors.favicon_apple_url && (
+              <img src={colors.favicon_apple_url} alt="Apple icon" className="mt-2 h-10 w-10 border border-border rounded bg-muted/30 object-contain" />
+            )}
+          </div>
+        </div>
+      </div>
         </div>
       </div>
 
