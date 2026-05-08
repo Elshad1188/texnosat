@@ -20,6 +20,8 @@ interface ThemeColors {
   logo_icon?: string;
   logo_color?: string;
   logo_url?: string;
+  favicon_url?: string;
+  favicon_apple_url?: string;
 }
 
 const defaultTheme: ThemeColors = {
