@@ -95,14 +95,20 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Clean up host string (remove trailing spaces, protocols)
-    const rawHost = String(smtp.host).trim().replace(/^https?:\/\//, '');
+    // Clean up host string (remove trailing spaces, protocols, common typos)
+    let rawHost = String(smtp.host).trim().replace(/^https?:\/\//, '').replace(/\/+$/, '');
+    // Auto-correct common typos: smpt -> smtp
+    rawHost = rawHost.replace(/^smpt\./i, 'smtp.');
+
+    const port = Number(smtp.port) || 465;
+    // Port 465 uses implicit TLS; port 587/25 use STARTTLS (tls:false lets denomailer upgrade)
+    const useTls = port === 465;
 
     const client = new SMTPClient({
       connection: {
         hostname: rawHost,
-        port: Number(smtp.port) || 465,
-        tls: smtp.secure !== false, // default to true if not explicitly false
+        port,
+        tls: useTls,
         auth: {
           username: smtp.username || "",
           password: smtp.password || "",
