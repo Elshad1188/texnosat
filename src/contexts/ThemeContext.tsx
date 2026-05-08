@@ -22,6 +22,8 @@ interface ThemeColors {
   logo_text_accent?: string;
   logo_icon?: string;
   logo_color?: string;
+  favicon_url?: string;
+  favicon_apple_url?: string;
 }
 
 const defaultTheme: ThemeColors = {
