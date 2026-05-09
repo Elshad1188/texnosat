@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { LayoutGrid, Building2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useTranslation } from "@/contexts/LanguageContext";
+import { useTranslation, useLanguage } from "@/contexts/LanguageContext";
 import { iconMap } from "@/lib/icons";
 
 // Daşınmaz əmlak kateqoriyaları üçün rəng paleti (slug → tailwind gradient)
