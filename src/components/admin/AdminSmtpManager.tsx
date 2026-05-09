@@ -113,12 +113,15 @@ const AdminSmtpManager = () => {
   };
 
   const sendTestEmail = async () => {
+    setTestResult(null);
     if (!testEmail) {
       toast({ title: "Test e-mail ünvanı daxil edin", variant: "destructive" });
       return;
     }
     setTesting(true);
     try {
+      // Save current SMTP settings first so the edge function uses them
+      await saveSettings("smtp", smtp);
       const res = await supabase.functions.invoke("send-email", {
         body: {
           to: testEmail,
@@ -126,10 +129,15 @@ const AdminSmtpManager = () => {
           body: "Bu test e-mailidir. SMTP tənzimləmələriniz düzgün işləyir!",
         },
       });
-      if (res.error) throw new Error(res.error.message);
+      if (res.error) throw new Error(res.error.message || "Edge function xətası");
+      const data = res.data as any;
+      if (data && data.success === false) throw new Error(data.error || "Göndərilmədi");
+      setTestResult({ ok: true, msg: `Test e-mail uğurla göndərildi: ${testEmail}` });
       toast({ title: "Test e-mail göndərildi!" });
     } catch (err: any) {
-      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+      const msg = err?.message || "Naməlum xəta";
+      setTestResult({ ok: false, msg });
+      toast({ title: "Xəta", description: msg, variant: "destructive" });
     }
     setTesting(false);
   };
