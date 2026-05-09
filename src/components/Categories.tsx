@@ -83,7 +83,7 @@ const Categories = () => {
                   <Icon className="h-7 w-7 text-white" strokeWidth={2} />
                 </div>
                 <span className="max-w-[68px] text-center text-[11px] font-medium leading-tight text-foreground line-clamp-2">
-                  {cat.name}
+                  {language === "ru" && cat.name_ru ? cat.name_ru : cat.name}
                 </span>
               </button>
             );
