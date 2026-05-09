@@ -196,11 +196,18 @@ const AdminSmtpManager = () => {
           </div>
 
           {/* Test email */}
-          <div className="flex items-center gap-2 pt-2 border-t border-border">
-            <Input value={testEmail} onChange={e => setTestEmail(e.target.value)} placeholder="test@example.com" className="h-9 text-xs flex-1" />
-            <Button onClick={sendTestEmail} disabled={testing || !smtp.host} size="sm" variant="outline" className="gap-1 shrink-0">
-              <TestTube className="h-3.5 w-3.5" /> {testing ? "Göndərilir..." : "Test et"}
-            </Button>
+          <div className="space-y-2 pt-2 border-t border-border">
+            <div className="flex items-center gap-2">
+              <Input value={testEmail} onChange={e => setTestEmail(e.target.value)} placeholder="test@example.com" className="h-9 text-xs flex-1" />
+              <Button onClick={sendTestEmail} disabled={testing || !smtp.host} size="sm" variant="outline" className="gap-1 shrink-0">
+                <TestTube className="h-3.5 w-3.5" /> {testing ? "Göndərilir..." : "Test e-mail göndər"}
+              </Button>
+            </div>
+            {testResult && (
+              <div className={`text-xs rounded-md px-3 py-2 border ${testResult.ok ? "bg-green-500/10 border-green-500/30 text-green-700 dark:text-green-400" : "bg-destructive/10 border-destructive/30 text-destructive"}`}>
+                {testResult.ok ? "✓ " : "✗ "}{testResult.msg}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
