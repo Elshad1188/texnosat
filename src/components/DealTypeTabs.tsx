@@ -46,7 +46,7 @@ const DealTypeTabs = ({ value, onChange, variant = "navigate", className = "" }:
             }`}
           >
             <Icon className="h-5 w-5" />
-            <span className="text-[11px] font-medium leading-tight sm:text-xs">{dt.label}</span>
+            <span className="text-[11px] font-medium leading-tight sm:text-xs">{t(dt.tKey, { defaultValue: dt.label })}</span>
           </button>
         );
       })}
