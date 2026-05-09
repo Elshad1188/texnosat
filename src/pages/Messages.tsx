@@ -923,9 +923,12 @@ const Messages = () => {
                         </div>
                       </div>
                     );
-                  })
+                  })}
+                  </>
                 )}
               </div>
+                );
+              })()}
             </div>
 
             {/* Chat area */}
