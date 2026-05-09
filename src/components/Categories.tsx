@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { LayoutGrid, Building2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useTranslation } from "@/contexts/LanguageContext";
+import { useTranslation, useLanguage } from "@/contexts/LanguageContext";
 import { iconMap } from "@/lib/icons";
 
 // Daşınmaz əmlak kateqoriyaları üçün rəng paleti (slug → tailwind gradient)
@@ -20,6 +20,7 @@ const categoryColors: Record<string, string> = {
 const Categories = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { language } = useLanguage();
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["categories-home"],
@@ -82,7 +83,7 @@ const Categories = () => {
                   <Icon className="h-7 w-7 text-white" strokeWidth={2} />
                 </div>
                 <span className="max-w-[68px] text-center text-[11px] font-medium leading-tight text-foreground line-clamp-2">
-                  {cat.name}
+                  {language === "ru" && cat.name_ru ? cat.name_ru : cat.name}
                 </span>
               </button>
             );

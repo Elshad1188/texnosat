@@ -1,11 +1,12 @@
 import { Home, Key, CalendarDays, Briefcase } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export const DEAL_TYPES = [
-  { value: "sale", label: "Alqı-satqı", icon: Home },
-  { value: "rent", label: "Kirayə", icon: Key },
-  { value: "daily", label: "Günlük", icon: CalendarDays },
-  { value: "business", label: "Hazır biznes", icon: Briefcase },
+  { value: "sale", label: "Alqı-satqı", tKey: "deal.sale", icon: Home },
+  { value: "rent", label: "Kirayə", tKey: "deal.rent", icon: Key },
+  { value: "daily", label: "Günlük", tKey: "deal.daily", icon: CalendarDays },
+  { value: "business", label: "Hazır biznes", tKey: "deal.business", icon: Briefcase },
 ] as const;
 
 export type DealValue = typeof DEAL_TYPES[number]["value"];
@@ -19,6 +20,7 @@ interface Props {
 
 const DealTypeTabs = ({ value, onChange, variant = "navigate", className = "" }: Props) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleClick = (dealValue: string) => {
     if (variant === "navigate") {
@@ -44,7 +46,7 @@ const DealTypeTabs = ({ value, onChange, variant = "navigate", className = "" }:
             }`}
           >
             <Icon className="h-5 w-5" />
-            <span className="text-[11px] font-medium leading-tight sm:text-xs">{dt.label}</span>
+            <span className="text-[11px] font-medium leading-tight sm:text-xs">{t(dt.tKey, { defaultValue: dt.label })}</span>
           </button>
         );
       })}
