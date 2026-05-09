@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { MessageCircle, Send, ArrowLeft, Loader2, Check, CheckCheck, Store, Trash2, MoreVertical, ImagePlus, Mic, X, Phone, Lock, Pause, Play } from "lucide-react";
+import { MessageCircle, Send, ArrowLeft, Loader2, Check, CheckCheck, Store, Trash2, MoreVertical, ImagePlus, Mic, X, Phone, Lock, Pause, Play, Search } from "lucide-react";
 import CallDialog from "@/components/CallDialog";
 import { useIncomingCall } from "@/hooks/useIncomingCall";
 import IdentitySwitcher from "@/components/IdentitySwitcher";
@@ -89,6 +89,9 @@ const Messages = () => {
   const [imagePreviewFile, setImagePreviewFile] = useState<File | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [startingChatWith, setStartingChatWith] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Voice recording state (WhatsApp-like)
@@ -427,7 +430,66 @@ const Messages = () => {
     refetchInterval: 3000,
   });
 
-  // Mark as read
+  // Debounce search input
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  // Search users / stores by name (only when query >= 2 chars)
+  const { data: searchResults = [] } = useQuery({
+    queryKey: ["user-search", debouncedSearch, user?.id],
+    queryFn: async () => {
+      if (!user || debouncedSearch.length < 2) return [];
+      const q = `%${debouncedSearch}%`;
+      const [{ data: profiles }, { data: stores }] = await Promise.all([
+        supabase.from("profiles").select("user_id, full_name, avatar_url").ilike("full_name", q).neq("user_id", user.id).limit(8),
+        supabase.from("stores").select("id, name, logo_url, user_id").ilike("name", q).neq("user_id", user.id).limit(8),
+      ]);
+      const list: Array<{ user_id: string; name: string; avatar: string | null; isStore: boolean }> = [];
+      (stores || []).forEach((s: any) => {
+        list.push({ user_id: s.user_id, name: s.name, avatar: s.logo_url, isStore: true });
+      });
+      (profiles || []).forEach((p: any) => {
+        if (!p.full_name) return;
+        if (list.some((x) => x.user_id === p.user_id)) return;
+        list.push({ user_id: p.user_id, name: p.full_name, avatar: p.avatar_url, isStore: false });
+      });
+      return list;
+    },
+    enabled: !!user && debouncedSearch.length >= 2,
+  });
+
+  const startChatWithUser = async (otherUserId: string) => {
+    if (!user || startingChatWith) return;
+    try {
+      setStartingChatWith(otherUserId);
+      const { data: existing } = await supabase
+        .from("conversations")
+        .select("id")
+        .or(`and(buyer_id.eq.${user.id},seller_id.eq.${otherUserId}),and(buyer_id.eq.${otherUserId},seller_id.eq.${user.id})`)
+        .is("listing_id", null)
+        .maybeSingle();
+      if (existing?.id) {
+        navigate(`/messages?c=${existing.id}`);
+      } else {
+        const { data: newConvo, error } = await supabase
+          .from("conversations")
+          .insert({ buyer_id: user.id, seller_id: otherUserId, listing_id: null })
+          .select("id")
+          .single();
+        if (error) throw error;
+        await queryClient.invalidateQueries({ queryKey: ["conversations", user.id] });
+        navigate(`/messages?c=${newConvo.id}`);
+      }
+      setSearchQuery("");
+    } catch (err: any) {
+      toast({ title: "Söhbət açılmadı", description: err?.message, variant: "destructive" });
+    } finally {
+      setStartingChatWith(null);
+    }
+  };
+
   useEffect(() => {
     if (!activeConvoId || !user || messages.length === 0) return;
     const unreadIds = messages.filter((m) => !m.is_read && m.sender_id !== user.id).map((m) => m.id);
@@ -670,22 +732,50 @@ const Messages = () => {
 
             {/* Sidebar */}
             <div className={`w-full md:w-[340px] flex-shrink-0 flex flex-col bg-card ${activeConvoId ? "hidden md:flex" : "flex"}`}>
-              <div className="p-4 pb-3">
+              <div className="p-4 pb-3 space-y-3">
                 <h2 className="font-display text-xl font-bold text-foreground">Mesajlar</h2>
-                <div className="mt-2">
-                  <IdentitySwitcher
-                    selectedStoreId={selectedStoreId}
-                    onSelect={setSelectedStoreId}
-                    compact
+                <IdentitySwitcher
+                  selectedStoreId={selectedStoreId}
+                  onSelect={setSelectedStoreId}
+                  compact
+                />
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="İstifadəçi və ya söhbət axtar..."
+                    className="w-full h-10 pl-9 pr-9 rounded-full bg-muted text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full hover:bg-background flex items-center justify-center"
+                    >
+                      <X className="h-3.5 w-3.5 text-muted-foreground" />
+                    </button>
+                  )}
                 </div>
               </div>
+              {(() => {
+                const q = debouncedSearch.toLowerCase();
+                const filteredConvos = q
+                  ? conversations.filter((c: any) => (c.displayName || "").toLowerCase().includes(q))
+                  : conversations;
+                const newUserResults = q.length >= 2
+                  ? (searchResults as any[]).filter((r) => !conversations.some((c: any) => {
+                      const otherId = c.buyer_id === user.id ? c.seller_id : c.buyer_id;
+                      return otherId === r.user_id;
+                    }))
+                  : [];
+                return (
               <div className="flex-1 overflow-y-auto">
                 {convosLoading ? (
                   <div className="flex items-center justify-center py-16">
                     <Loader2 className="h-6 w-6 animate-spin text-primary" />
                   </div>
-                ) : conversations.length === 0 ? (
+                ) : conversations.length === 0 && newUserResults.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
                     <div className="rounded-full bg-muted p-4 mb-4">
                       <MessageCircle className="h-8 w-8 text-muted-foreground" />
@@ -694,7 +784,42 @@ const Messages = () => {
                     <p className="text-xs text-muted-foreground">Elan sahibinə yazaraq söhbətə başlayın</p>
                   </div>
                 ) : (
-                  conversations.map((c: any) => {
+                  <>
+                    {q && filteredConvos.length === 0 && newUserResults.length === 0 && (
+                      <div className="px-4 py-8 text-center text-xs text-muted-foreground">Heç nə tapılmadı</div>
+                    )}
+                    {newUserResults.length > 0 && (
+                      <div className="border-b border-border/30">
+                        <p className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Yeni söhbət başlat</p>
+                        {newUserResults.map((r: any) => (
+                          <button
+                            key={r.user_id}
+                            onClick={() => startChatWithUser(r.user_id)}
+                            disabled={startingChatWith === r.user_id}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-muted/40 transition-colors"
+                          >
+                            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary/20 to-primary/5 text-primary font-bold text-sm ring-2 ring-background flex-shrink-0">
+                              {r.avatar ? (
+                                <img src={r.avatar} alt="" className="h-full w-full object-cover" />
+                              ) : r.isStore ? (
+                                <Store className="h-4 w-4" />
+                              ) : (
+                                <span>{r.name[0]?.toUpperCase() || "?"}</span>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate flex items-center gap-1.5">
+                                {r.name}
+                                {r.isStore && <Store className="h-3 w-3 text-primary" />}
+                              </p>
+                              <p className="text-[11px] text-muted-foreground">Söhbət başlamaq üçün toxunun</p>
+                            </div>
+                            {startingChatWith === r.user_id && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {filteredConvos.map((c: any) => {
                     const ls = c.profile?.last_seen;
                     const online = ls && (Date.now() - new Date(ls).getTime() < 120000);
                     return (
@@ -798,9 +923,12 @@ const Messages = () => {
                         </div>
                       </div>
                     );
-                  })
+                  })}
+                  </>
                 )}
               </div>
+                );
+              })()}
             </div>
 
             {/* Chat area */}
