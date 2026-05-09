@@ -1,11 +1,12 @@
 import { Home, Key, CalendarDays, Briefcase } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export const DEAL_TYPES = [
-  { value: "sale", label: "Alqı-satqı", icon: Home },
-  { value: "rent", label: "Kirayə", icon: Key },
-  { value: "daily", label: "Günlük", icon: CalendarDays },
-  { value: "business", label: "Hazır biznes", icon: Briefcase },
+  { value: "sale", label: "Alqı-satqı", tKey: "deal.sale", icon: Home },
+  { value: "rent", label: "Kirayə", tKey: "deal.rent", icon: Key },
+  { value: "daily", label: "Günlük", tKey: "deal.daily", icon: CalendarDays },
+  { value: "business", label: "Hazır biznes", tKey: "deal.business", icon: Briefcase },
 ] as const;
 
 export type DealValue = typeof DEAL_TYPES[number]["value"];
