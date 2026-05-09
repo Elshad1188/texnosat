@@ -20,6 +20,7 @@ interface Props {
 
 const DealTypeTabs = ({ value, onChange, variant = "navigate", className = "" }: Props) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleClick = (dealValue: string) => {
     if (variant === "navigate") {
