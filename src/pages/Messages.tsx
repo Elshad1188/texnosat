@@ -89,6 +89,9 @@ const Messages = () => {
   const [imagePreviewFile, setImagePreviewFile] = useState<File | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [startingChatWith, setStartingChatWith] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Voice recording state (WhatsApp-like)
