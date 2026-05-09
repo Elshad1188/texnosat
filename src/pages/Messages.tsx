@@ -430,7 +430,66 @@ const Messages = () => {
     refetchInterval: 3000,
   });
 
-  // Mark as read
+  // Debounce search input
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  // Search users / stores by name (only when query >= 2 chars)
+  const { data: searchResults = [] } = useQuery({
+    queryKey: ["user-search", debouncedSearch, user?.id],
+    queryFn: async () => {
+      if (!user || debouncedSearch.length < 2) return [];
+      const q = `%${debouncedSearch}%`;
+      const [{ data: profiles }, { data: stores }] = await Promise.all([
+        supabase.from("profiles").select("user_id, full_name, avatar_url").ilike("full_name", q).neq("user_id", user.id).limit(8),
+        supabase.from("stores").select("id, name, logo_url, user_id").ilike("name", q).neq("user_id", user.id).limit(8),
+      ]);
+      const list: Array<{ user_id: string; name: string; avatar: string | null; isStore: boolean }> = [];
+      (stores || []).forEach((s: any) => {
+        list.push({ user_id: s.user_id, name: s.name, avatar: s.logo_url, isStore: true });
+      });
+      (profiles || []).forEach((p: any) => {
+        if (!p.full_name) return;
+        if (list.some((x) => x.user_id === p.user_id)) return;
+        list.push({ user_id: p.user_id, name: p.full_name, avatar: p.avatar_url, isStore: false });
+      });
+      return list;
+    },
+    enabled: !!user && debouncedSearch.length >= 2,
+  });
+
+  const startChatWithUser = async (otherUserId: string) => {
+    if (!user || startingChatWith) return;
+    try {
+      setStartingChatWith(otherUserId);
+      const { data: existing } = await supabase
+        .from("conversations")
+        .select("id")
+        .or(`and(buyer_id.eq.${user.id},seller_id.eq.${otherUserId}),and(buyer_id.eq.${otherUserId},seller_id.eq.${user.id})`)
+        .is("listing_id", null)
+        .maybeSingle();
+      if (existing?.id) {
+        navigate(`/messages?c=${existing.id}`);
+      } else {
+        const { data: newConvo, error } = await supabase
+          .from("conversations")
+          .insert({ buyer_id: user.id, seller_id: otherUserId, listing_id: null })
+          .select("id")
+          .single();
+        if (error) throw error;
+        await queryClient.invalidateQueries({ queryKey: ["conversations", user.id] });
+        navigate(`/messages?c=${newConvo.id}`);
+      }
+      setSearchQuery("");
+    } catch (err: any) {
+      toast({ title: "Söhbət açılmadı", description: err?.message, variant: "destructive" });
+    } finally {
+      setStartingChatWith(null);
+    }
+  };
+
   useEffect(() => {
     if (!activeConvoId || !user || messages.length === 0) return;
     const unreadIds = messages.filter((m) => !m.is_read && m.sender_id !== user.id).map((m) => m.id);
