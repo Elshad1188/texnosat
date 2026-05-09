@@ -66,6 +66,7 @@ const AdminSmtpManager = () => {
   const [saving, setSaving] = useState(false);
   const [testEmail, setTestEmail] = useState("");
   const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
   useEffect(() => {
     const fetch = async () => {
