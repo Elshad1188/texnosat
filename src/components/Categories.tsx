@@ -20,6 +20,7 @@ const categoryColors: Record<string, string> = {
 const Categories = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { language } = useLanguage();
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["categories-home"],
