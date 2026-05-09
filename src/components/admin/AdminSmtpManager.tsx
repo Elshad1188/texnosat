@@ -66,6 +66,7 @@ const AdminSmtpManager = () => {
   const [saving, setSaving] = useState(false);
   const [testEmail, setTestEmail] = useState("");
   const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
   useEffect(() => {
     const fetch = async () => {
@@ -112,12 +113,15 @@ const AdminSmtpManager = () => {
   };
 
   const sendTestEmail = async () => {
+    setTestResult(null);
     if (!testEmail) {
       toast({ title: "Test e-mail ünvanı daxil edin", variant: "destructive" });
       return;
     }
     setTesting(true);
     try {
+      // Save current SMTP settings first so the edge function uses them
+      await saveSettings("smtp", smtp);
       const res = await supabase.functions.invoke("send-email", {
         body: {
           to: testEmail,
@@ -125,10 +129,15 @@ const AdminSmtpManager = () => {
           body: "Bu test e-mailidir. SMTP tənzimləmələriniz düzgün işləyir!",
         },
       });
-      if (res.error) throw new Error(res.error.message);
+      if (res.error) throw new Error(res.error.message || "Edge function xətası");
+      const data = res.data as any;
+      if (data && data.success === false) throw new Error(data.error || "Göndərilmədi");
+      setTestResult({ ok: true, msg: `Test e-mail uğurla göndərildi: ${testEmail}` });
       toast({ title: "Test e-mail göndərildi!" });
     } catch (err: any) {
-      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+      const msg = err?.message || "Naməlum xəta";
+      setTestResult({ ok: false, msg });
+      toast({ title: "Xəta", description: msg, variant: "destructive" });
     }
     setTesting(false);
   };
@@ -187,11 +196,18 @@ const AdminSmtpManager = () => {
           </div>
 
           {/* Test email */}
-          <div className="flex items-center gap-2 pt-2 border-t border-border">
-            <Input value={testEmail} onChange={e => setTestEmail(e.target.value)} placeholder="test@example.com" className="h-9 text-xs flex-1" />
-            <Button onClick={sendTestEmail} disabled={testing || !smtp.host} size="sm" variant="outline" className="gap-1 shrink-0">
-              <TestTube className="h-3.5 w-3.5" /> {testing ? "Göndərilir..." : "Test et"}
-            </Button>
+          <div className="space-y-2 pt-2 border-t border-border">
+            <div className="flex items-center gap-2">
+              <Input value={testEmail} onChange={e => setTestEmail(e.target.value)} placeholder="test@example.com" className="h-9 text-xs flex-1" />
+              <Button onClick={sendTestEmail} disabled={testing || !smtp.host} size="sm" variant="outline" className="gap-1 shrink-0">
+                <TestTube className="h-3.5 w-3.5" /> {testing ? "Göndərilir..." : "Test e-mail göndər"}
+              </Button>
+            </div>
+            {testResult && (
+              <div className={`text-xs rounded-md px-3 py-2 border ${testResult.ok ? "bg-green-500/10 border-green-500/30 text-green-700 dark:text-green-400" : "bg-destructive/10 border-destructive/30 text-destructive"}`}>
+                {testResult.ok ? "✓ " : "✗ "}{testResult.msg}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
