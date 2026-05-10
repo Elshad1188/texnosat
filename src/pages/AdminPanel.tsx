@@ -1053,8 +1053,12 @@ const AdminPanel = () => {
           <TabsContent value="settings" className="mt-3">
             <AdminSettingsManager />
           </TabsContent>
-          <TabsContent value="balance" className="mt-3">
+          <TabsContent value="balance" className="mt-3 space-y-6">
             <AdminBalanceManager />
+            <div className="border-t border-border pt-6">
+              <h3 className="mb-3 text-sm font-semibold text-foreground">Epoint əməliyyatları</h3>
+              <AdminEpointManager />
+            </div>
           </TabsContent>
           <TabsContent value="referral" className="mt-3">
             <AdminReferralManager />
