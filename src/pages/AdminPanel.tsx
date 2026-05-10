@@ -575,10 +575,7 @@ const AdminPanel = () => {
             <AdminTicketManager />
           </TabsContent>
 
-          {/* Epoint */}
-          <TabsContent value="epoint" className="mt-3">
-            <AdminEpointManager />
-          </TabsContent>
+          {/* Epoint indi Maliyyə tabının altındadır */}
 
           {/* Blog */}
           <TabsContent value="blog" className="mt-3">
