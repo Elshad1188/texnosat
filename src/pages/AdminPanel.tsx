@@ -424,16 +424,31 @@ const AdminPanel = () => {
               
               <div ref={tabsScrollRef} className="overflow-x-auto scrollbar-none w-full" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 <TabsList className="inline-flex h-auto min-w-full w-max gap-1 rounded-xl bg-muted/60 p-1">
+                {/* — Dashboard — */}
                 <TabsTrigger value="stats" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <BarChart3 className="h-3.5 w-3.5" /> Statistika
                 </TabsTrigger>
+
+                {/* — Moderasiya qrupu — */}
                 <TabsTrigger value="moderation" className="relative gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <CheckSquare className="h-3.5 w-3.5" /> Moderasiya
                   {pendingListings > 0 && <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />}
                 </TabsTrigger>
-                <TabsTrigger value="notifications" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
-                  <Bell className="h-3.5 w-3.5" /> Bildirişlər
+                <TabsTrigger value="reports" className="relative gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <Flag className="h-3.5 w-3.5" /> Şikayətlər
+                  {pendingReports > 0 && <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />}
                 </TabsTrigger>
+                <TabsTrigger value="antispam" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <ShieldAlert className="h-3.5 w-3.5" /> Antispam
+                </TabsTrigger>
+                <TabsTrigger value="store-requests" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <GitPullRequest className="h-3.5 w-3.5" /> Mağaza sorğuları
+                </TabsTrigger>
+                <TabsTrigger value="tickets" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <LifeBuoy className="h-3.5 w-3.5" /> Dəstək
+                </TabsTrigger>
+
+                {/* — Elanlar / Mağazalar qrupu — */}
                 <TabsTrigger value="listings" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <ShoppingBag className="h-3.5 w-3.5" /> Elanlar
                 </TabsTrigger>
@@ -447,6 +462,11 @@ const AdminPanel = () => {
                   <Store className="h-3.5 w-3.5" /> Mağazalar
                   {pendingStores > 0 && <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />}
                 </TabsTrigger>
+                <TabsTrigger value="scraper" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <Globe className="h-3.5 w-3.5" /> Scraper
+                </TabsTrigger>
+
+                {/* — İstifadəçilər qrupu — */}
                 <TabsTrigger value="users" className="relative gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <Users className="h-3.5 w-3.5" /> İstifadəçilər
                   {newUsers > 0 && <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />}
@@ -455,60 +475,50 @@ const AdminPanel = () => {
                   <MessageSquare className="h-3.5 w-3.5" /> Rəylər
                   {newReviews > 0 && <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />}
                 </TabsTrigger>
-                <TabsTrigger value="reports" className="relative gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
-                  <Flag className="h-3.5 w-3.5" /> Şikayətlər
-                  {pendingReports > 0 && <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />}
+
+                {/* — Maliyyə qrupu — */}
+                <TabsTrigger value="balance" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <Wallet className="h-3.5 w-3.5" /> Maliyyə
                 </TabsTrigger>
+                <TabsTrigger value="orders" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <Package className="h-3.5 w-3.5" /> Sifarişlər
+                </TabsTrigger>
+                <TabsTrigger value="referral" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <Gift className="h-3.5 w-3.5" /> Referal
+                </TabsTrigger>
+                <TabsTrigger value="gifts" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <Heart className="h-3.5 w-3.5" /> Hədiyyələr
+                </TabsTrigger>
+
+                {/* — Kontent qrupu — */}
                 <TabsTrigger value="banners" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <Image className="h-3.5 w-3.5" /> Bannerlər
                 </TabsTrigger>
                 <TabsTrigger value="pages" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <FileText className="h-3.5 w-3.5" /> Səhifələr
                 </TabsTrigger>
-                <TabsTrigger value="balance" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
-                  <Wallet className="h-3.5 w-3.5" /> Balans
-                </TabsTrigger>
-                <TabsTrigger value="referral" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
-                  <Gift className="h-3.5 w-3.5" /> Referal
-                </TabsTrigger>
-                <TabsTrigger value="integrations" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
-                  <Plug className="h-3.5 w-3.5" /> İnteqrasiyalar
-                </TabsTrigger>
-                <TabsTrigger value="settings" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
-                  <Settings className="h-3.5 w-3.5" /> Tənzimləmələr
-                </TabsTrigger>
-                <TabsTrigger value="gifts" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
-                  <Gift className="h-3.5 w-3.5" /> Hədiyyələr
-                </TabsTrigger>
-                <TabsTrigger value="video" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
-                  <Video className="h-3.5 w-3.5" /> Video
-                </TabsTrigger>
-                <TabsTrigger value="scraper" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
-                  <Globe className="h-3.5 w-3.5" /> Scraper
-                </TabsTrigger>
-                <TabsTrigger value="theme" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
-                  <Palette className="h-3.5 w-3.5" /> Dizayn
-                </TabsTrigger>
-                <TabsTrigger value="antispam" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
-                  <ShieldAlert className="h-3.5 w-3.5" /> Antispam
-                </TabsTrigger>
-                <TabsTrigger value="orders" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
-                  <ShoppingBag className="h-3.5 w-3.5" /> Sifarişlər
-                </TabsTrigger>
-                <TabsTrigger value="store-requests" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
-                  <GitPullRequest className="h-3.5 w-3.5" /> Mağaza sorğuları
-                </TabsTrigger>
-                <TabsTrigger value="tickets" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
-                  <LifeBuoy className="h-3.5 w-3.5" /> Dəstək
-                </TabsTrigger>
-                <TabsTrigger value="epoint" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
-                  <CreditCard className="h-3.5 w-3.5" /> Epoint
-                </TabsTrigger>
                 <TabsTrigger value="blog" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <BookOpen className="h-3.5 w-3.5" /> Blog
                 </TabsTrigger>
                 <TabsTrigger value="translations" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <Languages className="h-3.5 w-3.5" /> Tərcümələr
+                </TabsTrigger>
+
+                {/* — Sistem qrupu — */}
+                <TabsTrigger value="notifications" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <Bell className="h-3.5 w-3.5" /> Bildirişlər
+                </TabsTrigger>
+                <TabsTrigger value="integrations" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <Plug className="h-3.5 w-3.5" /> İnteqrasiyalar
+                </TabsTrigger>
+                <TabsTrigger value="theme" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <Palette className="h-3.5 w-3.5" /> Dizayn
+                </TabsTrigger>
+                <TabsTrigger value="video" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <Video className="h-3.5 w-3.5" /> Video
+                </TabsTrigger>
+                <TabsTrigger value="settings" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <Settings className="h-3.5 w-3.5" /> Tənzimləmələr
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -565,10 +575,7 @@ const AdminPanel = () => {
             <AdminTicketManager />
           </TabsContent>
 
-          {/* Epoint */}
-          <TabsContent value="epoint" className="mt-3">
-            <AdminEpointManager />
-          </TabsContent>
+          {/* Epoint indi Maliyyə tabının altındadır */}
 
           {/* Blog */}
           <TabsContent value="blog" className="mt-3">
@@ -1046,8 +1053,12 @@ const AdminPanel = () => {
           <TabsContent value="settings" className="mt-3">
             <AdminSettingsManager />
           </TabsContent>
-          <TabsContent value="balance" className="mt-3">
+          <TabsContent value="balance" className="mt-3 space-y-6">
             <AdminBalanceManager />
+            <div className="border-t border-border pt-6">
+              <h3 className="mb-3 text-sm font-semibold text-foreground">Epoint əməliyyatları</h3>
+              <AdminEpointManager />
+            </div>
           </TabsContent>
           <TabsContent value="referral" className="mt-3">
             <AdminReferralManager />
