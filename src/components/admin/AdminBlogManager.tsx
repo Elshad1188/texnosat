@@ -390,4 +390,54 @@ const AdminBlogManager = () => {
   );
 };
 
+const AiBlogAutoCard = () => {
+  const { toast } = useToast();
+  const [enabled, setEnabled] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [running, setRunning] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "ai_blog_auto").maybeSingle();
+      setEnabled(((data?.value as any)?.enabled) === true);
+      setLoading(false);
+    })();
+  }, []);
+
+  const toggle = async (v: boolean) => {
+    setEnabled(v);
+    const { error } = await supabase.from("site_settings").upsert({ key: "ai_blog_auto", value: { enabled: v } }, { onConflict: "key" });
+    if (error) { toast({ title: "Xəta", description: error.message, variant: "destructive" }); setEnabled(!v); return; }
+    toast({ title: v ? "Avtomatik AI bloq aktivdir" : "Avtomatik AI bloq söndürüldü" });
+  };
+
+  const runNow = async () => {
+    setRunning(true);
+    const { data, error } = await supabase.functions.invoke("ai-blog-generator", { body: { force: true }, method: "POST" });
+    setRunning(false);
+    if (error) { toast({ title: "Xəta", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Yeni qaralama yaradıldı ✓", description: "Aşağıdakı siyahıdan yoxlayıb dərc edin." });
+  };
+
+  return (
+    <Card>
+      <CardContent className="pt-4 flex flex-col md:flex-row md:items-center gap-3 justify-between">
+        <div>
+          <p className="font-semibold text-foreground">AI ilə avtomatik bloq</p>
+          <p className="text-xs text-muted-foreground">Hər gün daşınmaz əmlak mövzusunda 1 qaralama yaradılır. Admin təsdiq edənə qədər yayımlanmır.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button size="sm" variant="outline" onClick={runNow} disabled={running || loading}>
+            {running ? <Loader2 className="h-4 w-4 animate-spin" /> : "İndi yarat"}
+          </Button>
+          <div className="flex items-center gap-2">
+            <Switch checked={enabled} onCheckedChange={toggle} disabled={loading} />
+            <Label>{enabled ? "Aktiv" : "Söndürülüb"}</Label>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 export default AdminBlogManager;
