@@ -1333,6 +1333,13 @@ const ProductDetail = () => {
           }}
         />
       )}
+      {listing && (
+        <ListingBoostDialog
+          listingId={listing.id}
+          open={boostOpen}
+          onOpenChange={setBoostOpen}
+        />
+      )}
       <Dialog open={shareOpen} onOpenChange={setShareOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
