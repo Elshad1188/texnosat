@@ -24,6 +24,7 @@ import WatermarkOverlay from "@/components/WatermarkOverlay";
 import ReportButton from "@/components/ReportButton";
 import ModerationToolbar from "@/components/admin/ModerationToolbar";
 import SEOHead from "@/components/SEOHead";
+import ListingBoostDialog from "@/components/ListingBoostDialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -75,6 +76,7 @@ const ProductDetail = () => {
   const [commentText, setCommentText] = useState("");
   const [replyingTo, setReplyingTo] = useState<{ id: string, name: string } | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [boostOpen, setBoostOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [startingConversation, setStartingConversation] = useState(false);
   const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -794,6 +796,50 @@ const ProductDetail = () => {
               )}
             </div>
 
+            {/* Boost promo — visible to all users */}
+            <div className="mt-4 rounded-xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-primary/5 to-red-500/10 p-3">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/20">
+                  <Sparkles className="h-5 w-5 text-amber-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold text-foreground">Elanı irəli çək</h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Premium, Təcili və ya VIP paketlərlə elanı daha çox insana çatdır
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <Badge variant="outline" className="gap-1 border-amber-500/40 text-[10px]">
+                      <Crown className="h-3 w-3 text-amber-500" /> Premium
+                    </Badge>
+                    <Badge variant="outline" className="gap-1 border-red-500/40 text-[10px]">
+                      <Zap className="h-3 w-3 text-red-500" /> Təcili
+                    </Badge>
+                    <Badge variant="outline" className="gap-1 border-primary/40 text-[10px]">
+                      <Star className="h-3 w-3 text-primary" /> VIP
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                className="mt-3 w-full bg-gradient-to-r from-amber-500 to-red-500 text-white hover:opacity-90"
+                onClick={() => {
+                  if (!user) {
+                    navigate("/auth");
+                    return;
+                  }
+                  if (user.id !== listing.user_id) {
+                    toast({ title: "Yalnız elan sahibi", description: "Bu elanı yalnız sahibi irəli çəkə bilər" });
+                    return;
+                  }
+                  setBoostOpen(true);
+                }}
+              >
+                <Sparkles className="mr-1 h-4 w-4" />
+                İrəli çək
+              </Button>
+            </div>
+
             {/* Description */}
             {listing.description && (
               <div className="mt-6">
@@ -1285,6 +1331,13 @@ const ProductDetail = () => {
             image_urls: listing.image_urls,
             custom_fields: listing.custom_fields,
           }}
+        />
+      )}
+      {listing && (
+        <ListingBoostDialog
+          listingId={listing.id}
+          open={boostOpen}
+          onOpenChange={setBoostOpen}
         />
       )}
       <Dialog open={shareOpen} onOpenChange={setShareOpen}>
