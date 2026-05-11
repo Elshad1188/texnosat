@@ -300,6 +300,7 @@ const AdminBlogManager = () => {
 
   return (
     <Tabs defaultValue="posts" className="space-y-4">
+      <AiBlogAutoCard />
       <TabsList>
         <TabsTrigger value="posts">Yazılar</TabsTrigger>
         <TabsTrigger value="categories">Kateqoriyalar</TabsTrigger>
