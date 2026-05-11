@@ -76,6 +76,7 @@ const ProductDetail = () => {
   const [commentText, setCommentText] = useState("");
   const [replyingTo, setReplyingTo] = useState<{ id: string, name: string } | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [boostOpen, setBoostOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [startingConversation, setStartingConversation] = useState(false);
   const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
