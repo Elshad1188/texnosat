@@ -24,6 +24,7 @@ import WatermarkOverlay from "@/components/WatermarkOverlay";
 import ReportButton from "@/components/ReportButton";
 import ModerationToolbar from "@/components/admin/ModerationToolbar";
 import SEOHead from "@/components/SEOHead";
+import ListingBoostDialog from "@/components/ListingBoostDialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
