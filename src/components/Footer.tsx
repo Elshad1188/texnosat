@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Phone, Mail, MapPin } from "lucide-react";
+import { Phone, Mail, MapPin, QrCode, Download } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useTranslation } from "react-i18next";
+import { generateQRCodeURL } from "@/utils/qr";
 
 const Footer = () => {
   const { theme } = useTheme();
@@ -45,7 +46,7 @@ const Footer = () => {
   return (
     <footer className="border-t border-border bg-secondary text-secondary-foreground">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid gap-8 md:grid-cols-4">
+        <div className="grid gap-8 md:grid-cols-5">
           <div>
             <Link to="/" className="flex items-center gap-2">
               <span className="font-display text-xl font-bold">
@@ -92,6 +93,28 @@ const Footer = () => {
               <li className="flex items-center gap-2"><Mail className="h-4 w-4" /> {email}</li>
               <li className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {address}</li>
             </ul>
+          </div>
+
+          <div>
+            <h4 className="mb-3 font-display text-sm font-semibold flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              Tətbiqi yüklə
+            </h4>
+            <div className="flex items-start gap-3">
+              <div className="shrink-0 rounded-lg border border-border overflow-hidden bg-white p-1">
+                <img
+                  src={generateQRCodeURL(typeof window !== "undefined" ? window.location.origin : "https://elan24.az", 100)}
+                  alt="Elan24 QR kodu"
+                  className="h-[100px] w-[100px]"
+                  loading="lazy"
+                />
+              </div>
+              <div>
+                <p className="text-xs text-secondary-foreground/60">
+                  Telefonunuzla skan edin və saytı mobil cihazınızda açın.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
