@@ -1,30 +1,28 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Smartphone, Download } from "lucide-react";
+import { X, Smartphone, Download, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { generateQRCodeURL } from "@/utils/qr";
 
 const AppDownloadBanner = () => {
   const [visible, setVisible] = useState(false);
   const [appStoreUrl, setAppStoreUrl] = useState("");
   const [playStoreUrl, setPlayStoreUrl] = useState("");
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [siteUrl, setSiteUrl] = useState("https://elan24.az");
 
   useEffect(() => {
-    // Check if dismissed
+    setSiteUrl(window.location.origin);
     const dismissed = sessionStorage.getItem("app-banner-dismissed");
     if (dismissed) return;
-
-    // Check if already installed as PWA
     if (window.matchMedia("(display-mode: standalone)").matches) return;
 
-    // Listen for PWA install prompt
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
     };
     window.addEventListener("beforeinstallprompt", handler);
 
-    // Fetch store links
     supabase
       .from("site_settings")
       .select("value")
@@ -62,8 +60,8 @@ const AppDownloadBanner = () => {
   const hasStoreLinks = appStoreUrl || playStoreUrl;
 
   return (
-    <div className="fixed bottom-36 left-0 right-0 z-30 px-3 md:bottom-0 md:hidden">
-      <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-3 shadow-lg">
+    <div className="fixed bottom-36 left-0 right-0 z-30 px-3 md:bottom-4">
+      <div className="mx-auto max-w-md rounded-2xl border border-border bg-card p-3 shadow-lg md:max-w-sm">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-primary">
             <Smartphone className="h-5 w-5 text-primary-foreground" />
@@ -76,7 +74,9 @@ const AppDownloadBanner = () => {
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="mt-2 flex gap-2">
+
+        {/* Mobile action buttons */}
+        <div className="mt-2 flex gap-2 md:hidden">
           {deferredPrompt && (
             <Button size="sm" className="flex-1 gap-1 bg-gradient-primary text-primary-foreground text-xs" onClick={installPWA}>
               <Download className="h-3.5 w-3.5" /> Yüklə
@@ -93,9 +93,7 @@ const AppDownloadBanner = () => {
             </Button>
           )}
           {!deferredPrompt && !hasStoreLinks && isIOS && (
-            <p className="text-xs text-muted-foreground">
-              Paylaş → Ana ekrana əlavə et
-            </p>
+            <p className="text-xs text-muted-foreground">Paylaş → Ana ekrana əlavə et</p>
           )}
           {!deferredPrompt && hasStoreLinks && !isIOS && !isAndroid && (
             <div className="flex gap-2 flex-1">
@@ -111,6 +109,27 @@ const AppDownloadBanner = () => {
               )}
             </div>
           )}
+        </div>
+
+        {/* Desktop QR code */}
+        <div className="hidden md:flex mt-3 items-center gap-3">
+          <div className="shrink-0 rounded-lg border border-border overflow-hidden bg-white p-1">
+            <img
+              src={generateQRCodeURL(siteUrl, 120)}
+              alt="Elan24 QR kodu"
+              className="h-[120px] w-[120px]"
+              loading="lazy"
+            />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-foreground flex items-center gap-2">
+              <QrCode className="h-4 w-4 text-primary" />
+              Telefonunuzla skan edin
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Kameranızı QR koda yaxınlaşdırın və saytı mobil cihazınızda açın.
+            </p>
+          </div>
         </div>
       </div>
     </div>
