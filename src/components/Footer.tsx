@@ -109,10 +109,32 @@ const Footer = () => {
                   loading="lazy"
                 />
               </div>
-              <div>
+              <div className="flex flex-col gap-2">
                 <p className="text-xs text-secondary-foreground/60">
                   Telefonunuzla skan edin və saytı mobil cihazınızda açın.
                 </p>
+                <button
+                  onClick={async () => {
+                    try {
+                      const url = generateQRCodeURL(typeof window !== "undefined" ? window.location.origin : "https://elan24.az", 512);
+                      const res = await fetch(url);
+                      const blob = await res.blob();
+                      const blobUrl = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = blobUrl;
+                      a.download = "elan24-qr.png";
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(blobUrl);
+                    } catch (e) {
+                      console.error("QR download failed", e);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors w-fit"
+                >
+                  <Download className="h-3.5 w-3.5" /> QR-ni yüklə
+                </button>
               </div>
             </div>
           </div>

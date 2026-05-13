@@ -53,6 +53,24 @@ const AppDownloadBanner = () => {
     }
   };
 
+  const downloadQR = async () => {
+    try {
+      const url = generateQRCodeURL(siteUrl, 512);
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = "elan24-qr.png";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch (e) {
+      console.error("QR download failed", e);
+    }
+  };
+
   if (!visible) return null;
 
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -75,43 +93,59 @@ const AppDownloadBanner = () => {
           </button>
         </div>
 
-        {/* Mobile action buttons */}
-        <div className="mt-2 flex gap-2 md:hidden">
-          {deferredPrompt && (
-            <Button size="sm" className="flex-1 gap-1 bg-gradient-primary text-primary-foreground text-xs" onClick={installPWA}>
-              <Download className="h-3.5 w-3.5" /> Yüklə
-            </Button>
-          )}
-          {isIOS && appStoreUrl && (
-            <Button size="sm" variant="outline" className="flex-1 text-xs" asChild>
-              <a href={appStoreUrl} target="_blank" rel="noopener noreferrer">App Store</a>
-            </Button>
-          )}
-          {isAndroid && playStoreUrl && (
-            <Button size="sm" variant="outline" className="flex-1 text-xs" asChild>
-              <a href={playStoreUrl} target="_blank" rel="noopener noreferrer">Google Play</a>
-            </Button>
-          )}
-          {!deferredPrompt && !hasStoreLinks && isIOS && (
-            <p className="text-xs text-muted-foreground">Paylaş → Ana ekrana əlavə et</p>
-          )}
-          {!deferredPrompt && hasStoreLinks && !isIOS && !isAndroid && (
-            <div className="flex gap-2 flex-1">
-              {appStoreUrl && (
-                <Button size="sm" variant="outline" className="flex-1 text-xs" asChild>
-                  <a href={appStoreUrl} target="_blank" rel="noopener noreferrer">App Store</a>
-                </Button>
-              )}
-              {playStoreUrl && (
-                <Button size="sm" variant="outline" className="flex-1 text-xs" asChild>
-                  <a href={playStoreUrl} target="_blank" rel="noopener noreferrer">Google Play</a>
-                </Button>
-              )}
+        {/* Mobile actions */}
+        <div className="mt-2 flex flex-col gap-2 md:hidden">
+          <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-2">
+            <img
+              src={generateQRCodeURL(siteUrl, 100)}
+              alt="Elan24 QR kodu"
+              className="h-20 w-20 shrink-0 rounded"
+              loading="lazy"
+            />
+            <div className="flex flex-1 flex-col gap-1.5">
+              <p className="text-xs text-muted-foreground">Telefonunuzla skan edin</p>
+              <Button size="sm" variant="outline" className="w-fit gap-1 text-xs" onClick={downloadQR}>
+                <Download className="h-3.5 w-3.5" /> QR-ni yüklə
+              </Button>
             </div>
-          )}
+          </div>
+          <div className="flex gap-2">
+            {deferredPrompt && (
+              <Button size="sm" className="flex-1 gap-1 bg-gradient-primary text-primary-foreground text-xs" onClick={installPWA}>
+                <Download className="h-3.5 w-3.5" /> Yüklə
+              </Button>
+            )}
+            {isIOS && appStoreUrl && (
+              <Button size="sm" variant="outline" className="flex-1 text-xs" asChild>
+                <a href={appStoreUrl} target="_blank" rel="noopener noreferrer">App Store</a>
+              </Button>
+            )}
+            {isAndroid && playStoreUrl && (
+              <Button size="sm" variant="outline" className="flex-1 text-xs" asChild>
+                <a href={playStoreUrl} target="_blank" rel="noopener noreferrer">Google Play</a>
+              </Button>
+            )}
+            {!deferredPrompt && !hasStoreLinks && isIOS && (
+              <p className="text-xs text-muted-foreground">Paylaş → Ana ekrana əlavə et</p>
+            )}
+            {!deferredPrompt && hasStoreLinks && !isIOS && !isAndroid && (
+              <div className="flex gap-2 flex-1">
+                {appStoreUrl && (
+                  <Button size="sm" variant="outline" className="flex-1 text-xs" asChild>
+                    <a href={appStoreUrl} target="_blank" rel="noopener noreferrer">App Store</a>
+                  </Button>
+                )}
+                {playStoreUrl && (
+                  <Button size="sm" variant="outline" className="flex-1 text-xs" asChild>
+                    <a href={playStoreUrl} target="_blank" rel="noopener noreferrer">Google Play</a>
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Desktop QR code */}
+        {/* Desktop QR */}
         <div className="hidden md:flex mt-3 items-center gap-3">
           <div className="shrink-0 rounded-lg border border-border overflow-hidden bg-white p-1">
             <img
@@ -121,14 +155,17 @@ const AppDownloadBanner = () => {
               loading="lazy"
             />
           </div>
-          <div className="flex-1">
+          <div className="flex flex-1 flex-col gap-2">
             <p className="text-sm font-medium text-foreground flex items-center gap-2">
               <QrCode className="h-4 w-4 text-primary" />
               Telefonunuzla skan edin
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground">
               Kameranızı QR koda yaxınlaşdırın və saytı mobil cihazınızda açın.
             </p>
+            <Button size="sm" variant="outline" className="w-fit gap-1 text-xs" onClick={downloadQR}>
+              <Download className="h-3.5 w-3.5" /> QR-ni yüklə
+            </Button>
           </div>
         </div>
       </div>
