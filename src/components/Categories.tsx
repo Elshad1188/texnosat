@@ -55,7 +55,7 @@ const Categories = () => {
   return (
     <section className="py-6">
       <div className="container mx-auto px-4">
-        <div className="flex gap-5 overflow-x-auto pb-3 scrollbar-hide -mx-4 px-4 lg:justify-center lg:flex-wrap lg:gap-6">
+        <div className="flex gap-5 overflow-x-auto pb-3 scrollbar-hide -mx-4 px-4 md:justify-center md:flex-wrap md:overflow-visible md:mx-0 md:px-0 lg:gap-6">
           {/* All categories */}
           <button
             onClick={() => navigate("/products")}
