@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Clock, Eye, Heart, MessageCircle, Share2, ArrowLeft, Loader2, Trash2 } from "lucide-react";
+import DOMPurify from "dompurify";
 
 interface Post {
   id: string;
@@ -187,7 +188,7 @@ const BlogPost = () => {
         )}
 
         <div className="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-display prose-img:rounded-lg prose-a:text-primary"
-          dangerouslySetInnerHTML={{ __html: post.content }} />
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content) }} />
 
         {tags.length > 0 && (
           <div className="mt-8 flex flex-wrap gap-2">

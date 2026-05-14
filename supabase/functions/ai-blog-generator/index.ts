@@ -27,16 +27,38 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabase = createClient(supabaseUrl, serviceKey);
+
+    // --- Auth: only service role (cron) or admins can invoke ---
+    const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
+    const isServiceRole = token && token === serviceKey;
+    let isAdmin = false;
+    if (!isServiceRole) {
+      if (!token) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const authClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
+      const { data: { user }, error: authErr } = await authClient.auth.getUser(token);
+      if (authErr || !user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const { data: roleRow } = await supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
+      if (!roleRow) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      isAdmin = true;
+    }
 
     // Check toggle
     const { data: setting } = await supabase
       .from("site_settings").select("value").eq("key", "ai_blog_auto").maybeSingle();
     const enabled = setting?.value?.enabled === true;
-    const force = new URL(req.url).searchParams.get("force") === "1";
+    // Force bypass only allowed for admins (not anon)
+    const force = (isServiceRole || isAdmin) && new URL(req.url).searchParams.get("force") === "1";
     if (!enabled && !force) {
       return new Response(JSON.stringify({ skipped: true, reason: "disabled" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } });
