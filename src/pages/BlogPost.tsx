@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Clock, Eye, Heart, MessageCircle, Share2, ArrowLeft, Loader2, Trash2 } from "lucide-react";
+import DOMPurify from "dompurify";
 
 interface Post {
   id: string;
