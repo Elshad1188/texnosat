@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { iconMap } from "@/lib/icons";
 import { useTranslation } from "react-i18next";
 import { usePlatformMode } from "@/hooks/usePlatformMode";
+import { generateQRCodeURL } from "@/utils/qr";
 
 const Header = () => {
   const { t } = useTranslation();
