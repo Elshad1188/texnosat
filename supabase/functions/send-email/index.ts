@@ -13,10 +13,55 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnon = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // --- Authentication & authorization ---
+    const authHeader = req.headers.get("Authorization") || "";
+    if (!authHeader.toLowerCase().startsWith("bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const token = authHeader.slice(7).trim();
+    const userClient = createClient(supabaseUrl, supabaseAnon, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+    const { data: userData, error: userAuthError } = await userClient.auth.getUser();
+    if (userAuthError || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const callerId = userData.user.id;
+    const callerEmail = userData.user.email;
+
+    const { data: isAdminData } = await supabase.rpc("has_role", {
+      _user_id: callerId,
+      _role: "admin",
+    });
+    const isAdmin = !!isAdminData;
 
     const bodyJson = await req.json().catch(() => ({}));
     const { to, to_user_id, subject, body, template, template_vars } = bodyJson;
+
+    // Non-admins can only send email to themselves
+    if (!isAdmin) {
+      if (to_user_id && to_user_id !== callerId) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (to && callerEmail && to.toLowerCase() !== callerEmail.toLowerCase()) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     // Resolve email from user_id if needed
     let recipientEmail = to;
