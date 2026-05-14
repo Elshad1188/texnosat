@@ -140,10 +140,17 @@ Deno.serve(async (req) => {
         });
       }
     } else {
-      const authHeader = req.headers.get('Authorization');
-      const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
-      if (!authHeader || !anonKey || !authHeader.includes(anonKey)) {
-        console.log('Cron auth check - using service key verification');
+      // Cron mode requires service-role JWT or X-Cron-Secret header
+      const cronSecret = Deno.env.get('CRON_SECRET');
+      const providedSecret = req.headers.get('x-cron-secret');
+      const authHeader = req.headers.get('Authorization') || '';
+      const token = authHeader.toLowerCase().startsWith('bearer ') ? authHeader.slice(7).trim() : '';
+      const isServiceRole = token && token === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+      const cronOk = cronSecret && providedSecret && providedSecret === cronSecret;
+      if (!isServiceRole && !cronOk) {
+        return new Response(JSON.stringify({ error: 'Unauthorized cron call' }), {
+          status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
     }
 
