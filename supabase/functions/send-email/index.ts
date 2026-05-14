@@ -175,8 +175,8 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
-    console.error("Email send fatal error:", error);
-    return new Response(JSON.stringify({ error: error.message, stack: error.stack }), {
+    console.error("Email send fatal error:", error?.message, error?.stack);
+    return new Response(JSON.stringify({ error: "Email göndərilə bilmədi" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
