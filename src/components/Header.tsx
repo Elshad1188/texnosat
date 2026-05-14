@@ -1,4 +1,4 @@
-import { Plus, User, Heart, Menu, X, LogOut, Store, ShieldCheck, MessageCircle, Wallet, Phone, Mail, MapPin, FileText, FolderTree, Play, Home, CircuitBoard, Trophy, BookOpen, Smartphone, Apple, Download } from "lucide-react";
+import { Plus, User, Heart, Menu, X, LogOut, Store, ShieldCheck, MessageCircle, Wallet, Phone, Mail, MapPin, FileText, FolderTree, Play, Home, CircuitBoard, Trophy, BookOpen, Smartphone, Apple, QrCode, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { iconMap } from "@/lib/icons";
 import { useTranslation } from "react-i18next";
 import { usePlatformMode } from "@/hooks/usePlatformMode";
+import { generateQRCodeURL } from "@/utils/qr";
 
 const Header = () => {
   const { t } = useTranslation();
@@ -282,6 +283,45 @@ const Header = () => {
               {/* App downloads */}
               <div className="p-4">
                 <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tətbiqi yüklə</h4>
+
+                {/* QR Code */}
+                <div className="mb-3 flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-3">
+                  <div className="shrink-0 rounded bg-white p-0.5">
+                    <img
+                      src={generateQRCodeURL(typeof window !== "undefined" ? window.location.origin : "https://elan24.az", 100)}
+                      alt="Elan24 QR kodu"
+                      className="h-20 w-20"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="flex flex-1 flex-col gap-1.5">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <QrCode className="h-3.5 w-3.5 text-primary" />
+                      Telefonunuzla skan edin
+                    </p>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const url = generateQRCodeURL(typeof window !== "undefined" ? window.location.origin : "https://elan24.az", 512);
+                          const res = await fetch(url);
+                          const blob = await res.blob();
+                          const blobUrl = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = blobUrl;
+                          a.download = "elan24-qr.png";
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                          URL.revokeObjectURL(blobUrl);
+                        } catch (e) { console.error("QR download failed", e); }
+                      }}
+                      className="inline-flex items-center gap-1.5 w-fit rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                    >
+                      <Download className="h-3.5 w-3.5" /> QR-ni yüklə
+                    </button>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={installAndroid}
