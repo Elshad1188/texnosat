@@ -91,7 +91,7 @@ const StoresSlider = () => {
         {/* Slider */}
         <div
           ref={scrollRef}
-          className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide -mx-4 px-4 mask-fade-edges"
+          className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide -mx-4 px-4 mask-fade-edges lg:justify-center"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {stores.map((store: any) => (
