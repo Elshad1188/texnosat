@@ -188,7 +188,7 @@ const BlogPost = () => {
         )}
 
         <div className="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-display prose-img:rounded-lg prose-a:text-primary"
-          dangerouslySetInnerHTML={{ __html: post.content }} />
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content) }} />
 
         {tags.length > 0 && (
           <div className="mt-8 flex flex-wrap gap-2">
