@@ -610,16 +610,12 @@ const Messages = () => {
   const deleteConversation = useMutation({
     mutationFn: async (convoId: string) => {
       if (!user) throw new Error("İstifadəçi tapılmadı");
-      const { data, error } = await supabase
-        .from("conversations")
-        .delete()
-        .eq("id", convoId)
-        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
-        .select("id")
-        .maybeSingle();
+      const { data, error } = await supabase.rpc("delete_conversation_for_user", {
+        _conversation_id: convoId,
+      });
       if (error) throw error;
       if (!data) throw new Error("Söhbət silinə bilmədi");
-      return data.id;
+      return convoId;
     },
     onSuccess: (deletedConversationId) => {
       removeConversationFromCache(deletedConversationId);
