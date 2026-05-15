@@ -142,7 +142,9 @@ Deno.serve(async (req) => {
         }
       }
     } else {
-      if (!isTopUp) {
+      if (isContest) {
+        await supabase.from("site_settings").delete().eq("key", `contest_${order_id}`);
+      } else if (!isTopUp) {
         // Payment failed for order
         await supabase.from("orders").update({
           status: "cancelled",
