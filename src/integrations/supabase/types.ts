@@ -480,6 +480,180 @@ export type Database = {
         }
         Relationships: []
       }
+      contest_invites: {
+        Row: {
+          contest_id: string
+          created_at: string
+          id: string
+          invited_user_id: string
+          inviter_user_id: string
+        }
+        Insert: {
+          contest_id: string
+          created_at?: string
+          id?: string
+          invited_user_id: string
+          inviter_user_id: string
+        }
+        Update: {
+          contest_id?: string
+          created_at?: string
+          id?: string
+          invited_user_id?: string
+          inviter_user_id?: string
+        }
+        Relationships: []
+      }
+      contest_participants: {
+        Row: {
+          amount_paid: number
+          contest_id: string
+          created_at: string
+          entries_count: number
+          id: string
+          invites_count: number
+          paid_at: string
+          referral_code: string
+          user_id: string
+        }
+        Insert: {
+          amount_paid?: number
+          contest_id: string
+          created_at?: string
+          entries_count?: number
+          id?: string
+          invites_count?: number
+          paid_at?: string
+          referral_code: string
+          user_id: string
+        }
+        Update: {
+          amount_paid?: number
+          contest_id?: string
+          created_at?: string
+          entries_count?: number
+          id?: string
+          invites_count?: number
+          paid_at?: string
+          referral_code?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      contest_settings: {
+        Row: {
+          bonus_balance_amount: number
+          commission_pct: number
+          contest_description: string
+          contest_title: string
+          entry_fee: number
+          id: number
+          is_enabled: boolean
+          min_invites_to_win: number
+          rollover_pct: number
+          rules_text: string
+          second_pct: number
+          third_pct: number
+          updated_at: string
+          winner_pct: number
+        }
+        Insert: {
+          bonus_balance_amount?: number
+          commission_pct?: number
+          contest_description?: string
+          contest_title?: string
+          entry_fee?: number
+          id?: number
+          is_enabled?: boolean
+          min_invites_to_win?: number
+          rollover_pct?: number
+          rules_text?: string
+          second_pct?: number
+          third_pct?: number
+          updated_at?: string
+          winner_pct?: number
+        }
+        Update: {
+          bonus_balance_amount?: number
+          commission_pct?: number
+          contest_description?: string
+          contest_title?: string
+          entry_fee?: number
+          id?: number
+          is_enabled?: boolean
+          min_invites_to_win?: number
+          rollover_pct?: number
+          rules_text?: string
+          second_pct?: number
+          third_pct?: number
+          updated_at?: string
+          winner_pct?: number
+        }
+        Relationships: []
+      }
+      contests: {
+        Row: {
+          created_at: string
+          finalized_at: string | null
+          id: string
+          invites_count: number
+          participants_count: number
+          second_amount: number | null
+          second_id: string | null
+          status: string
+          third_amount: number | null
+          third_id: string | null
+          total_pool: number
+          week_end: string
+          week_start: string
+          winner_amount: number | null
+          winner_cover_url: string | null
+          winner_id: string | null
+          winner_note: string | null
+          winner_video_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          finalized_at?: string | null
+          id?: string
+          invites_count?: number
+          participants_count?: number
+          second_amount?: number | null
+          second_id?: string | null
+          status?: string
+          third_amount?: number | null
+          third_id?: string | null
+          total_pool?: number
+          week_end: string
+          week_start: string
+          winner_amount?: number | null
+          winner_cover_url?: string | null
+          winner_id?: string | null
+          winner_note?: string | null
+          winner_video_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          finalized_at?: string | null
+          id?: string
+          invites_count?: number
+          participants_count?: number
+          second_amount?: number | null
+          second_id?: string | null
+          status?: string
+          third_amount?: number | null
+          third_id?: string | null
+          total_pool?: number
+          week_end?: string
+          week_start?: string
+          winner_amount?: number | null
+          winner_cover_url?: string | null
+          winner_id?: string | null
+          winner_note?: string | null
+          winner_video_url?: string | null
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           buyer_id: string
@@ -2193,6 +2367,8 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      finalize_current_contest: { Args: never; Returns: Json }
+      get_or_create_current_contest: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2222,6 +2398,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      process_contest_join: { Args: { _user_id: string }; Returns: Json }
       process_referral: {
         Args: { _new_user_id: string; _referral_code: string }
         Returns: boolean
@@ -2234,6 +2411,10 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      register_contest_invite: {
+        Args: { _referral_code: string }
+        Returns: Json
       }
       reset_user_spin_cooldown: { Args: { _user_id: string }; Returns: Json }
       spend_balance: {
