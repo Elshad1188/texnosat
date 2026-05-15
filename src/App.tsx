@@ -44,6 +44,9 @@ import Orders from "./pages/Orders";
 import ComparePage from "./pages/ComparePage";
 import CompareBar from "./components/CompareBar";
 import SpinWheelPopup from "./components/SpinWheelPopup";
+import Contest from "./pages/Contest";
+import ContestMe from "./pages/ContestMe";
+import ContestReferral from "./pages/ContestReferral";
 import { usePlatformMode } from "@/hooks/usePlatformMode";
 
 const queryClient = new QueryClient();
@@ -100,6 +103,9 @@ const AppWrapper = () => {
         {showSpinWin && <Route path="/spin-win" element={<SpinWin />} />}
         {showOrders && <Route path="/orders" element={<Orders />} />}
         {showCompare && <Route path="/compare" element={<ComparePage />} />}
+        <Route path="/contest" element={<Contest />} />
+        <Route path="/contest/me" element={<ContestMe />} />
+        <Route path="/r/:code" element={<ContestReferral />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {showCompare && <CompareBar />}
