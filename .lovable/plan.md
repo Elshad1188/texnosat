@@ -1,89 +1,125 @@
-## Məqsəd
 
-Ana səhifədə deal-type tabs içindəki **"Otaq yoldaşı"** seçimini ləğv edib onun yerinə **"Hazır biznes"** kateqoriyası gətirmək. Hazır biznes — daşınmaz əmlakdan fərqli olaraq tam fəaliyyətdə olan biznes obyektinin (kafe, market, salon, istehsalat və s.) avadanlıqları + müştəri bazası + lokasiyası ilə birgə satışı/icarəsidir, ona görə öz xüsusi sahələri olmalıdır. Həmçinin bütün kateqoriyalarda **"Razılaşma yolu ilə"** qiymət seçimi əlavə olunacaq.
+# Həftəlik Dəvət Yarışması ("Elan24 Çempionatı")
 
-## 1) Deal-type tabs dəyişikliyi
+## Konsept
 
-`src/components/DealTypeTabs.tsx` — `roommate` sətrini silib yerinə əlavə edirik:
-```ts
-{ value: "business", label: "Hazır biznes", icon: Briefcase }
+İstifadəçi 1 AZN ödəyib həftəlik yarışmaya qoşulur. Ona unikal dəvət linki verilir. Həftə ərzində ən çox **yeni qeydiyyatlı** dostu dəvət edən qalib olur və **toplanmış fondun 70%-ni** Epoint vasitəsilə birbaşa kartına köçürülür. Hər həftə qalibin video reportajı saytda və sosial şəbəkələrdə paylaşılır → viral effekt.
+
+## Niyə viral işləyəcək
+
+- **Hər iştirakçı = pulsuz marketinq agenti** (qazanmaq üçün özü saytı yayır)
+- **1 AZN psixoloji baryer aşağıdır** — "niyə də yox" effekti
+- **Canlı liderlər cədvəli** — rəqabət hissi, davamlı qayıdış
+- **Həftəlik qalib hekayəsi** — yeni emosional kontent hər 7 gündən bir
+- **Real pul mükafatı** — şəkillərdə pul dəstəsi tutmuş qalib = ən güclü sosial sübut
+
+## Fond bölgüsü (şəffaflıq)
+
+Toplanan məbləğ məsələn 1000 AZN olarsa:
+- **70% (700 AZN)** → həftənin qalibinə (Epoint köçürmə)
+- **15% (150 AZN)** → 2-ci və 3-cü yerə (75 AZN hər biri)
+- **10% (100 AZN)** → növbəti həftənin "starter fonduna" (yığım azalmasın)
+- **5% (50 AZN)** → platforma komissiyası (Epoint xərcini örtür)
+
+Bu nisbətlər admin paneldən tənzimlənən olacaq.
+
+## Hüquqi forma (qumar olmamaq üçün)
+
+1 AZN **"iştirak haqqı"** kimi yox, **"VIP iştirakçı statusu" satışı** kimi rəsmiləşdirilir:
+- İstifadəçi 1 AZN ödəyir → balansına **1 AZN bonus** + **VIP iştirakçı nişanı** alır
+- Yarışmaya avtomatik qoşulması — bu xidmətin **bonusudur**
+- Qalibin mükafatı **"reklam kompensasiyası / influencer ödənişi"** kimi qeydə alınır (qalib həftə ərzində saytı tanıdıb)
+- Bu, Azərbaycan qanunvericiliyinə görə qumar deyil, **promo kampaniyadır**
+
+## İstifadəçi axını
+
+```
+1. Ana səhifədə banner: "Bu həftə fond: 1,247 AZN — qoşul"
+2. /contest səhifəsi: izah + "1 AZN ilə qoşul" düyməsi
+3. Epoint ödənişi → balansa 1 AZN + VIP nişan
+4. Unikal link verilir: elan24.az/r/USERCODE
+5. Şəxsi panel: "Sənin dəvətlərin: 7 | Reytinqdə yerin: 23"
+6. Liderlər cədvəli (canlı, top 50)
+7. Bazar günü 23:59 — qalib elan olunur
+8. Bazar ertəsi: video reportaj + ödəniş sübutu
+9. Yeni həftə başlayır
 ```
 
-Tab ikonu `Briefcase` (lucide). Beləliklə tabs sırası: **Alqı-satqı · Kirayə · Günlük · Hazır biznes** (yenə də 4 sütun).
+## Texniki struktur
 
-## 2) "Hazır biznes" kateqoriyasını yaratmaq
+### Yeni database cədvəlləri
 
-`src/data/categories.ts` faylına yeni root kateqoriya əlavə (`obyektler`-dən sonra):
-```ts
-{
-  id: "hazir-biznes",
-  name: "Hazır biznes",
-  slug: "hazir-biznes",
-  icon: "Briefcase",
-  color: "bg-fuchsia-500",
-  subCategories: [
-    { id: "kafe-restoran",   name: "Kafe / Restoran",     slug: "hazir-biznes-kafe" },
-    { id: "market",          name: "Market / Mağaza",     slug: "hazir-biznes-market" },
-    { id: "gozellik",        name: "Gözəllik salonu",     slug: "hazir-biznes-gozellik" },
-    { id: "istehsalat",      name: "İstehsalat",          slug: "hazir-biznes-istehsalat" },
-    { id: "xidmet",          name: "Xidmət sahəsi",       slug: "hazir-biznes-xidmet" },
-    { id: "online",          name: "Onlayn biznes",       slug: "hazir-biznes-online" },
-    { id: "diger",           name: "Digər",               slug: "hazir-biznes-diger" },
-  ],
-},
-```
+- **`contests`** — həftəlik yarışmalar (id, week_start, week_end, total_pool, winner_id, status)
+- **`contest_participants`** — iştirakçılar (id, contest_id, user_id, referral_code, invites_count, paid_at, rank)
+- **`contest_invites`** — uğurlu dəvətlər (id, contest_id, inviter_user_id, invited_user_id, created_at)
+- **`contest_settings`** — admin parametrləri (entry_fee, winner_pct, second_pct, third_pct, rollover_pct, commission_pct)
 
-## 3) Hazır biznes üçün xüsusi sahələr (category_fields)
+### Frontend səhifələri
 
-Yeni migrasiya `hazir-biznes` (root + 7 alt slug) üçün aşağıdakı sahələri yaradır:
+- **`/contest`** — əsas yarışma səhifəsi (fond, geri sayım, qoşulma düyməsi, liderlər cədvəli, qaydalar)
+- **`/contest/me`** — şəxsi panel (mənim linkim, dəvətlərim, reytinq, paylaş düymələri WhatsApp/Telegram/Instagram)
+- **`/contest/winners`** — keçmiş qaliblər (foto + video + məbləğ)
+- **`/r/:code`** — referral landing (qeydiyyat formuna yönləndirir, code-u sessionStorage-də saxlayır)
 
-| field_name | label | type | options |
-|---|---|---|---|
-| deal_type | Əməliyyat növü | select | Satılır, Kirayəyə verilir, Pay satılır |
-| business_area_m2 | Sahə (m²) | number | — |
-| monthly_revenue | Aylıq dövriyyə (AZN) | number | — |
-| monthly_profit | Aylıq xalis gəlir (AZN) | number | — |
-| staff_count | İşçi sayı | number | — |
-| operating_years | Neçə ildir fəaliyyətdədir | number | — |
-| rent_included | İcarə daxildir | select | Bəli, Xeyr, Əmlak özümüzdür |
-| equipment_included | Avadanlıq daxildir | select | Bəli, Xeyr, Qismən |
-| license_status | Lisenziya / icazə | select | Var, Yoxdur, Tələb olunmur |
-| reason_for_sale | Satış səbəbi | text | — |
+### Ana səhifə inteqrasiyası
 
-Bütün bu sahələr üçün `is_active=true`, `sort_order` ardıcıl. Admin **Kateqoriya sahələri** panelindən sonradan redaktə edə biləcək (mövcud `AdminCategoryFieldsManager` ilə).
+- **HeroSection altında**: parlaq qızıl/yaşıl banner — "🏆 Bu həftə fond: X AZN | Qaliblərə qədər: 3 gün 14 saat"
+- **MobileBottomNav**: yeni "Yarışma" ikonu (qızıl trofey, pulse animasiya)
+- **Header**: balans yanında kiçik "🏆" nişanı (yarışmadasansa)
 
-## 4) "Razılaşma yolu ilə" qiymət seçimi (bütün kateqoriyalar üçün)
+### Edge funksiyalar
 
-CreateListing formuna qiymət bloku yanında **checkbox** əlavə olunur:
-- Label: **"Qiymət razılaşma yolu ilədir"**
-- Aktivləşəndə: qiymət inputu disabled olur, `price = 0` saxlanılır, `custom_fields.price_negotiable = true`.
+- **`contest-join`** — Epoint ödəniş başladır, callback-də iştirakçı yaradır
+- **`contest-track-invite`** — yeni qeydiyyat zamanı referral code yoxlanır, uğurludursa contest_invites-ə yazılır
+- **`contest-finalize-week`** — pg_cron ilə hər bazar 23:59-da işə düşür: qalibləri seçir, balanslara mükafat yazır, payout_request yaradır, bildiriş göndərir
 
-Göstərilmə (ListingCard, ProductDetail, share text):
-- `custom_fields?.price_negotiable === true` olanda qiymət əvəzinə **"Razılaşma yolu ilə"** yazısı çıxır (üç yerdə də).
+### Admin panel (yeni tab)
 
-Bu yalnız front-end + custom_fields istifadə edir, sxem dəyişmir.
+- Cari həftə statistikası (iştirakçı sayı, fond, top 10)
+- Keçmiş həftələr siyahısı
+- Parametrlər (giriş haqqı, faizlər)
+- Qalibə video reportaj yükləmə (cover_url + video_url)
+- Manual finalize düyməsi (test üçün)
 
-## 5) Mövcud kodu təmizləmək
+### Viral mexanikalar
 
-- `src/pages/CreateListing.tsx` (sətir 387-390): `roommate` mappinqini silib yerinə `business` (label "Hazır biznes" / "biznes") mappinqi əlavə.
-- `src/pages/Products.tsx` (sətir 163): `roommate` filterini `business` filterinə dəyişmək (`norm === "business" || norm.includes("biznes")`).
-- DB-də `validate_listing_deal_type` triggerini yeniləyirik: icazəli dəyərlər `('sale','rent','daily','business')`. Migrasiya əvvəlcə mövcud `roommate` qeydlərini `sale`-ə migrasiya edir (bina.az-da real istifadə yoxdur).
+- **Paylaşma düymələri**: WhatsApp/Telegram/Instagram/Facebook — hazır mətnlə ("Mən Elan24 yarışmasındayam, qoşul: link")
+- **Push bildiriş**: hər səhər "Reytinqdə X yerdəsən, daha 2 dəvət ilə top 10-a düşə bilərsən"
+- **Email**: həftə sonu xatırlatma, qalib elanı
+- **Story-friendly qrafika**: şəxsi panel-də "Story-yə paylaş" düyməsi → istifadəçinin reytinqi və linki ilə avtomatik şəkil generasiya (canvas)
 
-## 6) Texniki addımlar yekun
+## Mərhələlər (4 mərhələ)
 
-1. **DB migrasiyası**:
-   - `validate_listing_deal_type` funksiyasını yeniləmək (`roommate` → `business`).
-   - Mövcud `listings.deal_type='roommate'` qeydlərini `'sale'`-ə UPDATE.
-   - `category_fields`-ə `hazir-biznes` üçün 10 sətir INSERT (root slug üçün).
-2. **Front-end**:
-   - `DealTypeTabs.tsx` — tab dəyişdir.
-   - `categories.ts` — yeni root kateqoriya.
-   - `CreateListing.tsx` — deal mapping + negotiable checkbox.
-   - `Products.tsx` — filter mapping.
-   - `ListingCard.tsx` + `ProductDetail.tsx` — "Razılaşma yolu ilə" göstəricisi.
+### Mərhələ 1 — Backbone (database + admin)
+- 4 cədvəli yarat (RLS ilə)
+- Admin paneldə "Yarışma" tab — parametrlər + cari həftə görüntüsü
+- `contest-finalize-week` edge function (cron olmadan, manual test)
 
-## Qeyd
+### Mərhələ 2 — İstifadəçi axını
+- `/contest` səhifəsi (qoşulma + canlı fond + geri sayım + liderlər)
+- `/contest/me` şəxsi panel (link + paylaşma düymələri)
+- `/r/:code` landing + Auth.tsx-də referral code emalı
+- `contest-join` Epoint inteqrasiyası
+- `contest-track-invite` yeni qeydiyyatda
 
-`DEAL_TYPES` icon `Users` artıq istifadə olunmadığı üçün importdan silinəcək. Hazır biznes elanları üçün `category` sütunu `hazir-biznes` slug-u alacaq, root kateqoriya kartları yığını avtomatik yenilənəcək.
+### Mərhələ 3 — Avtomatlaşdırma + bildirişlər
+- pg_cron həftəlik finalize
+- Push/email bildirişlər (qoşulma, reytinq dəyişikliyi, qalib elanı)
+- Ana səhifə banneri + MobileBottomNav ikonu
+- `/contest/winners` keçmiş qaliblər səhifəsi
 
-Təsdiq edin — implementasiyaya başlayım.
+### Mərhələ 4 — Viral təkmilləşdirmələr
+- Story üçün avtomatik şəkil generasiyası
+- Header-də 🏆 nişanı
+- Admin video reportaj yükləmə
+- Statistika dashboard (admin üçün)
+
+## İlk addım təklifi
+
+Mərhələ 1-dən başlayaq: database strukturu + admin parametrlər. Bu, qalan hər şeyin əsası olacaq və 1-2 saat içində hazır olar. Sonra Mərhələ 2 ilə canlı istifadəçi axını qurarıq.
+
+## Açıq qalan suallar (sonra qərar verə bilərik)
+
+- **Minimum dəvət şərti** — qalib olmaq üçün ən azı neçə dəvət lazımdır? (təklif: 3, ki "1 dəvət ilə uddum" hadisəsi olmasın)
+- **Eyni IP/cihazdan saxta dəvət** — necə qarşısını alaq? (təklif: yalnız Epoint-də ödəniş etmiş referral hesablanır → fırıldaq qeyri-mümkün)
+- **Yenidən qoşulma** — eyni həftədə 2-ci dəfə 1 AZN ödəyib şansını ikiqat artıra bilər? (təklif: bəli, fond böyüsün)

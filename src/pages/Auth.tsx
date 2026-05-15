@@ -71,17 +71,19 @@ const Auth = () => {
         toast({ title: "Hesab yaradıldı!", description: "Xoş gəldiniz!" });
         if (autoReferralCode) {
           setTimeout(async () => {
+            const upper = autoReferralCode.toUpperCase();
+            const { data: { user: newUser } } = await supabase.auth.getUser();
+            if (!newUser) return;
+            // Try classic referral
             const { data: refSettings } = await supabase
               .from("site_settings").select("value").eq("key", "referral").maybeSingle();
             const enabled = refSettings?.value ? (refSettings.value as any).referral_enabled !== false : true;
-            if (!enabled) return;
-            const { data: { user: newUser } } = await supabase.auth.getUser();
-            if (newUser) {
-              await supabase.rpc("process_referral", {
-                _referral_code: autoReferralCode.toUpperCase(),
-                _new_user_id: newUser.id,
-              });
+            if (enabled) {
+              await supabase.rpc("process_referral", { _referral_code: upper, _new_user_id: newUser.id });
             }
+            // Try contest invite
+            await supabase.rpc("register_contest_invite", { _referral_code: upper });
+            sessionStorage.removeItem("contest_ref");
           }, 2000);
         }
         navigate("/");
