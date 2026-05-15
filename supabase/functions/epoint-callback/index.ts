@@ -56,11 +56,21 @@ Deno.serve(async (req) => {
       return new Response("Missing order_id", { status: 400 });
     }
 
-    // Check if this is a balance top-up
+    // Check payment kind
     const isTopUp = String(order_id).startsWith("topup_");
+    const isContest = String(order_id).startsWith("contest_");
 
     if (status === "success") {
-      if (isTopUp) {
+      if (isContest) {
+        // Handle contest entry payment
+        const { data: meta } = await supabase
+          .from("site_settings").select("value").eq("key", `contest_${order_id}`).maybeSingle();
+        if (meta?.value) {
+          const userId = (meta.value as any).user_id;
+          await supabase.rpc("process_contest_join", { _user_id: userId });
+          await supabase.from("site_settings").delete().eq("key", `contest_${order_id}`);
+        }
+      } else if (isTopUp) {
         // Handle balance top-up
         const { data: topupMeta } = await supabase
           .from("site_settings")
