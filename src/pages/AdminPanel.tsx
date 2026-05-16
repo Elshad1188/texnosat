@@ -43,6 +43,7 @@ import AdminEpointManager from "@/components/admin/AdminEpointManager";
 import AdminActivitySummary from "@/components/admin/AdminActivitySummary";
 import AdminBlogManager from "@/components/admin/AdminBlogManager";
 import AdminTranslationsManager from "@/components/admin/AdminTranslationsManager";
+import AdminContestManager from "@/components/admin/AdminContestManager";
 import {
   ShieldCheck,
   ShieldAlert,
@@ -74,6 +75,7 @@ import {
   Wallet,
   Gift,
   Plug,
+  Trophy,
   Video,
   Globe,
   ChevronLeft,
@@ -517,6 +519,9 @@ const AdminPanel = () => {
                 <TabsTrigger value="video" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <Video className="h-3.5 w-3.5" /> Video
                 </TabsTrigger>
+                <TabsTrigger value="contest" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <Trophy className="h-3.5 w-3.5" /> Yarışma
+                </TabsTrigger>
                 <TabsTrigger value="settings" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <Settings className="h-3.5 w-3.5" /> Tənzimləmələr
                 </TabsTrigger>
@@ -550,7 +555,10 @@ const AdminPanel = () => {
             <AdminNotificationSender />
           </TabsContent>
 
-          {/* Translations */}
+          {/* Contest */}
+          <TabsContent value="contest" className="mt-3">
+            <AdminContestManager />
+          </TabsContent>
           <TabsContent value="translations" className="mt-3">
             <AdminTranslationsManager />
           </TabsContent>
