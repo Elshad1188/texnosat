@@ -75,6 +75,7 @@ import {
   Wallet,
   Gift,
   Plug,
+  Trophy,
   Video,
   Globe,
   ChevronLeft,
