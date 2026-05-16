@@ -21,6 +21,9 @@ const Index = () => {
           <DealTypeTabs variant="navigate" />
         </section>
         <Categories />
+        <div className="container mx-auto px-4 mb-4">
+          <ContestBanner />
+        </div>
         <div className="container mx-auto px-4">
           <BannerDisplay position="home_top" />
         </div>
