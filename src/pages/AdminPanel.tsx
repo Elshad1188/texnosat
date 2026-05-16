@@ -518,6 +518,9 @@ const AdminPanel = () => {
                 <TabsTrigger value="video" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <Video className="h-3.5 w-3.5" /> Video
                 </TabsTrigger>
+                <TabsTrigger value="contest" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <Trophy className="h-3.5 w-3.5" /> Yarışma
+                </TabsTrigger>
                 <TabsTrigger value="settings" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <Settings className="h-3.5 w-3.5" /> Tənzimləmələr
                 </TabsTrigger>
