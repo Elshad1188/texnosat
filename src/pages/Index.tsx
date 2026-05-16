@@ -8,6 +8,7 @@ import LatestBlogPosts from "@/components/LatestBlogPosts";
 import Footer from "@/components/Footer";
 import DealTypeTabs from "@/components/DealTypeTabs";
 import SEOHead from "@/components/SEOHead";
+import ContestBanner from "@/components/ContestBanner";
 
 const Index = () => {
   return (
