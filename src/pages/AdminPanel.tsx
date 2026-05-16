@@ -555,7 +555,10 @@ const AdminPanel = () => {
             <AdminNotificationSender />
           </TabsContent>
 
-          {/* Translations */}
+          {/* Contest */}
+          <TabsContent value="contest" className="mt-3">
+            <AdminContestManager />
+          </TabsContent>
           <TabsContent value="translations" className="mt-3">
             <AdminTranslationsManager />
           </TabsContent>
