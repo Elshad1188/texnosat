@@ -8,6 +8,7 @@ import LatestBlogPosts from "@/components/LatestBlogPosts";
 import Footer from "@/components/Footer";
 import DealTypeTabs from "@/components/DealTypeTabs";
 import SEOHead from "@/components/SEOHead";
+import ContestBanner from "@/components/ContestBanner";
 
 const Index = () => {
   return (
@@ -20,6 +21,9 @@ const Index = () => {
           <DealTypeTabs variant="navigate" />
         </section>
         <Categories />
+        <div className="container mx-auto px-4 mb-4">
+          <ContestBanner />
+        </div>
         <div className="container mx-auto px-4">
           <BannerDisplay position="home_top" />
         </div>
