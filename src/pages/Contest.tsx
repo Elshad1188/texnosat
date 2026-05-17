@@ -86,6 +86,27 @@ const Contest = () => {
     enabled: !!contest?.id && !!user,
   });
 
+  const { data: recentInvites = 0 } = useQuery({
+    queryKey: ["contest-recent-invites", user?.id, settings?.free_join_window_hours],
+    queryFn: async () => {
+      if (!user) return 0;
+      const hours = Number(settings?.free_join_window_hours || 24);
+      const since = new Date(Date.now() - hours * 3600 * 1000).toISOString();
+      const { count } = await supabase
+        .from("referrals")
+        .select("id", { count: "exact", head: true })
+        .eq("referrer_id", user.id)
+        .gte("created_at", since);
+      return count || 0;
+    },
+    enabled: !!user,
+    refetchInterval: 30000,
+  });
+
+  const freeRequired = Number(settings?.min_invites_for_free_join || 5);
+  const freeWindowHours = Number(settings?.free_join_window_hours || 24);
+  const canFreeJoin = recentInvites >= freeRequired;
+
   const weekEnd = useMemo(() => contest?.week_end ? new Date(contest.week_end) : null, [contest?.week_end]);
   const timeLeft = weekEnd ? formatTimeLeft(weekEnd) : "—";
 
