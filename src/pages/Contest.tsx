@@ -25,6 +25,7 @@ const Contest = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [joining, setJoining] = useState(false);
+  const [freeJoining, setFreeJoining] = useState(false);
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
@@ -85,6 +86,27 @@ const Contest = () => {
     enabled: !!contest?.id && !!user,
   });
 
+  const { data: recentInvites = 0 } = useQuery({
+    queryKey: ["contest-recent-invites", user?.id, settings?.free_join_window_hours],
+    queryFn: async () => {
+      if (!user) return 0;
+      const hours = Number(settings?.free_join_window_hours || 24);
+      const since = new Date(Date.now() - hours * 3600 * 1000).toISOString();
+      const { count } = await supabase
+        .from("referrals")
+        .select("id", { count: "exact", head: true })
+        .eq("referrer_id", user.id)
+        .gte("created_at", since);
+      return count || 0;
+    },
+    enabled: !!user,
+    refetchInterval: 30000,
+  });
+
+  const freeRequired = Number(settings?.min_invites_for_free_join || 5);
+  const freeWindowHours = Number(settings?.free_join_window_hours || 24);
+  const canFreeJoin = recentInvites >= freeRequired;
+
   const weekEnd = useMemo(() => contest?.week_end ? new Date(contest.week_end) : null, [contest?.week_end]);
   const timeLeft = weekEnd ? formatTimeLeft(weekEnd) : "—";
 
@@ -110,6 +132,26 @@ const Contest = () => {
       toast({ title: "Xəta", description: err.message, variant: "destructive" });
     } finally {
       setJoining(false);
+    }
+  };
+
+  const handleFreeJoin = async () => {
+    if (!user) { navigate("/auth"); return; }
+    setFreeJoining(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("contest-free-join");
+      if (error) throw error;
+      if (data?.success) {
+        toast({ title: "🏆 Pulsuz qoşuldunuz!", description: "Uğurlar!" });
+        await refetch();
+        navigate("/contest/me");
+      } else {
+        throw new Error(data?.error || "Qoşulmaq mümkün olmadı");
+      }
+    } catch (err: any) {
+      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+    } finally {
+      setFreeJoining(false);
     }
   };
 
@@ -169,19 +211,36 @@ const Contest = () => {
                 Mənim panelim — {myParticipation.invites_count} dəvət
               </Button>
             ) : (
-              <Button
-                size="lg"
-                onClick={handleJoin}
-                disabled={joining}
-                className="w-full h-14 bg-white text-orange-600 hover:bg-white/90 font-bold text-base shadow-lg"
-              >
-                {joining ? <Loader2 className="h-5 w-5 animate-spin" /> : (
-                  <>🏆 Cəmi {Number(settings?.entry_fee || 1)} AZN ilə qoşul</>
+              <div className="space-y-2">
+                <Button
+                  size="lg"
+                  onClick={handleJoin}
+                  disabled={joining}
+                  className="w-full h-14 bg-white text-orange-600 hover:bg-white/90 font-bold text-base shadow-lg"
+                >
+                  {joining ? <Loader2 className="h-5 w-5 animate-spin" /> : (
+                    <>🏆 Cəmi {Number(settings?.entry_fee || 1)} AZN ilə qoşul</>
+                  )}
+                </Button>
+                {user && (
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={handleFreeJoin}
+                    disabled={freeJoining || !canFreeJoin}
+                    className="w-full h-12 bg-white/10 border-white/40 text-white hover:bg-white/20 font-semibold text-sm"
+                  >
+                    {freeJoining ? <Loader2 className="h-5 w-5 animate-spin" /> : canFreeJoin ? (
+                      <>🎁 Pulsuz qoşul ({recentInvites} dəvətin var)</>
+                    ) : (
+                      <>🎁 Pulsuz qoşulmaq: {recentInvites}/{freeRequired} dəvət (son {freeWindowHours} saat)</>
+                    )}
+                  </Button>
                 )}
-              </Button>
+              </div>
             )}
             <p className="text-[11px] text-white/80 mt-2 text-center">
-              + {Number(settings?.bonus_balance_amount || 1)} AZN balansa bonus
+              + {Number(settings?.bonus_balance_amount || 1)} AZN balansa bonus (ödənişli qoşulmada)
             </p>
           </div>
         </div>

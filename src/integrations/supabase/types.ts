@@ -547,8 +547,10 @@ export type Database = {
           contest_description: string
           contest_title: string
           entry_fee: number
+          free_join_window_hours: number
           id: number
           is_enabled: boolean
+          min_invites_for_free_join: number
           min_invites_to_win: number
           rollover_pct: number
           rules_text: string
@@ -563,8 +565,10 @@ export type Database = {
           contest_description?: string
           contest_title?: string
           entry_fee?: number
+          free_join_window_hours?: number
           id?: number
           is_enabled?: boolean
+          min_invites_for_free_join?: number
           min_invites_to_win?: number
           rollover_pct?: number
           rules_text?: string
@@ -579,8 +583,10 @@ export type Database = {
           contest_description?: string
           contest_title?: string
           entry_fee?: number
+          free_join_window_hours?: number
           id?: number
           is_enabled?: boolean
+          min_invites_for_free_join?: number
           min_invites_to_win?: number
           rollover_pct?: number
           rules_text?: string
@@ -2398,6 +2404,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      process_contest_free_join: { Args: { _user_id: string }; Returns: Json }
       process_contest_join: { Args: { _user_id: string }; Returns: Json }
       process_referral: {
         Args: { _new_user_id: string; _referral_code: string }
