@@ -135,6 +135,26 @@ const Contest = () => {
     }
   };
 
+  const handleFreeJoin = async () => {
+    if (!user) { navigate("/auth"); return; }
+    setFreeJoining(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("contest-free-join");
+      if (error) throw error;
+      if (data?.success) {
+        toast({ title: "🏆 Pulsuz qoşuldunuz!", description: "Uğurlar!" });
+        await refetch();
+        navigate("/contest/me");
+      } else {
+        throw new Error(data?.error || "Qoşulmaq mümkün olmadı");
+      }
+    } catch (err: any) {
+      toast({ title: "Xəta", description: err.message, variant: "destructive" });
+    } finally {
+      setFreeJoining(false);
+    }
+  };
+
   if (settings && !settings.is_enabled) {
     return (
       <div className="min-h-screen bg-background">
