@@ -173,7 +173,7 @@ const Header = () => {
   const address = siteSettings?.contact_address || "Bakı, Azərbaycan";
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-border bg-card">
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
           {/* Hamburger Menu */}
