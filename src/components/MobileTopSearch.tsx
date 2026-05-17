@@ -33,7 +33,7 @@ const MobileTopSearch = () => {
   return (
     <div
       className={cn(
-        "fixed top-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-xl border-b border-border 2xl:hidden transition-transform duration-300 ease-out will-change-transform",
+        "fixed top-0 left-0 right-0 z-40 bg-card border-b border-border 2xl:hidden transition-transform duration-300 ease-out will-change-transform",
         visible ? "translate-y-0" : "-translate-y-full"
       )}
       style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
