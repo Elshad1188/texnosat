@@ -25,6 +25,7 @@ const Contest = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [joining, setJoining] = useState(false);
+  const [freeJoining, setFreeJoining] = useState(false);
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
