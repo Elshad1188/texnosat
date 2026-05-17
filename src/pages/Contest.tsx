@@ -133,10 +133,10 @@ const Contest = () => {
       <main className="container mx-auto max-w-3xl px-4 py-6 pb-24">
         {/* Hero */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-400 via-orange-500 to-pink-500 p-6 sm:p-8 text-white shadow-xl mb-6">
-          <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-          <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+          <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/10" />
+          <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-white/10" />
           <div className="relative">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur text-xs font-bold mb-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-xs font-bold mb-3">
               <Sparkles className="h-3.5 w-3.5" /> HƏFTƏLİK YARIŞMA
             </div>
             <h1 className="text-3xl sm:text-4xl font-bold font-display mb-2">
@@ -147,11 +147,11 @@ const Contest = () => {
             </p>
 
             <div className="grid grid-cols-2 gap-3 mb-5">
-              <div className="rounded-2xl bg-white/15 backdrop-blur p-4">
+              <div className="rounded-2xl bg-white/15 p-4">
                 <div className="text-[10px] uppercase tracking-wider text-white/80 mb-1">Cari fond</div>
                 <div className="text-3xl font-black">{Number(contest?.total_pool || 0).toFixed(0)} ₼</div>
               </div>
-              <div className="rounded-2xl bg-white/15 backdrop-blur p-4">
+              <div className="rounded-2xl bg-white/15 p-4">
                 <div className="text-[10px] uppercase tracking-wider text-white/80 mb-1 flex items-center gap-1">
                   <Clock className="h-3 w-3" /> Qalıb
                 </div>
