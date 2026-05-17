@@ -211,19 +211,36 @@ const Contest = () => {
                 Mənim panelim — {myParticipation.invites_count} dəvət
               </Button>
             ) : (
-              <Button
-                size="lg"
-                onClick={handleJoin}
-                disabled={joining}
-                className="w-full h-14 bg-white text-orange-600 hover:bg-white/90 font-bold text-base shadow-lg"
-              >
-                {joining ? <Loader2 className="h-5 w-5 animate-spin" /> : (
-                  <>🏆 Cəmi {Number(settings?.entry_fee || 1)} AZN ilə qoşul</>
+              <div className="space-y-2">
+                <Button
+                  size="lg"
+                  onClick={handleJoin}
+                  disabled={joining}
+                  className="w-full h-14 bg-white text-orange-600 hover:bg-white/90 font-bold text-base shadow-lg"
+                >
+                  {joining ? <Loader2 className="h-5 w-5 animate-spin" /> : (
+                    <>🏆 Cəmi {Number(settings?.entry_fee || 1)} AZN ilə qoşul</>
+                  )}
+                </Button>
+                {user && (
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={handleFreeJoin}
+                    disabled={freeJoining || !canFreeJoin}
+                    className="w-full h-12 bg-white/10 border-white/40 text-white hover:bg-white/20 font-semibold text-sm"
+                  >
+                    {freeJoining ? <Loader2 className="h-5 w-5 animate-spin" /> : canFreeJoin ? (
+                      <>🎁 Pulsuz qoşul ({recentInvites} dəvətin var)</>
+                    ) : (
+                      <>🎁 Pulsuz qoşulmaq: {recentInvites}/{freeRequired} dəvət (son {freeWindowHours} saat)</>
+                    )}
+                  </Button>
                 )}
-              </Button>
+              </div>
             )}
             <p className="text-[11px] text-white/80 mt-2 text-center">
-              + {Number(settings?.bonus_balance_amount || 1)} AZN balansa bonus
+              + {Number(settings?.bonus_balance_amount || 1)} AZN balansa bonus (ödənişli qoşulmada)
             </p>
           </div>
         </div>
