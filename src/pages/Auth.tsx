@@ -260,6 +260,19 @@ const Auth = () => {
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
+                  {mode === "register" && password.length > 0 && (
+                    <ul className="mt-2 space-y-1 rounded-md border border-border bg-muted/30 p-2 text-xs">
+                      {pwRules.map((r) => {
+                        const ok = r.test(password);
+                        return (
+                          <li key={r.key} className={`flex items-center gap-2 ${ok ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>
+                            {ok ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
+                            <span>{r.label[language === "ru" ? "ru" : "az"]}</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </div>
               )}
               {mode === "register" && (
