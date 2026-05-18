@@ -166,10 +166,8 @@ const Auth = () => {
       }
     } catch (error: any) {
       toast({
-        title: "Xəta",
-        description: error.message === "Invalid login credentials"
-          ? "E-mail və ya şifrə yanlışdır"
-          : error.message,
+        title: language === "ru" ? "Ошибка" : "Xəta",
+        description: translateAuthError(error?.message || "", language),
         variant: "destructive",
       });
     } finally {
