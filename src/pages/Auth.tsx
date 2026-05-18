@@ -224,11 +224,21 @@ const Auth = () => {
               )}
               {mode === "register" && (
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Mobil nömrə</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="phone" type="tel" placeholder="+994 50 123 45 67" value={phone} onChange={(e) => setPhone(e.target.value)} className="pl-10" required />
-                  </div>
+                  <Label htmlFor="phone">{language === "ru" ? "Мобильный номер" : "Mobil nömrə"}</Label>
+                  <PhoneInput
+                    international
+                    defaultCountry={defaultCountry}
+                    value={phone}
+                    onChange={(v) => setPhone(v || "")}
+                    className="phone-input-custom"
+                    placeholder={language === "ru" ? "Введите номер" : "Nömrəni daxil edin"}
+                  />
+                  {phone && !isValidPhoneNumber(phone) && (
+                    <p className="text-xs text-destructive flex items-center gap-1">
+                      <X className="h-3.5 w-3.5" />
+                      {language === "ru" ? "Некорректный номер" : "Nömrə düzgün deyil"}
+                    </p>
+                  )}
                 </div>
               )}
               <div className="space-y-2">
