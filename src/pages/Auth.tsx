@@ -78,6 +78,15 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { theme } = useTheme();
+  const { language } = useLanguage();
+
+  // Password rules + live validation
+  const pwRules = [
+    { key: "len", test: (p: string) => p.length >= 6, label: { az: "Minimum 6 simvol", ru: "Минимум 6 символов" } },
+    { key: "letter", test: (p: string) => /[A-Za-zÀ-ÿƏəĞğİıÖöŞşÜüÇç]/.test(p), label: { az: "Ən azı bir hərf", ru: "Хотя бы одна буква" } },
+    { key: "digit", test: (p: string) => /\d/.test(p), label: { az: "Ən azı bir rəqəm", ru: "Хотя бы одна цифра" } },
+  ];
+  const allPwValid = pwRules.every((r) => r.test(password));
 
   // Referal kodu URL-də olarsa avtomatik tətbiq olunur (link paylaşımı üçün), amma input göstərilmir
   const autoReferralCode = searchParams.get("ref") || "";
