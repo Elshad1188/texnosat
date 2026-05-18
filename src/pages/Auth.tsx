@@ -113,14 +113,33 @@ const Auth = () => {
         toast({ title: "Uğurla daxil oldunuz!" });
         navigate("/");
       } else {
+        if (!allPwValid) {
+          toast({
+            title: language === "ru" ? "Ошибка" : "Xəta",
+            description: language === "ru"
+              ? "Пароль не соответствует требованиям"
+              : "Şifrə tələblərə uyğun deyil",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
         if (password !== confirmPassword) {
-          toast({ title: "Xəta", description: "Şifrələr uyğun gəlmir", variant: "destructive" });
+          toast({
+            title: language === "ru" ? "Ошибка" : "Xəta",
+            description: language === "ru" ? "Пароли не совпадают" : "Şifrələr uyğun gəlmir",
+            variant: "destructive",
+          });
           setLoading(false);
           return;
         }
         const phoneTrimmed = phone.trim();
         if (!phoneTrimmed || phoneTrimmed.replace(/\D/g, "").length < 7) {
-          toast({ title: "Xəta", description: "Mobil nömrəni düzgün daxil edin", variant: "destructive" });
+          toast({
+            title: language === "ru" ? "Ошибка" : "Xəta",
+            description: language === "ru" ? "Введите корректный номер" : "Mobil nömrəni düzgün daxil edin",
+            variant: "destructive",
+          });
           setLoading(false);
           return;
         }
