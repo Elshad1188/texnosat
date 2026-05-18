@@ -7,10 +7,58 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, User, ArrowLeft, Eye, EyeOff, Phone } from "lucide-react";
+import { Mail, Lock, User, ArrowLeft, Eye, EyeOff, Phone, Check, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+const translateAuthError = (msg: string, lang: "az" | "ru"): string => {
+  const m = (msg || "").toLowerCase();
+  const dict: Record<string, { az: string; ru: string }> = {
+    invalid_login: {
+      az: "E-mail və ya şifrə yanlışdır",
+      ru: "Неверный e-mail или пароль",
+    },
+    password_short: {
+      az: "Şifrə minimum 6 simvol olmalıdır",
+      ru: "Пароль должен содержать минимум 6 символов",
+    },
+    user_exists: {
+      az: "Bu e-mail ilə artıq hesab mövcuddur",
+      ru: "Пользователь с таким e-mail уже существует",
+    },
+    email_invalid: {
+      az: "E-mail ünvanı düzgün deyil",
+      ru: "Некорректный e-mail",
+    },
+    email_not_confirmed: {
+      az: "E-mail təsdiqlənməyib. Poçtunuzu yoxlayın",
+      ru: "E-mail не подтверждён. Проверьте почту",
+    },
+    rate_limit: {
+      az: "Çox sayda cəhd. Bir az sonra yenidən sınayın",
+      ru: "Слишком много попыток. Попробуйте позже",
+    },
+    weak_password: {
+      az: "Şifrə çox zəifdir",
+      ru: "Слишком слабый пароль",
+    },
+    network: {
+      az: "Şəbəkə xətası. İnternet bağlantınızı yoxlayın",
+      ru: "Ошибка сети. Проверьте подключение",
+    },
+  };
+  if (m.includes("invalid login")) return dict.invalid_login[lang];
+  if (m.includes("password") && (m.includes("6") || m.includes("short") || m.includes("at least"))) return dict.password_short[lang];
+  if (m.includes("weak") && m.includes("password")) return dict.weak_password[lang];
+  if (m.includes("already") || m.includes("registered") || m.includes("exists")) return dict.user_exists[lang];
+  if (m.includes("invalid") && m.includes("email")) return dict.email_invalid[lang];
+  if (m.includes("not confirmed") || m.includes("confirm")) return dict.email_not_confirmed[lang];
+  if (m.includes("rate") || m.includes("too many")) return dict.rate_limit[lang];
+  if (m.includes("network") || m.includes("failed to fetch")) return dict.network[lang];
+  return msg;
+};
 
 type AuthMode = "login" | "register" | "forgot";
 
