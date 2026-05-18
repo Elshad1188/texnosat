@@ -94,11 +94,23 @@ const Auth = () => {
   // Referal kodu URL-də olarsa avtomatik tətbiq olunur (link paylaşımı üçün), amma input göstərilmir
   const autoReferralCode = searchParams.get("ref") || "";
 
+  const [defaultCountry, setDefaultCountry] = useState<any>("AZ");
+
   useEffect(() => {
     if (autoReferralCode) {
       setMode("register");
     }
   }, [autoReferralCode]);
+
+  useEffect(() => {
+    // Auto-detect country from IP for phone input
+    fetch("https://ipapi.co/json/")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.country_code) setDefaultCountry(d.country_code);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
