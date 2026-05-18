@@ -300,6 +300,14 @@ const Auth = () => {
                       {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
+                  {confirmPassword.length > 0 && (
+                    <p className={`text-xs flex items-center gap-1 ${password === confirmPassword ? "text-green-600 dark:text-green-400" : "text-destructive"}`}>
+                      {password === confirmPassword ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
+                      {password === confirmPassword
+                        ? (language === "ru" ? "Пароли совпадают" : "Şifrələr uyğundur")
+                        : (language === "ru" ? "Пароли не совпадают" : "Şifrələr uyğun gəlmir")}
+                    </p>
+                  )}
                 </div>
               )}
               <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90" disabled={loading}>
