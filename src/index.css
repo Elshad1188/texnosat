@@ -169,3 +169,37 @@
     animation: like-pop 0.8s ease-out forwards;
   }
 }
+
+/* react-phone-number-input themed styles */
+.phone-input-custom {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 2.5rem;
+  width: 100%;
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid hsl(var(--input));
+  background: hsl(var(--background));
+  padding: 0 0.75rem;
+}
+.phone-input-custom .PhoneInputCountry {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.phone-input-custom .PhoneInputInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: hsl(var(--foreground));
+  font-size: 0.875rem;
+  height: 100%;
+}
+.phone-input-custom .PhoneInputCountrySelect {
+  background: transparent;
+  color: hsl(var(--foreground));
+}
+.phone-input-custom .PhoneInputCountryIcon {
+  box-shadow: none;
+}

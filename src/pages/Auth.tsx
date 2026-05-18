@@ -7,8 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, User, ArrowLeft, Eye, EyeOff, Phone, Check, X } from "lucide-react";
+import { Mail, Lock, User, ArrowLeft, Eye, EyeOff, Check, X } from "lucide-react";
 import { Link } from "react-router-dom";
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
+import { isValidPhoneNumber } from "react-phone-number-input";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -91,11 +94,23 @@ const Auth = () => {
   // Referal kodu URL-də olarsa avtomatik tətbiq olunur (link paylaşımı üçün), amma input göstərilmir
   const autoReferralCode = searchParams.get("ref") || "";
 
+  const [defaultCountry, setDefaultCountry] = useState<any>("AZ");
+
   useEffect(() => {
     if (autoReferralCode) {
       setMode("register");
     }
   }, [autoReferralCode]);
+
+  useEffect(() => {
+    // Auto-detect country from IP for phone input
+    fetch("https://ipapi.co/json/")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.country_code) setDefaultCountry(d.country_code);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,8 +148,7 @@ const Auth = () => {
           setLoading(false);
           return;
         }
-        const phoneTrimmed = phone.trim();
-        if (!phoneTrimmed || phoneTrimmed.replace(/\D/g, "").length < 7) {
+        if (!phone || !isValidPhoneNumber(phone)) {
           toast({
             title: language === "ru" ? "Ошибка" : "Xəta",
             description: language === "ru" ? "Введите корректный номер" : "Mobil nömrəni düzgün daxil edin",
@@ -143,7 +157,7 @@ const Auth = () => {
           setLoading(false);
           return;
         }
-        await signUp(email, password, fullName, phoneTrimmed);
+        await signUp(email, password, fullName, phone);
         toast({ title: "Hesab yaradıldı!", description: "Xoş gəldiniz!" });
         if (autoReferralCode) {
           setTimeout(async () => {
@@ -221,11 +235,21 @@ const Auth = () => {
               )}
               {mode === "register" && (
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Mobil nömrə</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="phone" type="tel" placeholder="+994 50 123 45 67" value={phone} onChange={(e) => setPhone(e.target.value)} className="pl-10" required />
-                  </div>
+                  <Label htmlFor="phone">{language === "ru" ? "Мобильный номер" : "Mobil nömrə"}</Label>
+                  <PhoneInput
+                    international
+                    defaultCountry={defaultCountry}
+                    value={phone}
+                    onChange={(v) => setPhone(v || "")}
+                    className="phone-input-custom"
+                    placeholder={language === "ru" ? "Введите номер" : "Nömrəni daxil edin"}
+                  />
+                  {phone && !isValidPhoneNumber(phone) && (
+                    <p className="text-xs text-destructive flex items-center gap-1">
+                      <X className="h-3.5 w-3.5" />
+                      {language === "ru" ? "Некорректный номер" : "Nömrə düzgün deyil"}
+                    </p>
+                  )}
                 </div>
               )}
               <div className="space-y-2">
