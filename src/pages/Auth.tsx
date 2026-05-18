@@ -260,7 +260,7 @@ const Auth = () => {
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  {mode === "register" && password.length > 0 && (
+                  {mode === "register" && (
                     <ul className="mt-2 space-y-1 rounded-md border border-border bg-muted/30 p-2 text-xs">
                       {pwRules.map((r) => {
                         const ok = r.test(password);
