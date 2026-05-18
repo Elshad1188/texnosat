@@ -136,8 +136,7 @@ const Auth = () => {
           setLoading(false);
           return;
         }
-        const phoneTrimmed = phone.trim();
-        if (!phoneTrimmed || phoneTrimmed.replace(/\D/g, "").length < 7) {
+        if (!phone || !isValidPhoneNumber(phone)) {
           toast({
             title: language === "ru" ? "Ошибка" : "Xəta",
             description: language === "ru" ? "Введите корректный номер" : "Mobil nömrəni düzgün daxil edin",
@@ -146,7 +145,7 @@ const Auth = () => {
           setLoading(false);
           return;
         }
-        await signUp(email, password, fullName, phoneTrimmed);
+        await signUp(email, password, fullName, phone);
         toast({ title: "Hesab yaradıldı!", description: "Xoş gəldiniz!" });
         if (autoReferralCode) {
           setTimeout(async () => {
