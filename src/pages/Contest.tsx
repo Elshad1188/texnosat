@@ -203,14 +203,16 @@ const Contest = () => {
             </div>
 
             {myParticipation ? (
-              <Button
-                size="lg"
-                onClick={() => navigate("/contest/me")}
-                className="w-full h-14 bg-white text-orange-600 hover:bg-white/90 font-bold text-base shadow-lg"
-              >
-                <Share2 className="h-5 w-5 mr-2" />
-                Mənim panelim — {myParticipation.invites_count} dəvət
-              </Button>
+              <div className="space-y-2">
+                <Button
+                  size="lg"
+                  onClick={() => navigate("/contest/me")}
+                  className="w-full h-14 bg-white text-orange-600 hover:bg-white/90 font-bold text-base shadow-lg"
+                >
+                  <Share2 className="h-5 w-5 mr-2" />
+                  Mənim panelim — {myParticipation.invites_count} dəvət
+                </Button>
+              </div>
             ) : (
               <div className="space-y-2">
                 <Button
