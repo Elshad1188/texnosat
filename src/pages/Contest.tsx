@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Trophy, Users, Sparkles, Crown, Medal, Award, Clock, Loader2, Share2, Info } from "lucide-react";
+import { Trophy, Users, Sparkles, Crown, Medal, Award, Clock, Loader2, Share2, Info, Copy, MessageCircle, Send } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 const formatTimeLeft = (target: Date) => {
   const diff = target.getTime() - Date.now();
