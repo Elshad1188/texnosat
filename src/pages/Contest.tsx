@@ -248,6 +248,56 @@ const Contest = () => {
           </div>
         </div>
 
+        {/* My referral link — visible right on contest page */}
+        {myParticipation && (
+          <Card className="p-4 mb-6 bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/30">
+            <h3 className="font-bold mb-1 flex items-center gap-2 text-sm">
+              <Share2 className="h-4 w-4 text-amber-500" /> Sənin yarışma dəvət linkin
+            </h3>
+            <p className="text-[11px] text-muted-foreground mb-3">
+              Bu link yalnız bu yarışma üçündür — hər qeydiyyat sənə 1 dəvət sayılır.
+            </p>
+            {(() => {
+              const link = `${window.location.origin}/r/${myParticipation.referral_code}`;
+              const shareText = `🏆 Elan24 Çempionatına qoşul və böyük fondu qazan: ${link}`;
+              const copy = () => {
+                navigator.clipboard.writeText(link);
+                toast({ title: "Link kopyalandı!" });
+              };
+              const shareOn = (platform: string) => {
+                const enc = encodeURIComponent(shareText);
+                const urls: Record<string, string> = {
+                  whatsapp: `https://wa.me/?text=${enc}`,
+                  telegram: `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${enc}`,
+                  facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`,
+                };
+                window.open(urls[platform], "_blank");
+              };
+              return (
+                <>
+                  <div className="flex gap-2 mb-3">
+                    <Input value={link} readOnly className="font-mono text-xs" />
+                    <Button onClick={copy} variant="outline" size="icon"><Copy className="h-4 w-4" /></Button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button size="sm" onClick={() => shareOn("whatsapp")} className="bg-[#25D366] hover:bg-[#25D366]/90 text-white">
+                      <MessageCircle className="h-4 w-4 mr-1" /> WhatsApp
+                    </Button>
+                    <Button size="sm" onClick={() => shareOn("telegram")} className="bg-[#0088cc] hover:bg-[#0088cc]/90 text-white">
+                      <Send className="h-4 w-4 mr-1" /> Telegram
+                    </Button>
+                    <Button size="sm" onClick={() => shareOn("facebook")} className="bg-[#1877F2] hover:bg-[#1877F2]/90 text-white">
+                      <Users className="h-4 w-4 mr-1" /> Facebook
+                    </Button>
+                  </div>
+                </>
+              );
+            })()}
+          </Card>
+        )}
+
+
+
         {/* Prize breakdown */}
         <div className="grid grid-cols-3 gap-2 mb-6">
           <Card className="p-3 text-center border-amber-500/40 bg-amber-500/5">
