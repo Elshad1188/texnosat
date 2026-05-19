@@ -23,6 +23,7 @@ const Index = () => {
         </section>
         <Categories />
         <div className="container mx-auto px-4 mb-4">
+          <ContestWinnersBanner />
           <ContestBanner />
         </div>
         <div className="container mx-auto px-4">
