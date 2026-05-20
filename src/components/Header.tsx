@@ -300,7 +300,7 @@ const Header = () => {
                   <div className="flex flex-1 flex-col gap-1.5">
                     <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                       <QrCode className="h-3.5 w-3.5 text-primary" />
-                      Telefonunuzla skan edin
+                      {ru ? "Сканируйте телефоном" : "Telefonunuzla skan edin"}
                     </p>
                     <button
                       onClick={async () => {
