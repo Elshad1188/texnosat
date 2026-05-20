@@ -19,6 +19,8 @@ import { generateQRCodeURL } from "@/utils/qr";
 
 const Header = () => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
+  const ru = language === "ru";
   const { user, signOut } = useAuth();
   const { theme } = useTheme();
   const { isAdmin } = useIsAdmin();
