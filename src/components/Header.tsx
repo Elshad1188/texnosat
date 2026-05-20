@@ -285,7 +285,7 @@ const Header = () => {
 
               {/* App downloads */}
               <div className="p-4">
-                <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tətbiqi yüklə</h4>
+                <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{ru ? "Скачать приложение" : "Tətbiqi yüklə"}</h4>
 
                 {/* QR Code */}
                 <div className="mb-3 flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-3">
