@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Store, User, ChevronDown } from "lucide-react";
 import {
@@ -19,6 +20,9 @@ interface IdentitySwitcherProps {
 const IdentitySwitcher = forwardRef<HTMLDivElement, IdentitySwitcherProps>(
   ({ selectedStoreId, onSelect, compact = false }, ref) => {
     const { user } = useAuth();
+    const { language } = useLanguage();
+    const ru = language === "ru";
+    const personalLabel = ru ? "Личный аккаунт" : "Şəxsi hesab";
 
     const { data: profile } = useQuery({
       queryKey: ["my-profile", user?.id],
@@ -51,7 +55,7 @@ const IdentitySwitcher = forwardRef<HTMLDivElement, IdentitySwitcherProps>(
     }
 
     const selectedStore = selectedStoreId ? approvedStores.find((s) => s.id === selectedStoreId) : null;
-    const displayName = selectedStore ? selectedStore.name : profile?.full_name || "Şəxsi hesab";
+    const displayName = selectedStore ? selectedStore.name : profile?.full_name || personalLabel;
     const displayAvatar = selectedStore?.logo_url || profile?.avatar_url || null;
     const isStore = !!selectedStore;
 
@@ -87,7 +91,7 @@ const IdentitySwitcher = forwardRef<HTMLDivElement, IdentitySwitcherProps>(
                   <User className="h-3.5 w-3.5 text-muted-foreground" />
                 )}
               </div>
-              <span className="text-sm">{profile?.full_name || "Şəxsi hesab"}</span>
+              <span className="text-sm">{profile?.full_name || personalLabel}</span>
               {!selectedStoreId && <span className="ml-auto text-primary text-xs">✓</span>}
             </DropdownMenuItem>
             {approvedStores.map((store) => (

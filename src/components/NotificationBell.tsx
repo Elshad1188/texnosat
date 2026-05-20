@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { playNotificationSound } from "@/lib/notificationSound";
 import { Bell, Check, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,8 @@ import {
 
 const NotificationBell = () => {
   const { user } = useAuth();
+  const { language } = useLanguage();
+  const ru = language === "ru";
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -98,15 +101,15 @@ const NotificationBell = () => {
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-full z-50 mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
             <div className="sticky top-0 flex items-center justify-between border-b border-border bg-card p-3">
-              <h3 className="text-sm font-semibold text-foreground">Bildirişlər</h3>
+              <h3 className="text-sm font-semibold text-foreground">{ru ? "Уведомления" : "Bildirişlər"}</h3>
               {unreadCount > 0 && (
                 <Button variant="ghost" size="sm" className="h-6 text-[10px] gap-1" onClick={markAllRead}>
-                  <CheckCheck className="h-3 w-3" /> Hamısını oxu
+                  <CheckCheck className="h-3 w-3" /> {ru ? "Прочитать все" : "Hamısını oxu"}
                 </Button>
               )}
             </div>
             {notifications.length === 0 ? (
-              <div className="p-6 text-center text-sm text-muted-foreground">Bildiriş yoxdur</div>
+              <div className="p-6 text-center text-sm text-muted-foreground">{ru ? "Нет уведомлений" : "Bildiriş yoxdur"}</div>
             ) : (
               <div>
                 {notifications.map((n: any) => (
@@ -122,7 +125,7 @@ const NotificationBell = () => {
                       <p className="text-xs font-semibold text-foreground">{n.title}</p>
                       {n.message && <p className="mt-0.5 text-[11px] text-muted-foreground line-clamp-2">{n.message}</p>}
                       <p className="mt-0.5 text-[10px] text-muted-foreground">
-                        {new Date(n.created_at).toLocaleDateString("az")}
+                        {new Date(n.created_at).toLocaleDateString(ru ? "ru" : "az")}
                       </p>
                     </div>
                     {!n.is_read && (
@@ -144,11 +147,11 @@ const NotificationBell = () => {
               {selectedNotification?.title}
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              {selectedNotification && new Date(selectedNotification.created_at).toLocaleString("az")}
+              {selectedNotification && new Date(selectedNotification.created_at).toLocaleString(ru ? "ru" : "az")}
             </DialogDescription>
           </DialogHeader>
           <div className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
-            {selectedNotification?.message || "Məzmun yoxdur"}
+            {selectedNotification?.message || (ru ? "Нет содержимого" : "Məzmun yoxdur")}
           </div>
           {selectedNotification?.link && (
             <Button
@@ -164,7 +167,7 @@ const NotificationBell = () => {
                 }
               }}
             >
-              Keçid et
+              {ru ? "Перейти" : "Keçid et"}
             </Button>
           )}
         </DialogContent>

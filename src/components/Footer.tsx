@@ -5,11 +5,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { generateQRCodeURL } from "@/utils/qr";
 
 const Footer = () => {
   const { theme } = useTheme();
   const { t } = useTranslation();
+  const { language } = useLanguage();
+  const ru = language === "ru";
   const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
 
   useEffect(() => {
@@ -38,8 +41,8 @@ const Footer = () => {
 
   const phone = settings?.contact_phone || "+994 50 123 45 67";
   const email = settings?.contact_email || "info@elan24.az";
-  const address = settings?.contact_address || "Bakı, Azərbaycan";
-  const footerText = settings?.footer_text || "© 2026 Elan24. Bütün hüquqlar qorunur.";
+  const address = settings?.contact_address || (ru ? "Баку, Азербайджан" : "Bakı, Azərbaycan");
+  const footerText = settings?.footer_text || (ru ? "© 2026 Elan24. Все права защищены." : "© 2026 Elan24. Bütün hüquqlar qorunur.");
 
   if (isMobileOrTablet) return null;
 
@@ -54,17 +57,17 @@ const Footer = () => {
               </span>
             </Link>
             <p className="mt-3 text-sm text-secondary-foreground/60">
-              {settings?.site_description || "Azərbaycanın pulsuz elan saytı."}
+              {settings?.site_description || (ru ? "Бесплатный сайт объявлений Азербайджана." : "Azərbaycanın pulsuz elan saytı.")}
             </p>
           </div>
 
           <div>
             <h4 className="mb-3 font-display text-sm font-semibold">{t("categories.title")}</h4>
             <ul className="space-y-2 text-sm text-secondary-foreground/60">
-              <li><Link to="/products?category=telefonlar" className="hover:text-primary">Telefonlar</Link></li>
-              <li><Link to="/products?category=noutbuklar" className="hover:text-primary">Noutbuklar</Link></li>
-              <li><Link to="/products?category=plansetler" className="hover:text-primary">Planşetlər</Link></li>
-              <li><Link to="/products?category=aksesuarlar" className="hover:text-primary">Aksesuarlar</Link></li>
+              <li><Link to="/products?category=telefonlar" className="hover:text-primary">{ru ? "Телефоны" : "Telefonlar"}</Link></li>
+              <li><Link to="/products?category=noutbuklar" className="hover:text-primary">{ru ? "Ноутбуки" : "Noutbuklar"}</Link></li>
+              <li><Link to="/products?category=plansetler" className="hover:text-primary">{ru ? "Планшеты" : "Planşetlər"}</Link></li>
+              <li><Link to="/products?category=aksesuarlar" className="hover:text-primary">{ru ? "Аксессуары" : "Aksesuarlar"}</Link></li>
               <li><Link to="/blog" className="hover:text-primary">{t("nav.blog")}</Link></li>
             </ul>
           </div>
@@ -98,7 +101,7 @@ const Footer = () => {
           <div>
             <h4 className="mb-3 font-display text-sm font-semibold flex items-center gap-2">
               <Download className="h-4 w-4" />
-              Tətbiqi yüklə
+              {ru ? "Скачать приложение" : "Tətbiqi yüklə"}
             </h4>
             <div className="flex items-start gap-3">
               <div className="shrink-0 rounded-lg border border-border overflow-hidden bg-white p-1">
@@ -111,7 +114,7 @@ const Footer = () => {
               </div>
               <div className="flex flex-col gap-2">
                 <p className="text-xs text-secondary-foreground/60">
-                  Telefonunuzla skan edin və saytı mobil cihazınızda açın.
+                  {ru ? "Сканируйте телефоном и откройте сайт на мобильном устройстве." : "Telefonunuzla skan edin və saytı mobil cihazınızda açın."}
                 </p>
                 <button
                   onClick={async () => {
@@ -133,7 +136,7 @@ const Footer = () => {
                   }}
                   className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors w-fit"
                 >
-                  <Download className="h-3.5 w-3.5" /> QR-ni yüklə
+                  <Download className="h-3.5 w-3.5" /> {ru ? "Скачать QR" : "QR-ni yüklə"}
                 </button>
               </div>
             </div>
