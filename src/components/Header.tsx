@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { iconMap } from "@/lib/icons";
 import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { usePlatformMode } from "@/hooks/usePlatformMode";
 import { generateQRCodeURL } from "@/utils/qr";
 
