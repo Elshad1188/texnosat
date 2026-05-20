@@ -13,11 +13,14 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { iconMap } from "@/lib/icons";
 import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { usePlatformMode } from "@/hooks/usePlatformMode";
 import { generateQRCodeURL } from "@/utils/qr";
 
 const Header = () => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
+  const ru = language === "ru";
   const { user, signOut } = useAuth();
   const { theme } = useTheme();
   const { isAdmin } = useIsAdmin();
@@ -249,7 +252,7 @@ const Header = () => {
 
               {/* Pages */}
               <div className="p-4">
-                <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Məlumat</h4>
+                <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{ru ? "Информация" : "Məlumat"}</h4>
                 <div className="space-y-1">
                   {pages.length > 0 ? pages.map((p: any) => (
                     <Link key={p.slug} to={`/page/${p.slug}`} onClick={() => setSheetOpen(false)}
@@ -258,9 +261,9 @@ const Header = () => {
                     </Link>
                   )) : (
                     <>
-                      <Link to="/page/about" onClick={() => setSheetOpen(false)} className="block rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted">Haqqımızda</Link>
-                      <Link to="/page/rules" onClick={() => setSheetOpen(false)} className="block rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted">Qaydalar</Link>
-                      <Link to="/page/privacy" onClick={() => setSheetOpen(false)} className="block rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted">Məxfilik</Link>
+                      <Link to="/page/about" onClick={() => setSheetOpen(false)} className="block rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted">{ru ? "О нас" : "Haqqımızda"}</Link>
+                      <Link to="/page/rules" onClick={() => setSheetOpen(false)} className="block rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted">{ru ? "Правила" : "Qaydalar"}</Link>
+                      <Link to="/page/privacy" onClick={() => setSheetOpen(false)} className="block rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted">{ru ? "Конфиденциальность" : "Məxfilik"}</Link>
                     </>
                   )}
                 </div>
@@ -282,7 +285,7 @@ const Header = () => {
 
               {/* App downloads */}
               <div className="p-4">
-                <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tətbiqi yüklə</h4>
+                <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{ru ? "Скачать приложение" : "Tətbiqi yüklə"}</h4>
 
                 {/* QR Code */}
                 <div className="mb-3 flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-3">
@@ -297,7 +300,7 @@ const Header = () => {
                   <div className="flex flex-1 flex-col gap-1.5">
                     <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                       <QrCode className="h-3.5 w-3.5 text-primary" />
-                      Telefonunuzla skan edin
+                      {ru ? "Сканируйте телефоном" : "Telefonunuzla skan edin"}
                     </p>
                     <button
                       onClick={async () => {
@@ -317,7 +320,7 @@ const Header = () => {
                       }}
                       className="inline-flex items-center gap-1.5 w-fit rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
                     >
-                      <Download className="h-3.5 w-3.5" /> QR-ni yüklə
+                      <Download className="h-3.5 w-3.5" /> {ru ? "Скачать QR" : "QR-ni yüklə"}
                     </button>
                   </div>
                 </div>
@@ -343,7 +346,7 @@ const Header = () => {
               {/* Footer text */}
               <div className="p-4 pt-0">
                 <p className="text-[10px] text-muted-foreground/50">
-                  {siteSettings?.footer_text || "© 2026 Elan24. Bütün hüquqlar qorunur."}
+                  {siteSettings?.footer_text || (ru ? "© 2026 Elan24. Все права защищены." : "© 2026 Elan24. Bütün hüquqlar qorunur.")}
                 </p>
               </div>
             </SheetContent>
