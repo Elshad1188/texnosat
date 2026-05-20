@@ -252,7 +252,7 @@ const Header = () => {
 
               {/* Pages */}
               <div className="p-4">
-                <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Məlumat</h4>
+                <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{ru ? "Информация" : "Məlumat"}</h4>
                 <div className="space-y-1">
                   {pages.length > 0 ? pages.map((p: any) => (
                     <Link key={p.slug} to={`/page/${p.slug}`} onClick={() => setSheetOpen(false)}
@@ -261,9 +261,9 @@ const Header = () => {
                     </Link>
                   )) : (
                     <>
-                      <Link to="/page/about" onClick={() => setSheetOpen(false)} className="block rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted">Haqqımızda</Link>
-                      <Link to="/page/rules" onClick={() => setSheetOpen(false)} className="block rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted">Qaydalar</Link>
-                      <Link to="/page/privacy" onClick={() => setSheetOpen(false)} className="block rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted">Məxfilik</Link>
+                      <Link to="/page/about" onClick={() => setSheetOpen(false)} className="block rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted">{ru ? "О нас" : "Haqqımızda"}</Link>
+                      <Link to="/page/rules" onClick={() => setSheetOpen(false)} className="block rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted">{ru ? "Правила" : "Qaydalar"}</Link>
+                      <Link to="/page/privacy" onClick={() => setSheetOpen(false)} className="block rounded-lg px-3 py-2 text-sm text-foreground hover:bg-muted">{ru ? "Конфиденциальность" : "Məxfilik"}</Link>
                     </>
                   )}
                 </div>
