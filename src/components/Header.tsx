@@ -320,7 +320,7 @@ const Header = () => {
                       }}
                       className="inline-flex items-center gap-1.5 w-fit rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
                     >
-                      <Download className="h-3.5 w-3.5" /> QR-ni yüklə
+                      <Download className="h-3.5 w-3.5" /> {ru ? "Скачать QR" : "QR-ni yüklə"}
                     </button>
                   </div>
                 </div>
