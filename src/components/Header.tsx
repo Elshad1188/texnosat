@@ -346,7 +346,7 @@ const Header = () => {
               {/* Footer text */}
               <div className="p-4 pt-0">
                 <p className="text-[10px] text-muted-foreground/50">
-                  {siteSettings?.footer_text || "© 2026 Elan24. Bütün hüquqlar qorunur."}
+                  {siteSettings?.footer_text || (ru ? "© 2026 Elan24. Все права защищены." : "© 2026 Elan24. Bütün hüquqlar qorunur.")}
                 </p>
               </div>
             </SheetContent>
