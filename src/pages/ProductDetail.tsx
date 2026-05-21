@@ -26,6 +26,7 @@ import ModerationToolbar from "@/components/admin/ModerationToolbar";
 import SEOHead from "@/components/SEOHead";
 import ListingBoostDialog from "@/components/ListingBoostDialog";
 import {
+import { getLocale } from "@/lib/datetime";
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -409,7 +410,7 @@ const ProductDetail = () => {
   const images = listing.image_urls?.length ? listing.image_urls : ["/placeholder.svg"];
   const avgRating = sellerReviews.length > 0 ? sellerReviews.reduce((s: number, r: any) => s + r.rating, 0) / sellerReviews.length : 0;
   const level = getUserLevel(sellerReviews.length, avgRating, sellerListingsCount, seller?.created_at);
-  const formatSharePrice = (price: number, currency: string) => `${price.toLocaleString("az-AZ")} ${currency}`;
+  const formatSharePrice = (price: number, currency: string) => `${price.toLocaleString(getLocale())} ${currency}`;
   const shareText = `${listing.title} — ${(listing as any).custom_fields?.price_negotiable ? "Razılaşma yolu ilə" : formatSharePrice(Number(listing.price), listing.currency || "AZN")}`;
   const productUrl = `https://elan24.az/product/${listing.id}`;
   const shareImageUrl = (() => {

@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
+import { getLocale } from "@/lib/datetime";
   Loader2, ScanBarcode, Package, Plus, Minus, RotateCcw,
   ArrowDownToLine, ArrowUpFromLine, History, BarChart3, AlertTriangle, Search
 } from "lucide-react";
@@ -385,7 +386,7 @@ const WarehouseTab = ({ storeId }: WarehouseTabProps) => {
                     </p>
                   </div>
                   <p className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0">
-                    {new Date(m.created_at).toLocaleDateString("az-AZ", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                    {new Date(m.created_at).toLocaleDateString(getLocale(), { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </CardContent>
               </Card>

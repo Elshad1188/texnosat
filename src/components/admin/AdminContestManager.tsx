@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Trophy, Users, Gift, Flag } from "lucide-react";
+import { getLocale } from "@/lib/datetime";
 
 interface Settings {
   is_enabled: boolean;
@@ -85,7 +86,7 @@ const AdminContestManager = () => {
               <div className="rounded-lg border p-3"><div className="text-xs text-muted-foreground">Fond</div><div className="text-lg font-bold">{Number(current.total_pool).toFixed(2)} ₼</div></div>
               <div className="rounded-lg border p-3"><div className="text-xs text-muted-foreground">İştirakçı</div><div className="text-lg font-bold">{current.participants_count}</div></div>
               <div className="rounded-lg border p-3"><div className="text-xs text-muted-foreground">Dəvətlər</div><div className="text-lg font-bold">{current.invites_count}</div></div>
-              <div className="rounded-lg border p-3"><div className="text-xs text-muted-foreground">Bitir</div><div className="text-xs">{new Date(current.week_end).toLocaleString("az-AZ")}</div></div>
+              <div className="rounded-lg border p-3"><div className="text-xs text-muted-foreground">Bitir</div><div className="text-xs">{new Date(current.week_end).toLocaleString(getLocale())}</div></div>
             </div>
           ) : <div className="text-sm text-muted-foreground">Aktiv yarışma yoxdur</div>}
           <Button onClick={finalizeNow} disabled={loading || !current} variant="destructive" size="sm" className="mt-4">
@@ -140,7 +141,7 @@ const AdminContestManager = () => {
             {history.length === 0 && <div className="text-muted-foreground">Hələ heç bir yarışma yekunlaşmayıb</div>}
             {history.map((h) => (
               <div key={h.id} className="border rounded-lg p-3">
-                <div className="text-xs text-muted-foreground">{new Date(h.week_start).toLocaleDateString("az-AZ")} — {new Date(h.week_end).toLocaleDateString("az-AZ")}</div>
+                <div className="text-xs text-muted-foreground">{new Date(h.week_start).toLocaleDateString(getLocale())} — {new Date(h.week_end).toLocaleDateString(getLocale())}</div>
                 <div className="text-sm mt-1">Fond: <b>{Number(h.total_pool).toFixed(2)} ₼</b> · İştirakçı: {h.participants_count}</div>
                 {h.winner_id && <div className="text-xs mt-1">🏆 {h.winner_id.slice(0,8)} ({Number(h.winner_amount).toFixed(2)} ₼)</div>}
               </div>

@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, XCircle, Clock, Loader2, AlertTriangle, Store, Eye } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getLocale } from "@/lib/datetime";
 
 const statusMap: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Gözləmədə", color: "bg-amber-500/20 text-amber-600", icon: Clock },
@@ -106,7 +107,7 @@ const AdminStoreModerationManager = () => {
                         <p className="text-[11px] text-muted-foreground truncate">
                           {s.city || "—"} · {profiles[s.user_id] || "Adsız"}
                         </p>
-                        <p className="text-[10px] text-muted-foreground/70">{new Date(s.created_at).toLocaleDateString("az")}</p>
+                        <p className="text-[10px] text-muted-foreground/70">{new Date(s.created_at).toLocaleDateString(getLocale())}</p>
                       </div>
                     </div>
                   </div>

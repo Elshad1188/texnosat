@@ -24,6 +24,7 @@ import {
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { getLocale } from "@/lib/datetime";
 
 function formatTime(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -32,7 +33,7 @@ function formatTime(dateStr: string) {
   if (hours < 24) return `${hours} saat əvvəl`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days} gün əvvəl`;
-  return new Date(dateStr).toLocaleDateString("az");
+  return new Date(dateStr).toLocaleDateString(getLocale());
 }
 
 const StoreDetail = () => {
@@ -378,7 +379,7 @@ const StoreDetail = () => {
                   key={listing.id} id={listing.id} title={listing.title}
                   price={`${listing.price} ${listing.currency}`}
                   location={listing.location}
-                  time={new Date(listing.created_at).toLocaleDateString("az-AZ")}
+                  time={new Date(listing.created_at).toLocaleDateString(getLocale())}
                   image={listing.image_urls?.[0] || "/placeholder.svg"}
                   condition={listing.condition} isPremium={listing.is_premium}
                   isUrgent={listing.is_urgent} isBuyable={(listing as any).is_buyable}

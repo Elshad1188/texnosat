@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { Wallet, Copy, Users, ArrowUpRight, ArrowDownRight, Gift, Check, Loader2, CreditCard, Trophy } from "lucide-react";
+import { getLocale } from "@/lib/datetime";
 
 const Balance = () => {
   const { user, loading: authLoading } = useAuth();
@@ -355,7 +356,7 @@ const Balance = () => {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{t.description}</p>
                       <p className="text-[11px] text-muted-foreground">
-                        {new Date(t.created_at).toLocaleDateString("az-AZ")} · {new Date(t.created_at).toLocaleTimeString("az-AZ", { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(t.created_at).toLocaleDateString(getLocale())} · {new Date(t.created_at).toLocaleTimeString(getLocale(), { hour: "2-digit", minute: "2-digit" })}
                       </p>
                     </div>
                     <Badge variant={t.amount > 0 ? "default" : "destructive"} className="shrink-0 text-xs">

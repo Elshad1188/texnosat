@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { getLocale } from "@/lib/datetime";
 
 function formatCount(n: number) {
   if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
@@ -27,7 +28,7 @@ function formatTime(dateStr: string) {
   if (hours < 24) return `${hours}s`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}g`;
-  return new Date(dateStr).toLocaleDateString("az");
+  return new Date(dateStr).toLocaleDateString(getLocale());
 }
 
 /* ---- Image slideshow sub-component ---- */

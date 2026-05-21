@@ -35,6 +35,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
+import { getLocale } from "@/lib/datetime";
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
@@ -68,7 +69,7 @@ function formatTime(dateStr: string) {
   if (hours < 24) return `${hours}s əvvəl`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}g əvvəl`;
-  return new Date(dateStr).toLocaleDateString("az");
+  return new Date(dateStr).toLocaleDateString(getLocale());
 }
 
 const Messages = () => {
@@ -689,7 +690,7 @@ const Messages = () => {
   // Group messages by date
   const groupedMessages: { date: string; msgs: MessageRecord[] }[] = [];
   messages.forEach((m) => {
-    const dateStr = new Date(m.created_at!).toLocaleDateString("az", { day: "numeric", month: "long", year: "numeric" });
+    const dateStr = new Date(m.created_at!).toLocaleDateString(getLocale(), { day: "numeric", month: "long", year: "numeric" });
     const last = groupedMessages[groupedMessages.length - 1];
     if (last && last.date === dateStr) {
       last.msgs.push(m);
@@ -1117,7 +1118,7 @@ const Messages = () => {
                                         )}
                                         <div className={`flex items-center justify-end gap-1 px-3 pb-2 pt-0.5 ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
                                           <span className="text-[10px]">
-                                            {new Date(m.created_at!).toLocaleTimeString("az", { hour: "2-digit", minute: "2-digit" })}
+                                            {new Date(m.created_at!).toLocaleTimeString(getLocale(), { hour: "2-digit", minute: "2-digit" })}
                                           </span>
                                           {isMine && (
                                             m.is_read ? <CheckCheck className="h-3.5 w-3.5 text-sky-300" /> : <Check className="h-3.5 w-3.5 opacity-70" />
@@ -1132,7 +1133,7 @@ const Messages = () => {
                                         <audio controls src={m.audio_url} className="max-w-[240px] h-10" />
                                         <div className={`flex items-center justify-end gap-1 mt-1 ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
                                           <span className="text-[10px]">
-                                            {new Date(m.created_at!).toLocaleTimeString("az", { hour: "2-digit", minute: "2-digit" })}
+                                            {new Date(m.created_at!).toLocaleTimeString(getLocale(), { hour: "2-digit", minute: "2-digit" })}
                                           </span>
                                           {isMine && (
                                             m.is_read ? <CheckCheck className="h-3.5 w-3.5 text-sky-300" /> : <Check className="h-3.5 w-3.5 opacity-70" />
@@ -1147,7 +1148,7 @@ const Messages = () => {
                                         <p className="text-[13px] sm:text-sm whitespace-pre-wrap break-words leading-relaxed">{m.content}</p>
                                         <div className={`flex items-center justify-end gap-1 mt-0.5 -mb-0.5 ${isMine ? "text-primary-foreground/50" : "text-muted-foreground"}`}>
                                           <span className="text-[10px]">
-                                            {new Date(m.created_at!).toLocaleTimeString("az", { hour: "2-digit", minute: "2-digit" })}
+                                            {new Date(m.created_at!).toLocaleTimeString(getLocale(), { hour: "2-digit", minute: "2-digit" })}
                                           </span>
                                           {isMine && (
                                             <Tooltip>

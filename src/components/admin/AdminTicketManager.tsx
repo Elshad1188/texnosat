@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MessageSquare, Clock, CheckCircle, Loader2, AlertTriangle, Send, ArrowLeft } from "lucide-react";
+import { getLocale } from "@/lib/datetime";
 
 const statusColors: Record<string, string> = {
   open: "bg-blue-500/20 text-blue-600",
@@ -135,7 +136,7 @@ const AdminTicketManager = () => {
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground">
-            {profiles[selectedTicket.user_id] || "Adsız"} · {new Date(selectedTicket.created_at).toLocaleDateString("az")}
+            {profiles[selectedTicket.user_id] || "Adsız"} · {new Date(selectedTicket.created_at).toLocaleDateString(getLocale())}
           </p>
 
           <div className="flex gap-2">
@@ -160,7 +161,7 @@ const AdminTicketManager = () => {
                   {msg.is_admin ? "Admin" : profiles[selectedTicket.user_id] || "İstifadəçi"}
                 </span>
                 <span className="text-[10px] text-muted-foreground">
-                  {new Date(msg.created_at).toLocaleString("az")}
+                  {new Date(msg.created_at).toLocaleString(getLocale())}
                 </span>
               </div>
               <p className="text-foreground whitespace-pre-wrap">{msg.content}</p>
@@ -210,7 +211,7 @@ const AdminTicketManager = () => {
                 <Badge className={`${statusColors[t.status]} border-0 text-[10px]`}>{statusLabels[t.status]}</Badge>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                {profiles[t.user_id] || "Adsız"} · {new Date(t.created_at).toLocaleDateString("az")}
+                {profiles[t.user_id] || "Adsız"} · {new Date(t.created_at).toLocaleDateString(getLocale())}
               </p>
             </div>
           ))}

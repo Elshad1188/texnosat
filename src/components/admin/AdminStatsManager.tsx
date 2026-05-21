@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, TrendingUp, Users, ShoppingBag, Star, Eye, MessageCircle, Wifi, CalendarDays } from "lucide-react";
+import { getLocale } from "@/lib/datetime";
 
 interface Props {
   onNavigate?: (tab: string) => void;
@@ -48,7 +49,7 @@ const AdminStatsManager = ({ onNavigate }: Props) => {
         const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
         const dayEnd = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).toISOString();
         const count = allListings.filter((l: any) => l.created_at >= dayStart && l.created_at < dayEnd).length;
-        dailyListings.push({ date: d.toLocaleDateString("az", { day: "numeric", month: "short" }), count });
+        dailyListings.push({ date: d.toLocaleDateString(getLocale(), { day: "numeric", month: "short" }), count });
       }
 
       const allReviews = reviews.data || [];

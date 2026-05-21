@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, XCircle, Clock, Eye, Loader2, AlertTriangle } from "lucide-react";
+import { getLocale } from "@/lib/datetime";
 
 interface Listing {
   id: string;
@@ -139,7 +140,7 @@ const AdminModerationManager = () => {
                         <p className="text-[11px] text-muted-foreground truncate">
                           {l.location} · {l.category} · {profiles[l.user_id] || "Adsız"}
                         </p>
-                        <p className="text-[10px] text-muted-foreground/70">{new Date(l.created_at).toLocaleDateString("az")}</p>
+                        <p className="text-[10px] text-muted-foreground/70">{new Date(l.created_at).toLocaleDateString(getLocale())}</p>
                       </div>
                       {l.rejection_reason && (
                         <p className="mt-1 text-[10px] text-destructive font-medium line-clamp-1">Səbəb: {l.rejection_reason}</p>

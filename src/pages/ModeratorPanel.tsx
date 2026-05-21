@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
+import { getLocale } from "@/lib/datetime";
   Shield, CheckSquare, Store, Flag, MessageSquare, Loader2, AlertTriangle,
   CheckCircle, XCircle, Clock, Eye, Trash2, BarChart3
 } from "lucide-react";
@@ -405,7 +406,7 @@ const ModeratorPanel = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <Badge className="bg-red-500/10 text-red-600 border-0 text-[10px]">{r.target_type}</Badge>
-                          <span className="text-[11px] text-muted-foreground">{new Date(r.created_at).toLocaleDateString("az")}</span>
+                          <span className="text-[11px] text-muted-foreground">{new Date(r.created_at).toLocaleDateString(getLocale())}</span>
                         </div>
                         <p className="text-sm font-medium text-foreground">{r.reason}</p>
                         {r.description && <p className="text-xs text-muted-foreground mt-1">{r.description}</p>}
@@ -437,7 +438,7 @@ const ModeratorPanel = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="text-xs font-semibold text-foreground">{profiles[c.user_id] || "Adsız"}</span>
-                      <span className="text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleDateString("az")}</span>
+                      <span className="text-[10px] text-muted-foreground">{new Date(c.created_at).toLocaleDateString(getLocale())}</span>
                     </div>
                     <p className="text-sm text-foreground/90">{c.content}</p>
                   </div>

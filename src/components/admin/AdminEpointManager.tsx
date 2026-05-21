@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CreditCard, Search, TrendingUp, ArrowUpCircle, ShoppingBag, Loader2 } from "lucide-react";
+import { getLocale } from "@/lib/datetime";
 
 interface BalanceTransaction {
   id: string;
@@ -189,7 +190,7 @@ const AdminEpointManager = () => {
                           {t.description}
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                          {new Date(t.created_at).toLocaleDateString("az-AZ")} {new Date(t.created_at).toLocaleTimeString("az-AZ", { hour: "2-digit", minute: "2-digit" })}
+                          {new Date(t.created_at).toLocaleDateString(getLocale())} {new Date(t.created_at).toLocaleTimeString(getLocale(), { hour: "2-digit", minute: "2-digit" })}
                         </TableCell>
                       </TableRow>
                     ))
@@ -248,7 +249,7 @@ const AdminEpointManager = () => {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                          {new Date(o.created_at).toLocaleDateString("az-AZ")} {new Date(o.created_at).toLocaleTimeString("az-AZ", { hour: "2-digit", minute: "2-digit" })}
+                          {new Date(o.created_at).toLocaleDateString(getLocale())} {new Date(o.created_at).toLocaleTimeString(getLocale(), { hour: "2-digit", minute: "2-digit" })}
                         </TableCell>
                       </TableRow>
                     ))
