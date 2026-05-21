@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getLocale } from "@/lib/datetime";
 import { playNotificationSound } from "@/lib/notificationSound";
 import { Bell, Check, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -125,7 +126,7 @@ const NotificationBell = () => {
                       <p className="text-xs font-semibold text-foreground">{n.title}</p>
                       {n.message && <p className="mt-0.5 text-[11px] text-muted-foreground line-clamp-2">{n.message}</p>}
                       <p className="mt-0.5 text-[10px] text-muted-foreground">
-                        {new Date(n.created_at).toLocaleDateString(ru ? "ru" : "az")}
+                        {new Date(n.created_at).toLocaleDateString(getLocale())}
                       </p>
                     </div>
                     {!n.is_read && (
@@ -147,7 +148,7 @@ const NotificationBell = () => {
               {selectedNotification?.title}
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              {selectedNotification && new Date(selectedNotification.created_at).toLocaleString(ru ? "ru" : "az")}
+              {selectedNotification && new Date(selectedNotification.created_at).toLocaleString(getLocale())}
             </DialogDescription>
           </DialogHeader>
           <div className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
