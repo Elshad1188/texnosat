@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { MessageSquare, Plus, Send, ArrowLeft, Loader2 } from "lucide-react";
+import { getLocale } from "@/lib/datetime";
 
 const statusColors: Record<string, string> = {
   open: "bg-blue-500/20 text-blue-600",
@@ -124,7 +125,7 @@ const Support = () => {
               <div key={msg.id} className={`rounded-lg p-3 text-sm ${msg.is_admin ? "bg-primary/10 ml-6" : "bg-muted/50 mr-6"}`}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-semibold text-foreground">{msg.is_admin ? "Dəstək" : "Siz"}</span>
-                  <span className="text-[10px] text-muted-foreground">{new Date(msg.created_at).toLocaleString("az")}</span>
+                  <span className="text-[10px] text-muted-foreground">{new Date(msg.created_at).toLocaleString(getLocale())}</span>
                 </div>
                 <p className="text-foreground whitespace-pre-wrap">{msg.content}</p>
               </div>
@@ -179,7 +180,7 @@ const Support = () => {
                     <span className="text-sm font-semibold text-foreground">{t.subject}</span>
                     <Badge className={`${statusColors[t.status]} border-0 text-[10px]`}>{statusLabels[t.status]}</Badge>
                   </div>
-                  <p className="mt-1 text-[11px] text-muted-foreground">{new Date(t.created_at).toLocaleDateString("az")}</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">{new Date(t.created_at).toLocaleDateString(getLocale())}</p>
                 </CardContent>
               </Card>
             ))}

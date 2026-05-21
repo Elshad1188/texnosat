@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Pencil, Trash2, Eye, EyeOff, Star, Loader2, Image as ImageIcon, X } from "lucide-react";
 import { slugify, estimateReadingMinutes, stripHtml } from "@/lib/blog";
+import { getLocale } from "@/lib/datetime";
 
 interface Post {
   id: string;
@@ -331,7 +332,7 @@ const AdminBlogManager = () => {
                   </Badge>
                   <span>{post.views_count} baxış</span>
                   <span>·</span>
-                  <span>{new Date(post.created_at).toLocaleDateString("az-AZ")}</span>
+                  <span>{new Date(post.created_at).toLocaleDateString(getLocale())}</span>
                 </div>
               </div>
               <div className="flex gap-1">

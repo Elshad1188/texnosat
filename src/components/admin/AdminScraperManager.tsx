@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Download, Eye, Globe, CheckSquare, Square, ExternalLink, ImageIcon, Clock, Trash2, Play, Pause } from "lucide-react";
+import { getLocale } from "@/lib/datetime";
 
 interface ScrapedListing {
   title: string;
@@ -392,7 +393,7 @@ const AdminScraperManager = () => {
                   <p className="text-[11px] text-muted-foreground truncate mt-0.5">
                     {CRON_PRESETS.find(c => c.value === schedule.cron_expression)?.label || schedule.cron_expression}
                     {" · "}{schedule.scrape_limit} limit
-                    {schedule.last_run_at && ` · Son: ${new Date(schedule.last_run_at).toLocaleDateString('az')}`}
+                    {schedule.last_run_at && ` · Son: ${new Date(schedule.last_run_at).toLocaleDateString(getLocale())}`}
                   </p>
                 </div>
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => runScheduleNow(schedule)} title="İndi işlət">

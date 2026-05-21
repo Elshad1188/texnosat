@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Flag, CheckCircle, Clock, XCircle, Loader2, AlertTriangle } from "lucide-react";
+import { getLocale } from "@/lib/datetime";
 
 interface Report {
   id: string;
@@ -115,7 +116,7 @@ const AdminReportsManager = () => {
                   <p className="mt-1 text-sm font-medium text-foreground">{r.reason}</p>
                   {r.description && <p className="mt-0.5 text-xs text-muted-foreground">{r.description}</p>}
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Şikayətçi: {profiles[r.reporter_id] || "Adsız"} · {new Date(r.created_at).toLocaleDateString("az")}
+                    Şikayətçi: {profiles[r.reporter_id] || "Adsız"} · {new Date(r.created_at).toLocaleDateString(getLocale())}
                   </p>
                   {r.admin_note && (
                     <p className="mt-1 text-xs text-primary">Admin qeydi: {r.admin_note}</p>

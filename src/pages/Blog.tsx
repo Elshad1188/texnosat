@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Clock, Eye, Search, Star, Loader2, BookOpen } from "lucide-react";
+import { getLocale } from "@/lib/datetime";
 
 interface Post {
   id: string;
@@ -131,7 +132,7 @@ const Blog = () => {
                       <h2 className="font-display text-2xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">{featured.title}</h2>
                       {featured.excerpt && <p className="text-sm text-muted-foreground line-clamp-3 mb-3">{featured.excerpt}</p>}
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{featured.published_at && new Date(featured.published_at).toLocaleDateString("az-AZ")}</span>
+                        <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{featured.published_at && new Date(featured.published_at).toLocaleDateString(getLocale())}</span>
                         <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{featured.reading_minutes} dəq</span>
                         <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{featured.views_count}</span>
                       </div>
@@ -156,7 +157,7 @@ const Blog = () => {
                       <h3 className="font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">{post.title}</h3>
                       {post.excerpt && <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2">{post.excerpt}</p>}
                       <div className="mt-3 flex items-center gap-3 text-[11px] text-muted-foreground">
-                        <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{post.published_at && new Date(post.published_at).toLocaleDateString("az-AZ")}</span>
+                        <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{post.published_at && new Date(post.published_at).toLocaleDateString(getLocale())}</span>
                         <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{post.reading_minutes} dəq</span>
                         <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{post.views_count}</span>
                       </div>

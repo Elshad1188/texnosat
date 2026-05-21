@@ -39,6 +39,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getLocale } from "@/lib/datetime";
 
 interface SpinPrize {
   id: string;
@@ -360,7 +361,7 @@ const AdminGiftsManager = () => {
                                         <span className="text-[10px] text-muted-foreground font-mono">{user.user_id}</span>
                                         {user.last_spin_at ? (
                                             <span className="text-[10px] text-orange-600 font-bold mt-0.5">
-                                                Son fırlatma: {new Date(user.last_spin_at).toLocaleString('az-AZ')}
+                                                Son fırlatma: {new Date(user.last_spin_at).toLocaleString(getLocale())}
                                             </span>
                                         ) : (
                                             <span className="text-[10px] text-green-600 font-bold mt-0.5">Şansı var</span>
@@ -405,7 +406,7 @@ const AdminGiftsManager = () => {
                                         </div>
                                     </TableCell>
                                     <TableCell className="font-bold text-green-600">+{h.amount.toFixed(2)} ₼</TableCell>
-                                    <TableCell className="text-xs">{new Date(h.created_at).toLocaleString("az-AZ")}</TableCell>
+                                    <TableCell className="text-xs">{new Date(h.created_at).toLocaleString(getLocale())}</TableCell>
                                     <TableCell className="text-right">
                                         <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={() => handleResetCooldown(h.user_id)}>
                                             <RotateCw className="h-3 w-3 mr-1" /> Sıfırla

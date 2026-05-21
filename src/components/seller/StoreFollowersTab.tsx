@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users } from "lucide-react";
+import { getLocale } from "@/lib/datetime";
 
 interface StoreFollowersTabProps {
   followers: any[];
@@ -38,7 +39,7 @@ const StoreFollowersTab = ({ followers, followerProfiles }: StoreFollowersTabPro
                 </p>
                 <p className="text-[10px] text-muted-foreground">
                   {profile?.city && <span>{profile.city} · </span>}
-                  {new Date(f.created_at).toLocaleDateString("az-AZ")}
+                  {new Date(f.created_at).toLocaleDateString(getLocale())}
                 </p>
               </div>
             </CardContent>

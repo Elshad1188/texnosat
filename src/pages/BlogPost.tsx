@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Clock, Eye, Heart, MessageCircle, Share2, ArrowLeft, Loader2, Trash2 } from "lucide-react";
 import DOMPurify from "dompurify";
+import { getLocale } from "@/lib/datetime";
 
 interface Post {
   id: string;
@@ -178,7 +179,7 @@ const BlogPost = () => {
               <span className="text-foreground font-medium">{author.full_name || "Müəllif"}</span>
             </div>
           )}
-          <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{post.published_at && new Date(post.published_at).toLocaleDateString("az-AZ")}</span>
+          <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{post.published_at && new Date(post.published_at).toLocaleDateString(getLocale())}</span>
           <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{post.reading_minutes} dəq oxuma</span>
           <span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5" />{post.views_count}</span>
         </div>
@@ -237,7 +238,7 @@ const BlogPost = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
                     <span className="text-sm font-medium text-foreground">{c.profile?.full_name || "İstifadəçi"}</span>
-                    <span className="text-[11px] text-muted-foreground">{new Date(c.created_at).toLocaleDateString("az-AZ")}</span>
+                    <span className="text-[11px] text-muted-foreground">{new Date(c.created_at).toLocaleDateString(getLocale())}</span>
                   </div>
                   <p className="text-sm text-foreground whitespace-pre-wrap">{c.content}</p>
                 </div>

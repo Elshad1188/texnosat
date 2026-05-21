@@ -45,6 +45,7 @@ import AdminBlogManager from "@/components/admin/AdminBlogManager";
 import AdminTranslationsManager from "@/components/admin/AdminTranslationsManager";
 import AdminContestManager from "@/components/admin/AdminContestManager";
 import {
+import { getLocale } from "@/lib/datetime";
   ShieldCheck,
   ShieldAlert,
   Trash2,
@@ -680,7 +681,7 @@ const AdminPanel = () => {
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {l.price} ₼ · {l.location} · {l.category} · {l.views_count} baxış ·{" "}
-                        {new Date(l.created_at).toLocaleDateString("az")}
+                        {new Date(l.created_at).toLocaleDateString(getLocale())}
                       </p>
                       <p className="text-xs text-muted-foreground">Satıcı: {getProfileName(l.user_id)}</p>
                     </div>
@@ -770,7 +771,7 @@ const AdminPanel = () => {
                         </div>
                         <p className="text-xs text-muted-foreground">
                           {s.city || "—"} · {getProfileName(s.user_id)} ·{" "}
-                          {new Date(s.created_at).toLocaleDateString("az")}
+                          {new Date(s.created_at).toLocaleDateString(getLocale())}
                         </p>
                       </div>
                       <div className="flex shrink-0 items-center gap-1">
@@ -843,12 +844,12 @@ const AdminPanel = () => {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> Qeydiyyat</span>
-                          <span className="font-medium">{new Date(selectedUser.created_at).toLocaleDateString("az")}</span>
+                          <span className="font-medium">{new Date(selectedUser.created_at).toLocaleDateString(getLocale())}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Onlayn statusu</span>
                           <span className="font-medium">
-                            {selectedUser.last_seen ? new Date(selectedUser.last_seen).toLocaleString("az") : "—"}
+                            {selectedUser.last_seen ? new Date(selectedUser.last_seen).toLocaleString(getLocale()) : "—"}
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -970,7 +971,7 @@ const AdminPanel = () => {
                           {isSelf && <Badge variant="outline" className="text-[10px]">Siz</Badge>}
                         </div>
                         <p className="text-[11px] text-muted-foreground truncate">
-                          {p.city || "—"} · {p.phone || "—"} · {new Date(p.created_at).toLocaleDateString("az")}
+                          {p.city || "—"} · {p.phone || "—"} · {new Date(p.created_at).toLocaleDateString(getLocale())}
                         </p>
                       </div>
                       {!isSelf && (
@@ -1030,7 +1031,7 @@ const AdminPanel = () => {
                       <p className="text-sm text-foreground line-clamp-1">{r.comment || "Şərh yoxdur"}</p>
                       <p className="text-[11px] text-muted-foreground truncate">
                         {getProfileName(r.reviewer_id)} → {getProfileName(r.reviewed_user_id)} ·{" "}
-                        {new Date(r.created_at).toLocaleDateString("az")}
+                        {new Date(r.created_at).toLocaleDateString(getLocale())}
                       </p>
                     </div>
                     <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => deleteReview(r.id)}>

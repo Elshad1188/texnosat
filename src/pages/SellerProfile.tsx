@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Textarea } from "@/components/ui/textarea";
 import { useIsAdminOrMod } from "@/hooks/useIsAdmin";
 import {
+import { getLocale } from "@/lib/datetime";
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -27,7 +28,7 @@ function formatTime(dateStr: string) {
   if (hours < 24) return `${hours} saat əvvəl`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days} gün əvvəl`;
-  return new Date(dateStr).toLocaleDateString("az");
+  return new Date(dateStr).toLocaleDateString(getLocale());
 }
 
 function getUserLevel(reviewCount: number, avg: number, listingsCount: number, createdAt?: string | null) {
@@ -250,7 +251,7 @@ const SellerProfile = () => {
                 )}
                 <span className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
-                  {new Date(profile.created_at).toLocaleDateString("az")} tarixindən
+                  {new Date(profile.created_at).toLocaleDateString(getLocale())} tarixindən
                 </span>
                 <span className="flex items-center gap-1">
                   <Package className="h-4 w-4" /> {listings.length} elan

@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { getLocale } from "@/lib/datetime";
 
 const SavedSearchesList = () => {
   const { user } = useAuth();
@@ -71,8 +72,8 @@ const SavedSearchesList = () => {
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Yaradıldı: {new Date(s.created_at).toLocaleDateString("az")}
-                {s.last_notified_at && ` • Son bildiriş: ${new Date(s.last_notified_at).toLocaleDateString("az")}`}
+                Yaradıldı: {new Date(s.created_at).toLocaleDateString(getLocale())}
+                {s.last_notified_at && ` • Son bildiriş: ${new Date(s.last_notified_at).toLocaleDateString(getLocale())}`}
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">

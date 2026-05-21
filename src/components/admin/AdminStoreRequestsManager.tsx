@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, XCircle, Clock, Loader2, AlertTriangle, Eye, Trash2, Edit2 } from "lucide-react";
+import { getLocale } from "@/lib/datetime";
 
 const statusMap: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Gözləmədə", color: "bg-amber-500/20 text-amber-600", icon: Clock },
@@ -131,7 +132,7 @@ const AdminStoreRequestsManager = () => {
                     </span>
                     <Badge className={`${st.color} border-0 text-[10px] h-4 px-1.5`}>{st.label}</Badge>
                   </div>
-                  <span className="text-[10px] text-muted-foreground">{new Date(req.created_at).toLocaleDateString("az")}</span>
+                  <span className="text-[10px] text-muted-foreground">{new Date(req.created_at).toLocaleDateString(getLocale())}</span>
                 </div>
 
                 <div className="text-xs text-muted-foreground">

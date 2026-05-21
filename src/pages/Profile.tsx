@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import PushEnableButton from "@/components/PushEnableButton";
+import { getLocale } from "@/lib/datetime";
 
 const Profile = () => {
   const { user, signOut, loading: authLoading } = useAuth();
@@ -207,7 +208,7 @@ const Profile = () => {
                 <div className="mt-1 flex flex-wrap items-center justify-center gap-3 text-xs text-muted-foreground sm:justify-start">
                   {profile?.city && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{profile.city}</span>}
                   {profile?.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{profile.phone}</span>}
-                  <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(profile?.created_at || "").toLocaleDateString("az-AZ")}</span>
+                  <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{new Date(profile?.created_at || "").toLocaleDateString(getLocale())}</span>
                 </div>
                 <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
                   {isAdmin && (
@@ -408,7 +409,7 @@ const Profile = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-foreground">{r.comment || "Şərh yoxdur"}</p>
-                        <p className="mt-0.5 text-[11px] text-muted-foreground">{new Date(r.created_at || "").toLocaleDateString("az-AZ")}</p>
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">{new Date(r.created_at || "").toLocaleDateString(getLocale())}</p>
                       </div>
                     </CardContent>
                   </Card>

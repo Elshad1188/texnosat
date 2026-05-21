@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Package, ShoppingCart, Truck, CheckCircle, XCircle, Clock, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getLocale } from "@/lib/datetime";
 
 const statusMap: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Gözləyir", color: "bg-yellow-500/20 text-yellow-600", icon: Clock },
@@ -92,7 +93,7 @@ const Orders = () => {
                 <StatusIcon className="h-3 w-3" /> {status.label}
               </Badge>
               <span className="text-[10px] text-muted-foreground">
-                {new Date(order.created_at).toLocaleDateString("az")}
+                {new Date(order.created_at).toLocaleDateString(getLocale())}
               </span>
             </div>
             {order.tracking_number && (
