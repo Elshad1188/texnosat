@@ -12,10 +12,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-import { getLocale } from "@/lib/datetime";
   Loader2, ScanBarcode, Package, Plus, Minus, RotateCcw,
   ArrowDownToLine, ArrowUpFromLine, History, BarChart3, AlertTriangle, Search
 } from "lucide-react";
+import { getLocale } from "@/lib/datetime";
 
 interface WarehouseTabProps {
   storeId: string;

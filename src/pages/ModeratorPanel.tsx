@@ -12,10 +12,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
-import { getLocale } from "@/lib/datetime";
   Shield, CheckSquare, Store, Flag, MessageSquare, Loader2, AlertTriangle,
   CheckCircle, XCircle, Clock, Eye, Trash2, BarChart3
 } from "lucide-react";
+import { getLocale } from "@/lib/datetime";
 
 const statusMap: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Gözləmədə", color: "bg-amber-500/20 text-amber-600", icon: Clock },
