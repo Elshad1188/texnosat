@@ -15,11 +15,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Textarea } from "@/components/ui/textarea";
 import { useIsAdminOrMod } from "@/hooks/useIsAdmin";
 import {
-import { getLocale } from "@/lib/datetime";
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { getLocale } from "@/lib/datetime";
 
 function formatTime(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
