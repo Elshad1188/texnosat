@@ -32,12 +32,40 @@ const TelegramBotTab = ({ storeId }: TelegramBotTabProps) => {
     enabled: !!user,
   });
 
-  const botLink = `https://t.me/Elan24_bot?start=${user?.id}`;
+  const [linkToken, setLinkToken] = useState<string | null>(null);
+  const [linkLoading, setLinkLoading] = useState(false);
 
-  const copyLink = () => {
-    navigator.clipboard.writeText(botLink);
-    toast({ title: "Kopyalandı", description: "Bot linki kopyalandı" });
+  const generateLink = async (): Promise<string | null> => {
+    if (!user) return null;
+    setLinkLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("telegram-link-token");
+      if (error || !data?.token) {
+        toast({ title: "Xəta", description: "Link yaradılmadı, yenidən cəhd edin", variant: "destructive" });
+        return null;
+      }
+      setLinkToken(data.token);
+      return data.token as string;
+    } finally {
+      setLinkLoading(false);
+    }
   };
+
+  const botLink = linkToken ? `https://t.me/Elan24_bot?start=${linkToken}` : "";
+
+  const copyLink = async () => {
+    const t = linkToken || (await generateLink());
+    if (!t) return;
+    navigator.clipboard.writeText(`https://t.me/Elan24_bot?start=${t}`);
+    toast({ title: "Kopyalandı", description: "Bot linki kopyalandı (15 dəqiqə etibarlıdır)" });
+  };
+
+  const openBot = async () => {
+    const t = linkToken || (await generateLink());
+    if (!t) return;
+    window.open(`https://t.me/Elan24_bot?start=${t}`, "_blank");
+  };
+
 
   const updateSettings = useMutation({
     mutationFn: async (updates: any) => {
