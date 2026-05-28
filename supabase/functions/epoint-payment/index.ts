@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { order_id, amount, description, is_topup, user_id: topup_user_id } = body;
+    const { order_id, amount, description, is_topup } = body;
     const numericAmount = Number(amount);
 
     if (!order_id || !Number.isFinite(numericAmount) || numericAmount <= 0) {
@@ -78,14 +78,17 @@ Deno.serve(async (req) => {
     }
 
     if (is_topup) {
+      // Top-ups always credit the authenticated user — never a caller-supplied id.
       await supabase.from("site_settings").upsert(
         {
           key: `topup_${order_id}`,
-          value: { user_id: topup_user_id || user.id, amount: numericAmount },
+          value: { user_id: user.id, amount: numericAmount },
         },
         { onConflict: "key" },
       );
     }
+
+
 
     const origin = getRedirectOrigin(req.headers.get("origin"));
     const jsonString = JSON.stringify({
