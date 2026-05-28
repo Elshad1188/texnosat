@@ -104,6 +104,14 @@ const Reels = () => {
   // Lock to prevent swipe/index changes during comment operations
   const commentLockRef = useRef(false);
 
+  // Auth guard: redirect to login if not authenticated
+  useEffect(() => {
+    if (!user) {
+      navigate("/auth", { replace: true });
+    }
+  }, [user, navigate]);
+
+
   // Fetch categories
   const { data: categories = [] } = useQuery({
     queryKey: ["reels-categories"],
