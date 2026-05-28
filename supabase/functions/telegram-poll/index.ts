@@ -365,13 +365,46 @@ async function sendMessage(chatId: number, text: string, botToken: string) {
 }
 
 async function handleStart(chatId: number, text: string, supabase: any, botToken: string) {
-  const token = text.split(" ")[1];
-  if (token) {
-    await supabase.from("telegram_bot_settings").upsert({ telegram_chat_id: chatId, user_id: token }, { onConflict: "telegram_chat_id" });
-    const { data: stores } = await supabase.from("stores").select("id,name").eq("user_id", token).eq("status", "approved");
-    await sendMessage(chatId, `✅ Hesab bağlandı!\n\n${stores?.map((s: any, i: number) => `${i + 1}. ${s.name}`).join("\n") || "Mağaza yoxdur"}\n\nSeçmək: /store 1`, botToken);
+  const token = text.split(" ")[1]?.trim();
+  if (!token) {
+    await sendMessage(chatId, "👋 Salam! Hesabınızı bağlamaq üçün veb saytdakı 'Botu aç' düyməsindən istifadə edin.", botToken);
+    return;
   }
+
+  // Look up one-time signed link token; reject if missing or expired.
+  const { data: linkRow } = await supabase
+    .from("telegram_link_tokens")
+    .select("user_id, expires_at")
+    .eq("token", token)
+    .maybeSingle();
+
+  if (!linkRow || new Date(linkRow.expires_at) < new Date()) {
+    await sendMessage(chatId, "❌ Bu link etibarsız və ya vaxtı keçib. Veb saytdan yeni link yaradın.", botToken);
+    return;
+  }
+
+  const userId = linkRow.user_id;
+
+  // Consume token immediately (one-time use)
+  await supabase.from("telegram_link_tokens").delete().eq("token", token);
+
+  await supabase
+    .from("telegram_bot_settings")
+    .upsert({ telegram_chat_id: chatId, user_id: userId }, { onConflict: "telegram_chat_id" });
+
+  const { data: stores } = await supabase
+    .from("stores")
+    .select("id,name")
+    .eq("user_id", userId)
+    .eq("status", "approved");
+
+  await sendMessage(
+    chatId,
+    `✅ Hesab bağlandı!\n\n${stores?.map((s: any, i: number) => `${i + 1}. ${s.name}`).join("\n") || "Mağaza yoxdur"}\n\nSeçmək: /store 1`,
+    botToken,
+  );
 }
+
 
 async function handleStoreSelect(chatId: number, text: string, supabase: any, botToken: string) {
   const { data: s } = await supabase.from("telegram_bot_settings").select("user_id").eq("telegram_chat_id", chatId).single();
