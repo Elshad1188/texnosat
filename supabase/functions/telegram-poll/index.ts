@@ -24,11 +24,22 @@ function telegramUrl(token: string, method: string) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  // Require Authorization: only the scheduled cron (anon JWT) or service role can trigger
+  const authHeader = req.headers.get("Authorization") || "";
+  const provided = authHeader.replace("Bearer ", "").trim();
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  if (!provided || (provided !== anonKey && provided !== serviceKey)) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
+  }
+
   const startTime = Date.now();
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
   if (!lovableKey) return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), { status: 500, headers: corsHeaders });
 
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+
 
   let botToken: string;
   try {
