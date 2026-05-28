@@ -89,7 +89,6 @@ Deno.serve(async (req) => {
     }
 
 
-    if (is_topup) {
 
     const origin = getRedirectOrigin(req.headers.get("origin"));
     const jsonString = JSON.stringify({
