@@ -123,28 +123,35 @@ const TelegramBotTab = ({ storeId }: TelegramBotTabProps) => {
           <div>
             <div className="flex flex-col sm:flex-row gap-2 mt-1">
               <div className="relative flex-1">
-                <Input value={botLink} readOnly className="text-xs pr-20" />
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  onClick={copyLink} 
+                <Input
+                  value={botLink || "Link yaratmaq üçün düyməyə basın"}
+                  readOnly
+                  className="text-xs pr-20"
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={copyLink}
+                  disabled={linkLoading}
                   className="absolute right-0 top-0 h-full px-3 text-primary hover:bg-transparent"
                 >
-                  <Copy className="h-3.5 w-3.5 mr-1" /> Kopyala
+                  <Copy className="h-3.5 w-3.5 mr-1" /> {linkToken ? "Kopyala" : "Yarat"}
                 </Button>
               </div>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
+                disabled={linkLoading}
                 className="gap-1.5 shrink-0 bg-[#0088cc] hover:bg-[#0077b3] text-white border-none shadow-md shadow-blue-500/10"
-                onClick={() => window.open(botLink, "_blank")}
+                onClick={openBot}
               >
                 <Send className="h-3.5 w-3.5" /> Botu aç
               </Button>
             </div>
             <p className="text-[10px] text-muted-foreground mt-2">
-              Yuxarıdakı düyməyə basaraq Telegram-da botu açın və <b>/start</b> düyməsinə basın.
+              Link 15 dəqiqə etibarlıdır və yalnız bir dəfə istifadə oluna bilər. Telegram-da botu açın və <b>/start</b> düyməsinə basın.
             </p>
           </div>
+
 
           {/* Status */}
           {botSettings ? (
