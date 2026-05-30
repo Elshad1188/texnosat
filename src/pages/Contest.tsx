@@ -64,12 +64,13 @@ const Contest = () => {
         .limit(50);
       const ids = (data || []).map((p) => p.user_id);
       if (ids.length === 0) return [];
-      const { data: profiles } = await supabase
-        .from("profiles").select("user_id, full_name, avatar_url").in("user_id", ids);
+      const { data: profiles } = await (supabase as any)
+        .from("profiles_public").select("user_id, full_name, avatar_url").in("user_id", ids);
       return (data || []).map((p) => ({
         ...p,
-        profile: profiles?.find((pr) => pr.user_id === p.user_id),
+        profile: (profiles as any[] | null)?.find((pr) => pr.user_id === p.user_id),
       }));
+
     },
     refetchInterval: 15000,
     enabled: !!contest?.id,

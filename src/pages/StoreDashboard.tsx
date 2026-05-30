@@ -69,10 +69,11 @@ const StoreDashboard = () => {
     queryKey: ["follower-profiles", followers.map(f => f.user_id)],
     queryFn: async () => {
       if (followers.length === 0) return [];
-      const { data } = await supabase
-        .from("profiles").select("user_id, full_name, avatar_url, city")
+      const { data } = await (supabase as any)
+        .from("profiles_public").select("user_id, full_name, avatar_url, city")
         .in("user_id", followers.map(f => f.user_id));
-      return data || [];
+      return (data as any[] | null) || [];
+
     },
     enabled: followers.length > 0,
   });

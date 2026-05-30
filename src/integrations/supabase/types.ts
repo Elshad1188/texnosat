@@ -1912,6 +1912,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "spin_history_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       spin_prizes: {
@@ -2377,10 +2384,52 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_public: {
+        Row: {
+          avatar_url: string | null
+          city: string | null
+          created_at: string | null
+          full_name: string | null
+          last_seen: string | null
+          phone: string | null
+          presence_state: string | null
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          city?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          last_seen?: string | null
+          phone?: string | null
+          presence_state?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          city?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          last_seen?: string | null
+          phone?: string | null
+          presence_state?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_get_user_email: { Args: { _user_id: string }; Returns: string }
+      admin_list_contest_participants: {
+        Args: { _contest_id: string }
+        Returns: {
+          amount_paid: number
+          entries_count: number
+          full_name: string
+          invites_count: number
+          user_id: string
+        }[]
+      }
       delete_conversation_for_user: {
         Args: { _conversation_id: string }
         Returns: boolean

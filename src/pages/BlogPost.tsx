@@ -73,7 +73,7 @@ const BlogPost = () => {
       if (metaDesc) metaDesc.setAttribute("content", (p as Post).meta_description || (p as Post).excerpt || "");
 
       const [authorRes, catRes, tagRes, likesRes, likedRes, commentsRes] = await Promise.all([
-        supabase.from("profiles").select("full_name, avatar_url").eq("user_id", (p as Post).author_id).maybeSingle(),
+        (supabase as any).from("profiles_public").select("full_name, avatar_url").eq("user_id", (p as Post).author_id).maybeSingle(),
         (p as Post).category_id ? supabase.from("blog_categories").select("name, slug").eq("id", (p as Post).category_id!).maybeSingle() : Promise.resolve({ data: null }),
         supabase.from("blog_post_tags").select("tag_id, blog_tags(name, slug)").eq("post_id", (p as Post).id),
         supabase.from("blog_likes").select("id", { count: "exact", head: true }).eq("post_id", (p as Post).id),
@@ -89,7 +89,7 @@ const BlogPost = () => {
 
       if (commentsRes.data) {
         const userIds = [...new Set(commentsRes.data.map((c: any) => c.user_id))];
-        const { data: profs } = await supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", userIds);
+        const { data: profs } = await (supabase as any).from("profiles_public").select("user_id, full_name, avatar_url").in("user_id", userIds);
         const profMap = new Map((profs || []).map((p: any) => [p.user_id, p]));
         setComments(commentsRes.data.map((c: any) => ({ ...c, profile: profMap.get(c.user_id) })));
       }

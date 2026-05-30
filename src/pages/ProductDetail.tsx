@@ -192,7 +192,7 @@ const ProductDetail = () => {
   const { data: seller } = useQuery({
     queryKey: ["profile", listing?.user_id],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("*").eq("user_id", listing!.user_id).single();
+      const { data } = await (supabase as any).from("profiles_public").select("user_id, full_name, avatar_url, phone, city, presence_state, last_seen, created_at").eq("user_id", listing!.user_id).maybeSingle();
       return data;
     },
     enabled: !!listing?.user_id,
@@ -233,7 +233,7 @@ const ProductDetail = () => {
         .order("created_at", { ascending: true });
       if (!data) return [];
       const userIds = [...new Set(data.map(c => c.user_id))];
-      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", userIds);
+      const { data: profiles } = await (supabase as any).from("profiles_public").select("user_id, full_name, avatar_url").in("user_id", userIds);
       const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
       return data.map(c => ({ ...c, profile: profileMap.get(c.user_id) }));
     },

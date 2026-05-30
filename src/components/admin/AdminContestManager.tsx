@@ -36,14 +36,11 @@ const AdminContestManager = () => {
     setCurrent(active);
 
     if (active) {
-      const { data: lb } = await supabase
-        .from("contest_participants")
-        .select("user_id,invites_count,entries_count,amount_paid")
-        .eq("contest_id", active.id)
-        .order("invites_count", { ascending: false })
-        .limit(20);
-      setLeaderboard(lb || []);
+      const { data: lb } = await (supabase as any)
+        .rpc("admin_list_contest_participants", { _contest_id: active.id });
+      setLeaderboard((lb || []).slice(0, 20));
     }
+
 
     const { data: h } = await supabase
       .from("contests")

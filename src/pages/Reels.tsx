@@ -211,7 +211,7 @@ const Reels = () => {
   const { data: reelProfile } = useQuery({
     queryKey: ["reel-profile", currentReel?.user_id],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("full_name, avatar_url, user_id").eq("user_id", currentReel!.user_id).maybeSingle();
+      const { data } = await (supabase as any).from("profiles_public").select("full_name, avatar_url, user_id").eq("user_id", currentReel!.user_id).maybeSingle();
       return data;
     },
     enabled: !!currentReel,
@@ -279,7 +279,7 @@ const Reels = () => {
         .order("created_at", { ascending: true });
       if (!data) return [];
       const userIds = [...new Set(data.map(c => c.user_id))];
-      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", userIds);
+      const { data: profiles } = await (supabase as any).from("profiles_public").select("user_id, full_name, avatar_url").in("user_id", userIds);
       const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
       return data.map(c => ({ ...c, profile: profileMap.get(c.user_id) }));
     },
