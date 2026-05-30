@@ -65,7 +65,7 @@ const SellerOrdersTab = ({ storeId }: SellerOrdersTabProps) => {
     queryKey: ["seller-order-buyers", buyerIds],
     queryFn: async () => {
       if (buyerIds.length === 0) return [];
-      const { data } = await supabase.from("profiles").select("user_id, full_name").in("user_id", buyerIds);
+      const { data } = await (supabase as any).from("profiles_public").select("user_id, full_name").in("user_id", buyerIds);
       return data || [];
     },
     enabled: buyerIds.length > 0,

@@ -70,7 +70,7 @@ const StoreDashboard = () => {
     queryFn: async () => {
       if (followers.length === 0) return [];
       const { data } = await supabase
-        .from("profiles").select("user_id, full_name, avatar_url, city")
+        .from("profiles_public" as any).select("user_id, full_name, avatar_url, city")
         .in("user_id", followers.map(f => f.user_id));
       return data || [];
     },

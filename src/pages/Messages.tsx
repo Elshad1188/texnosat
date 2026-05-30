@@ -369,7 +369,7 @@ const Messages = () => {
       if (conversationRows.length === 0) return [];
 
       const otherUserIds = conversationRows.map(c => c.buyer_id === user.id ? c.seller_id : c.buyer_id);
-      const { data: profiles } = await supabase.from("profiles").select("*").in("user_id", otherUserIds);
+      const { data: profiles } = await (supabase as any).from("profiles_public").select("user_id, full_name, avatar_url, presence_state, last_seen").in("user_id", otherUserIds);
       const { data: stores } = await supabase.from("stores").select("*").in("user_id", otherUserIds);
 
       const listingIds = conversationRows.filter(c => c.listing_id).map(c => c.listing_id!);
@@ -444,7 +444,7 @@ const Messages = () => {
       if (!user || debouncedSearch.length < 2) return [];
       const q = `%${debouncedSearch}%`;
       const [{ data: profiles }, { data: stores }] = await Promise.all([
-        supabase.from("profiles").select("user_id, full_name, avatar_url").ilike("full_name", q).neq("user_id", user.id).limit(8),
+        (supabase as any).from("profiles_public").select("user_id, full_name, avatar_url").ilike("full_name", q).neq("user_id", user.id).limit(8),
         supabase.from("stores").select("id, name, logo_url, user_id").ilike("name", q).neq("user_id", user.id).limit(8),
       ]);
       const list: Array<{ user_id: string; name: string; avatar: string | null; isStore: boolean }> = [];

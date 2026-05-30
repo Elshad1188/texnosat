@@ -55,7 +55,7 @@ const SellerProfile = () => {
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["seller-profile", id],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("*").eq("user_id", id).single();
+      const { data } = await (supabase as any).from("profiles_public").select("user_id, full_name, avatar_url, phone, city, presence_state, last_seen, created_at").eq("user_id", id).maybeSingle();
       return data;
     },
     enabled: !!id,
@@ -120,7 +120,7 @@ const SellerProfile = () => {
     queryKey: ["reviewer-profiles-seller", reviewerIds],
     queryFn: async () => {
       if (reviewerIds.length === 0) return [];
-      const { data } = await supabase.from("profiles").select("*").in("user_id", reviewerIds);
+      const { data } = await (supabase as any).from("profiles_public").select("user_id, full_name, avatar_url").in("user_id", reviewerIds);
       return data || [];
     },
     enabled: reviewerIds.length > 0,

@@ -91,7 +91,7 @@ const StoreDetail = () => {
     queryKey: ["reviewer-profiles", reviewerIds],
     queryFn: async () => {
       if (reviewerIds.length === 0) return [];
-      const { data } = await supabase.from("profiles").select("*").in("user_id", reviewerIds);
+      const { data } = await (supabase as any).from("profiles_public").select("user_id, full_name, avatar_url").in("user_id", reviewerIds);
       return data || [];
     },
     enabled: reviewerIds.length > 0,
