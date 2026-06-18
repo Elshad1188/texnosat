@@ -564,6 +564,11 @@ const AdminPanel = () => {
           <TabsContent value="contest" className="mt-3">
             <AdminContestManager />
           </TabsContent>
+
+          {/* CJ Dropshipping */}
+          <TabsContent value="cj" className="mt-3">
+            <AdminCJManager />
+          </TabsContent>
           <TabsContent value="translations" className="mt-3">
             <AdminTranslationsManager />
           </TabsContent>
