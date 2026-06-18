@@ -1,7 +1,11 @@
 // CJ Dropshipping public product feed for the homepage.
 // Fetches CJ product list, applies admin-configured commission, returns AZN prices.
-import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 const CJ_BASE = 'https://developers.cjdropshipping.com/api2.0/v1';
 
