@@ -2419,6 +2419,14 @@ export type Database = {
       }
     }
     Functions: {
+      admin_get_payout_details: {
+        Args: { _payout_id: string }
+        Returns: {
+          bank_account: string
+          bank_name: string
+          card_number: string
+        }[]
+      }
       admin_get_user_email: { Args: { _user_id: string }; Returns: string }
       admin_list_contest_participants: {
         Args: { _contest_id: string }
