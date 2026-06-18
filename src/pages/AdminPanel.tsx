@@ -524,6 +524,9 @@ const AdminPanel = () => {
                 <TabsTrigger value="contest" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <Trophy className="h-3.5 w-3.5" /> Yarışma
                 </TabsTrigger>
+                <TabsTrigger value="cj" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <Package className="h-3.5 w-3.5" /> CJ Dropshipping
+                </TabsTrigger>
                 <TabsTrigger value="settings" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <Settings className="h-3.5 w-3.5" /> Tənzimləmələr
                 </TabsTrigger>
