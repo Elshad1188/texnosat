@@ -44,6 +44,7 @@ import AdminActivitySummary from "@/components/admin/AdminActivitySummary";
 import AdminBlogManager from "@/components/admin/AdminBlogManager";
 import AdminTranslationsManager from "@/components/admin/AdminTranslationsManager";
 import AdminContestManager from "@/components/admin/AdminContestManager";
+import AdminCJManager from "@/components/admin/AdminCJManager";
 import {
   ShieldCheck,
   ShieldAlert,
@@ -523,6 +524,9 @@ const AdminPanel = () => {
                 <TabsTrigger value="contest" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <Trophy className="h-3.5 w-3.5" /> Yarışma
                 </TabsTrigger>
+                <TabsTrigger value="cj" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <Package className="h-3.5 w-3.5" /> CJ Dropshipping
+                </TabsTrigger>
                 <TabsTrigger value="settings" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <Settings className="h-3.5 w-3.5" /> Tənzimləmələr
                 </TabsTrigger>
@@ -559,6 +563,11 @@ const AdminPanel = () => {
           {/* Contest */}
           <TabsContent value="contest" className="mt-3">
             <AdminContestManager />
+          </TabsContent>
+
+          {/* CJ Dropshipping */}
+          <TabsContent value="cj" className="mt-3">
+            <AdminCJManager />
           </TabsContent>
           <TabsContent value="translations" className="mt-3">
             <AdminTranslationsManager />
