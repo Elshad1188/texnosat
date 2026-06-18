@@ -236,7 +236,12 @@ const AdminOrderManager = () => {
                   <p className="text-sm font-medium">{getProfileName(p.seller_id)}</p>
                   <p className="text-lg font-bold text-primary">{Number(p.amount).toFixed(2)} ₼</p>
                   <p className="text-[10px] text-muted-foreground">
-                    {p.bank_name && `${p.bank_name} · `}{p.card_number || p.bank_account}
+                    {p.bank_name && `${p.bank_name}`}
+                    {revealedDetails[p.id] ? (
+                      <> · {revealedDetails[p.id]?.card_number || revealedDetails[p.id]?.bank_account || "—"}</>
+                    ) : (
+                      <> · <button type="button" className="underline" onClick={() => revealPayout(p.id)}>Bank məlumatlarını göstər</button></>
+                    )}
                   </p>
                 </div>
                 <div className="flex gap-1.5">
