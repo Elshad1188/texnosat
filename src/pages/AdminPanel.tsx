@@ -44,6 +44,7 @@ import AdminActivitySummary from "@/components/admin/AdminActivitySummary";
 import AdminBlogManager from "@/components/admin/AdminBlogManager";
 import AdminTranslationsManager from "@/components/admin/AdminTranslationsManager";
 import AdminContestManager from "@/components/admin/AdminContestManager";
+import AdminCJManager from "@/components/admin/AdminCJManager";
 import {
   ShieldCheck,
   ShieldAlert,
