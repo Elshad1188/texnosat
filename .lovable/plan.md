@@ -1,125 +1,92 @@
 
-# Həftəlik Dəvət Yarışması ("Elan24 Çempionatı")
+# CJdropshipping inteqrasiyası
 
-## Konsept
+Elan24-ə CJ Dropshipping inteqrasiyası əlavə olunur: məhsullar avtomatik çəkilir, üzərinə admin komissiyası (faiz + sabit AZN) əlavə edilir, müştəri ödəyəndə admin paneldə təsdiq düyməsi ilə CJ-də avtomatik sifariş yaradılır.
 
-İstifadəçi 1 AZN ödəyib həftəlik yarışmaya qoşulur. Ona unikal dəvət linki verilir. Həftə ərzində ən çox **yeni qeydiyyatlı** dostu dəvət edən qalib olur və **toplanmış fondun 70%-ni** Epoint vasitəsilə birbaşa kartına köçürülür. Hər həftə qalibin video reportajı saytda və sosial şəbəkələrdə paylaşılır → viral effekt.
+## 1. Hazırlıq (sizin tərəfdən)
 
-## Niyə viral işləyəcək
+Siz [developers.cjdropshipping.com](https://developers.cjdropshipping.com) saytında:
+1. Qeydiyyatdan keçin (CJ hesabınız varsa eyni email)
+2. **API Key** alın (Profile → Authorization → API Keys)
+3. CJ balansınızı doldurun (sifarişlər oradan ödəniləcək)
+4. Açarı hazır olduqda mənə deyin — `add_secret` ilə təhlükəsiz saxlayacam: `CJ_API_EMAIL`, `CJ_API_KEY`
 
-- **Hər iştirakçı = pulsuz marketinq agenti** (qazanmaq üçün özü saytı yayır)
-- **1 AZN psixoloji baryer aşağıdır** — "niyə də yox" effekti
-- **Canlı liderlər cədvəli** — rəqabət hissi, davamlı qayıdış
-- **Həftəlik qalib hekayəsi** — yeni emosional kontent hər 7 gündən bir
-- **Real pul mükafatı** — şəkillərdə pul dəstəsi tutmuş qalib = ən güclü sosial sübut
+## 2. Verilənlər bazası
 
-## Fond bölgüsü (şəffaflıq)
+Yeni cədvəllər:
+- **`cj_settings`** — komissiya faizi, sabit əlavə (AZN), USD→AZN məzənnə, avtomatik import on/off, default kateqoriya
+- **`cj_products`** — CJ-dən çəkilən məhsullar (pid, variantlar, original_price USD, son satış qiyməti AZN, listing_id bağlantısı, status: pending/imported/disabled)
+- **`cj_import_jobs`** — manual axtarış (açar söz/kateqoriya) və trend importları (status, nəticə sayı)
+- **`cj_orders`** — Elan24 order ↔ CJ order ID bağlantısı (status: awaiting_admin, placed, shipped, delivered, failed; tracking_number)
 
-Toplanan məbləğ məsələn 1000 AZN olarsa:
-- **70% (700 AZN)** → həftənin qalibinə (Epoint köçürmə)
-- **15% (150 AZN)** → 2-ci və 3-cü yerə (75 AZN hər biri)
-- **10% (100 AZN)** → növbəti həftənin "starter fonduna" (yığım azalmasın)
-- **5% (50 AZN)** → platforma komissiyası (Epoint xərcini örtür)
+RLS: hamısı yalnız admin üçün (`has_role admin`).
 
-Bu nisbətlər admin paneldən tənzimlənən olacaq.
+## 3. Edge Functions
 
-## Hüquqi forma (qumar olmamaq üçün)
+| Funksiya | İş |
+|---|---|
+| `cj-search` | Admin axtarış sorğusu → CJ Product List API → nəticələri qaytarır (preview) |
+| `cj-import` | Seçilmiş məhsulları `cj_products`-a yazır, qiyməti hesablayır, `listings` cədvəlinə avto-yerləşdirir (admin user altında, store_id = "CJ Store") |
+| `cj-trending` | Gündəlik cron (pg_cron) — CJ bestseller API-dən top məhsulları çəkir, avtomatik import edir |
+| `cj-place-order` | Admin "Təsdiqlə" düyməsi ilə çağırılır — CJ Create Order API, ünvan + variant ötürür, tracking number alır |
+| `cj-sync-tracking` | Hər 6 saatdan bir — açıq sifarişlər üçün CJ-dən status/tracking yeniləyir, müştəriyə bildiriş göndərir |
 
-1 AZN **"iştirak haqqı"** kimi yox, **"VIP iştirakçı statusu" satışı** kimi rəsmiləşdirilir:
-- İstifadəçi 1 AZN ödəyir → balansına **1 AZN bonus** + **VIP iştirakçı nişanı** alır
-- Yarışmaya avtomatik qoşulması — bu xidmətin **bonusudur**
-- Qalibin mükafatı **"reklam kompensasiyası / influencer ödənişi"** kimi qeydə alınır (qalib həftə ərzində saytı tanıdıb)
-- Bu, Azərbaycan qanunvericiliyinə görə qumar deyil, **promo kampaniyadır**
+Bütün funksiyalar CJ-nin Bearer token-i alır (`POST /authentication/getAccessToken`, 15 gün yaşayır → cache `cj_settings.access_token`).
 
-## İstifadəçi axını
+## 4. Qiymət hesablanması
 
-```
-1. Ana səhifədə banner: "Bu həftə fond: 1,247 AZN — qoşul"
-2. /contest səhifəsi: izah + "1 AZN ilə qoşul" düyməsi
-3. Epoint ödənişi → balansa 1 AZN + VIP nişan
-4. Unikal link verilir: elan24.az/r/USERCODE
-5. Şəxsi panel: "Sənin dəvətlərin: 7 | Reytinqdə yerin: 23"
-6. Liderlər cədvəli (canlı, top 50)
-7. Bazar günü 23:59 — qalib elan olunur
-8. Bazar ertəsi: video reportaj + ödəniş sübutu
-9. Yeni həftə başlayır
+```text
+final_price_AZN = (CJ_price_USD × USD_AZN_rate × (1 + komissiya_pct/100)) + sabit_əlavə_AZN
 ```
 
-## Texniki struktur
+Misal: CJ-də 10 USD, məzənnə 1.70, komissiya 30%, sabit 2 AZN
+→ `10 × 1.70 × 1.30 + 2 = 24.10 AZN`
 
-### Yeni database cədvəlləri
+Komissiya dəyişəndə admin "Bütün CJ məhsullarının qiymətini yenilə" düyməsini basanda toplu UPDATE işləyir.
 
-- **`contests`** — həftəlik yarışmalar (id, week_start, week_end, total_pool, winner_id, status)
-- **`contest_participants`** — iştirakçılar (id, contest_id, user_id, referral_code, invites_count, paid_at, rank)
-- **`contest_invites`** — uğurlu dəvətlər (id, contest_id, inviter_user_id, invited_user_id, created_at)
-- **`contest_settings`** — admin parametrləri (entry_fee, winner_pct, second_pct, third_pct, rollover_pct, commission_pct)
+## 5. Sifariş axını (yarı-avtomatik)
 
-### Frontend səhifələri
+```text
+1. Müştəri CJ məhsulunu alır (mövcud Epoint checkout)
+2. Ödəniş uğurlu → cj_orders qeydi yaranır (status: awaiting_admin)
+3. Admin panelə bildiriş gəlir + admin email
+4. Admin "CJ sifarişləri" tabında görür: müştəri ünvanı, məhsul, qazanc
+5. "CJ-də sifariş ver" düyməsi → cj-place-order çağırılır
+   - CJ balansından çıxır, tracking number gəlir
+6. Müştəriyə bildiriş: "Sifarişiniz göndərilir, tracking: XXX"
+7. cj-sync-tracking arxa fonda status izləyir
+```
 
-- **`/contest`** — əsas yarışma səhifəsi (fond, geri sayım, qoşulma düyməsi, liderlər cədvəli, qaydalar)
-- **`/contest/me`** — şəxsi panel (mənim linkim, dəvətlərim, reytinq, paylaş düymələri WhatsApp/Telegram/Instagram)
-- **`/contest/winners`** — keçmiş qaliblər (foto + video + məbləğ)
-- **`/r/:code`** — referral landing (qeydiyyat formuna yönləndirir, code-u sessionStorage-də saxlayır)
+## 6. Admin paneli (yeni tab: "CJdropshipping")
 
-### Ana səhifə inteqrasiyası
+- **Parametrlər**: komissiya %, sabit AZN, USD məzənnə, default kateqoriya, trend auto-import on/off
+- **Axtarış & İdxal**: açar söz / CJ kateqoriya seçimi → preview cədvəli → checkbox ilə bulk import
+- **İdxal olunmuş məhsullar**: siyahı, qiymət yenilə, deaktiv et, sil
+- **CJ Sifarişləri**: gözləyən / verilmiş / çatdırılmış tablar, "Təsdiqlə və CJ-də sifariş ver" düyməsi
+- **Statistika**: ümumi gəlir, CJ-yə ödənilən, xalis qazanc
 
-- **HeroSection altında**: parlaq qızıl/yaşıl banner — "🏆 Bu həftə fond: X AZN | Qaliblərə qədər: 3 gün 14 saat"
-- **MobileBottomNav**: yeni "Yarışma" ikonu (qızıl trofey, pulse animasiya)
-- **Header**: balans yanında kiçik "🏆" nişanı (yarışmadasansa)
+## 7. Frontend
 
-### Edge funksiyalar
+CJ məhsulları normal `listings` cədvəlinə yazıldığı üçün **heç bir front dəyişiklik lazım deyil** — mövcud kart, axtarış, kateqoriya, Buy Now hər şey avtomatik işləyəcək. Sadəcə məhsulun `custom_fields.source = "cj"` flag-i olacaq (idarəetmə üçün).
 
-- **`contest-join`** — Epoint ödəniş başladır, callback-də iştirakçı yaradır
-- **`contest-track-invite`** — yeni qeydiyyat zamanı referral code yoxlanır, uğurludursa contest_invites-ə yazılır
-- **`contest-finalize-week`** — pg_cron ilə hər bazar 23:59-da işə düşür: qalibləri seçir, balanslara mükafat yazır, payout_request yaradır, bildiriş göndərir
+## 8. İcra mərhələləri
 
-### Admin panel (yeni tab)
+| # | Mərhələ | Vaxt |
+|---|---|---|
+| 1 | DB cədvəlləri + admin tab UI skeleti + parametrlər | indi |
+| 2 | `cj-search` + `cj-import` + admin axtarış UI | API açar gəldikdən sonra |
+| 3 | `cj-trending` + pg_cron | mərhələ 2-dən sonra |
+| 4 | `cj-place-order` + sifariş tab + bildirişlər | mərhələ 2-dən sonra |
+| 5 | `cj-sync-tracking` cron + müştəri bildirişləri | son |
 
-- Cari həftə statistikası (iştirakçı sayı, fond, top 10)
-- Keçmiş həftələr siyahısı
-- Parametrlər (giriş haqqı, faizlər)
-- Qalibə video reportaj yükləmə (cover_url + video_url)
-- Manual finalize düyməsi (test üçün)
+## Texniki qeydlər
 
-### Viral mexanikalar
+- CJ API: `https://developers.cjdropshipping.com/api2.0/v1/...`
+- Rate limit: 1 req/sec — funksiyada queue/delay
+- Sifariş üçün CJ-nin tələb etdiyi: `shippingZip`, `shippingCountryCode` (AZ), `shippingProvince`, `shippingCity`, `shippingAddress`, `shippingCustomerName`, `shippingPhone`, `email`, `quantity`, `vid` (variant ID), `logisticName` (default: "CJPacket")
+- Çatdırılma haqqı CJ-dən ayrıca gəlir — checkout-da müştəriyə öncədən əlavə etmək üçün `cj-quote-freight` köməkçi funksiyası (mərhələ 4)
+- Şəkillər CJ CDN-də qalır (heç bir storage yükü)
 
-- **Paylaşma düymələri**: WhatsApp/Telegram/Instagram/Facebook — hazır mətnlə ("Mən Elan24 yarışmasındayam, qoşul: link")
-- **Push bildiriş**: hər səhər "Reytinqdə X yerdəsən, daha 2 dəvət ilə top 10-a düşə bilərsən"
-- **Email**: həftə sonu xatırlatma, qalib elanı
-- **Story-friendly qrafika**: şəxsi panel-də "Story-yə paylaş" düyməsi → istifadəçinin reytinqi və linki ilə avtomatik şəkil generasiya (canvas)
+## İndi başlayaq?
 
-## Mərhələlər (4 mərhələ)
-
-### Mərhələ 1 — Backbone (database + admin)
-- 4 cədvəli yarat (RLS ilə)
-- Admin paneldə "Yarışma" tab — parametrlər + cari həftə görüntüsü
-- `contest-finalize-week` edge function (cron olmadan, manual test)
-
-### Mərhələ 2 — İstifadəçi axını
-- `/contest` səhifəsi (qoşulma + canlı fond + geri sayım + liderlər)
-- `/contest/me` şəxsi panel (link + paylaşma düymələri)
-- `/r/:code` landing + Auth.tsx-də referral code emalı
-- `contest-join` Epoint inteqrasiyası
-- `contest-track-invite` yeni qeydiyyatda
-
-### Mərhələ 3 — Avtomatlaşdırma + bildirişlər
-- pg_cron həftəlik finalize
-- Push/email bildirişlər (qoşulma, reytinq dəyişikliyi, qalib elanı)
-- Ana səhifə banneri + MobileBottomNav ikonu
-- `/contest/winners` keçmiş qaliblər səhifəsi
-
-### Mərhələ 4 — Viral təkmilləşdirmələr
-- Story üçün avtomatik şəkil generasiyası
-- Header-də 🏆 nişanı
-- Admin video reportaj yükləmə
-- Statistika dashboard (admin üçün)
-
-## İlk addım təklifi
-
-Mərhələ 1-dən başlayaq: database strukturu + admin parametrlər. Bu, qalan hər şeyin əsası olacaq və 1-2 saat içində hazır olar. Sonra Mərhələ 2 ilə canlı istifadəçi axını qurarıq.
-
-## Açıq qalan suallar (sonra qərar verə bilərik)
-
-- **Minimum dəvət şərti** — qalib olmaq üçün ən azı neçə dəvət lazımdır? (təklif: 3, ki "1 dəvət ilə uddum" hadisəsi olmasın)
-- **Eyni IP/cihazdan saxta dəvət** — necə qarşısını alaq? (təklif: yalnız Epoint-də ödəniş etmiş referral hesablanır → fırıldaq qeyri-mümkün)
-- **Yenidən qoşulma** — eyni həftədə 2-ci dəfə 1 AZN ödəyib şansını ikiqat artıra bilər? (təklif: bəli, fond böyüsün)
+**Mərhələ 1-i** indi qura bilərəm (DB + admin UI + parametrlər) — API açar gəlmədən də işləyəcək. Siz açarı aldıqda mərhələ 2-yə keçərik. Başlayım?
