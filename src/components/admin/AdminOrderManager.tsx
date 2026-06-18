@@ -59,14 +59,28 @@ const AdminOrderManager = () => {
     },
   });
 
-  // Fetch payout requests
+  // Fetch payout requests (card_number/bank_account are protected — fetched via RPC on demand)
   const { data: payouts = [] } = useQuery({
     queryKey: ["admin-payouts"],
     queryFn: async () => {
-      const { data } = await supabase.from("payout_requests").select("*").order("created_at", { ascending: false });
+      const { data } = await supabase
+        .from("payout_requests")
+        .select("id, seller_id, store_id, amount, status, bank_name, created_at, processed_at, admin_note")
+        .order("created_at", { ascending: false });
       return data || [];
     },
   });
+
+  const [revealedDetails, setRevealedDetails] = useState<Record<string, { card_number: string | null; bank_account: string | null } | null>>({});
+  const revealPayout = async (id: string) => {
+    const { data, error } = await supabase.rpc("admin_get_payout_details", { _payout_id: id });
+    if (error) {
+      toast({ title: "Xəta", description: error.message, variant: "destructive" });
+      return;
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    setRevealedDetails((s) => ({ ...s, [id]: row || null }));
+  };
 
   // Fetch profiles for names
   const sellerIds = [...new Set(orders.map((o: any) => o.seller_id))];
