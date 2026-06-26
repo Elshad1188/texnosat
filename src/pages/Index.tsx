@@ -10,6 +10,7 @@ import DealTypeTabs from "@/components/DealTypeTabs";
 import SEOHead from "@/components/SEOHead";
 import ContestBanner from "@/components/ContestBanner";
 import ContestWinnersBanner from "@/components/ContestWinnersBanner";
+import HomeMiniMap from "@/components/HomeMiniMap";
 
 
 const Index = () => {
@@ -30,6 +31,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <BannerDisplay position="home_top" />
         </div>
+        <HomeMiniMap />
         <StoresSlider />
         <FeaturedListings />
         <LatestBlogPosts />
