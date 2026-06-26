@@ -31,6 +31,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <BannerDisplay position="home_top" />
         </div>
+        <HomeMiniMap />
         <StoresSlider />
         <FeaturedListings />
         <LatestBlogPosts />
