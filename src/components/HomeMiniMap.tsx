@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { MapPin, ArrowRight, Navigation } from "lucide-react";
-import { Button } from "@/components/ui/skeleton";
+
 import { lazy, Suspense } from "react";
 import { useTranslation } from "@/contexts/LanguageContext";
 
