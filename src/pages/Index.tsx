@@ -10,6 +10,7 @@ import DealTypeTabs from "@/components/DealTypeTabs";
 import SEOHead from "@/components/SEOHead";
 import ContestBanner from "@/components/ContestBanner";
 import ContestWinnersBanner from "@/components/ContestWinnersBanner";
+import HomeMiniMap from "@/components/HomeMiniMap";
 
 
 const Index = () => {
