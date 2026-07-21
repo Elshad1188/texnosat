@@ -94,6 +94,12 @@ const Auth = () => {
   // Referal kodu URL-də olarsa avtomatik tətbiq olunur (link paylaşımı üçün), amma input göstərilmir
   const autoReferralCode = searchParams.get("ref") || "";
 
+  // OAuth consent flow: preserve original destination as same-origin relative path.
+  const rawNext = searchParams.get("next") || "";
+  const nextPath = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
+  const goNext = () => navigate(nextPath, { replace: true });
+
+
   const [defaultCountry, setDefaultCountry] = useState<any>("AZ");
 
   useEffect(() => {
