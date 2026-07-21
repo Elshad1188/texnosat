@@ -132,7 +132,7 @@ const Auth = () => {
       } else if (mode === "login") {
         await signIn(email, password);
         toast({ title: "Uğurla daxil oldunuz!" });
-        navigate("/");
+        goNext();
       } else {
         if (!allPwValid) {
           toast({
@@ -182,7 +182,7 @@ const Auth = () => {
             sessionStorage.removeItem("contest_ref");
           }, 2000);
         }
-        navigate("/");
+        goNext();
       }
     } catch (error: any) {
       toast({
