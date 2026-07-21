@@ -99,6 +99,12 @@ const Auth = () => {
   const nextPath = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
   const goNext = () => navigate(nextPath, { replace: true });
 
+  useEffect(() => {
+    if (user && rawNext) goNext();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+
 
   const [defaultCountry, setDefaultCountry] = useState<any>("AZ");
 
