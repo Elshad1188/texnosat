@@ -48,6 +48,7 @@ import Contest from "./pages/Contest";
 import ContestMe from "./pages/ContestMe";
 import ContestReferral from "./pages/ContestReferral";
 import OAuthConsent from "./pages/OAuthConsent";
+import Connections from "./pages/Connections";
 import { usePlatformMode } from "@/hooks/usePlatformMode";
 
 
@@ -109,6 +110,7 @@ const AppWrapper = () => {
         <Route path="/contest/me" element={<ContestMe />} />
         <Route path="/r/:code" element={<ContestReferral />} />
         <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
+        <Route path="/connections" element={<Connections />} />
         <Route path="*" element={<NotFound />} />
 
       </Routes>
