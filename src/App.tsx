@@ -48,6 +48,7 @@ import Contest from "./pages/Contest";
 import ContestMe from "./pages/ContestMe";
 import ContestReferral from "./pages/ContestReferral";
 import OAuthConsent from "./pages/OAuthConsent";
+import Connections from "./pages/Connections";
 import { usePlatformMode } from "@/hooks/usePlatformMode";
 
 
