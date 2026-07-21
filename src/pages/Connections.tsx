@@ -184,7 +184,7 @@ const Connections = () => {
                       </a>
                     )}
                     <p className="text-xs text-muted-foreground mt-1">
-                      {ru ? "Разрешено" : "İcazə verildi"}: {formatDateTime(g.granted_at, language)}
+                      {ru ? "Разрешено" : "İcazə verildi"}: {formatDateTime(g.granted_at)}
                     </p>
 
                     <div className="mt-3">
