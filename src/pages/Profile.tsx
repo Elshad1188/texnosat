@@ -227,6 +227,12 @@ const Profile = () => {
                       </Link>
                     </Button>
                   )}
+                  <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" asChild>
+                    <Link to="/connections">
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                      Qoşulmuş tətbiqlər
+                    </Link>
+                  </Button>
                 </div>
               </div>
               <div className="flex gap-4 text-center">
