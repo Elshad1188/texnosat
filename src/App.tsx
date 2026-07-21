@@ -110,6 +110,7 @@ const AppWrapper = () => {
         <Route path="/contest/me" element={<ContestMe />} />
         <Route path="/r/:code" element={<ContestReferral />} />
         <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
+        <Route path="/connections" element={<Connections />} />
         <Route path="*" element={<NotFound />} />
 
       </Routes>
