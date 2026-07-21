@@ -94,6 +94,18 @@ const Auth = () => {
   // Referal kodu URL-də olarsa avtomatik tətbiq olunur (link paylaşımı üçün), amma input göstərilmir
   const autoReferralCode = searchParams.get("ref") || "";
 
+  // OAuth consent flow: preserve original destination as same-origin relative path.
+  const rawNext = searchParams.get("next") || "";
+  const nextPath = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
+  const goNext = () => navigate(nextPath, { replace: true });
+
+  useEffect(() => {
+    if (user && rawNext) goNext();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+
+
   const [defaultCountry, setDefaultCountry] = useState<any>("AZ");
 
   useEffect(() => {
@@ -126,7 +138,7 @@ const Auth = () => {
       } else if (mode === "login") {
         await signIn(email, password);
         toast({ title: "Uğurla daxil oldunuz!" });
-        navigate("/");
+        goNext();
       } else {
         if (!allPwValid) {
           toast({
@@ -176,7 +188,7 @@ const Auth = () => {
             sessionStorage.removeItem("contest_ref");
           }, 2000);
         }
-        navigate("/");
+        goNext();
       }
     } catch (error: any) {
       toast({

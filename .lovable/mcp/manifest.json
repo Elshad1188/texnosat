@@ -1,0 +1,116 @@
+{
+  "version": 1,
+  "sdk_version": "0.24.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://qkeymzkgymmceclilaot.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "elan24-mcp",
+      "version": "0.1.0",
+      "title": "Elan24"
+    },
+    "tools": [
+      {
+        "name": "search_listings",
+        "title": "Search listings",
+        "description": "Search active public real-estate listings on Elan24 by keyword, category slug, region, deal type (satilir/kiraye), and price range.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Free-text search on title/description."
+            },
+            "category_slug": {
+              "type": "string",
+              "description": "Category slug, e.g. 'menziller'."
+            },
+            "region": {
+              "type": "string",
+              "description": "Region/city name."
+            },
+            "deal_type": {
+              "type": "string",
+              "enum": [
+                "satilir",
+                "kiraye"
+              ],
+              "description": "Sale or rent."
+            },
+            "min_price": {
+              "type": "number"
+            },
+            "max_price": {
+              "type": "number"
+            },
+            "limit": {
+              "type": "number",
+              "description": "Max results (default 20, cap 50)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_my_listings",
+        "title": "Get my listings",
+        "description": "Return listings owned by the currently signed-in Elan24 user.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "active",
+                "pending",
+                "rejected",
+                "sold",
+                "expired"
+              ]
+            },
+            "limit": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_my_profile",
+        "title": "Get my profile",
+        "description": "Return the signed-in Elan24 user's profile (name, phone, balance, avatar).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
