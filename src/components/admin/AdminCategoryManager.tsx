@@ -57,7 +57,7 @@ const AdminCategoryManager = () => {
 
   const openEdit = (cat: Category) => {
     setEditId(cat.id);
-    setForm({ name: cat.name, slug: cat.slug, icon: cat.icon || "CircuitBoard", parent_id: cat.parent_id || "", sort_order: cat.sort_order, is_active: cat.is_active });
+    setForm({ name: cat.name, slug: cat.slug, icon: cat.icon || "CircuitBoard", parent_id: cat.parent_id || "", sort_order: cat.sort_order, is_active: cat.is_active, site_type: (cat as any).site_type || "real_estate" });
     setDialogOpen(true);
   };
 
