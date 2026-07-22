@@ -45,7 +45,7 @@ const AdminCategoryManager = () => {
   const getChildren = (parentId: string) => categories.filter((c) => c.parent_id === parentId);
 
   const resetForm = () => {
-    setForm({ name: "", slug: "", icon: "CircuitBoard", parent_id: "", sort_order: 0, is_active: true });
+    setForm({ name: "", slug: "", icon: "CircuitBoard", parent_id: "", sort_order: 0, is_active: true, site_type: "real_estate" });
     setEditId(null);
   };
 
