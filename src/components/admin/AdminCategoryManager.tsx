@@ -19,8 +19,10 @@ interface Category {
   parent_id: string | null;
   sort_order: number;
   is_active: boolean;
+  site_type?: string;
   created_at: string;
 }
+
 
 const AdminCategoryManager = () => {
   const { toast } = useToast();
