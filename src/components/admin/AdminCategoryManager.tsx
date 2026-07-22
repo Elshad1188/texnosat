@@ -205,6 +205,17 @@ const AdminCategoryManager = () => {
               </Select>
             </div>
             <div className="space-y-2">
+              <Label>Sayt növü</Label>
+              <Select value={form.site_type} onValueChange={(v) => setForm({ ...form, site_type: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="real_estate">🏢 Əmlak</SelectItem>
+                  <SelectItem value="general">📦 Ümumi elan</SelectItem>
+                  <SelectItem value="both">🌐 Hər ikisi</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label>Sıra nömrəsi</Label>
               <Input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })} />
             </div>
