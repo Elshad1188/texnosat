@@ -308,6 +308,37 @@ const AdminSettingsManager = () => {
         </div>
       </div>
 
+      {/* Site Type — controls which categories show on homepage/search */}
+      <div className="rounded-xl border-2 border-primary/30 bg-card p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">🏷️ Sayt Növü (Kateqoriyalar)</h3>
+        <p className="text-xs text-muted-foreground">
+          Ana səhifədə və axtarışda hansı kateqoriyaların görünəcəyini təyin edir. Yeni kateqoriyaları Kateqoriya Menecerindən əlavə edərək tipini seçə bilərsiniz.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {[
+            { value: "real_estate", label: "🏢 Əmlak saytı", desc: "Yalnız daşınmaz əmlak kateqoriyaları (mənzil, ofis, torpaq və s.)" },
+            { value: "general", label: "📦 Ümumi elan saytı", desc: "Ümumi elan kateqoriyaları (avtomobil, elektronika, geyim və s.)" },
+            { value: "both", label: "🌐 Hər ikisi", desc: "Həm əmlak həm də ümumi elan kateqoriyaları göstərilsin." },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setSiteType(opt.value as any)}
+              className={`rounded-xl border-2 p-3 text-left transition-all ${
+                siteType === opt.value
+                  ? "border-primary bg-primary/5 shadow-md"
+                  : "border-border hover:border-primary/30"
+              }`}
+            >
+              <p className="text-sm font-semibold text-foreground">{opt.label}</p>
+              <p className="text-[11px] text-muted-foreground mt-1 leading-tight">{opt.desc}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+
+
       {/* Feature Toggles — disable platform-wide features */}
       <div className="rounded-xl border-2 border-amber-500/30 bg-card p-4 space-y-3">
         <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">🧩 Funksiya açarları</h3>
