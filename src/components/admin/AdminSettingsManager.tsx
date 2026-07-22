@@ -159,6 +159,12 @@ const AdminSettingsManager = () => {
         setPlatformMode((modeData.value as any).mode || "both");
       }
 
+      const { data: siteTypeData } = await supabase.from("site_settings").select("value").eq("key", "site_type").maybeSingle();
+      if (siteTypeData?.value) {
+        setSiteType(((siteTypeData.value as any).type || "real_estate") as any);
+      }
+
+
       const { data: seoData } = await supabase.from("site_settings").select("value").eq("key", "seo").maybeSingle();
       if (seoData?.value) {
         setSeoSettings((prev: any) => ({ ...prev, ...(seoData.value as any) }));
