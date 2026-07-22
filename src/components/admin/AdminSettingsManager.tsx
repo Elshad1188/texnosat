@@ -203,6 +203,17 @@ const AdminSettingsManager = () => {
       await supabase.from("site_settings").insert({ key: "platform_mode", value: modePayload, updated_by: user?.id });
     }
 
+    // Save site type (real_estate / general / both)
+    const { data: existingSiteType } = await supabase.from("site_settings").select("id").eq("key", "site_type").maybeSingle();
+    const siteTypePayload = { type: siteType } as any;
+    if (existingSiteType) {
+      await supabase.from("site_settings").update({ value: siteTypePayload, updated_by: user?.id }).eq("key", "site_type");
+    } else {
+      await supabase.from("site_settings").insert({ key: "site_type", value: siteTypePayload, updated_by: user?.id });
+    }
+
+
+
     // Auto-enable ecommerce when marketplace mode is selected
     if (platformMode === "marketplace" || platformMode === "both") {
       const { data: ecomData } = await supabase.from("site_settings").select("id, value").eq("key", "ecommerce").maybeSingle();
