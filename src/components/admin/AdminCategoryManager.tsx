@@ -67,7 +67,7 @@ const AdminCategoryManager = () => {
   const handleSave = async () => {
     if (!form.name) { toast({ title: "Ad daxil edin", variant: "destructive" }); return; }
     const slug = form.slug || generateSlug(form.name);
-    const payload = { name: form.name, slug, icon: form.icon, parent_id: form.parent_id || null, sort_order: form.sort_order, is_active: form.is_active };
+    const payload = { name: form.name, slug, icon: form.icon, parent_id: form.parent_id || null, sort_order: form.sort_order, is_active: form.is_active, site_type: form.site_type };
 
     if (editId) {
       const { error } = await supabase.from("categories").update(payload).eq("id", editId);
