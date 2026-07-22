@@ -31,7 +31,7 @@ const AdminCategoryManager = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const [form, setForm] = useState({ name: "", slug: "", icon: "CircuitBoard", parent_id: "", sort_order: 0, is_active: true });
+  const [form, setForm] = useState({ name: "", slug: "", icon: "CircuitBoard", parent_id: "", sort_order: 0, is_active: true, site_type: "real_estate" });
 
   const fetchCategories = async () => {
     const { data } = await supabase.from("categories").select("*").order("sort_order");
