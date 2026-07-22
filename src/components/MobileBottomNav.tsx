@@ -76,13 +76,13 @@ const MobileBottomNav = () => {
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <div className="flex items-center justify-around h-14">
-        {navItems.map((item) => {
+        {navItems.map((item, idx) => {
           const active = isActive(item.path);
 
           if (item.isCenter) {
             return (
               <Link
-                key={item.path}
+                key={idx}
                 to={item.path}
                 className="relative -mt-4 flex flex-col items-center"
               >
@@ -98,7 +98,7 @@ const MobileBottomNav = () => {
 
           return (
             <Link
-              key={item.path}
+              key={idx}
               to={item.path}
               className="flex flex-col items-center justify-center gap-0.5 min-w-[3rem]"
             >

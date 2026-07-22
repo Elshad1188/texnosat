@@ -124,6 +124,7 @@ const AdminSettingsManager = () => {
   const [uploadingWm, setUploadingWm] = useState(false);
   const [themeSettings, setThemeSettings] = useState<any>(DEFAULT_THEME);
   const [platformMode, setPlatformMode] = useState<PlatformMode>("both");
+  const [siteType, setSiteType] = useState<"real_estate" | "general" | "both">("real_estate");
   const [seoSettings, setSeoSettings] = useState<any>({
     keywords: "elan, pulsuz elan, daşınmaz əmlak, kirayə, satış, bina, mənzil, ev, ofis, torpaq, Bakı",
     og_image: "",
@@ -157,6 +158,12 @@ const AdminSettingsManager = () => {
       if (modeData?.value) {
         setPlatformMode((modeData.value as any).mode || "both");
       }
+
+      const { data: siteTypeData } = await supabase.from("site_settings").select("value").eq("key", "site_type").maybeSingle();
+      if (siteTypeData?.value) {
+        setSiteType(((siteTypeData.value as any).type || "real_estate") as any);
+      }
+
 
       const { data: seoData } = await supabase.from("site_settings").select("value").eq("key", "seo").maybeSingle();
       if (seoData?.value) {
@@ -195,6 +202,17 @@ const AdminSettingsManager = () => {
     } else {
       await supabase.from("site_settings").insert({ key: "platform_mode", value: modePayload, updated_by: user?.id });
     }
+
+    // Save site type (real_estate / general / both)
+    const { data: existingSiteType } = await supabase.from("site_settings").select("id").eq("key", "site_type").maybeSingle();
+    const siteTypePayload = { type: siteType } as any;
+    if (existingSiteType) {
+      await supabase.from("site_settings").update({ value: siteTypePayload, updated_by: user?.id }).eq("key", "site_type");
+    } else {
+      await supabase.from("site_settings").insert({ key: "site_type", value: siteTypePayload, updated_by: user?.id });
+    }
+
+
 
     // Auto-enable ecommerce when marketplace mode is selected
     if (platformMode === "marketplace" || platformMode === "both") {
@@ -289,6 +307,37 @@ const AdminSettingsManager = () => {
           />
         </div>
       </div>
+
+      {/* Site Type — controls which categories show on homepage/search */}
+      <div className="rounded-xl border-2 border-primary/30 bg-card p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">🏷️ Sayt Növü (Kateqoriyalar)</h3>
+        <p className="text-xs text-muted-foreground">
+          Ana səhifədə və axtarışda hansı kateqoriyaların görünəcəyini təyin edir. Yeni kateqoriyaları Kateqoriya Menecerindən əlavə edərək tipini seçə bilərsiniz.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {[
+            { value: "real_estate", label: "🏢 Əmlak saytı", desc: "Yalnız daşınmaz əmlak kateqoriyaları (mənzil, ofis, torpaq və s.)" },
+            { value: "general", label: "📦 Ümumi elan saytı", desc: "Ümumi elan kateqoriyaları (avtomobil, elektronika, geyim və s.)" },
+            { value: "both", label: "🌐 Hər ikisi", desc: "Həm əmlak həm də ümumi elan kateqoriyaları göstərilsin." },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setSiteType(opt.value as any)}
+              className={`rounded-xl border-2 p-3 text-left transition-all ${
+                siteType === opt.value
+                  ? "border-primary bg-primary/5 shadow-md"
+                  : "border-border hover:border-primary/30"
+              }`}
+            >
+              <p className="text-sm font-semibold text-foreground">{opt.label}</p>
+              <p className="text-[11px] text-muted-foreground mt-1 leading-tight">{opt.desc}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+
 
       {/* Feature Toggles — disable platform-wide features */}
       <div className="rounded-xl border-2 border-amber-500/30 bg-card p-4 space-y-3">

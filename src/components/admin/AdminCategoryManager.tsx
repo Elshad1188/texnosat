@@ -19,8 +19,10 @@ interface Category {
   parent_id: string | null;
   sort_order: number;
   is_active: boolean;
+  site_type?: string;
   created_at: string;
 }
+
 
 const AdminCategoryManager = () => {
   const { toast } = useToast();
@@ -29,7 +31,7 @@ const AdminCategoryManager = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const [form, setForm] = useState({ name: "", slug: "", icon: "CircuitBoard", parent_id: "", sort_order: 0, is_active: true });
+  const [form, setForm] = useState({ name: "", slug: "", icon: "CircuitBoard", parent_id: "", sort_order: 0, is_active: true, site_type: "real_estate" });
 
   const fetchCategories = async () => {
     const { data } = await supabase.from("categories").select("*").order("sort_order");
@@ -43,7 +45,7 @@ const AdminCategoryManager = () => {
   const getChildren = (parentId: string) => categories.filter((c) => c.parent_id === parentId);
 
   const resetForm = () => {
-    setForm({ name: "", slug: "", icon: "CircuitBoard", parent_id: "", sort_order: 0, is_active: true });
+    setForm({ name: "", slug: "", icon: "CircuitBoard", parent_id: "", sort_order: 0, is_active: true, site_type: "real_estate" });
     setEditId(null);
   };
 
@@ -55,7 +57,7 @@ const AdminCategoryManager = () => {
 
   const openEdit = (cat: Category) => {
     setEditId(cat.id);
-    setForm({ name: cat.name, slug: cat.slug, icon: cat.icon || "CircuitBoard", parent_id: cat.parent_id || "", sort_order: cat.sort_order, is_active: cat.is_active });
+    setForm({ name: cat.name, slug: cat.slug, icon: cat.icon || "CircuitBoard", parent_id: cat.parent_id || "", sort_order: cat.sort_order, is_active: cat.is_active, site_type: (cat as any).site_type || "real_estate" });
     setDialogOpen(true);
   };
 
@@ -65,7 +67,7 @@ const AdminCategoryManager = () => {
   const handleSave = async () => {
     if (!form.name) { toast({ title: "Ad daxil edin", variant: "destructive" }); return; }
     const slug = form.slug || generateSlug(form.name);
-    const payload = { name: form.name, slug, icon: form.icon, parent_id: form.parent_id || null, sort_order: form.sort_order, is_active: form.is_active };
+    const payload = { name: form.name, slug, icon: form.icon, parent_id: form.parent_id || null, sort_order: form.sort_order, is_active: form.is_active, site_type: form.site_type };
 
     if (editId) {
       const { error } = await supabase.from("categories").update(payload).eq("id", editId);
@@ -199,6 +201,17 @@ const AdminCategoryManager = () => {
                 <SelectContent>
                   <SelectItem value="none">Yoxdur (əsas kateqoriya)</SelectItem>
                   {parents.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Sayt növü</Label>
+              <Select value={form.site_type} onValueChange={(v) => setForm({ ...form, site_type: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="real_estate">🏢 Əmlak</SelectItem>
+                  <SelectItem value="general">📦 Ümumi elan</SelectItem>
+                  <SelectItem value="both">🌐 Hər ikisi</SelectItem>
                 </SelectContent>
               </Select>
             </div>

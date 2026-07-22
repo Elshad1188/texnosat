@@ -400,6 +400,7 @@ export type Database = {
           name: string
           name_ru: string | null
           parent_id: string | null
+          site_type: string
           slug: string
           sort_order: number | null
         }
@@ -411,6 +412,7 @@ export type Database = {
           name: string
           name_ru?: string | null
           parent_id?: string | null
+          site_type?: string
           slug: string
           sort_order?: number | null
         }
@@ -422,6 +424,7 @@ export type Database = {
           name?: string
           name_ru?: string | null
           parent_id?: string | null
+          site_type?: string
           slug?: string
           sort_order?: number | null
         }
