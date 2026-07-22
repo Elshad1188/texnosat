@@ -124,6 +124,7 @@ const AdminSettingsManager = () => {
   const [uploadingWm, setUploadingWm] = useState(false);
   const [themeSettings, setThemeSettings] = useState<any>(DEFAULT_THEME);
   const [platformMode, setPlatformMode] = useState<PlatformMode>("both");
+  const [siteType, setSiteType] = useState<"real_estate" | "general" | "both">("real_estate");
   const [seoSettings, setSeoSettings] = useState<any>({
     keywords: "elan, pulsuz elan, daşınmaz əmlak, kirayə, satış, bina, mənzil, ev, ofis, torpaq, Bakı",
     og_image: "",
