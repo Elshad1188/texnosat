@@ -69,7 +69,7 @@ const ScrollToTop = () => {
 
 const AppWrapper = () => {
   const { isLoaded } = useTheme();
-  const { showReels, showSpinWin, showOrders, showCompare } = usePlatformMode();
+  const { showReels, showSpinWin, showOrders, showCompare, isLoading: platformLoading } = usePlatformMode();
   useChatPresence();
   usePresence();
 
@@ -115,7 +115,7 @@ const AppWrapper = () => {
 
       </Routes>
       {showCompare && <CompareBar />}
-      {showSpinWin && <SpinWheelPopup />}
+      {!platformLoading && showSpinWin && <SpinWheelPopup />}
     </div>
   );
 };
