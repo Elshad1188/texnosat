@@ -351,9 +351,22 @@ const CreateListing = () => {
           }
         }
       }
+      const sanitizeName = (name: string) => {
+        const dot = name.lastIndexOf(".");
+        const base = (dot > 0 ? name.slice(0, dot) : name)
+          .normalize("NFKD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-zA-Z0-9._-]+/g, "-")
+          .replace(/-+/g, "-")
+          .replace(/^-+|-+$/g, "")
+          .toLowerCase() || "file";
+        const ext = (dot > 0 ? name.slice(dot + 1) : "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+        return ext ? `${base}.${ext}` : base;
+      };
+
       const newImageUrls: string[] = [];
       for (const file of images) {
-        const fileName = `${user.id}/${Date.now()}-${file.name}`;
+        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${sanitizeName(file.name)}`;
         const { error: uploadError } = await supabase.storage.from("listing-images").upload(fileName, file);
         if (uploadError) throw uploadError;
         const { data: urlData } = supabase.storage.from("listing-images").getPublicUrl(fileName);
@@ -363,7 +376,7 @@ const CreateListing = () => {
       // Upload video if new
       let finalVideoUrl: string | null = existingVideo || null;
       if (videoFile) {
-        const videoName = `${user.id}/${Date.now()}-${videoFile.name}`;
+        const videoName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${sanitizeName(videoFile.name)}`;
         const { error: vErr } = await supabase.storage.from("listing-videos").upload(videoName, videoFile);
         if (vErr) throw vErr;
         const { data: vUrl } = supabase.storage.from("listing-videos").getPublicUrl(videoName);
