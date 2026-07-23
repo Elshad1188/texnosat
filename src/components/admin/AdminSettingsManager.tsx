@@ -314,7 +314,7 @@ const AdminSettingsManager = () => {
         <p className="text-xs text-muted-foreground">
           Ana səhifədə və axtarışda hansı kateqoriyaların görünəcəyini təyin edir. Yeni kateqoriyaları Kateqoriya Menecerindən əlavə edərək tipini seçə bilərsiniz.
         </p>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           {[
             { value: "real_estate", label: "🏢 Əmlak saytı", desc: "Yalnız daşınmaz əmlak kateqoriyaları (mənzil, ofis, torpaq və s.)" },
             { value: "both", label: "🌐 Hər ikisi", desc: "Həm əmlak həm də digər kateqoriyaları göstərilsin." },
