@@ -251,7 +251,8 @@ const CreateListing = () => {
       } else if (images.length > 0) {
         // Upload first image temporarily to get URL
         const file = images[0];
-        const tmpPath = `${user.id}/ai-tmp-${Date.now()}-${file.name}`;
+        const safeName = file.name.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]+/g, "-").toLowerCase() || "file";
+        const tmpPath = `${user.id}/ai-tmp-${Date.now()}-${safeName}`;
         const { error: upErr } = await supabase.storage.from("listing-images").upload(tmpPath, file);
         if (upErr) throw upErr;
         const { data: urlData } = supabase.storage.from("listing-images").getPublicUrl(tmpPath);
