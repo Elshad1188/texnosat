@@ -115,7 +115,7 @@ const AppWrapper = () => {
 
       </Routes>
       {showCompare && <CompareBar />}
-      {showSpinWin && <SpinWheelPopup />}
+      {!platformLoading && showSpinWin && <SpinWheelPopup />}
     </div>
   );
 };
