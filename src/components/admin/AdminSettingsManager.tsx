@@ -317,8 +317,7 @@ const AdminSettingsManager = () => {
         <div className="grid gap-3 sm:grid-cols-3">
           {[
             { value: "real_estate", label: "🏢 Əmlak saytı", desc: "Yalnız daşınmaz əmlak kateqoriyaları (mənzil, ofis, torpaq və s.)" },
-            { value: "general", label: "📦 Ümumi elan saytı", desc: "Ümumi elan kateqoriyaları (avtomobil, elektronika, geyim və s.)" },
-            { value: "both", label: "🌐 Hər ikisi", desc: "Həm əmlak həm də ümumi elan kateqoriyaları göstərilsin." },
+            { value: "both", label: "🌐 Hər ikisi", desc: "Həm əmlak həm də digər kateqoriyaları göstərilsin." },
           ].map((opt) => (
             <button
               key={opt.value}
