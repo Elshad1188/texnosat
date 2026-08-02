@@ -136,11 +136,13 @@ const AdminQuickListing = () => {
       if (error) throw error;
 
       toast({ title: "Qeydiyyatsız elan yaradıldı" });
+      setUsed((n) => n + 1);
       setTitle("");
       setPhone("");
       setDescription("");
       setPrice("");
       setImages([]);
+
     } catch (e: any) {
       toast({ title: "Xəta", description: e?.message, variant: "destructive" });
     } finally {
