@@ -727,8 +727,9 @@ const ProductDetail = () => {
             {/* Prominent contact CTA - top of details */}
             {user?.id !== listing.user_id && (() => {
               const phone = (listing as any)?.custom_fields?.contact_phone || (store as any)?.phone || (seller as any)?.phone || "";
+              const isGuest = !!(listing as any)?.custom_fields?.is_guest;
               return (
-                <div className="mt-5 grid grid-cols-2 gap-2.5 sm:gap-3">
+                <div className={`mt-5 grid gap-2.5 sm:gap-3 ${isGuest ? "grid-cols-1" : "grid-cols-2"}`}>
                   {phone ? (
                     <a href={`tel:${phone}`} className="flex">
                       <Button className="w-full h-14 gap-2 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/25 text-base font-bold border-0">
@@ -740,14 +741,14 @@ const ProductDetail = () => {
                       <Phone className="h-5 w-5" /> Nömrə yoxdur
                     </Button>
                   )}
-                  <Button
+                  {!isGuest && <Button
                     onClick={openConversation}
                     disabled={startingConversation}
                     className="w-full h-14 gap-2 rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground hover:opacity-95 shadow-lg shadow-primary/25 text-base font-bold border-0"
                   >
                     {startingConversation ? <Loader2 className="h-5 w-5 animate-spin" /> : <MessageCircle className="h-5 w-5" />}
                     Mesaj yaz
-                  </Button>
+                  </Button>}
                 </div>
               );
             })()}
