@@ -21,6 +21,7 @@ import AdminCategoryFieldsManager from "@/components/admin/AdminCategoryFieldsMa
 import AdminRegionManager from "@/components/admin/AdminRegionManager";
 import AdminThemeManager from "@/components/admin/AdminThemeManager";
 import AdminModerationManager from "@/components/admin/AdminModerationManager";
+import AdminQuickListing from "@/components/admin/AdminQuickListing";
 import AdminBannerManager from "@/components/admin/AdminBannerManager";
 import AdminReportsManager from "@/components/admin/AdminReportsManager";
 import AdminStatsManager from "@/components/admin/AdminStatsManager";
@@ -456,6 +457,9 @@ const AdminPanel = () => {
                 <TabsTrigger value="listings" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <ShoppingBag className="h-3.5 w-3.5" /> Elanlar
                 </TabsTrigger>
+                <TabsTrigger value="quick-listing" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
+                  <ShoppingBag className="h-3.5 w-3.5" /> Sürətli elan
+                </TabsTrigger>
                 <TabsTrigger value="categories" className="gap-1 rounded-lg px-2.5 py-1.5 text-xs whitespace-nowrap">
                   <FolderTree className="h-3.5 w-3.5" /> Kateqoriyalar
                 </TabsTrigger>
@@ -544,6 +548,11 @@ const AdminPanel = () => {
           {/* Stats */}
           <TabsContent value="stats" className="mt-3">
             <AdminStatsManager onNavigate={(tab: string) => setActiveTab(tab)} />
+          </TabsContent>
+
+          {/* Quick guest listing */}
+          <TabsContent value="quick-listing" className="mt-3">
+            <AdminQuickListing />
           </TabsContent>
 
           {/* Moderation */}
