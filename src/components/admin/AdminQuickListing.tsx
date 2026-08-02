@@ -160,6 +160,28 @@ const AdminQuickListing = () => {
         Yalnız ad, nömrə, şəkil və məlumat kifayətdir. Bu elanlar qeydiyyatsız sayılır — istifadəçilər onlarla mesajlaşa bilməz, yalnız zəng edə bilər.
       </p>
 
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-border bg-muted/40 p-3">
+        <div className="space-y-1.5">
+          <Label className="text-xs">Aylıq limit</Label>
+          <Input
+            type="number"
+            min={0}
+            value={limit}
+            onChange={(e) => setLimit(Number(e.target.value))}
+            onBlur={(e) => saveLimit(Math.max(0, Number(e.target.value) || 0))}
+            disabled={savingLimit || limitLoading}
+            className="h-9 w-24"
+          />
+        </div>
+        <p className={`text-xs ${limitReached ? "text-destructive" : "text-muted-foreground"}`}>
+          {limitLoading
+            ? "Yüklənir..."
+            : `Bu ay: ${used}/${limit} · qalıb ${remaining}${limitReached ? " — limit bitdi" : ""}`}
+        </p>
+      </div>
+
+
+
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label className="text-xs">Ad (başlıq) *</Label>
