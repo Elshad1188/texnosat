@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,54 @@ const AdminQuickListing = () => {
   const [location, setLocation] = useState("Bakı");
   const [images, setImages] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
+  const [limit, setLimit] = useState<number>(50);
+  const [used, setUsed] = useState<number>(0);
+  const [limitLoading, setLimitLoading] = useState(true);
+  const [savingLimit, setSavingLimit] = useState(false);
+
+  const monthStart = () => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1).toISOString();
+  };
+
+  const loadUsage = async () => {
+    setLimitLoading(true);
+    const [{ data: settings }, { count }] = await Promise.all([
+      supabase.from("site_settings").select("value").eq("key", "general").maybeSingle(),
+      supabase
+        .from("listings")
+        .select("id", { count: "exact", head: true })
+        .eq("custom_fields->>is_guest", "true")
+        .gte("created_at", monthStart()),
+    ]);
+    const val = (settings?.value as any) || {};
+    setLimit(Number(val.guest_listing_monthly_limit ?? 50));
+    setUsed(count ?? 0);
+    setLimitLoading(false);
+  };
+
+  useEffect(() => {
+    loadUsage();
+  }, []);
+
+  const saveLimit = async (next: number) => {
+    setSavingLimit(true);
+    try {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "general").maybeSingle();
+      const merged = { ...((data?.value as any) || {}), guest_listing_monthly_limit: next };
+      const { error } = await supabase.from("site_settings").update({ value: merged }).eq("key", "general");
+      if (error) throw error;
+      setLimit(next);
+      toast({ title: "Aylıq limit yeniləndi" });
+    } catch (e: any) {
+      toast({ title: "Xəta", description: e?.message, variant: "destructive" });
+    } finally {
+      setSavingLimit(false);
+    }
+  };
+
+  const remaining = Math.max(0, limit - used);
+  const limitReached = !limitLoading && remaining <= 0;
 
   const addFiles = (files: FileList | null) => {
     if (!files) return;
@@ -44,6 +92,15 @@ const AdminQuickListing = () => {
       toast({ title: "Ad və nömrə mütləqdir", variant: "destructive" });
       return;
     }
+    if (limitReached) {
+      toast({
+        title: "Aylıq limit bitdi",
+        description: `Bu ay ${limit} qeydiyyatsız elan yaradılıb. Növbəti ay yenilənəcək.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       const urls: string[] = [];
@@ -79,11 +136,13 @@ const AdminQuickListing = () => {
       if (error) throw error;
 
       toast({ title: "Qeydiyyatsız elan yaradıldı" });
+      setUsed((n) => n + 1);
       setTitle("");
       setPhone("");
       setDescription("");
       setPrice("");
       setImages([]);
+
     } catch (e: any) {
       toast({ title: "Xəta", description: e?.message, variant: "destructive" });
     } finally {
@@ -100,6 +159,28 @@ const AdminQuickListing = () => {
       <p className="text-xs text-muted-foreground">
         Yalnız ad, nömrə, şəkil və məlumat kifayətdir. Bu elanlar qeydiyyatsız sayılır — istifadəçilər onlarla mesajlaşa bilməz, yalnız zəng edə bilər.
       </p>
+
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-border bg-muted/40 p-3">
+        <div className="space-y-1.5">
+          <Label className="text-xs">Aylıq limit</Label>
+          <Input
+            type="number"
+            min={0}
+            value={limit}
+            onChange={(e) => setLimit(Number(e.target.value))}
+            onBlur={(e) => saveLimit(Math.max(0, Number(e.target.value) || 0))}
+            disabled={savingLimit || limitLoading}
+            className="h-9 w-24"
+          />
+        </div>
+        <p className={`text-xs ${limitReached ? "text-destructive" : "text-muted-foreground"}`}>
+          {limitLoading
+            ? "Yüklənir..."
+            : `Bu ay: ${used}/${limit} · qalıb ${remaining}${limitReached ? " — limit bitdi" : ""}`}
+        </p>
+      </div>
+
+
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
@@ -148,7 +229,7 @@ const AdminQuickListing = () => {
         </div>
       </div>
 
-      <Button onClick={submit} disabled={saving} className="gap-2">
+      <Button onClick={submit} disabled={saving || limitReached} className="gap-2">
         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />} Elanı yarat
       </Button>
     </div>
