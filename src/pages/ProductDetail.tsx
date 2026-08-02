@@ -1123,14 +1123,14 @@ const ProductDetail = () => {
                     {t("detail.show_number")}
                   </Button>
                 )}
-                <Button
+                {!(listing as any)?.custom_fields?.is_guest && <Button
                   variant="outline"
                   className="flex-1 gap-2"
                   onClick={openConversation}
                   disabled={startingConversation}
                 >
                   {startingConversation ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />} {t("detail.send_message")}
-                </Button>
+                </Button>}
               </div>
             </>
           )}
