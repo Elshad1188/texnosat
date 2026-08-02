@@ -32,6 +32,54 @@ const AdminQuickListing = () => {
   const [location, setLocation] = useState("Bakı");
   const [images, setImages] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
+  const [limit, setLimit] = useState<number>(50);
+  const [used, setUsed] = useState<number>(0);
+  const [limitLoading, setLimitLoading] = useState(true);
+  const [savingLimit, setSavingLimit] = useState(false);
+
+  const monthStart = () => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1).toISOString();
+  };
+
+  const loadUsage = async () => {
+    setLimitLoading(true);
+    const [{ data: settings }, { count }] = await Promise.all([
+      supabase.from("site_settings").select("value").eq("key", "general").maybeSingle(),
+      supabase
+        .from("listings")
+        .select("id", { count: "exact", head: true })
+        .eq("custom_fields->>is_guest", "true")
+        .gte("created_at", monthStart()),
+    ]);
+    const val = (settings?.value as any) || {};
+    setLimit(Number(val.guest_listing_monthly_limit ?? 50));
+    setUsed(count ?? 0);
+    setLimitLoading(false);
+  };
+
+  useEffect(() => {
+    loadUsage();
+  }, []);
+
+  const saveLimit = async (next: number) => {
+    setSavingLimit(true);
+    try {
+      const { data } = await supabase.from("site_settings").select("value").eq("key", "general").maybeSingle();
+      const merged = { ...((data?.value as any) || {}), guest_listing_monthly_limit: next };
+      const { error } = await supabase.from("site_settings").update({ value: merged }).eq("key", "general");
+      if (error) throw error;
+      setLimit(next);
+      toast({ title: "Aylıq limit yeniləndi" });
+    } catch (e: any) {
+      toast({ title: "Xəta", description: e?.message, variant: "destructive" });
+    } finally {
+      setSavingLimit(false);
+    }
+  };
+
+  const remaining = Math.max(0, limit - used);
+  const limitReached = !limitLoading && remaining <= 0;
 
   const addFiles = (files: FileList | null) => {
     if (!files) return;
@@ -44,6 +92,15 @@ const AdminQuickListing = () => {
       toast({ title: "Ad və nömrə mütləqdir", variant: "destructive" });
       return;
     }
+    if (limitReached) {
+      toast({
+        title: "Aylıq limit bitdi",
+        description: `Bu ay ${limit} qeydiyyatsız elan yaradılıb. Növbəti ay yenilənəcək.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       const urls: string[] = [];
