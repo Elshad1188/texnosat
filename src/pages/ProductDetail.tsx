@@ -1023,7 +1023,7 @@ const ProductDetail = () => {
                     <ShoppingCart className="h-5 w-5" /> {t("detail.buy_now")}
                   </Button>
                 )}
-                {user?.id !== listing.user_id && (
+                {user?.id !== listing.user_id && !(listing as any)?.custom_fields?.is_guest && (
                   <Button 
                     variant={listing.is_buyable ? "outline" : "default"}
                     className={`w-full gap-2 h-12 text-lg font-bold ${!listing.is_buyable ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-600/20' : ''}`}
@@ -1047,14 +1047,14 @@ const ProductDetail = () => {
                       {t("detail.show_number")}
                     </Button>
                   )}
-                  <Button
+                  {!(listing as any)?.custom_fields?.is_guest && <Button
                     variant="outline"
                     className="flex-1 gap-2"
                     onClick={openConversation}
                     disabled={startingConversation}
                   >
                     {startingConversation ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />} {t("detail.send_message")}
-                  </Button>
+                  </Button>}
                 </div>
               </div>
             </>
