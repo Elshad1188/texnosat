@@ -229,7 +229,7 @@ const AdminQuickListing = () => {
         </div>
       </div>
 
-      <Button onClick={submit} disabled={saving} className="gap-2">
+      <Button onClick={submit} disabled={saving || limitReached} className="gap-2">
         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />} Elanı yarat
       </Button>
     </div>
