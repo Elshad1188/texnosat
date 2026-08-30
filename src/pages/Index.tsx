@@ -11,6 +11,7 @@ import SEOHead from "@/components/SEOHead";
 import ContestBanner from "@/components/ContestBanner";
 import ContestWinnersBanner from "@/components/ContestWinnersBanner";
 import HomeMiniMap from "@/components/HomeMiniMap";
+import HomePromoBar from "@/components/HomePromoBar";
 
 
 const Index = () => {
@@ -18,6 +19,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <SEOHead />
       <Header />
+      <HomePromoBar />
       <main>
         <HeroSection />
         <section className="container mx-auto px-4 -mt-2 mb-4">
