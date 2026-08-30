@@ -11,6 +11,7 @@ import SEOHead from "@/components/SEOHead";
 import ContestBanner from "@/components/ContestBanner";
 import ContestWinnersBanner from "@/components/ContestWinnersBanner";
 import HomeMiniMap from "@/components/HomeMiniMap";
+import HomePromoBar from "@/components/HomePromoBar";
 
 
 const Index = () => {
