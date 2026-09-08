@@ -1,44 +1,50 @@
-# Sayt məlumatlarının Firebase-ə bağlanması
+# Firebase bağlantısı — texniki qiymətləndirmə və plan
 
-## Məsələ
+## Sual
 
-Saytın bütün məlumatları hazırda Lovable Cloud məlumat bazasında saxlanılır (elanlar, istifadəçilər, mesajlar, mağazalar, sifarişlər və s.). Ayrıca yazılmış tətbiqiniz isə Firebase-ə bağlıdır və hər iki yerdə eyni elanlar görünməlidir.
+Saytın bütün funksiyaları Firebase-ə köçürsək tam işləyəcəkmi? Firebase-in olmayan funksiyası varmı?
 
-## Vacib qeyd (dürüst tövsiyə)
+## Dürüst cavab: XEYR
 
-Firebase-ə **tam köçmək** tövsiyə etmirəm, çünki saytın 50+ cədvəli, onlarla avtomatik funksiyası (bildirişlər, ödənişlər, yarışma, referal sistemi), giriş sistemi və fayl saxlama sistemi hamısı mövcud bazaya bağlıdır. Tam köçmə saytın böyük hissəsinin yenidən yazılması deməkdir və ödəniş/bildiriş funksiyaları pozula bilər.
+Sayt Postgres (Lovable Cloud) üzərində qurulub və onlarla xüsusi imkandan istifadə edir. Firebase Firestore bu imkanları vermir, ona görə tam köçmə 60-70% yenidən yazmaq deməkdir və kritik funksiyalar pozular.
 
-Bunun əvəzinə iki real variant var:
+### Firebase-in OLMADIĞI / çatışmayan funksiyalar
 
-## Variant A (Tövsiyə olunan): Tətbiq birbaşa mövcud bazaya bağlanır
+1. **Avtomatik bildiriş trigger-ləri (30+ ədəd)** — yeni elan, mesaj, stok azalması, yeni istifadəçi, şikayət, rəy, mağaza sorğusu və s. hər biri üçün Postgres trigger-i var. Firestore-da bunların hər biri üçün ayrıca Cloud Function yazmaq lazımdır.
+2. **Ödəniş sistemi (Epoint)** — `process_contest_join`, `spend_balance`, balans əməliyyatları Postgres transaction və `FOR UPDATE` kilidi ilə işləyir. Firestore-də race condition riski yüksəkdir, nəticədə cüt ödəniş/balans xətası mümkündür.
+3. **Yarışma sistemi** — `finalize_current_contest`, `process_contest_free_join`, `register_contest_invite`, `process_referral` kimi 20+ security-definer funksiya. Firestore-da JS-lə yenidən qurmaq və təhlükəsizliyi təmin etmək lazımdır.
+4. **Hədiyyə çarxı və referal bonusları** — maliyyə əməliyyatları atomik PostgreSQL transaction tələb edir.
+5. **pg_cron avtomatika** — həftəlik yarışma yekunlaşması, email növbəsi avtomatik işləyir. Firebase-də ayrıca Cloud Scheduler lazımdır.
+6. **Email növbəsi (pgmq)** — auth/transactional email-lər Postgres növbəsi ilə göndərilir.
+7. **RLS (sətir-səviyyəsi təhlükəsizlik)** — Firestore "security rules" tam fərqli modeldir; 50+ mövcud siyasəti yenidən qurmaq riskli və vaxt aparıcıdır.
+8. **Axtarış və saved_searches** — JSONB filter və avtomatik uyğunluq Firestore-də performans problemi yaradır.
+9. **Vault secrets, net.http_post** — server daxili API-lar yoxdur.
 
-Firebase ümumiyyətlə lazım deyil. Ayrıca tətbiqiniz saytın mövcud backend-inə qoşulur:
+## Tövsiyə olunan həll: Variant A (Firebase-siz)
 
-- Tətbiqə Supabase JS kitabxanası (və ya Flutter/Swift/Kotlin üçün Supabase SDK) əlavə olunur
-- Tətbiq eyni API ünvanı və açar ilə bağlanır — elanlar, kateqoriyalar, axtarış, sevimlilər, mesajlar hamısı eyni məlumatdan oxunur
-- Saytda nə dəyişirsə, tətbiqdə dərhal görünür (real vaxt rejimində)
-- Sizdən tələb olunur: ayrıca tətbiqin koduna giriş (tətbiqi kim yazıbsa, ona API məlumatlarını vermək)
+Ayrıca yazılmış tətbiqinizi Firebase-ə deyil, birbaşa saytın mövcud bazasına bağlamaq:
 
-Bu variantda bu layihədə kod dəyişikliyi demək olar ki, lazım deyil — yalnız tətbiq tərəfində bağlantı qurulur.
+- Tətbiqə Supabase SDK əlavə olunur (Flutter / Swift / Kotlin / React Native — hər biri üçün var)
+- Eyni API url və anon açarı ilə bağlanır
+- Bütün funksiyalar olduğu kimi işləyir: elanlar, mesajlar, ödəniş, yarışma, bildiriş, balans
+- Real vaxt yenilənmə (Supabase Realtime)
+- Bu layihədə kod dəyişikliyi demək olar ki, yoxdur — yalnız tətbiq tərəfində bağlantı qurulur
+- Tətbiq koduna giriş və ya tətbiqin yazıldığı dil məlum olmalıdır
 
-## Variant B: Firebase-ə avtomatik sinxronizasiya (körpü)
+## Variant B (Firebase-ə sinxronizasiya — yalnız oxunan məlumatlar)
 
-Məlumatlar saytda qalır, amma hər dəyişiklik Firebase Firestore-a avtomatik kopyalanır:
+Yalnız son çarə kimi: elanlar, kateqoriyalar, bölgələr, mağazalar Firestore-a kopyalanır, amma giriş, ödəniş, mesaj, yarışma saytda qalır. Bu zaman:
+- `firebase-sync` edge function-ları yazılır (webhook tipli)
+- İlkin köçürmə funksiyası
+- Firebase service account açarı tələb olunur
+- Məhdudiyyət: mesajlaşma/ödəniş tətbiqdə işləməyəcək (sayta yönləndirmə lazım)
 
-- Yeni edge function-lar: elan yaradılanda/dəyişəndə/silindəndə Firebase Firestore-a yazır
-- İlkin köçürmə: mövcud bütün elanlar bir dəfəlik Firebase-ə köçürülür
-- Sinxronlaşdırılan məlumatlar: elanlar, kateqoriyalar, bölgələr, mağazalar, bannerlər
-- Firebase service account açarı lazımdır (siz Firebase konsolundan götürüb təhlükəsiz formada əlavə edəcəksiniz)
-- Məhdudiyyət: mesajlaşma, ödəniş, giriş (auth) kimi funksiyalar sayt tərəfində qalır — Firebase-ə yalnız oxunan məlumatlar (elanlar və s.) gedir
+## Nə lazımdır (Variant A üçün)
 
-## Tətbiq planı (Variant B seçilərsə)
+1. Ayrıca tətbiqin hansı dil/framework-də yazıldığını bildirməyiniz
+2. Tətbiqin hazır Firebase-i tamamilə çıxarmaq və ya paralel saxlamaq istədiyinizi təsdiqləməyiniz
+3. Bu layihənin backend məlumatları (url + anon açar) — artıq mövcuddur, tətbiqə veriləcək
 
-1. Firebase-də Firestore bazası yaradın və service account açarı əldə edin (təlimat veriləcək)
-2. Açarı təhlükəsiz şəkildə layihəyə əlavə etməyiniz üçün forma açılacaq
-3. `firebase-sync` edge function-u: elanlar/kateqoriyalar üçün webhook tipli sinxronizasiya
-4. Mövcud məlumatların bir dəfəlik köçürülməsi funksiyası
-5. Test: saytda yeni elan → Firebase-də görünməsi
+## Nəticə
 
-## Sual (planı təsdiqləməzdən əvvəl)
-
-Hansı variantı seçirsiniz? Variant A sadə və etibarlıdır, amma tətbiq kodunun dəyişməsini tələb edir. Variant B Firebase-i saxlayır, amma məlumatlar iki yerdə olur və gecikmə/risk yaranır.
+Firebase-ə tam köçmək tövsiyə etmirəm — ödəniş, yarışma, bildiriş kimi funksiyalar mütləq pozular. Variant A (tətbiq birbaşa baza qoşulur) etibarlı, sürətli və bütün funksiyaları saxlayır.
