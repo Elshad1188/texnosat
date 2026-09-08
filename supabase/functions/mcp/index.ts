@@ -7,8 +7,63 @@ import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.24.0";
 
 // src/lib/mcp/tools/search-listings.ts
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.24.0";
-import { createClient } from "npm:@supabase/supabase-js@^2.97.0";
 import { z } from "npm:zod@^3.25.76";
+
+// src/lib/mcp/supabase.ts
+import { createClient } from "npm:@supabase/supabase-js@^2.97.0";
+function runtimeEnv(name) {
+  const runtime = globalThis;
+  return runtime.Deno?.env?.get?.(name) ?? runtime.process?.env?.[name];
+}
+function configuredEnv(names) {
+  for (const name of names) {
+    const value = runtimeEnv(name)?.trim();
+    if (value) return value;
+  }
+  return void 0;
+}
+function supabaseProjectUrl() {
+  const url = configuredEnv(["SUPABASE_URL", "VITE_SUPABASE_URL"]);
+  if (!url) throw new Error("SUPABASE_URL (or VITE_SUPABASE_URL) is required");
+  return url;
+}
+function supabasePublishableKey() {
+  const direct = configuredEnv([
+    "SUPABASE_PUBLISHABLE_KEY",
+    "VITE_SUPABASE_PUBLISHABLE_KEY"
+  ]);
+  if (direct) return direct;
+  const keyset = runtimeEnv("SUPABASE_PUBLISHABLE_KEYS");
+  if (keyset) {
+    try {
+      const parsed = JSON.parse(keyset);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        const keys = parsed;
+        const key = [keys.default, ...Object.values(keys)].find((v) => typeof v === "string" && v.trim().startsWith("sb_publishable_"))?.trim();
+        if (key) return key;
+      }
+    } catch {
+    }
+  }
+  const legacy = configuredEnv(["SUPABASE_ANON_KEY", "VITE_SUPABASE_ANON_KEY"]);
+  if (legacy) return legacy;
+  throw new Error("SUPABASE_PUBLISHABLE_KEY, SUPABASE_PUBLISHABLE_KEYS, or SUPABASE_ANON_KEY is required");
+}
+function supabaseAnon() {
+  return createClient(supabaseProjectUrl(), supabasePublishableKey(), {
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
+}
+function supabaseForUser(ctx) {
+  const token = ctx.getToken();
+  if (!token) throw new Error("supabaseForUser requires a verified OAuth token");
+  return createClient(supabaseProjectUrl(), supabasePublishableKey(), {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
+}
+
+// src/lib/mcp/tools/search-listings.ts
 var search_listings_default = defineTool({
   name: "search_listings",
   title: "Search listings",
@@ -24,11 +79,7 @@ var search_listings_default = defineTool({
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async (input) => {
-    const supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_PUBLISHABLE_KEY,
-      { auth: { persistSession: false } }
-    );
+    const supabase = supabaseAnon();
     const limit = Math.min(input.limit ?? 20, 50);
     let q = supabase.from("listings").select("id,title,price,currency,region,category_slug,deal_type,created_at,image_urls").eq("status", "active").order("created_at", { ascending: false }).limit(limit);
     if (input.query) q = q.ilike("title", `%${input.query}%`);
@@ -48,7 +99,6 @@ var search_listings_default = defineTool({
 
 // src/lib/mcp/tools/get-my-listings.ts
 import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.24.0";
-import { createClient as createClient2 } from "npm:@supabase/supabase-js@^2.97.0";
 import { z as z2 } from "npm:zod@^3.25.76";
 var get_my_listings_default = defineTool2({
   name: "get_my_listings",
@@ -63,14 +113,7 @@ var get_my_listings_default = defineTool2({
     if (!ctx.isAuthenticated()) {
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
-    const supabase = createClient2(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_PUBLISHABLE_KEY,
-      {
-        global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-        auth: { persistSession: false, autoRefreshToken: false }
-      }
-    );
+    const supabase = supabaseForUser(ctx);
     const limit = Math.min(input.limit ?? 20, 100);
     let q = supabase.from("listings").select("id,title,price,currency,status,category_slug,deal_type,views_count,created_at").eq("user_id", ctx.getUserId()).order("created_at", { ascending: false }).limit(limit);
     if (input.status) q = q.eq("status", input.status);
@@ -85,7 +128,6 @@ var get_my_listings_default = defineTool2({
 
 // src/lib/mcp/tools/get-my-profile.ts
 import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.24.0";
-import { createClient as createClient3 } from "npm:@supabase/supabase-js@^2.97.0";
 var get_my_profile_default = defineTool3({
   name: "get_my_profile",
   title: "Get my profile",
@@ -96,14 +138,7 @@ var get_my_profile_default = defineTool3({
     if (!ctx.isAuthenticated()) {
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
-    const supabase = createClient3(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_PUBLISHABLE_KEY,
-      {
-        global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-        auth: { persistSession: false, autoRefreshToken: false }
-      }
-    );
+    const supabase = supabaseForUser(ctx);
     const { data, error } = await supabase.from("profiles").select("*").eq("id", ctx.getUserId()).maybeSingle();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     return {

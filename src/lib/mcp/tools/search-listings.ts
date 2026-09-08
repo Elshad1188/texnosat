@@ -1,6 +1,6 @@
 import { defineTool } from "@lovable.dev/mcp-js";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { supabaseAnon } from "../supabase";
 
 export default defineTool({
   name: "search_listings",
@@ -18,11 +18,7 @@ export default defineTool({
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async (input) => {
-    const supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_PUBLISHABLE_KEY!,
-      { auth: { persistSession: false } },
-    );
+    const supabase = supabaseAnon();
     const limit = Math.min(input.limit ?? 20, 50);
     let q = supabase
       .from("listings")
