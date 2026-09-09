@@ -1,50 +1,23 @@
-# Firebase bağlantısı — texniki qiymətləndirmə və plan
+# Tətbiq üçün baza sənədi (schema + qaydalar)
 
-## Sual
+Tətbiqi yazan agent 5 sual verib: profil yaranması, elan yaratmaq, seçilmişlər, mesajlaşma, mağazalar. Cavabları bazadan yoxladım. Onları bir sənəd şəklində layihəyə yazıram ki, siz sadəcə kopyalayıb agentə göndərəsiniz.
 
-Saytın bütün funksiyaları Firebase-ə köçürsək tam işləyəcəkmi? Firebase-in olmayan funksiyası varmı?
+## Nə hazırlanacaq
 
-## Dürüst cavab: XEYR
+Yeni fayl: `docs/app-backend-spec.md` — tətbiq tərəfinə göndərmək üçün tam təlimat:
 
-Sayt Postgres (Lovable Cloud) üzərində qurulub və onlarla xüsusi imkandan istifadə edir. Firebase Firestore bu imkanları vermir, ona görə tam köçmə 60-70% yenidən yazmaq deməkdir və kritik funksiyalar pozular.
+1. **Bağlantı** — backend URL, anon açar, auth/storage/functions ünvanları.
+2. **Profil** — qeydiyyatdan sonra profil avtomatik yaranır (baza trigger-i ilə). Tətbiq `profiles`-a əlavə insert ETMƏMƏLİDİR, yalnız `user_id`-ə görə oxuyub/yeniləyir.
+3. **Yeni elan** — `listings` cədvəlinin bütün sütunları, hansı sütunlar məcburidir (`user_id`, `title`, `price`, `category`, `location`), status həmişə `pending` olaraq düşür və admin təsdiqləyir (tətbiq `approved` göndərə bilməz), `is_active` standart `false`.
+4. **Şəkillər** — hansı storage qovluqlarına yüklənir: `listing-images`, `listing-videos`, `chat_media`, `store-logos` (hamısı public oxunur, yükləmə üçün giriş tələb olunur) + fayl adının təhlükəsiz formatı (boşluq/AZ hərfləri olmadan, yoxsa "Invalid key" xətası).
+5. **Seçilmişlər** — `favorites (user_id, listing_id)` insert/delete, qayda `auth.uid() = user_id`.
+6. **Mesajlaşma** — `conversations` (buyer_id, seller_id, listing_id) və `messages` (conversation_id, sender_id, content, image_url, audio_url) insert qaydaları; söhbəti silmək üçün `delete_conversation_for_user` funksiyası; mesajı silmək üçün `delete_own_message`.
+7. **Mağazalar və rəylər** — `stores` insert (status `pending`), `reviews` (rating 1-5, öz elanına rəy yazmaq qadağa).
+8. **Realtime** — hansı cədvəllərə canlı abunə olmaq (listings, messages, notifications).
+9. **Vacib xəbərdarlıqlar** — cədvəlləri yenidən qurmaq YOX; sayt bu cədvəllərə bağlıdır, tətbiq eyni cədvəllərdən oxuyub yazmalıdır. Balans, ödəniş, yarışma və push bildirişləri birbaşa yazılmır — server funksiyaları ilə işləyir.
 
-### Firebase-in OLMADIĞI / çatışmayan funksiyalar
+## Texniki qeydlər
 
-1. **Avtomatik bildiriş trigger-ləri (30+ ədəd)** — yeni elan, mesaj, stok azalması, yeni istifadəçi, şikayət, rəy, mağaza sorğusu və s. hər biri üçün Postgres trigger-i var. Firestore-da bunların hər biri üçün ayrıca Cloud Function yazmaq lazımdır.
-2. **Ödəniş sistemi (Epoint)** — `process_contest_join`, `spend_balance`, balans əməliyyatları Postgres transaction və `FOR UPDATE` kilidi ilə işləyir. Firestore-də race condition riski yüksəkdir, nəticədə cüt ödəniş/balans xətası mümkündür.
-3. **Yarışma sistemi** — `finalize_current_contest`, `process_contest_free_join`, `register_contest_invite`, `process_referral` kimi 20+ security-definer funksiya. Firestore-da JS-lə yenidən qurmaq və təhlükəsizliyi təmin etmək lazımdır.
-4. **Hədiyyə çarxı və referal bonusları** — maliyyə əməliyyatları atomik PostgreSQL transaction tələb edir.
-5. **pg_cron avtomatika** — həftəlik yarışma yekunlaşması, email növbəsi avtomatik işləyir. Firebase-də ayrıca Cloud Scheduler lazımdır.
-6. **Email növbəsi (pgmq)** — auth/transactional email-lər Postgres növbəsi ilə göndərilir.
-7. **RLS (sətir-səviyyəsi təhlükəsizlik)** — Firestore "security rules" tam fərqli modeldir; 50+ mövcud siyasəti yenidən qurmaq riskli və vaxt aparıcıdır.
-8. **Axtarış və saved_searches** — JSONB filter və avtomatik uyğunluq Firestore-də performans problemi yaradır.
-9. **Vault secrets, net.http_post** — server daxili API-lar yoxdur.
-
-## Tövsiyə olunan həll: Variant A (Firebase-siz)
-
-Ayrıca yazılmış tətbiqinizi Firebase-ə deyil, birbaşa saytın mövcud bazasına bağlamaq:
-
-- Tətbiqə Supabase SDK əlavə olunur (Flutter / Swift / Kotlin / React Native — hər biri üçün var)
-- Eyni API url və anon açarı ilə bağlanır
-- Bütün funksiyalar olduğu kimi işləyir: elanlar, mesajlar, ödəniş, yarışma, bildiriş, balans
-- Real vaxt yenilənmə (Supabase Realtime)
-- Bu layihədə kod dəyişikliyi demək olar ki, yoxdur — yalnız tətbiq tərəfində bağlantı qurulur
-- Tətbiq koduna giriş və ya tətbiqin yazıldığı dil məlum olmalıdır
-
-## Variant B (Firebase-ə sinxronizasiya — yalnız oxunan məlumatlar)
-
-Yalnız son çarə kimi: elanlar, kateqoriyalar, bölgələr, mağazalar Firestore-a kopyalanır, amma giriş, ödəniş, mesaj, yarışma saytda qalır. Bu zaman:
-- `firebase-sync` edge function-ları yazılır (webhook tipli)
-- İlkin köçürmə funksiyası
-- Firebase service account açarı tələb olunur
-- Məhdudiyyət: mesajlaşma/ödəniş tətbiqdə işləməyəcək (sayta yönləndirmə lazım)
-
-## Nə lazımdır (Variant A üçün)
-
-1. Ayrıca tətbiqin hansı dil/framework-də yazıldığını bildirməyiniz
-2. Tətbiqin hazır Firebase-i tamamilə çıxarmaq və ya paralel saxlamaq istədiyinizi təsdiqləməyiniz
-3. Bu layihənin backend məlumatları (url + anon açar) — artıq mövcuddur, tətbiqə veriləcək
-
-## Nəticə
-
-Firebase-ə tam köçmək tövsiyə etmirəm — ödəniş, yarışma, bildiriş kimi funksiyalar mütləq pozular. Variant A (tətbiq birbaşa baza qoşulur) etibarlı, sürətli və bütün funksiyaları saxlayır.
+- Sənəd yalnız oxunaqlı markdown olacaq; kodda və bazada dəyişiklik edilməyəcək.
+- Bütün RLS ifadələri real bazadan alınmış vəziyyətə uyğun yazılacaq (`pg_policies` yoxlanıldı).
+- Əgər tətbiqin bəzi əməliyyatları hazırda RLS ilə bağlıdırsa, sənəddə açıq göstəriləcək və lazım gələrsə ayrıca icazə əlavə etməyi sizinlə razılaşdıracağam.
