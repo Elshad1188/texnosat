@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type SiteType = "real_estate" | "general" | "both";
+export type SiteType = "real_estate" | "general" | "transport" | "both";
 
 /**
  * Global site type — controls which categories are visible.
