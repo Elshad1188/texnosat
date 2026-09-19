@@ -7,14 +7,17 @@ import BannerDisplay from "@/components/BannerDisplay";
 import LatestBlogPosts from "@/components/LatestBlogPosts";
 import Footer from "@/components/Footer";
 import DealTypeTabs from "@/components/DealTypeTabs";
+import HomeModeTabs from "@/components/HomeModeTabs";
 import SEOHead from "@/components/SEOHead";
 import ContestBanner from "@/components/ContestBanner";
 import ContestWinnersBanner from "@/components/ContestWinnersBanner";
 import HomeMiniMap from "@/components/HomeMiniMap";
 import HomePromoBar from "@/components/HomePromoBar";
+import { useHomeMode } from "@/contexts/HomeModeContext";
 
 
 const Index = () => {
+  const { mode } = useHomeMode();
   return (
     <div className="min-h-screen bg-background">
       <SEOHead />
@@ -22,9 +25,12 @@ const Index = () => {
       <HomePromoBar />
       <main>
         <HeroSection />
-        <section className="container mx-auto px-4 -mt-2 mb-4">
-          <DealTypeTabs variant="navigate" />
-        </section>
+        <HomeModeTabs />
+        {(!mode || mode === "real_estate") && (
+          <section className="container mx-auto px-4 -mt-2 mb-4">
+            <DealTypeTabs variant="navigate" />
+          </section>
+        )}
         <Categories />
         <div className="container mx-auto px-4 mb-4">
           <ContestWinnersBanner />

@@ -50,6 +50,7 @@ import ContestReferral from "./pages/ContestReferral";
 import OAuthConsent from "./pages/OAuthConsent";
 import Connections from "./pages/Connections";
 import { usePlatformMode } from "@/hooks/usePlatformMode";
+import { HomeModeProvider } from "@/contexts/HomeModeContext";
 
 
 const queryClient = new QueryClient();
@@ -129,6 +130,7 @@ const App = () => (
         <CompareProvider>
           <AuthProvider>
             <LanguageProvider>
+              <HomeModeProvider>
               <ThemeProvider>
                 <ScrollToTop />
                 <AppWrapper />
@@ -139,6 +141,7 @@ const App = () => (
                 <FirebaseInit />
                 <SEOAnalytics />
               </ThemeProvider>
+              </HomeModeProvider>
             </LanguageProvider>
           </AuthProvider>
         </CompareProvider>
