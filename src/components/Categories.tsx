@@ -5,7 +5,8 @@ import { LayoutGrid, Building2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation, useLanguage } from "@/contexts/LanguageContext";
 import { iconMap } from "@/lib/icons";
-import { useSiteType, categoryMatchesSite } from "@/hooks/useSiteType";
+import { useSiteType, categoryMatchesSite, SiteType } from "@/hooks/useSiteType";
+import { useHomeMode } from "@/contexts/HomeModeContext";
 
 // Daşınmaz əmlak kateqoriyaları üçün rəng paleti (slug → tailwind gradient)
 const categoryColors: Record<string, string> = {
@@ -23,6 +24,7 @@ const Categories = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const { siteType } = useSiteType();
+  const { mode } = useHomeMode();
 
   const { data: allCategories = [], isLoading } = useQuery({
     queryKey: ["categories-home"],
