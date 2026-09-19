@@ -52,35 +52,66 @@ const FeaturedListings = () => {
     staleTime: 60000,
   });
 
-  const { data: premiumListings = [] } = useQuery({
+  // Kateqoriya slug → site_type xəritəsi (alt kateqoriyalar valideynə bağlanır)
+  const { data: catSiteMap = {} } = useQuery({
+    queryKey: ["cat-site-map"],
+    queryFn: async () => {
+      const { data } = await supabase.from("categories").select("slug, site_type, parent_id");
+      const all = data || [];
+      const byId: Record<string, any> = {};
+      const bySlug: Record<string, string> = {};
+      // parent_id uuid olduğundan slug üzərindən iki mərhələli xəritə qururuq
+      const { data: full } = await supabase.from("categories").select("id, slug, site_type, parent_id");
+      (full || []).forEach((c: any) => { byId[c.id] = c; });
+      (full || []).forEach((c: any) => {
+        let st = c.site_type || "real_estate";
+        if (!c.site_type && c.parent_id && byId[c.parent_id]) st = byId[c.parent_id].site_type || "real_estate";
+        bySlug[c.slug] = st;
+      });
+      return bySlug;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Rejimə uyğun elan filteri (rejim seçilməyibsə hamısı keçir)
+  const matchesMode = (l: any) => {
+    if (!mode) return true;
+    const st = (catSiteMap as Record<string, string>)[l.category] || "both";
+    return categoryMatchesSite(st, mode as SiteType);
+  };
+
+  const { data: premiumRaw = [] } = useQuery({
     queryKey: ["listings-premium", hpSettings.homepage_premium_count],
     queryFn: async () => {
       const { data } = await supabase.from("listings").select("*")
         .eq("is_active", true).eq("is_premium", true)
-        .order("created_at", { ascending: false }).limit(hpSettings.homepage_premium_count);
+        .order("created_at", { ascending: false }).limit(hpSettings.homepage_premium_count * 3);
       return data || [];
     },
   });
+  const premiumListings = premiumRaw.filter(matchesMode).slice(0, hpSettings.homepage_premium_count);
 
-  const { data: urgentListings = [] } = useQuery({
+  const { data: urgentRaw = [] } = useQuery({
     queryKey: ["listings-urgent", hpSettings.homepage_urgent_count],
     queryFn: async () => {
       const { data } = await supabase.from("listings").select("*")
         .eq("is_active", true).eq("is_urgent", true)
-        .order("created_at", { ascending: false }).limit(hpSettings.homepage_urgent_count);
+        .order("created_at", { ascending: false }).limit(hpSettings.homepage_urgent_count * 3);
       return data || [];
     },
   });
+  const urgentListings = urgentRaw.filter(matchesMode).slice(0, hpSettings.homepage_urgent_count);
 
-  const { data: newListings = [], isLoading } = useQuery({
+  const { data: newRaw = [], isLoading } = useQuery({
     queryKey: ["listings-new", hpSettings.homepage_new_count],
     queryFn: async () => {
       const { data } = await supabase.from("listings").select("*")
         .eq("is_active", true)
-        .order("created_at", { ascending: false }).limit(hpSettings.homepage_new_count);
+        .order("created_at", { ascending: false }).limit(hpSettings.homepage_new_count * 3);
       return data || [];
     },
   });
+  const newListings = newRaw.filter(matchesMode).slice(0, hpSettings.homepage_new_count);
 
   // Initialize allNewListings when first batch loads
   useEffect(() => {
