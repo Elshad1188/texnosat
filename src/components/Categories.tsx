@@ -39,8 +39,11 @@ const Categories = () => {
     },
   });
 
+  // Seçilmiş rejim (Nəqliyyat / Daşınmaz əmlak / Qarışıq) üstünlük təşkil edir;
+  // rejim seçilməyibsə admin paneldəki site_type tətbiq olunur.
+  const effectiveType: SiteType = (mode as SiteType) || siteType;
   const categories = allCategories.filter((c: any) =>
-    categoryMatchesSite(c.site_type, siteType)
+    categoryMatchesSite(c.site_type, effectiveType)
   );
 
 
