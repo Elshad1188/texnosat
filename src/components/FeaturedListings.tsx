@@ -132,7 +132,7 @@ const FeaturedListings = () => {
     if (data && data.length > 0) {
       setAllNewListings(prev => {
         const existingIds = new Set(prev.map((l: any) => l.id));
-        const fresh = data.filter((l: any) => !existingIds.has(l.id));
+        const fresh = data.filter((l: any) => !existingIds.has(l.id) && matchesMode(l));
         return [...prev, ...fresh];
       });
       setNewOffset(prev => prev + data.length);
