@@ -6,6 +6,8 @@ import { Crown, Zap, Clock, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLanguage, useTranslation } from "@/contexts/LanguageContext";
+import { useHomeMode } from "@/contexts/HomeModeContext";
+import { categoryMatchesSite, SiteType } from "@/hooks/useSiteType";
 
 interface HomepageSettings {
   homepage_premium_count: number;
@@ -27,6 +29,7 @@ const FeaturedListings = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const { mode } = useHomeMode();
   const [newOffset, setNewOffset] = useState(0);
   const [allNewListings, setAllNewListings] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
