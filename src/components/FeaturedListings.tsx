@@ -113,14 +113,12 @@ const FeaturedListings = () => {
   });
   const newListings = newRaw.filter(matchesMode).slice(0, hpSettings.homepage_new_count);
 
-  // Initialize allNewListings when first batch loads
+  // Initialize allNewListings when first batch loads (və rejim dəyişəndə sıfırla)
   useEffect(() => {
-    if (newListings.length > 0) {
-      setAllNewListings(newListings);
-      setNewOffset(newListings.length);
-      setHasMore(newListings.length >= hpSettings.homepage_new_count);
-    }
-  }, [newListings, hpSettings.homepage_new_count]);
+    setAllNewListings(newListings);
+    setNewOffset(newListings.length);
+    setHasMore(newListings.length >= hpSettings.homepage_new_count);
+  }, [newListings, hpSettings.homepage_new_count, mode]);
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore || newOffset === 0) return;
