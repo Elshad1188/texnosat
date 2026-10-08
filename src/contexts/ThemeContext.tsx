@@ -113,7 +113,10 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    refreshTheme();
+    // Never block the app on the splash screen if the network is slow
+    const t = setTimeout(() => setIsLoaded(true), 3000);
+    refreshTheme().catch(() => {});
+    return () => clearTimeout(t);
   }, []);
 
   return (
