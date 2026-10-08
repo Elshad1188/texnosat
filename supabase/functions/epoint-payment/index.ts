@@ -138,7 +138,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    const errorMessage = epointResult?.message || rawResult || "Epoint API error";
+    const rawMessage = epointResult?.message || rawResult || "Epoint API error";
+    const errorMessage = /cannot accept payments/i.test(rawMessage)
+      ? "Kartla ödəniş hazırda aktiv deyil. Zəhmət olmasa bir az sonra yenidən cəhd edin."
+      : rawMessage;
     console.error("Epoint request rejected:", { status: epointResponse.status, errorMessage, origin });
 
     return new Response(JSON.stringify({
