@@ -17,6 +17,8 @@ import { useLanguage, useTranslation } from "@/contexts/LanguageContext";
 import { getListingCoords } from "@/components/ListingsMap";
 const ListingsMap = lazy(() => import("@/components/ListingsMap"));
 import DealTypeTabs from "@/components/DealTypeTabs";
+import { useListingScope } from "@/hooks/useListingScope";
+import { listingMatchesScope } from "@/lib/listingScope";
 import RegionCascader from "@/components/RegionCascader";
 
 type MapBounds = { north: number; south: number; east: number; west: number };
@@ -53,6 +55,7 @@ const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const { scope, categoryMap, isLoading: scopeLoading } = useListingScope();
   const initialSearch = searchParams.get("search") || "";
   const initialCategory = searchParams.get("category") || "";
   const initialDeal = searchParams.get("deal") || "";
@@ -76,7 +79,7 @@ const Products = () => {
   const [selectedMetro, setSelectedMetro] = useState<string>("");
 
   // Fetch categories
-  const { data: categories = [] } = useQuery({
+  const { data: allCategories = [] } = useQuery({
     queryKey: ["categories-all"],
     queryFn: async () => {
       const { data } = await supabase.from("categories").select("*").eq("is_active", true).order("sort_order");
@@ -127,6 +130,7 @@ const Products = () => {
     enabled: listingStoreIds.length > 0,
   });
 
+  const categories = allCategories.filter(c => listingMatchesScope(c.slug, categoryMap, scope));
   const parentCategories = categories.filter((c: any) => !c.parent_id);
   const subcategories = selectedCategory ? categories.filter((c: any) => {
     const parent = parentCategories.find((p: any) => p.slug === selectedCategory);
@@ -136,7 +140,7 @@ const Products = () => {
   const parentRegions = regions.filter((r: any) => !r.parent_id);
 
   const filteredProducts = useMemo(() => {
-    let result = [...allListings];
+    let result = scopeLoading ? [] : allListings.filter(p => listingMatchesScope(p.category, categoryMap, scope));
 
     if (query) {
       const q = query.toLowerCase();
@@ -222,7 +226,7 @@ const Products = () => {
     else if (sortBy === "views") result.sort((a: any, b: any) => (b.views_count || 0) - (a.views_count || 0));
 
     return result;
-  }, [query, selectedCategory, selectedSubcategory, sortBy, priceMin, priceMax, allListings, selectedRegion, regions, customFilters, dateRange, selectedDeal]);
+  }, [query, selectedCategory, selectedSubcategory, sortBy, priceMin, priceMax, allListings, selectedRegion, regions, customFilters, dateRange, selectedDeal, scope, categoryMap, scopeLoading]);
 
   // Apply map-bounds filter on top of standard filters when in map view
   const visibleProducts = useMemo(() => {

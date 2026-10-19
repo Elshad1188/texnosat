@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { Car, Building2, LayoutGrid } from "lucide-react";
 import { useHomeMode, HomeMode } from "@/contexts/HomeModeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -45,23 +46,25 @@ const HomeModeTabs = () => {
             const Icon = m.icon;
             const active = mode === m.value;
             return (
-              <button
+              <Button
+                variant="outline"
+                aria-pressed={active}
                 key={m.value}
                 onClick={() => setMode(active ? null : m.value)}
-                className={`flex flex-col items-center gap-1.5 sm:gap-2 rounded-2xl border p-3 sm:p-5 text-center transition-all ${
+                className={`h-auto min-h-24 whitespace-normal flex flex-col items-center gap-1.5 sm:gap-2 rounded-lg border p-3 sm:p-5 text-center transition-colors ${
                   active
-                    ? `border-transparent bg-gradient-to-br ${m.gradient} text-white shadow-lg scale-[1.02]`
+                    ? "border-primary bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:text-primary-foreground"
                     : "border-border bg-card text-foreground hover:border-primary/50 hover:shadow-md"
                 }`}
               >
-                <Icon className={`h-6 w-6 sm:h-8 sm:w-8 ${active ? "text-white" : "text-primary"}`} />
+                <Icon className={`h-6 w-6 sm:h-8 sm:w-8 ${active ? "text-primary-foreground" : "text-primary"}`} />
                 <span className="text-xs font-bold sm:text-base leading-tight">
                   {isRu ? m.ru : m.az}
                 </span>
-                <span className={`hidden sm:block text-[11px] leading-tight ${active ? "text-white/80" : "text-muted-foreground"}`}>
+                <span className={`hidden sm:block text-[11px] leading-tight ${active ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
                   {isRu ? m.descRu : m.descAz}
                 </span>
-              </button>
+              </Button>
             );
           })}
         </div>
