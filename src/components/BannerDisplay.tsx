@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface BannerDisplayProps {
@@ -10,6 +12,8 @@ interface BannerDisplayProps {
 }
 
 const BannerDisplay = ({ position, interval = 5000 }: BannerDisplayProps) => {
+  const { language } = useLanguage();
+  const ru = language === "ru";
   const [current, setCurrent] = useState(0);
 
   const { data: banners = [], isLoading, isFetched } = useQuery({
@@ -87,13 +91,13 @@ const BannerDisplay = ({ position, interval = 5000 }: BannerDisplayProps) => {
               muted
               loop
               playsInline
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain"
             />
           ) : (
             <img
               src={banner.image_url}
               alt={banner.title}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain"
               loading="eager"
               decoding="async"
               draggable={false}
@@ -102,12 +106,13 @@ const BannerDisplay = ({ position, interval = 5000 }: BannerDisplayProps) => {
           return (
             <div
               key={banner.id}
+              aria-hidden={!isActive}
               className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
                 isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
               }`}
             >
               {banner.link ? (
-                <Link to={banner.link} className="block h-full w-full">
+                <Link to={banner.link} tabIndex={isActive ? 0 : -1} className="block h-full w-full">
                   {inner}
                 </Link>
               ) : (
@@ -121,18 +126,22 @@ const BannerDisplay = ({ position, interval = 5000 }: BannerDisplayProps) => {
       {/* Arrows */}
       {banners.length > 1 && (
         <>
-          <button
+          <Button
+            variant="ghost"
             onClick={prev}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-background/70 text-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+            aria-label={ru ? "Предыдущий баннер" : "Əvvəlki banner"}
+            className="p-0 absolute left-2 top-1/2 -translate-y-1/2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-background/70 text-foreground shadow-md sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity backdrop-blur-sm"
           >
             <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
             onClick={next}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-background/70 text-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+            aria-label={ru ? "Следующий баннер" : "Növbəti banner"}
+            className="p-0 absolute right-2 top-1/2 -translate-y-1/2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-background/70 text-foreground shadow-md sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity backdrop-blur-sm"
           >
             <ChevronRight className="h-4 w-4" />
-          </button>
+          </Button>
         </>
       )}
 
@@ -140,10 +149,13 @@ const BannerDisplay = ({ position, interval = 5000 }: BannerDisplayProps) => {
       {banners.length > 1 && (
         <div className="flex justify-center gap-1.5 mt-2">
           {banners.map((_: any, i: number) => (
-            <button
+            <Button
+            variant="ghost"
               key={i}
+              aria-label={`${ru ? "Баннер" : "Banner"} ${i + 1}`}
+              aria-pressed={i === current}
               onClick={() => setCurrent(i)}
-              className={`h-2 rounded-full transition-all duration-300 ${
+              className={`h-2 min-h-0 p-0 rounded-full transition-all duration-300 ${
                 i === current
                   ? "w-5 bg-primary"
                   : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"

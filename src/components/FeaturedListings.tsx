@@ -32,7 +32,7 @@ const FeaturedListings = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { language } = useLanguage();
-  const { scope, categoryMap, isLoading: scopeLoading, isError: scopeError } = useListingScope();
+  const { scope, categoryMap, isLoading: scopeLoading, isError: scopeError, refetch: refetchScope } = useListingScope();
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const { data: hpSettings = defaultSettings } = useQuery({
@@ -100,8 +100,8 @@ const FeaturedListings = () => {
   });
   const isLoading = scopeLoading || (hpSettings.homepage_new_count > 0 && listingsLoading);
   const loadMore = useCallback(() => {
-    if (!loadingMore && hasMore) void fetchNextPage();
-  }, [loadingMore, hasMore, fetchNextPage]);
+    if (!isError && !loadingMore && hasMore) void fetchNextPage();
+  }, [isError, loadingMore, hasMore, fetchNextPage]);
 
   // Auto-load with IntersectionObserver
   useEffect(() => {
@@ -179,7 +179,7 @@ const FeaturedListings = () => {
               );
             })}
           </div>
-          {showLoadMore && listings.length === 0 && (
+          {showLoadMore && !isError && !scopeError && listings.length === 0 && (
             <div className="flex flex-col items-center gap-3 py-10 text-center text-muted-foreground" role="status">
               <Search className="h-8 w-8" />
               <p className="text-sm">{language === "ru" ? "В этом разделе пока нет объявлений" : "Bu bölmədə hələ elan yoxdur"}</p>
@@ -188,12 +188,12 @@ const FeaturedListings = () => {
           {showLoadMore && (isError || scopeError) && (
             <div role="alert" className="flex flex-wrap items-center justify-center gap-3 py-4">
               <p className="text-sm text-muted-foreground">{language === "ru" ? "Не удалось загрузить объявления" : "Elanları yükləmək mümkün olmadı"}</p>
-              <Button variant="outline" onClick={() => { void refetch(); }}>{language === "ru" ? "Повторить" : "Yenidən cəhd et"}</Button>
+              <Button variant="outline" onClick={() => { void (scopeError ? refetchScope() : refetch()); }}>{language === "ru" ? "Повторить" : "Yenidən cəhd et"}</Button>
             </div>
           )}
           {showLoadMore && hasMore && (
             <div className="mt-6 flex justify-center">
-              {hpSettings.homepage_auto_load ? (
+              {hpSettings.homepage_auto_load && !isError ? (
                 <div ref={sentinelRef}>
                   {loadingMore && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
                 </div>
@@ -231,7 +231,7 @@ const FeaturedListings = () => {
     <div>
       {renderSection(t("home.premium_title"), t("home.premium_subtitle"), <Crown className="h-6 w-6 text-primary" />, premiumListings)}
       {renderSection(t("home.urgent_title"), t("home.urgent_subtitle"), <Zap className="h-6 w-6 text-destructive" />, urgentListings)}
-      {renderSection(t("home.latest_title"), t("home.latest_subtitle"), <Clock className="h-6 w-6 text-primary" />, displayNewListings, "bg-muted/50", true, true)}
+      {hpSettings.homepage_new_count > 0 && renderSection(t("home.latest_title"), t("home.latest_subtitle"), <Clock className="h-6 w-6 text-primary" />, displayNewListings, "bg-muted/50", true, true)}
     </div>
   );
 };

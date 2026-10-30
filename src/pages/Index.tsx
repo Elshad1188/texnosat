@@ -13,11 +13,11 @@ import ContestBanner from "@/components/ContestBanner";
 import ContestWinnersBanner from "@/components/ContestWinnersBanner";
 import HomeMiniMap from "@/components/HomeMiniMap";
 import HomePromoBar from "@/components/HomePromoBar";
-import { useHomeMode } from "@/contexts/HomeModeContext";
+import { useListingScope } from "@/hooks/useListingScope";
 
 
 const Index = () => {
-  const { mode } = useHomeMode();
+  const { scope } = useListingScope();
   return (
     <div className="min-h-screen bg-background">
       <SEOHead />
@@ -26,7 +26,7 @@ const Index = () => {
       <main>
         <HeroSection />
         <HomeModeTabs />
-        {(!mode || mode === "real_estate") && (
+        {(scope === "both" || scope === "real_estate") && (
           <section className="container mx-auto px-4 -mt-2 mb-4">
             <DealTypeTabs variant="navigate" />
           </section>

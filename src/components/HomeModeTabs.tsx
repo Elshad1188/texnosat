@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Car, Building2, LayoutGrid } from "lucide-react";
+import { Car, Building2, LayoutGrid, type LucideIcon } from "lucide-react";
 import { useHomeMode, HomeMode } from "@/contexts/HomeModeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const MODES: { value: HomeMode; icon: any; az: string; ru: string; descAz: string; descRu: string; gradient: string }[] = [
+const MODES: { value: HomeMode; icon: LucideIcon; az: string; ru: string; descAz: string; descRu: string }[] = [
   {
     value: "transport",
     icon: Car,
@@ -11,7 +11,6 @@ const MODES: { value: HomeMode; icon: any; az: string; ru: string; descAz: strin
     ru: "Транспорт",
     descAz: "Avtomobil, moto, ehtiyat hissələri",
     descRu: "Авто, мото, запчасти",
-    gradient: "from-blue-600 to-blue-500",
   },
   {
     value: "real_estate",
@@ -20,7 +19,6 @@ const MODES: { value: HomeMode; icon: any; az: string; ru: string; descAz: strin
     ru: "Недвижимость",
     descAz: "Mənzil, ev, ofis, torpaq",
     descRu: "Квартиры, дома, офисы, участки",
-    gradient: "from-emerald-600 to-emerald-500",
   },
   {
     value: "general",
@@ -29,7 +27,6 @@ const MODES: { value: HomeMode; icon: any; az: string; ru: string; descAz: strin
     ru: "Разное",
     descAz: "Elektronika, geyim, ev əşyaları",
     descRu: "Электроника, одежда, товары для дома",
-    gradient: "from-amber-600 to-amber-500",
   },
 ];
 
@@ -51,7 +48,7 @@ const HomeModeTabs = () => {
                 aria-pressed={active}
                 key={m.value}
                 onClick={() => setMode(active ? null : m.value)}
-                className={`h-auto min-h-24 whitespace-normal flex flex-col items-center gap-1.5 sm:gap-2 rounded-lg border p-3 sm:p-5 text-center transition-colors ${
+                className={`h-auto min-h-[96px] whitespace-normal flex flex-col items-center gap-1.5 sm:gap-2 rounded-lg border p-3 sm:p-5 text-center transition-colors [&_svg]:size-6 sm:[&_svg]:size-8 ${
                   active
                     ? "border-primary bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:text-primary-foreground"
                     : "border-border bg-card text-foreground hover:border-primary/50 hover:shadow-md"

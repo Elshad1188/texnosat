@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useListingScope } from "@/hooks/useListingScope";
+import { listingMatchesScope } from "@/lib/listingScope";
 import { generateQRCodeURL } from "@/utils/qr";
 
 const Footer = () => {
@@ -13,6 +15,9 @@ const Footer = () => {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const ru = language === "ru";
+  const { scope, categories, categoryMap } = useListingScope();
+  const footerCategories = categories.filter(c => c.is_active && !c.parent_id && listingMatchesScope(c.slug, categoryMap, scope))
+    .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).slice(0, 4);
   const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
 
   useEffect(() => {
@@ -64,10 +69,11 @@ const Footer = () => {
           <div>
             <h4 className="mb-3 font-display text-sm font-semibold">{t("categories.title")}</h4>
             <ul className="space-y-2 text-sm text-secondary-foreground/60">
-              <li><Link to="/products?category=telefonlar" className="hover:text-primary">{ru ? "Телефоны" : "Telefonlar"}</Link></li>
-              <li><Link to="/products?category=noutbuklar" className="hover:text-primary">{ru ? "Ноутбуки" : "Noutbuklar"}</Link></li>
-              <li><Link to="/products?category=plansetler" className="hover:text-primary">{ru ? "Планшеты" : "Planşetlər"}</Link></li>
-              <li><Link to="/products?category=aksesuarlar" className="hover:text-primary">{ru ? "Аксессуары" : "Aksesuarlar"}</Link></li>
+              {footerCategories.map(category => (
+                <li key={category.id}><Link to={`/products?category=${encodeURIComponent(category.slug)}`} className="hover:text-primary">
+                  {ru && category.name_ru ? category.name_ru : category.name}
+                </Link></li>
+              ))}
               <li><Link to="/blog" className="hover:text-primary">{t("nav.blog")}</Link></li>
             </ul>
           </div>
@@ -106,7 +112,7 @@ const Footer = () => {
             <div className="flex items-start gap-3">
               <div className="shrink-0 rounded-lg border border-border overflow-hidden bg-white p-1">
                 <img
-                  src={generateQRCodeURL(typeof window !== "undefined" ? window.location.origin : "https://elan24.az", 100)}
+                  src={generateQRCodeURL("https://elan24.az", 100)}
                   alt="Elan24 QR kodu"
                   className="h-[100px] w-[100px]"
                   loading="lazy"
@@ -119,7 +125,7 @@ const Footer = () => {
                 <button
                   onClick={async () => {
                     try {
-                      const url = generateQRCodeURL(typeof window !== "undefined" ? window.location.origin : "https://elan24.az", 512);
+                      const url = generateQRCodeURL("https://elan24.az", 512);
                       const res = await fetch(url);
                       const blob = await res.blob();
                       const blobUrl = URL.createObjectURL(blob);

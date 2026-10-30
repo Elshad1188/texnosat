@@ -277,7 +277,7 @@ const Products = () => {
       <Header />
       <main className="container mx-auto px-4 py-6">
         {/* Deal type tabs (bina.az style) */}
-        <div className="mb-5">
+        {(scope === "real_estate" || scope === "both") && <div className="mb-5">
           <DealTypeTabs
             value={selectedDeal}
             onChange={(v) => {
@@ -288,7 +288,7 @@ const Products = () => {
             }}
             variant="controlled"
           />
-        </div>
+        </div>}
 
         {/* Search */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
