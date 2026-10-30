@@ -1,14 +1,14 @@
-import { Heart, MapPin, Clock, Store, Crown, Zap, GitCompareArrows, ChevronLeft, ChevronRight, ShoppingCart, Truck, BedDouble, Maximize2, Building2, Landmark, FileCheck2 } from "lucide-react";
+import { Heart, MapPin, Clock, Store, Crown, Zap, ChevronLeft, ChevronRight, ShoppingCart, Truck, BedDouble, Maximize2, Building2, Landmark, FileCheck2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useCompare } from "@/contexts/CompareContext";
 import WatermarkOverlay from "@/components/WatermarkOverlay";
 import CheckoutDialog from "@/components/CheckoutDialog";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useTranslation } from "@/contexts/LanguageContext";
+import { Button } from "@/components/ui/button";
+import { useLanguage, useTranslation } from "@/contexts/LanguageContext";
 import { usePlatformMode } from "@/hooks/usePlatformMode";
 
 interface ListingCardProps {
@@ -37,10 +37,11 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
   const navigate = useNavigate();
   const { t } = useTranslation();
   const platform = usePlatformMode();
+  const { language } = useLanguage();
+  const ru = language === "ru";
+  const canBuy = isBuyable && platform.showCheckout;
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { toggle, has } = useCompare();
-  const isComparing = has(id);
 
   const allImages = images && images.length > 1 ? images : [image];
   const hasSlider = imageSlider && allImages.length > 1;
@@ -60,11 +61,12 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
   const { data: favoriteData } = useQuery({
     queryKey: ["favorite", id, user?.id],
     queryFn: async () => {
+      if (!user) return null;
       const { data } = await supabase
         .from("favorites")
         .select("id")
         .eq("listing_id", id)
-        .eq("user_id", user!.id)
+        .eq("user_id", user.id)
         .maybeSingle();
       return data;
     },
@@ -99,7 +101,12 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
         onMouseLeave={() => setHovered(false)}
       >
         <img
-          src={allImages[currentImg] || image}
+          src={allImages[currentImg] || image || "/placeholder.svg"}
+          loading="lazy"
+          decoding="async"
+          onError={(e) => {
+            if (!e.currentTarget.src.endsWith("/placeholder.svg")) e.currentTarget.src = "/placeholder.svg";
+          }}
           alt={title}
           className="h-full w-full object-cover transition-all duration-500 group-hover:scale-105"
         />
@@ -109,11 +116,13 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
         {hasSlider && allImages.length > 1 && (
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
             {allImages.map((_, i) => (
-              <button
+              <Button
+                variant="ghost"
                 key={i}
                 onClick={(e) => { e.stopPropagation(); setCurrentImg(i); }}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  i === currentImg ? "w-4 bg-white" : "w-1.5 bg-white/50"
+                aria-label={`${ru ? "Фото" : "Şəkil"} ${i + 1}`}
+                className={`h-1.5 min-h-0 p-0 rounded-full transition-all duration-300 ${
+                  i === currentImg ? "w-4 bg-primary-foreground" : "w-1.5 bg-primary-foreground/50"
                 }`}
               />
             ))}
@@ -123,33 +132,40 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
         {/* Arrows on hover */}
         {hasSlider && hovered && (
           <>
-            <button
+            <Button
+                variant="ghost"
+              aria-label={ru ? "Предыдущее фото" : "Əvvəlki şəkil"}
               onClick={(e) => { e.stopPropagation(); setCurrentImg((currentImg - 1 + allImages.length) % allImages.length); }}
-              className="absolute left-1 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur-sm"
+              className="p-0 absolute left-1 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur-sm"
             >
               <ChevronLeft className="h-3 w-3" />
-            </button>
-            <button
+            </Button>
+            <Button
+                variant="ghost"
+              aria-label={ru ? "Следующее фото" : "Növbəti şəkil"}
               onClick={(e) => { e.stopPropagation(); setCurrentImg((currentImg + 1) % allImages.length); }}
-              className="absolute right-1 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur-sm"
+              className="p-0 absolute right-1 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur-sm"
             >
               <ChevronRight className="h-3 w-3" />
-            </button>
+            </Button>
           </>
         )}
-        <button
+        <Button
+                variant="ghost"
           onClick={(e) => {
             e.stopPropagation();
             if (!user) { navigate("/auth"); return; }
             toggleFavorite.mutate();
           }}
+          aria-label={ru ? "Избранное" : "Seçilmişlər"}
+          title={ru ? "Избранное" : "Seçilmişlər"}
           disabled={toggleFavorite.isPending}
-          className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-card/80 backdrop-blur-sm transition-colors hover:bg-card"
+          className="p-0 absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-card/80 backdrop-blur-sm transition-colors hover:bg-card"
         >
           <Heart className={`h-4 w-4 ${isFavorited ? "fill-primary text-primary" : "text-muted-foreground"}`} />
-        </button>
+        </Button>
         <div className="absolute left-2 top-2 flex flex-wrap gap-1.5">
-          {isBuyable && (
+          {canBuy && (
             <div className="flex items-center gap-1 rounded-full bg-primary/90 px-2 py-0.5 shadow-lg backdrop-blur-sm">
               <ShoppingCart className="h-3 w-3 text-primary-foreground" />
               <span className="text-[10px] font-bold text-primary-foreground">{t("card.for_sale")}</span>
@@ -160,7 +176,7 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
               title={t("card.delivery_available")}
               className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/90 shadow-lg shadow-emerald-500/30 backdrop-blur-sm"
             >
-              <Truck className="h-3.5 w-3.5 text-white" />
+              <Truck className="h-3.5 w-3.5 text-primary-foreground" />
             </div>
           ) : (
             <div
@@ -172,12 +188,12 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
           ))}
           {isPremium && (
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500/90 shadow-lg shadow-amber-500/30 backdrop-blur-sm">
-              <Crown className="h-3.5 w-3.5 text-white" />
+              <Crown className="h-3.5 w-3.5 text-primary-foreground" />
             </div>
           )}
           {isUrgent && (
             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-red-500/90 shadow-lg shadow-red-500/30 backdrop-blur-sm">
-              <Zap className="h-3.5 w-3.5 text-white fill-white" />
+              <Zap className="h-3.5 w-3.5 text-primary-foreground fill-primary-foreground" />
             </div>
           )}
         </div>
@@ -186,12 +202,14 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
       <div className="p-2 sm:p-2.5">
         <div className="flex items-baseline justify-between gap-1 flex-wrap">
           <p className="font-display text-[15px] sm:text-base font-bold text-foreground leading-tight break-words">
-            {customFields?.price_negotiable ? "Razılaşma yolu ilə" : price}
+            {customFields?.price_negotiable ? (ru ? "По договорённости" : "Razılaşma yolu ilə") : price}
           </p>
           {customFields?.deal_type && (
             <span className="shrink-0 text-[10px] font-medium text-primary">{customFields.deal_type}</span>
           )}
         </div>
+
+        <h3 className="mt-1 min-h-9 line-clamp-2 text-xs font-medium leading-[18px] text-foreground" title={title}>{title}</h3>
 
         {/* Region & sub-region under price */}
         {location && (
@@ -230,11 +248,11 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
           <div className="mt-1.5 flex flex-wrap items-center gap-1">
             {customFields?.mortgage === "Var" && (
               <span
-                title="İpoteka ilə alına bilər"
+                title={ru ? "Доступна ипотека" : "İpoteka ilə alına bilər"}
                 className="inline-flex items-center gap-0.5 rounded bg-emerald-500/10 px-1 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400"
               >
                 <Landmark className="h-2.5 w-2.5" />
-                İpoteka
+                {ru ? "Ипотека" : "İpoteka"}
               </span>
             )}
             {customFields?.document && customFields.document !== "Sənədsiz" && (
@@ -251,12 +269,13 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
 
         {/* Store Badge */}
         {storeId && storeName && (
-          <button
+          <Button
+                variant="ghost"
             onClick={(e) => {
               e.stopPropagation();
               navigate(`/store/${storeId}`);
             }}
-            className="mt-1.5 flex items-center gap-1 rounded bg-muted/80 px-1.5 py-0.5 transition-colors hover:bg-muted max-w-full"
+            className="h-auto mt-1.5 flex items-center gap-1 rounded bg-muted/80 px-1.5 py-0.5 transition-colors hover:bg-muted max-w-full"
           >
             <div className="flex h-3.5 w-3.5 shrink-0 items-center justify-center overflow-hidden rounded bg-card">
               {storeLogo ? (
@@ -266,7 +285,7 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
               )}
             </div>
             <span className="truncate text-[10px] font-medium text-muted-foreground">{storeName}</span>
-          </button>
+          </Button>
         )}
 
         <div className="mt-1.5 flex items-center justify-end gap-1.5 text-[10px] text-muted-foreground">
@@ -276,22 +295,23 @@ const ListingCard = ({ id, title, price, numericPrice, currency, userId, customF
         </div>
 
         {/* Buy button */}
-        {isBuyable && (
-          <button
+        {canBuy && (
+          <Button
+                variant="ghost"
             onClick={(e) => {
               e.stopPropagation();
               if (!user) { navigate("/auth"); return; }
               setCheckoutOpen(true);
             }}
-            className="mt-1.5 flex w-full items-center justify-center gap-1 rounded-md bg-primary py-1.5 text-[10px] font-bold text-primary-foreground transition-colors hover:bg-primary/90"
+            className="h-auto mt-1.5 flex w-full items-center justify-center gap-1 rounded-md bg-primary py-1.5 text-[10px] font-bold text-primary-foreground transition-colors hover:bg-primary/90"
           >
             <ShoppingCart className="h-3 w-3" />
             {t("card.buy")}
-          </button>
+          </Button>
         )}
       </div>
 
-      {isBuyable && numericPrice != null && userId && createPortal(
+      {canBuy && numericPrice != null && userId && createPortal(
         <CheckoutDialog
           open={checkoutOpen}
           onOpenChange={setCheckoutOpen}
