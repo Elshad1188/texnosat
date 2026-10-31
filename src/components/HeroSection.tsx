@@ -3,17 +3,19 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import VisualSearchButton from "@/components/VisualSearchButton";
-import { useTranslation } from "react-i18next";
+import { useLanguage, useTranslation } from "@/contexts/LanguageContext";
 import { usePlatformMode } from "@/hooks/usePlatformMode";
 
 const HeroSection = () => {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const platform = usePlatformMode();
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
 
   const handleSearch = () => {
-    navigate(`/products${query ? `?search=${encodeURIComponent(query)}` : ""}`);
+    const search = query.trim();
+    navigate(`/products${search ? `?search=${encodeURIComponent(search)}` : ""}`);
   };
 
   return (
@@ -24,7 +26,8 @@ const HeroSection = () => {
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
-              placeholder={t("nav.search_placeholder")}
+              aria-label={language === "ru" ? "Поиск объявлений" : "Elan axtarışı"}
+              placeholder={t("nav.search_placeholder", { defaultValue: language === "ru" ? "Что вы ищете?" : "Nə axtarırsınız?" })}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="h-12 w-full rounded-2xl border border-border bg-card pl-12 pr-32 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
@@ -36,7 +39,7 @@ const HeroSection = () => {
                 size="sm"
                 className="h-8 bg-gradient-primary text-primary-foreground hover:opacity-90 rounded-xl px-4"
               >
-                {t("hero.search_button")}
+                {t("hero.search_button", { defaultValue: language === "ru" ? "Поиск" : "Axtar" })}
               </Button>
             </div>
           </div>
