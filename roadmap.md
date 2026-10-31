@@ -1,4 +1,5 @@
 # Homepage audit
+- [ ] Recheck and correct the homepage search and button layouts reported by the user.
 - [x] Verify homepage rendering and public navigation on phone, tablet and desktop.
 - [x] Fix listing pagination and mode-selection defects found during inspection.
 - [x] Fix broken promotion links and homepage layout defects.
