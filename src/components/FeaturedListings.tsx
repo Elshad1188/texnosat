@@ -149,7 +149,7 @@ const FeaturedListings = () => {
             </div>
             {showAll && (
               <Button variant="link" onClick={() => navigate("/products")} className="h-auto px-0 text-sm">
-                {t("common.view_all")}
+                {t("common.view_all", { defaultValue: language === "ru" ? "Все объявления" : "Hamısına bax" })}
               </Button>
             )}
           </div>
@@ -205,7 +205,7 @@ const FeaturedListings = () => {
                   className="flex items-center gap-2 rounded-lg bg-primary/10 px-6 py-2.5 text-sm font-medium text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
                 >
                   {loadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {t("home.load_more")}
+                  {t("home.load_more", { defaultValue: language === "ru" ? "Показать ещё" : "Daha çox göstər" })}
                 </Button>
               )}
             </div>
@@ -229,9 +229,9 @@ const FeaturedListings = () => {
 
   return (
     <div>
-      {renderSection(t("home.premium_title"), t("home.premium_subtitle"), <Crown className="h-6 w-6 text-primary" />, premiumListings)}
-      {renderSection(t("home.urgent_title"), t("home.urgent_subtitle"), <Zap className="h-6 w-6 text-destructive" />, urgentListings)}
-      {hpSettings.homepage_new_count > 0 && renderSection(t("home.latest_title"), t("home.latest_subtitle"), <Clock className="h-6 w-6 text-primary" />, displayNewListings, "bg-muted/50", true, true)}
+      {renderSection(t("home.premium_title", { defaultValue: language === "ru" ? "Премиум объявления" : "Premium elanlar" }), t("home.premium_subtitle", { defaultValue: "" }), <Crown className="h-6 w-6 text-primary" />, premiumListings)}
+      {renderSection(t("home.urgent_title", { defaultValue: language === "ru" ? "Срочные объявления" : "Təcili elanlar" }), t("home.urgent_subtitle", { defaultValue: "" }), <Zap className="h-6 w-6 text-destructive" />, urgentListings)}
+      {hpSettings.homepage_new_count > 0 && renderSection(t("home.latest_title", { defaultValue: language === "ru" ? "Последние объявления" : "Son elanlar" }), t("home.latest_subtitle", { defaultValue: "" }), <Clock className="h-6 w-6 text-primary" />, displayNewListings, "bg-muted/50", true, true)}
     </div>
   );
 };

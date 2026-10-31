@@ -11,12 +11,12 @@ const HomeMiniMap = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const ru = language === "ru";
-  const { scope, categoryMap, isLoading: scopeLoading } = useListingScope();
+  const { scope, categoryMap, isLoading: scopeLoading, isError: scopeError } = useListingScope();
   const slugs = Object.keys(categoryMap).filter(c => listingMatchesScope(c, categoryMap, scope));
 
-  const { data: totalCount = 0, isLoading } = useQuery({
+  const { data: totalCount = 0, isLoading, isError } = useQuery({
     queryKey: ["homepage-map-count", scope, slugs.join(",")],
-    enabled: !scopeLoading,
+    enabled: !scopeLoading && !scopeError,
     queryFn: async () => {
       if (scope !== "both" && slugs.length === 0) return 0;
       let query = supabase
@@ -38,7 +38,7 @@ const HomeMiniMap = () => {
           <MapPin className="h-6 w-6 shrink-0 text-primary" />
           <div>
             <h2 className="text-sm font-semibold text-foreground">{ru ? "Поиск на карте" : "Xəritə ilə axtarış"}</h2>
-            <p className="text-xs text-muted-foreground">{isLoading || scopeLoading ? "…" : `${totalCount} ${ru ? "активных объявлений" : "aktiv elan"}`}</p>
+            <p className="text-xs text-muted-foreground">{scopeError || isError ? (ru ? "Не удалось загрузить данные" : "Məlumatları yükləmək mümkün olmadı") : isLoading || scopeLoading ? "…" : `${totalCount} ${ru ? "активных объявлений" : "aktiv elan"}`}</p>
           </div>
         </div>
         <Button variant="ghost" onClick={() => navigate("/products?view=map")} aria-label={ru ? "Открыть карту" : "Xəritəni aç"} className="shrink-0 text-primary">
