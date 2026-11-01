@@ -11,7 +11,7 @@ const Categories = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { language } = useLanguage();
-  const { scope, categories: allCategories, categoryMap, isLoading } = useListingScope();
+  const { scope, categories: allCategories, categoryMap, isLoading, isError } = useListingScope();
   const categories = allCategories.filter(c => c.is_active && !c.parent_id && listingMatchesScope(c.slug, categoryMap, scope))
     .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
@@ -31,6 +31,8 @@ const Categories = () => {
       </section>
     );
   }
+
+  if (isError && allCategories.length === 0) return null;
 
   return (
     <section className="py-6">

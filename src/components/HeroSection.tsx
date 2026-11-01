@@ -19,30 +19,30 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative bg-gradient-to-b from-primary/5 to-background pt-6 pb-4">
+    <section className="bg-background pb-3 pt-4">
       <div className="container mx-auto px-4">
-        <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }}>
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+        <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="flex min-w-0 items-center gap-1 rounded-lg border border-input bg-card p-1.5 shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/20 sm:gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2 pl-2">
+            <Search className="h-5 w-5 shrink-0 text-muted-foreground" />
             <input
               type="text"
               aria-label={language === "ru" ? "Поиск объявлений" : "Elan axtarışı"}
               placeholder={t("nav.search_placeholder", { defaultValue: language === "ru" ? "Что вы ищете?" : "Nə axtarırsınız?" })}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="h-12 w-full rounded-2xl border border-border bg-card pl-12 pr-32 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              className="h-11 w-full min-w-0 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
             />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+          </div>
+            <div className="flex shrink-0 items-center gap-1 sm:gap-2">
               {platform.showVisualSearch && <VisualSearchButton />}
               <Button 
                 type="submit" 
                 size="sm"
-                className="h-8 bg-gradient-primary text-primary-foreground hover:opacity-90 rounded-xl px-4"
+                className="h-11 rounded-md px-3 text-sm font-semibold sm:px-5"
               >
                 {t("hero.search_button", { defaultValue: language === "ru" ? "Поиск" : "Axtar" })}
               </Button>
             </div>
-          </div>
         </form>
       </div>
     </section>

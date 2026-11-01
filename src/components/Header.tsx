@@ -182,7 +182,7 @@ const Header = () => {
           {/* Hamburger Menu */}
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9">
+              <Button variant="ghost" size="icon" aria-label={ru ? "Меню" : "Menyu"} title={ru ? "Меню" : "Menyu"} className="h-10 w-10 [&_svg]:size-5">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>

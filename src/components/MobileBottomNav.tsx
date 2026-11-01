@@ -75,7 +75,7 @@ const MobileBottomNav = () => {
       )}
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      <div className="flex items-center justify-around h-14">
+      <div className="grid h-16 grid-cols-5 items-center">
         {navItems.map((item, idx) => {
           const active = isActive(item.path);
 
@@ -84,12 +84,13 @@ const MobileBottomNav = () => {
               <Link
                 key={idx}
                 to={item.path}
-                className="relative -mt-4 flex flex-col items-center"
+                className="relative flex h-16 min-w-0 flex-col items-center justify-center gap-1"
+                aria-current={active ? "page" : undefined}
               >
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-primary shadow-md shadow-primary/25 transition-transform active:scale-90">
+                <div className="flex h-9 w-11 items-center justify-center rounded-md bg-primary transition-colors">
                   <Plus className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
                 </div>
-                <span className="mt-0.5 text-[9px] font-semibold text-primary leading-none">
+                <span className="text-[10px] font-semibold text-primary leading-3">
                   {item.label}
                 </span>
               </Link>
@@ -100,12 +101,13 @@ const MobileBottomNav = () => {
             <Link
               key={idx}
               to={item.path}
-              className="flex flex-col items-center justify-center gap-0.5 min-w-[3rem]"
+              className="flex h-16 min-w-0 flex-col items-center justify-center gap-1 px-1"
+              aria-current={active ? "page" : undefined}
             >
               <div className="relative">
                 <item.icon
                   className={cn(
-                    "h-[18px] w-[18px] transition-colors",
+                    "h-5 w-5 transition-colors",
                     active ? "text-primary" : "text-muted-foreground"
                   )}
                   strokeWidth={active ? 2.5 : 2}
@@ -118,7 +120,7 @@ const MobileBottomNav = () => {
               </div>
               <span
                 className={cn(
-                  "text-[9px] font-medium leading-none transition-colors",
+                  "max-w-full text-center text-[10px] font-medium leading-3 transition-colors",
                   active ? "text-primary" : "text-muted-foreground"
                 )}
               >
