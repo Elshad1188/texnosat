@@ -2,6 +2,7 @@ import { Home, Key, CalendarDays, Briefcase } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export const DEAL_TYPES = [
   { value: "sale", label: "Alqı-satqı", tKey: "deal.sale", icon: Home },
@@ -22,6 +23,8 @@ interface Props {
 const DealTypeTabs = ({ value, onChange, variant = "navigate", className = "" }: Props) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { language } = useLanguage();
+  const russianLabels: Record<string, string> = { sale: "Продажа", rent: "Аренда", daily: "Посуточно", business: "Бизнес" };
 
   const handleClick = (dealValue: string) => {
     if (variant === "navigate") {
@@ -49,7 +52,7 @@ const DealTypeTabs = ({ value, onChange, variant = "navigate", className = "" }:
             }`}
           >
             <Icon className="h-5 w-5" />
-            <span className="text-[11px] font-medium leading-tight sm:text-xs">{t(dt.tKey, { defaultValue: dt.label })}</span>
+            <span className="text-[11px] font-medium leading-tight sm:text-xs">{t(dt.tKey, { defaultValue: language === "ru" ? russianLabels[dt.value] : dt.label })}</span>
           </Button>
         );
       })}
