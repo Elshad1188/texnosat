@@ -118,16 +118,19 @@ const ChatBot = () => {
   return (
     <>
       {!open && (
-        <button
+        <Button
+          size="icon"
+          aria-label="Elan24 köməkçi"
+          title="Elan24 köməkçi"
           onClick={() => setOpen(true)}
-          className="fixed bottom-20 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-primary text-primary-foreground shadow-lg hover:opacity-90 transition-all md:bottom-6"
+          className="fixed bottom-[calc(80px+env(safe-area-inset-bottom,0px))] right-4 z-40 h-11 w-11 rounded-full shadow-card 2xl:bottom-6 [&_svg]:size-5"
         >
           <MessageCircle className="h-5 w-5" />
-        </button>
+        </Button>
       )}
 
       {open && (
-        <div className="fixed bottom-16 right-3 z-50 flex h-[480px] w-[340px] flex-col rounded-2xl border border-border bg-card shadow-2xl md:bottom-4 md:right-4 md:w-[380px]">
+         <div className="fixed bottom-[calc(72px+env(safe-area-inset-bottom,0px))] right-3 z-50 flex h-[480px] max-h-[calc(100dvh-156px)] w-[calc(100%-24px)] max-w-[380px] flex-col rounded-lg border border-border bg-card shadow-card 2xl:bottom-4">
           <div className="flex items-center justify-between rounded-t-2xl bg-gradient-primary px-4 py-3">
             <div className="flex items-center gap-2">
               <Bot className="h-5 w-5 text-primary-foreground" />
@@ -137,10 +140,10 @@ const ChatBot = () => {
               </div>
             </div>
             <div className="flex gap-1">
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-primary-foreground/80 hover:text-primary-foreground hover:bg-white/10" onClick={() => { setOpen(false); navigate("/support"); }} title="Dəstək sorğusu">
+              <Button variant="ghost" size="icon" className="h-9 w-9 text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10" onClick={() => { setOpen(false); navigate("/support"); }} title="Dəstək sorğusu">
                 <LifeBuoy className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-primary-foreground/80 hover:text-primary-foreground hover:bg-white/10" onClick={() => setOpen(false)}>
+              <Button variant="ghost" size="icon" aria-label="Köməkçini bağla" className="h-9 w-9 text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10" onClick={() => setOpen(false)}>
                 <X className="h-4 w-4" />
               </Button>
             </div>

@@ -16,7 +16,7 @@ const LanguageSwitcher = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Language">
+        <Button variant="ghost" size="icon" className="h-10 w-10" aria-label={language === "ru" ? "Язык" : "Dil"} title={language === "ru" ? "Язык" : "Dil"}>
           <Globe className="h-4 w-4" />
           <span className="sr-only">{language.toUpperCase()}</span>
         </Button>
