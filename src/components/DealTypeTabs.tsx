@@ -1,6 +1,7 @@
 import { Home, Key, CalendarDays, Briefcase } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
 
 export const DEAL_TYPES = [
   { value: "sale", label: "Alqı-satqı", tKey: "deal.sale", icon: Home },
@@ -36,18 +37,20 @@ const DealTypeTabs = ({ value, onChange, variant = "navigate", className = "" }:
         const Icon = dt.icon;
         const active = value === dt.value;
         return (
-          <button
+          <Button
+            variant="ghost"
+            aria-pressed={active}
             key={dt.value}
             onClick={() => handleClick(dt.value)}
-            className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border p-3 text-center transition-all ${
+            className={`h-[68px] min-w-0 flex flex-col items-center justify-center gap-1.5 whitespace-normal rounded-md border px-1 py-2 text-center transition-colors [&_svg]:size-5 ${
               active
-                ? "border-primary bg-primary text-primary-foreground shadow-md"
-                : "border-border bg-card text-foreground hover:border-primary/50 hover:bg-accent"
+                ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+                : "border-border bg-muted/30 text-foreground hover:border-primary/50 hover:bg-accent"
             }`}
           >
             <Icon className="h-5 w-5" />
             <span className="text-[11px] font-medium leading-tight sm:text-xs">{t(dt.tKey, { defaultValue: dt.label })}</span>
-          </button>
+          </Button>
         );
       })}
     </div>

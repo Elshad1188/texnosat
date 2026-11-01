@@ -5,8 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const VisualSearchButton = () => {
+  const { language } = useLanguage();
+  const ru = language === "ru";
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
@@ -64,29 +67,28 @@ const VisualSearchButton = () => {
 
   return (
     <>
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         type="button"
         onClick={() => setOpen(true)}
-        className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-        title="Şəkillə axtar"
+        className="h-11 w-11 shrink-0 rounded-md border border-border bg-muted/30 text-foreground hover:bg-accent hover:text-primary [&_svg]:size-5"
+        aria-label={ru ? "Поиск по фото" : "Şəkillə axtar"}
+        title={ru ? "Поиск по фото" : "Şəkillə axtar"}
       >
         <ScanSearch className="h-5 w-5" />
-      </button>
+      </Button>
 
       <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ScanSearch className="h-5 w-5 text-primary" />
-              Vizual Axtarış
+              {ru ? "Поиск по фото" : "Şəkillə axtarış"}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Məhsulun şəklini yükləyin və ya kamera ilə çəkin — oxşar elanları tapaq.
-            </p>
-
             {!preview ? (
               <div className="flex flex-col gap-3">
                 <input
@@ -106,7 +108,7 @@ const VisualSearchButton = () => {
                   onClick={() => fileRef.current?.click()}
                 >
                   <Camera className="h-8 w-8 text-primary" />
-                  <span className="text-sm font-medium">Şəkil çək və ya yüklə</span>
+                  <span className="text-sm font-medium">{ru ? "Снять или загрузить фото" : "Şəkil çək və ya yüklə"}</span>
                 </Button>
               </div>
             ) : (
@@ -117,12 +119,15 @@ const VisualSearchButton = () => {
                   className="w-full max-h-64 object-contain rounded-xl border border-border"
                 />
                 {!loading && (
-                  <button
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    aria-label={ru ? "Удалить фото" : "Şəkli sil"}
                     onClick={reset}
-                    className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-background border border-border"
+                    className="absolute top-2 right-2 h-10 w-10 rounded-md bg-background/80"
                   >
                     <X className="h-4 w-4" />
-                  </button>
+                  </Button>
                 )}
                 {loading && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/70 rounded-xl">
